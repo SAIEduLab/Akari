@@ -633,6 +633,13 @@
       return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
     if (mask.startsWith('今の') && !symbols?.project?.components.some(component=>component.name==='今'))
       return located(parseExpression(compact.slice(2),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(2)}));
+    // おみくじのどれか (E2E-R2-12): one item of a list is picked by its number, 1 to the list's 数. The error carries the
+    // value written out, for the sentence's own rewrite (〜を言う).
+    {const pick=/^【([^【】「」]+)】のどれか$/.exec(compact)||/^([^\u0001、。（）]+?)のどれか$/.exec(mask),name=pick?.[1];
+      if(name&&dataNameKind(name,symbols,ctx)==='list'){
+        const value=`${nameSource(name)}の（1から${nameSource(name)}の数のどれか）番目`;
+        throw Object.assign(new AkariError('P205',`リストの 中から 1つ えらぶときは「${value}」と 書きます`,ctx.lineNo||0,1),{listPick:value});
+      }}
     // The kana spellings たした・ひいた・わった read the same (F-20).
     const arithmetic=[['をかけた',/^(.+?)と(.+?)をかけた(?:数|答え)$/d,'MUL'],['を足した',/^(.+?)(?:に|と)(.+?)を足した(?:数|答え)$/d,'ADD'],['をたした',/^(.+?)(?:に|と)(.+?)をたした(?:数|答え)$/d,'ADD'],
       ['を引いた',/^(.+?)から(.+?)を引いた(?:数|答え)$/d,'SUB'],['をひいた',/^(.+?)から(.+?)をひいた(?:数|答え)$/d,'SUB'],['で割った',/^(.+?)を(.+?)で割った(?:数|答え)$/d,'DIV'],['でわった',/^(.+?)を(.+?)でわった(?:数|答え)$/d,'DIV']];
@@ -875,7 +882,8 @@
     if (source.endsWith('、')) {source=source.slice(0,-1);ctx={...ctx,sourcePositions:ctx.sourcePositions?.slice(0,-1)};}
     const mask=surfaceMask(source);
     const fail = message => { throw new AkariError('P205',message,ctx.lineNo||0,1); };
-    if (mask.includes('になったら')) fail('「になったら」は ここでは 使えません。いまの ようすを しらべるなら「もし点数が10なら、」、そうなるまで 待つなら「点数が10になるまで待つ」のように 書きます');
+    // もし答えが「7」になったら: the two readings are named with the words written (final call 12), as for the one with no もし.
+    if (mask.includes('になったら')) fail(becomesIfMessage(mask.endsWith('になったら') ? source.slice(0, -'になったら'.length) : null, symbols, ctx));
     // Explicit Boolean expression: its parentheses determine scope and operator precedence.
     if (source.startsWith('条件（')) {
       const endings = form === 'if' ? ['が成り立つなら','が成り立つならば','が成り立つのであれば','が成り立たないなら','が成り立たないならば','が成り立たないのであれば'] : form === 'while' ? ['が成り立つあいだ','が成り立つ間','が成り立たないあいだ','が成り立たない間'] : form === 'until' ? ['が成り立つまで','が成り立たないまで'] : ['が成り立つ','が成り立たない'];
@@ -1545,7 +1553,17 @@
       part.comment = line.comment;
       return readRoleStatement(replacement,part,symbols,ctx);
     }
-    const e = (part) => parseMappedExpression(part.text, code, line, symbols, ctx, part.start);
+    // A list's どれか (E2E-R2-12) is rewritten in place: おみくじのどれかを言う → おみくじの（1からおみくじの数のどれか）番目を言う.
+    const e = (part) => {
+      try { return parseMappedExpression(part.text, code, line, symbols, ctx, part.start); }
+      catch (error) {
+        if (!error?.listPick) throw error;
+        const source = code.slice(0, part.start) + error.listPick + code.slice(part.start + part.text.length);
+        let readable = false;
+        try { readable = !!parseSyntax(source + '。', { symbols }).ast; } catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; }
+        throw Object.assign(sentenceDiagnostic(error.message, line, readable ? [{ label: 'リストから 1つ えらぶ', source: canonicalStatementSource(source, symbols) }] : []), { listPick: error.listPick });
+      }
+    };
     const q = (part,unit) => {if(surfaceMask(part.text).endsWith(unit))throw new AkariError('P205','「歩」や「秒」などは 1回だけ 書きます。れい：前へ10歩進む');return sentenceQuantity(e(part),unit);};
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
     const node = (kind,props={}) => statementNode(kind,line,{...props,actorRef:{...(ctx.topicActor || {kind:'self'})}});
@@ -1618,7 +1636,7 @@
           if(args.length<2)throw new AkariError('P205','つなげるものを 2つ いじょう ならべます。れい：「点数は」と点数をつなげて言う');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
         }
         case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','言う ことは「「文字」と言う」、へんすうの 中身は「点数を言う」のように 書きます'); break;
-        case 'value': {const part=parts[0], raw=part.text.endsWith('の値') && !(part.text === '拡張の値' && EXTENSION_HOST.operations('events').length && !extensionValueIsData(symbols, ctx))?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
+        case 'value': {const part=parts[0], raw=part.text.endsWith('の値') && !(part.text === '拡張の値' && EXTENSION_HOST.operations('events').length && !extensionValueIsData(symbols, ctx))?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError)||caught.listPick)throw caught;error=caught;}
           const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
             unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
@@ -1831,7 +1849,7 @@
     const m=/^画面の(?:(まん中|真ん中|まんなか|中央|中心)|(どこか))$/.exec(mask);if(!m)return null;
     const w=symbols?.project?.stage?.width??640,h=symbols?.project?.stage?.height??400;
     const source=m[1]?`画面の左下のはしから、右へ${w/2}歩、上へ${h/2}歩のばしょへ行く`:`画面の左下のはしから、右へ0歩から${w}歩のどれか、上へ0歩から${h}歩のどれかのばしょへ行く`;
-    return {source,message:`「〜のところへ行く」の 行き先は、部品か マウスです。画面の ${m[1]?'まん中':'どこか'}へ 行くときは「${source}」と 書きます`};
+    return {source,place:m[1]?'まん中':'どこか',message:`「〜のところへ行く」の 行き先は、部品か マウスです。画面の ${m[1]?'まん中':'どこか'}へ 行くときは「${source}」と 書きます`};
   }
   // 〜のところへ動く, 〜のところへ1秒かけて行く and 画面のまん中のところへ行く name the readable sentence (source: the
   // sentence without its subject, the time first).
@@ -1928,9 +1946,13 @@
     if (/(?:よこ|たて|横|縦)[^、]+、(?:よこ|たて|横|縦)[^、]+?の(?:ばしょ|場所|位置)(?:へ|に)/.test(rmask) && /(?:行く|いく|動く|うごく|滑る|すべる)$/.test(rmask))
       return { message: '決めた ばしょへ 行くときは、画面の 左下の はしから 数えて「' + MOVE_EXAMPLE_FIXED + '」のように 書きます。ばしょは 部品の まん中で 数えます' };
     if (ichi()) return ichi();
-    // 1秒で前へ10歩すべる: the time is written 〇秒かけて.
-    if (/(?:滑る|すべる)$/.test(mask))
-      return { message: '時間を かけて 動くときは「1秒かけて、前へ10歩進む」のように「〇秒かけて、」を 書きます', source: code.replace(/(?:滑る|すべる)$/, '動く'), label: '「' + /(?:滑る|すべる)$/.exec(mask)[0] + '」を 書きかえる' };
+    // 1秒で前へ10歩すべる: the time is written 〇秒かけて. すべる with no time is a move that takes time, so the rewrite
+    // takes 1秒, after the subject, as the message says (R2-B-11).
+    if (/(?:滑る|すべる)$/.test(mask)) {
+      const moved = code.replace(/(?:滑る|すべる)$/, '動く'), subject = /^[^、。\u0001]+?は、?/.exec(mask)?.[0] || '';
+      const source = /秒(?:間)?(?:かけて|で)/.test(mask) ? moved : moved.slice(0, subject.length) + '1秒かけて、' + moved.slice(subject.length);
+      return { message: '時間を かけて 動くときは「1秒かけて、前へ10歩進む」のように「〇秒かけて、」を 書きます', source, label: '「' + /(?:滑る|すべる)$/.exec(mask)[0] + '」を 書きかえる' };
+    }
     return null;
   }
   // 1秒から3秒のどれか (the unit on both ends, B-12) reads as 1から3のどれか秒. Every character keeps its place in the
@@ -2393,6 +2415,11 @@
     try{return parseCondition(/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(written))?written:written+'と同じ',symbols,ctx,'plain');}
     catch(error){if(!(error instanceof AkariError))throw error;return null;}
   }
+  // With もし (もし答えが「7」になったら、) only two readings are meant: now, or after waiting.
+  function becomesIfMessage(written,symbols,ctx){
+    const condition=written===null?null:becomesCondition(written,symbols,ctx);
+    return `「になったら」は ここでは 使えません。いまの ようすを しらべるなら「${condition?'もし'+formatCondition(condition,'if')+'、':'もし点数が10なら、'}」、そうなるまで 待つなら「${condition?formatCondition(condition,'until')+'待つ':'点数が10になるまで待つ'}」のように 書きます`;
+  }
   function becomesMessage(written,symbols,ctx){
     const condition=becomesCondition(written,symbols,ctx);
     const now=condition?'もし'+formatCondition(condition,'if')+'、':'もし〜なら、',wait=condition?formatCondition(condition,'until')+'待つ。':'〜になるまで待つ。';
@@ -2619,8 +2646,9 @@
         throw sentenceDiagnostic('くらべる ことばは「より大きい」「より小さい」と 書きます',line,choice('「大きい」「小さい」と 書く',source),{kind:'IfStatement'});
       }
       // もし答えがりんごなら (FM2-02): a word compared with 答え, or with a variable that holds text, is written in 「 」.
-      // Read bare it is a name to make, and the program would never match.
-      {const cmp=/^(もし、?)?([^、。\u0001【】（）\s]+?)が([^、。\u0001「」【】（）\s0-9０-９．.－\-＋+]+?)(なら|ならば|だったら|でなければ|じゃなかったら|と同じ|とちがう|と違う|になる)/.exec(mask);
+      // Read bare it is a name to make, and the program would never match. Both sides are names (at most 32 characters),
+      // so the pattern looks no further: unbounded, a long line of が took seconds (language-boundaries, 45000 が).
+      {const cmp=/^(もし、?)?([^、。\u0001【】（）\s]{1,32}?)が([^、。\u0001「」【】（）\s0-9０-９．.－\-＋+]{1,32}?)(なら|ならば|だったら|でなければ|じゃなかったら|と同じ|とちがう|と違う|になる)/.exec(mask);
         const variable=cmp&&[...(symbols?.project?.projectData?.variables||[]),...(symbols?.project?.components||[]).flatMap(c=>c.localData?.variables||[])].find(v=>v.name===cmp[2]);
         const text=cmp&&(cmp[2]==='答え'||(variable&&typeof variable.initialValue==='string'&&!/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(variable.initialValue)));
         const word=cmp?.[3];
@@ -2667,8 +2695,9 @@
         const choices=[...choice('この 動きを 止める',p[0].text+'この動きを止める'),...choice('作品を 全部 止める','作品を全部止める')];
         if(choices.length)throw sentenceDiagnostic('何を 止めるかを 書きます。この 本文の 動きを 止めるときは「この動きを止める」、作品の 動きを ぜんぶ 止めるときは「作品を全部止める」と 書きます',line,choices,{kind:'StopCommand'});
       }
-      // 点数を1たす / 点数に1をたす / 点数から1ひく: a variable grows with ふやす and shrinks with へらす.
-      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。\u0001]+?)(?:を|に)(.+?)(?:を)?(たす|足す|ひく|引く)$/d,code,mask))&&unread()){
+      // 点数を1たす / 点数に1をたす / 点数から1ひく: a variable grows with ふやす and shrinks with へらす. Only a line that
+      // ends so is looked at, and the name is at most 32 characters: a long line of を took seconds (language-boundaries).
+      if(/(?:たす|足す|ひく|引く)$/.test(mask)&&(p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。\u0001]{1,32}?)(?:を|に)(.+?)(?:を)?(たす|足す|ひく|引く)$/d,code,mask))&&unread()){
         const up=/^(?:たす|足す)$/.test(p[3].text);
         nearIf(`へんすうの 数を ${up?'ふやす':'へらす'}ときは「〔文〕」と 書きます`,up?'「ふやす」と 書く':'「へらす」と 書く',`${p[0].text}${p[1].text}を${p[2].text}${up?'ふやす':'へらす'}`,'NumericUpdate');
       }
@@ -2752,7 +2781,8 @@
         if(pair){clauses.push({start,end:i,pair});start=i+1;}
       }
       clauses.push({start,end:code.length,pair:null});
-      const teForm={動く:'動いて',進む:'進んで'};
+      // 〜のところへ行く (from 〜の位置へ行って, R2-B-09) keeps its て-form too.
+      const teForm={動く:'動いて',進む:'進んで',行く:'行って'};
       let first=null,example=null,whole=code;
       // From the last sentence to the first, so the places of the earlier ones still hold.
       for(const clause of [...clauses].reverse()){
@@ -2767,7 +2797,7 @@
         if(source&&!reads(source))source=removedMoveGuidance(source)?.source||source;
         if(source){
           rewritten=example=canonicalStatementSource(source,symbols);
-          if(clause.pair){const verb=/(?:動く|進む)$/.exec(rewritten);rewritten=verb?rewritten.slice(0,-2)+teForm[verb[0]]:null;}
+          if(clause.pair){const verb=/(?:動く|進む|行く)$/.exec(rewritten);rewritten=verb?rewritten.slice(0,-2)+teForm[verb[0]]:null;}
         }
         whole=rewritten&&whole!==null?whole.slice(0,clause.start)+rewritten+whole.slice(clause.end):null;
       }
@@ -2927,6 +2957,21 @@
         throw sentenceDiagnostic(found.message,line,known&&reads(source)?[{label:found.label,source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
       }
     }
+    // 画面のまん中へ行く / まん中へ行く / 画面のどこかへ行く (E2E-R2-13): a place of the screen is written from the bottom-left
+    // corner, with the size of this work's screen (final call 3 keeps 画面のまん中 out of the language).
+    if((p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(画面の(?:まん中|真ん中|まんなか|中央|中心|どこか)|まん中|真ん中|まんなか)(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.fixed,...MOVE_VERBS.here].join('|')+')$','d'),code,mask))){
+      const [who,before,place,after]=p,screen=screenPlaceSource(surfaceMask(place.text.startsWith('画面の')?place.text:'画面の'+place.text),symbols),
+        time=(before||after)?.text;
+      // A part named まん中 is gone to as a part.
+      if(!place.text.startsWith('画面の')&&symbols?.project?.components?.some(c=>c.name===place.text)){
+        const source=who.text+(time?time+'秒かけて、':'')+'「'+place.text+'」のところへ行く';
+        throw sentenceDiagnostic(`キャラクターや 部品の ところへ 行くときは「「${place.text}」のところへ行く」と 書きます`,line,reads(source)?[{label:'「ところへ行く」と 書く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
+      }
+      if(screen){
+        const source=who.text+(time?time+'秒かけて、':'')+screen.source;
+        throw sentenceDiagnostic(`画面の ${screen.place}へ 行くときは、画面の 左下の はしから 数えて「${screen.source}」と 書きます`,line,reads(source)?[{label:'決めた ばしょへ 行く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
+      }
+    }
     // 点数が10になったら、 (no もし): waiting or checking is not decided; 10歩進んだら、1秒待つ: an order is 「〜して、」.
     // The body is written below: the もし line is proposed here, and the wait (which takes the body out one level) is
     // added by the block reader, which sees the body's lines (CC-266).
@@ -2941,8 +2986,8 @@
     // A 「〜して、」 chain that does not read (R2-B-04): each clause is looked at on its own, in its own words, as a sentence
     // of its own would be; a fix for a clause is offered for the whole line, the clause keeping its て-form.
     // Only the clause forms whose line-wide checks would point the wrong way are looked at (ゆっくり, a time after the
-    // angle or the place), so an ordinary chain is read once (PERF-02).
-    if(!chainLooking&&mask.includes('、')&&/ゆっくり|度、?[^、。]*?秒(?:間)?(?:かけて|で)|のところ(?:へ|に)、?[^、。]*?秒(?:間)?(?:かけて|で)/.test(mask)){
+    // angle or the place, a place written 〜の位置へ: R2-B-09), so an ordinary chain is read once (PERF-02).
+    if(!chainLooking&&mask.includes('、')&&/ゆっくり|度、?[^、。]*?秒(?:間)?(?:かけて|で)|のところ(?:へ|に)、?[^、。]*?秒(?:間)?(?:かけて|で)|の(?:位置|場所|ばしょ)(?:へ|に)(?:行っ|いっ|行き|いき)/.test(mask)){
       const clauses=[];let start=0;
       for(let i=0;i<mask.length;i++){
         if(mask[i]!=='、')continue;
@@ -2991,7 +3036,7 @@
     if((p=surfaceCapture(/^(?:全部|ぜんぶ|全員|すべて)(?:が|は|で|も)?、?(.+(?:待つ|まつ))$/d,code,mask))&&reads(p[0].text))
       throw fixed('みんなで 待つときは、「みんなは1秒待つ」か「1秒待つ」と 書きます',p[0].text,'みんなで 待つ','WaitTime');
     // 「ベル」を鳴らし、終わるまで待つ (an old form): 鳴らす itself waits until the sound ends.
-    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+?)を(.*?)鳴らし(?:て)?、?(?:鳴り)?終わるまで待つ$/d,code,mask)))
+    if(/終わるまで待つ$/.test(mask)&&(p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+?)を(.*?)鳴らし(?:て)?、?(?:鳴り)?終わるまで待つ$/d,code,mask)))
       throw fixed('「鳴らす」は、音が 終わるまで 待ちます',`${p[0].text}${p[1].text}を${p[2].text}鳴らす`,'鳴らして 待つ','SoundCommand');
     // 10歩進みました: what to do is written as 〜する or 〜します.
     if(/ました$/.test(mask))throw sentenceDiagnostic('これから する ことは「進む」「進みます」のように 書きます',line,[{label:'「ます」に する',source:canonicalStatementSource(code.slice(0,-3)+'ます',symbols)}]);
@@ -3000,11 +3045,15 @@
       const sign=/増|ふ/.test(p[3].text)?'＋':'－';
       throw fixed(`${p[1].text}は「${p[1].text}を120％にする」のように、何％に するかを 書きます`,`${p[0].text}${p[1].text}を（${p[1].text}${sign}${p[2].text}）％にする`,'計算して かえる',p[1].text==='大きさ'?'LooksCommand':'SoundCommand');
     }
-    // 「点数は」と点数を言う: two things said together are joined.
-    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+)と([^\u0001、。]+?)を(?:つなげて)?(?:([^、。\u0001]+?)秒(?:間)?)?(?:つなげて)?(?:言う|いう|話す|はなす)$/d,code,mask))&&p[1].text.startsWith('「')&&(p[3]||!mask.includes('つなげて')))
+    // 「点数は」と点数を言う: things said together are joined, two or more of them (E2E-R2-09: 「点数は」と点数と「点」), with
+    // or without a 、 before the time or the verb. The items are kept as written; a rewrite is offered only when it reads.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+と[^、。]+?)を(つなげて)?、?(?:([^、。\u0001]+?)秒(?:間)?)?(つなげて)?、?(?:言う|いう|話す|はなす)$/d,code,mask))&&p[1].text.startsWith('「')
+      &&(p[3]||!(p[2]||p[4])||mask.includes('、'))){
       // With a time (〜をつなげて2秒話す), the joined text is said for that time: the message names that sentence.
-      throw p[3]?fixed(`時間を つけて 話すときは「${canonicalStatementSource(`${p[0].text}（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`,symbols)}」と 書きます`,`${p[0].text}（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`,'時間を つけて 話す','Say')
-        :fixed('2つを ならべて 言うときは、「つなげて言う」と 書きます',`${p[0].text}${p[1].text}と${p[2].text}をつなげて言う`,'つなげて 言う','Say');
+      const timed=`${p[0].text}（${p[1].text}をつなげた文字）を${p[3]?.text}秒話す`,plain=`${p[0].text}${p[1].text}をつなげて言う`;
+      if(p[3]&&reads(timed))throw fixed(`時間を つけて 話すときは「${canonicalStatementSource(timed,symbols)}」と 書きます`,timed,'時間を つけて 話す','Say');
+      if(!p[3]&&reads(plain))throw fixed('いくつかを ならべて 言うときは、「つなげて言う」と 書きます',plain,'つなげて 言う','Say');
+    }
     // もしねこがおされたら: a click starts with its own heading.
     if((p=surfaceCapture(/^もし、?(.+?)が(?:おされ|押され|クリックされ)(?:たら|ていれば|ているなら|れば|ると|てたら)、?$/d,code,mask))){
       const who=p[0].text.replace(/^「(.*)」$/,'$1');
@@ -3041,8 +3090,10 @@
       let raw=p[0].text;
       if(!/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
       const condition=parseCondition(raw,symbols,ctx,'plain'),body=p[1].text,indent=' '.repeat(line.indent||0);
-      // The wait is the one the message names (点数が10になるまで待つ): when it is so already, it does not wait.
-      throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,[
+      // The wait is the one the message names (点数が10になるまで待つ): when it is so already, it does not wait. With もし
+      // the message names the two readings meant, not the 名人 heading (「もし…になったとき、」 is none).
+      const written=p[0].text.replace(/^もし、?/,'');
+      throw sentenceDiagnostic(written===p[0].text?becomesMessage(written,symbols,ctx):becomesIfMessage(written,symbols,ctx),line,[
         {label:'いま そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
         {label:'そうなるのを 待ってから する',source:`${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
       ],{kind:'Condition',missing:['stateOrTransition']});
@@ -3082,6 +3133,18 @@
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が多すぎて、これ いじょうは 書けません。文を 短くするか、ほかの 動きに 分けてください',1,1);
     const physical=normalizeSource(source).lines,headings=[];
     for(const line of physical){if(line.continuation)continue;const nested=nestedQuoteDiagnostic(line,symbols);if(nested)throw nested;}
+    // A 「, 【 or （ left open, or a ） that closes nothing, is told on the line where that mark is (F2-06 of the manuals'
+    // review; it was 0, shown as 1行目): each line's code is scanned as the parser masks it, and the place is mapped back.
+    for(const line of physical){
+      if(line.continuation||!line.mapped.text)continue;
+      try{surfaceMask(line.mapped.text);}catch(error){
+        const at=error instanceof AkariError&&error.code==='P207'&&Number.isInteger(error.markAt)?line.mapped.positions[error.markAt]:undefined;
+        if(at===undefined)continue;
+        // The physical line the place is on (a 「 」 may go on over lines).
+        const where=physical.findLast(item=>item.lineNo>=line.lineNo&&item.start<=at)||line;
+        error.line=where.lineNo;error.column=at-where.start+1;throw error;
+      }
+    }
     let previousHeading=null,headingError=null;
     for(const line of physical){
       if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
@@ -3439,6 +3502,9 @@
     let code=compactOutsideString(line.code),working=line;
     // 〜に〜を入れる / 〜を〜に入れる with a bare (not 「」) target, as [target, value]; .variable when the target is a variable.
     const putInto=text=>{
+      // Only a sentence that ends with 入れる is looked at: the patterns go back over every に and を, which took
+      // seconds on a long line of 点数に (language-boundaries).
+      if(!/(?:入れる|いれる|入れます|いれます)$/.test(text))return null;
       const first=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる|入れます|いれます)$/d,text),valueFirst=!first&&surfaceCapture(/^(.+?)を(.+)に(?:入れる|いれる|入れます|いれます)$/d,text);
       const pair=first||(valueFirst?[valueFirst[1],valueFirst[0]]:null);
       if(!pair||pair[0].text.startsWith('「'))return null;
@@ -3606,8 +3672,9 @@
   function surfaceMask(text) {
     // Without a quote, a bracket or ※ nothing is hidden (and no bracket can be left open).
     if (typeof text === 'string' && !/[「『【（［）］※]/.test(text)) return text;
-    const out = text.split(''), stack = [];
-    let quote = '';
+    // The place of the mark that is left open, or of a ） that closes the wrong one, goes with P207 (markAt).
+    const out = text.split(''), stack = [], opens = [];
+    let quote = '', quoteAt = 0;
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
       if (quote) {
@@ -3621,19 +3688,20 @@
       }
       if (ch === '※') { for(let j=i;j<text.length;j++) out[j]='\u0001'; break; }
       if (ch === '「' || ch === '『' || ch === '【') {
-        quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
+        quote = ch === '「' ? '」' : ch === '『' ? '』' : '】'; quoteAt = i;
         out[i] = '\u0001';
         continue;
       }
       if (ch === '（' || ch === '［') {
-        stack.push(ch === '（' ? '）' : '］');
+        stack.push(ch === '（' ? '）' : '］'); opens.push(i);
         out[i] = '\u0001';
       } else if (ch === '）' || ch === '］') {
-        if (stack.pop() !== ch) throw new AkariError('P207', 'かっこの 開く しるしと とじる しるしが 合っているか たしかめてください');
+        opens.pop();
+        if (stack.pop() !== ch) throw Object.assign(new AkariError('P207', 'かっこの 開く しるしと とじる しるしが 合っているか たしかめてください'), { markAt: i });
         out[i] = '\u0001';
       } else if (stack.length) out[i] = '\u0001';
     }
-    if (quote || stack.length) throw new AkariError('P207', '「 」・【 】・（ ）などの とじる しるしを 書いてください');
+    if (quote || stack.length) throw Object.assign(new AkariError('P207', '「 」・【 】・（ ）などの とじる しるしを 書いてください'), { markAt: quote ? quoteAt : opens[0] });
     return out.join('');
   }
   function readLegacySurfaceStatement(code, line, symbols, ctx) {

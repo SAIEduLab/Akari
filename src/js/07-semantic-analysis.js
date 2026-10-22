@@ -134,13 +134,15 @@
         : project.components.find((c) => c.id === ctx.targetId)?.name ||
           ctx.targetId ||
           '呼び出し元未確定';
-    const add = (code, message, node, where) => {
+    // proposals: rewrites of the body's text (start/end in that text), which the code view offers as buttons.
+    const add = (code, message, node, where, proposals = null) => {
       const d = {
         code,
         message,
         line: node?.sourceSpan?.startLine || 0,
         column: node?.sourceSpan?.startColumn || 1,
         where,
+        ...(proposals?.length ? { proposals } : {}),
       };
       const k = `${d.code}|${d.message}|${d.line}|${d.column}|${d.where}`;
       if (!diagKeys.has(k)) {
@@ -196,6 +198,22 @@
       }
       if (n.sensor === 'クローンである') return `名人の 本文では、だれが コピーかを 書きます。れい：もし${part}がコピーなら、`;
       return `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：${part}の${messageExpression(n)}`;
+    };
+    // The same, as a rewrite of the condition the child wrote (C-touch-R2-04), when who touches is sure: 「ねこ」の「星」 names
+    // ねこ, or the work has one character other than the partner. The text keeps the child's words and ending. The code
+    // view and 作品チェック (11-application.js) do not yet draw a check error's proposals; they draw a reading error's.
+    const meijinTouchProposals = (n, where, ctx) => {
+      const range = SOURCE_RANGES.get(n)?.range, text = !ctx.definition ? scriptBySourceKey(project, where)?.source : null;
+      if (!['TOUCHING', 'TOUCHING_COLOR'].includes(n.sensor) || !range || typeof text !== 'string') return null;
+      const arg = n.arg, qualified = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' ? arg : null,
+        partner = qualified ? qualified.value : arg, partnerName = partner?.kind === 'StringLiteral' ? partner.value : null,
+        others = project.components.filter(c => c.type === 'sprite' && c.name !== partnerName),
+        part = qualified ? qualified.actorRef.name : others.length === 1 ? others[0].name : null,
+        original = text.slice(range.start, range.end), written = qualified ? original.replace(/^\s*「[^」]+」\s*の\s*/, '') : original;
+      if (!part || (qualified && written === original)) return null;
+      const source = part + 'が' + written, next = text.slice(0, range.start) + source + text.slice(range.end);
+      try { if (!parseSyntax(next, { symbols, meijin: true }).ast) return null; } catch (error) { if (!(error instanceof AkariError)) throw error; return null; }
+      return [{ label: 'だれが ふれるかを 書く', source, start: range.start, end: range.end, original }];
     };
     // コスチュームを「丸」にする / いろを「赤」にする / 文字を「あ」にする (FM2-03): a part's look written as data; the
     // sentence that changes it is named, never a variable to make. null for any other name.
@@ -467,6 +485,16 @@
             else if (ctx.event !== eventOnly[n.sensor] && n.sensor !== '拡張の値')
               add('S311', `「${messageExpression(n)}」は「${EVENT_LABELS[eventOnly[n.sensor]]}」の きっかけの 本文で 使います`, ctx.node, where);
           }
+          // What a ふれている names (C-touch-R2-02/-04): 'part' for 「ねこ」の「星」 (ねこ touches 星), 'place' for 「ゆか」の上
+          // (ゆか itself is touched), 'number' for 点数, 10 or 星のよこのばしょ. null when the partner is one that can be touched.
+          const touchArg = n.sensor === 'TOUCHING' ? n.arg : null,
+            touchOf = touchArg?.kind === 'ActorQualifiedRead' && touchArg.actorRef?.kind === 'named' && touchArg.value?.kind === 'StringLiteral' && componentByName(touchArg.actorRef.name) ? touchArg.actorRef.name : null,
+            touchData = touchArg?.kind === 'VariableRead' && !componentByName(touchArg.name)
+              ? [...project.projectData.variables, ...project.components.flatMap(c => c.localData.variables)].find(v => v.name === touchArg.name) : null,
+            touchProblem = !touchArg ? null
+              : touchOf ? (componentByName(touchArg.value.value) || touchArg.value.value === 'マウス' || Object.hasOwn(EDGE_TARGETS, touchArg.value.value) ? 'part' : 'place')
+              : ['NumberLiteral', 'QuantityLiteral', 'BinaryExpression', 'UnaryExpression'].includes(touchArg.kind)
+                || (touchArg.kind === 'ActorQualifiedRead' && touchArg.value?.kind === 'SensorRead') || (touchData && typeof touchData.initialValue === 'number') ? 'number' : null;
           if (
             [
               '横位置',
@@ -478,9 +506,12 @@
               'TOUCHING',
               'TOUCHING_COLOR',
             ].includes(n.sensor) &&
-            ctx.targetType === 'stage'
+            ctx.targetType === 'stage' &&
+            // A partner that cannot be touched gets one message below, with who touches in 名人; 「ねこ」の「星」 gets this one.
+            !(ctx.meijin && (touchProblem === 'place' || touchProblem === 'number'))
           )
-            add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
+            add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where,
+              ctx.meijin ? meijinTouchProposals(n, where, ctx) : null);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
@@ -499,20 +530,23 @@
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス', ...Object.keys(EDGE_TARGETS)]);
             // What is touched is a part, the edge or the mouse (C-touch-R2-02): 「ゆか」の上 is ゆか itself, and a number
             // (点数, 10, 星のよこのばしょ) is no partner. A variable that starts with text may hold a part's name.
-            const arg = n.arg;
-            const data = arg?.kind === 'VariableRead' && !componentByName(arg.name)
-              ? [...project.projectData.variables, ...project.components.flatMap(c => c.localData.variables)].find(v => v.name === arg.name) : null;
-            const of = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' && arg.value?.kind === 'StringLiteral' ? arg.actorRef.name : null;
-            const numeric = ['NumberLiteral', 'QuantityLiteral', 'BinaryExpression', 'UnaryExpression'].includes(arg?.kind)
-              || (arg?.kind === 'ActorQualifiedRead' && arg.value?.kind === 'SensorRead') || (data && typeof data.initialValue === 'number');
-            if ((of && componentByName(of)) || numeric) {
-              // The example is the sentence written, with a partner other than the body's own part (or the mouse), and in
-              // 名人 with who touches.
+            const arg = n.arg, of = touchOf, owner = ctx.targetType !== 'stage' ? project.components.find(c => c.id === ctx.targetId)?.name : null;
+            // The example is the sentence written, with a partner other than the body's own part (or the mouse), and in
+            // 名人 with who touches: the subject written, else a character of the work.
+            const sentence = (who, shown) => ctx.node?.kind === 'WaitUntil' ? `${who}${shown}にふれるまで待つ` : ctx.node?.kind === 'RepeatUntil' ? `${who}${shown}にふれるまで、くり返す`
+              : ctx.node?.kind === 'RepeatWhile' ? `${who}${shown}にふれているあいだ、くり返す` : `もし${who}${shown}にふれていれば、`;
+            if (touchProblem === 'place' || touchProblem === 'number') {
               const partner = of || project.components.find(c => c.id !== ctx.targetId && c.type === 'sprite')?.name || project.components.find(c => c.id !== ctx.targetId)?.name || 'マウス';
-              const who = ctx.meijin ? (project.components.find(c => c.type === 'sprite' && c.name !== partner)?.name || 'ねこ') + 'が' : '', shown = touchShown(partner);
-              const example = ctx.node?.kind === 'WaitUntil' ? `${who}${shown}にふれるまで待つ` : ctx.node?.kind === 'RepeatUntil' ? `${who}${shown}にふれるまで、くり返す`
-                : ctx.node?.kind === 'RepeatWhile' ? `${who}${shown}にふれているあいだ、くり返す` : `もし${who}${shown}にふれていれば、`;
-              add('S304', 'ふれる 相手は、部品か 画面のはしか マウスです。' + (of ? `「${of}」の ${arg.value.value}に のったかも、「${of}」に ふれたかで しらべます。` : '数には ふれられません。') + 'れい：' + example, ctx.node, where);
+              const who = ctx.meijin ? (owner || project.components.find(c => c.type === 'sprite' && c.name !== partner)?.name || 'ねこ') + 'が' : '';
+              add('S304', 'ふれる 相手は、部品か 画面のはしか マウスです。' + (of ? `「${of}」の ${arg.value.value}に のったかも、「${of}」に ふれたかで しらべます。` : '数には ふれられません。') + 'れい：' + sentence(who, touchShown(partner)), ctx.node, where);
+            }
+            // 「ねこ」の「星」にふれている (C-touch-R2-04): ねこ is who touches. 名人 with no subject is told by the subject
+            // message above; an ordinary body touches with its own part, and 画面's body is told that it has none.
+            if (touchProblem === 'part' && (owner || !ctx.meijin) && !(ctx.targetType === 'stage' && !ctx.meijin)) {
+              const shown = touchShown(arg.value.value);
+              add('S304', ctx.meijin ? `だれが ふれるかは「${of}が」と 書きます。れい：${sentence(of + 'が', shown)}`
+                : of === owner ? `ふれるのは この 本文の ${of}なので、「「${of}」の」は 書きません。れい：${sentence('', shown)}`
+                : `「${of}」が ふれたかは、${of}の 本文で しらべます。この 本文に 書くと、${owner}が ふれたかを しらべます。れい：${sentence('', shown)}`, ctx.node, where);
             }
           }
           if (n.sensor === 'TOUCHING_COLOR') {
@@ -1740,9 +1774,9 @@
         const location = SOURCE_RANGES.get(node), proposals = [];
         let range = location && !location.rewritten ? location.range : null, chained = false;
         // Inside a 「〜して、」 chain (…のばしょへ行って、) the sentence was read as 行く: the fix is made for the clause as
-        // written and keeps the て-form.
+        // written and keeps the て-form, also with the time after the place (…のばしょへ1秒かけて行って、, R2-B-09).
         if (!range && location?.rewritten && location.extent && source && !lanes) {
-          const clause = /^[^。\n]*?の(?:ばしょ|場所)(?:へ|に)(?:行って|いって|行き|いき)(?=、)/.exec(source.slice(location.extent.start));
+          const clause = /^[^。\n]*?の(?:ばしょ|場所)(?:へ|に)(?:、?[^、。\n]*?秒(?:間)?(?:かけて|で))?(?:行って|いって|行き|いき)(?=、)/.exec(source.slice(location.extent.start));
           if (clause) { range = { start: location.extent.start, end: location.extent.start + clause[0].length }; chained = true; }
         }
         if (range && source) {
@@ -1895,11 +1929,13 @@
           }
         }
         // 「ド」を鳴らす in a work with a sound ド and data named ド (final call 29): the sentence plays the sound; the data is
-        // never used there (I132). With no sound ド the check stops instead (S301), so I131 is gone.
+        // never used there (I132). With no sound ド the check stops instead (S301), so I131 is gone. Every name written as
+        // a sound's name is told of, not only ドレミ (LANGUAGE.md 音と待機): 「ベル」を鳴らす with a variable ベル plays the
+        // sound ベル. A bare data name (曲を鳴らす) is read as that data, so it is not a sound's name and gets no notice.
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
           const arg = n.args?.[0], name = arg?.kind === 'StringLiteral' ? arg.value : null;
           const owner = project.components.find(c => c.id === item.targetId)?.localData;
-          const data = name === null || !Object.hasOwn(SOLFEGE_HZ, name) ? null
+          const data = name === null ? null
             : [project.projectData, owner].filter(Boolean).some(d => d.variables.some(v => v.name === name)) ? 'variable'
             : [project.projectData, owner].filter(Boolean).some(d => d.lists.some(l => l.name === name)) ? 'list' : null;
           if (data && project.sounds.some(s => s.name === name))

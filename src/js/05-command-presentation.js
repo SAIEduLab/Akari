@@ -1074,9 +1074,10 @@
                 ? valueNode(10) : !draft && ['MotionCommand:GOTO_PART', 'MotionCommand:POINT_TO'].includes(schema.id) && index === 0
                   // The first part in the work other than the body's owner, or the mouse (LANGUAGE.md 動きの文).
                   ? valueNode(typeof context.partTarget === 'string' && context.partTarget ? context.partTarget : 'マウス')
-                  // A copy is made of a character: the one the editor names, else the first other part.
-                  : !draft && schema.id === 'CloneCommand:CREATE_TARGET' && index === 0 && [context.spriteTarget, context.partTarget].some(name => typeof name === 'string' && name && name !== 'マウス')
-                    ? valueNode([context.spriteTarget, context.partTarget].find(name => typeof name === 'string' && name && name !== 'マウス')) : make())
+                  // A copy is made of a character, the one the editor names. partTarget may be a button or a label, which
+                  // has no copies, so without a named character the editor picks one (another character, else itself).
+                  : !draft && schema.id === 'CloneCommand:CREATE_TARGET' && index === 0 && typeof context.spriteTarget === 'string' && context.spriteTarget && context.spriteTarget !== 'マウス'
+                    ? valueNode(context.spriteTarget) : make())
         : make();
     }
     // A new いまのばしょから動く moves 右へ10歩; its second leg and the time are added in the block.
