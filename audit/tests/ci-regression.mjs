@@ -18,9 +18,11 @@ const {results,pass}=caseRecorder();
 const source=fs.readFileSync(currentProductFile(),'utf8');
 const start=source.indexOf('    function cancelDrag({ animate = false } = {}) {'),end=source.indexOf('    function previewDrag(',start);
 assert.ok(start>0&&end>start);
-// The block view's drag state also holds a long-press timer, a reason line and the palette's delete zone.
+// The block view's drag state also holds a long-press timer, a reason line and the palette's delete zone; since 1.5.0
+// (1992065) cancelling also closes the places between blocks around a kept-in-view block and resets the plane floor.
 const sandbox={Date:{now:()=>1000},drag:{started:true},ghost:null,snapPreview:null,dragFrame:null,clearTimeout(){},showDragReason(){},
-  palette:{classList:{remove(){}}},suppressClickUntil:0,root:{querySelectorAll:()=>[],classList:{remove(){}}},notifyPending(){},updateControls(){}};
+  palette:{classList:{remove(){}}},suppressClickUntil:0,root:{querySelectorAll:()=>[],classList:{remove(){},contains:()=>false},matches:()=>false},
+  index:new Map(),planeFloor:0,keepInView:(anchor,close)=>close(),notifyPending(){},updateControls(){}};
 vm.runInNewContext(source.slice(start,end)+';cancelDrag();',sandbox);
 assert.equal(sandbox.suppressClickUntil,1350);assert.equal(sandbox.drag,null);pass('click-guard/cancel-sets-suppression');
 const clickStart=source.indexOf("        if (Date.now() < suppressClickUntil) {",end);
