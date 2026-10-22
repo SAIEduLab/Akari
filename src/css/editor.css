@@ -1138,7 +1138,8 @@ button:focus-visible {
   font-size: 12px;
 }
 .dirty-state.dirty {
-  color: #a56800;
+  /* 5.6:1 on the status line (the 12 px note 「ファイルに まだ ほぞんしていないよ」). */
+  color: #8f5a00;
   font-weight: 700;
 }
 .diagnosis-summary {
@@ -2711,6 +2712,10 @@ body[data-editor-mode] :is(select, input:not([type="checkbox"]):not([type="radio
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+/* On the code view's orange toolbar the ring is darker, so it stands out from the whole gradient (4.5:1 or more). The
+   level and the name need the ids to outweigh the rule above (its :is() counts the ids of #codeEditor・#callableCode). */
+body[data-editor-mode="code"] .menutool :is(button, summary):focus-visible,
+body[data-editor-mode="code"] #app > .menutool :is(#uiLevel, #projectName):focus-visible { outline-color: #6b3a0f; }
 body[data-editor-mode] .menutool > button {
   height: 36px;
   border-radius: 10px;
@@ -3018,7 +3023,8 @@ body[data-editor-mode] .editor-shell {
 body[data-editor-mode] .line-gutter {
   background: #f4eadf;
   border-color: var(--line);
-  color: #ad9a84;
+  /* The line numbers are read (「3行目」 in the messages): 4.6:1 on the gutter. */
+  color: #7a6650;
 }
 body[data-editor-mode] #codeEditor {
   color: #3b332c;
