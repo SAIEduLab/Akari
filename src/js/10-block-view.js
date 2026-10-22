@@ -1567,7 +1567,7 @@
       ['表示', 'ひょうじ'], ['段階', 'だんかい'], ['以上', 'いじょう'], ['以下', 'いか'], ['未満', 'みまん'], ['値', 'あたい'],
       ['成', 'な', 'り'], ['求', 'もと', 'め'], ['増', 'ふ', 'や'], ['減', 'へ', 'ら'], ['残', 'のこ', 'り'], ['呼', 'よ', 'ぶ'], ['捨', 'す', 'て'], ['続', 'つづ', 'け']];
     const FACE_READING_SOURCE = FACE_READINGS.map(([word, , next]) => next ? word + '(?=' + next + ')' : word).join('|'),
-      FACE_READING_SKIP = '.blockui-node, input, select, textarea, ruby, .blockui-preview-slot, [data-blockui-field]';
+      FACE_READING_SKIP = '.blockui-node, input, select, textarea, ruby, .blockui-preview-slot, [data-blockui-field], .blockui-subject-text, .blockui-subject-chip';
     function faceRuby(root) {
       if (!['entry', 'basic'].includes(document.body.dataset.uiLevel)) return root;
       const found = new RegExp(FACE_READING_SOURCE), texts = [],
@@ -1952,11 +1952,14 @@
     function subjectFace(node, field) {
       const value = node.fields[field.key], owner = node.schemaId === 'ActorQualifiedRead';
       // A subject carried over from a sentence before (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is not written in
-      // this one, but another part does it: the face shows it pale and in （ ） (E2E-R1-04). The body's own part is not shown.
+      // this one, but another part does it (E2E-R1-04, final call 30): the だれが place of the face shows that part as a pale
+      // chip, apart from the sentence's words, which stay those of the code. The body's own part is not shown.
       if (!owner && value?.kind === 'named' && !schemaOf(node)?.bodies?.length && !subjectWritten(node, value.name) &&
           value.name !== project()?.components.find(c => c.id === context().targetId)?.name) {
-        const carried = E('span', 'blockui-phrase-text blockui-subject-text blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id });
-        carried.style.opacity = '0.6';
+        const why = '前の 文の「' + value.name + (value.particle || 'は') + '」を ひきついで、' + value.name + 'が します',
+          carried = E('span', 'blockui-subject-chip blockui-subject-carried', value.name, { 'data-block-id': node.id, 'data-carried-subject': value.name, title: why, role: 'note', 'aria-label': why });
+        Object.assign(carried.style, { display: 'inline-flex', alignItems: 'center', alignSelf: 'center', padding: '0 7px', minHeight: '20px',
+          border: '1px dashed currentColor', borderRadius: '10px', opacity: '0.6', marginRight: '4px', fontSize: '0.92em', whiteSpace: 'nowrap' });
         return carried;
       }
       if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
