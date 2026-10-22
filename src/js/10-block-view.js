@@ -2978,31 +2978,35 @@
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
-          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place.
+          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place. はじめて has no value
+          // blocks to put there, so it shows neither 計算で決める nor 計算の答えを話す (E-12).
+          const entry=document.body.dataset.uiLevel==='entry';
           const numberSlot=(key,unit)=>{
             main.append(...unitValue(node,key,undefined,unit));
-            extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
+            if(!entry)extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
             main.append(slot('value'));
             const localContext=subjectContext(node),choices=hintCandidates(project(),localContext.targetId,{source:session()?.sourceText||'',...localContext}).filter(h=>h.id.startsWith('read:')&&h.binding?.kind!=='list'&&h.enabled);
             const data=E('select','blockui-speech-data',null,{'aria-label':'話す 文字か、へんすうの 中身を えらぶ'});
-            data.append(E('option','','文字を話す',{value:'literal'}),E('option','','計算の答えを話す',{value:'expression'}));
+            const current=node.inputs.value,
+              shown=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            data.append(E('option','','文字を話す',{value:'literal'}));
+            if(!entry||shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
             for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の いまの中身',{value:String(i)}));
-            const current=node.inputs.value;
-            data.value=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            data.value=shown;
             if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
             listen(data,'change',()=>{
               if(data.value==='expression'){chooseDestination({parentId:node.id,input:'value'});return;}
               const replacement=data.value==='literal'?createBlock('StringLiteral'):nodeForSearchHint(choices[Number(data.value)],project(),localContext);
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
-            });extraControls.append(data);
+            });if(data.options.length>1)extraControls.append(data);
             // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
             if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
             else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
-          main.append(extra);
+          if(extraControls.childElementCount)main.append(extra);
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
           const child = node.inputs.value, numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value'),
             control = fieldControl(child, numberField), input = control.querySelector('input');
