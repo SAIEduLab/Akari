@@ -43,7 +43,22 @@ export interface FactoryApi {
   readonly signal: AbortSignal; readonly sessionId: string; readonly connector: Connector | null;
   getState(): Json; setState(value: Json): void; emit(eventId: string, payload: Value): void;
 }
-export interface InvokeContext { readonly signal: AbortSignal; readonly sessionId: string; [key: string]: unknown }
+/** A part as the product's run information gives it (EXTENSIONS.md 座標と向き). Read it only; never change it. */
+export interface PartView {
+  readonly runtimeId: string; readonly baseId: string; readonly isClone: boolean;
+  /** Steps from the screen's bottom-left corner to the part's centre; right and up are positive. */
+  readonly x: number; readonly y: number;
+  /** Right is 0, up is 90, counterclockwise; 0 or more and less than 360. */
+  readonly direction: number;
+}
+export interface InvokeContext {
+  readonly signal: AbortSignal; readonly sessionId: string;
+  /** The part (or "stage") whose sentence calls the handler. */
+  readonly runtimeId: string;
+  /** runtime.actor(context.runtimeId) is the calling part; it is null for the stage. */
+  readonly runtime: { actor(runtimeId: string): PartView | null };
+  [key: string]: unknown;
+}
 export interface Instance {
   commands?: { [id: string]: (args: Value[], context: InvokeContext) => Value | null | void | Promise<Value | null | void> };
   calculations?: { [id: string]: (args: Value[], context: InvokeContext) => Value };
