@@ -5956,11 +5956,14 @@ body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { displ
 body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
 body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
-:is(#editorModeblocks, #callableModeblocks)[aria-disabled="true"] { opacity: 0.5; }
+:is(#editorModeblocks, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
 /* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
 .mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
 .mode-blocked-note[hidden] { display: none !important; }
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
+/* The same note under いつ動く？ (its left is set to the button's when it opens). */
+.source-nav { position: relative; }
+.source-nav > .mode-blocked-note { position: absolute; top: calc(100% + 6px); z-index: 61; width: max-content; max-width: min(20rem, calc(100% - 16px)); box-shadow: 0 6px 16px #18364b30; }
 
 /* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
    the sentence itself in a box. Its height never depends on the sentence, so the stage keeps its size from sentence
@@ -6224,6 +6227,9 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   .status, #statusText, .editor-pending, #entryOutside, .mode-blocked-note, .monitor-empty, .blockui-trigger-scope, .diagnostic-help) {
   word-break: auto-phrase;
 }
+/* The notes under ブロック and いつ動く？ are one short sentence whose phrases are spaced: they break at the spaces
+   (「…ブロックに」 then 「もどれるよ」), never inside a phrase. */
+:is(#modeBlockedNote, #callableModeBlockedNote, #headingBlockedNote) { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* Touch screens (E-19): what a finger presses is at least 40 × 40 px — the fields, choices and buttons in the blocks,
    the category buttons (36 px to see, 40 px to press), the stage's size handles and zoom buttons, and the right

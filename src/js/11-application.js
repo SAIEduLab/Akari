@@ -1430,6 +1430,19 @@
         }
         b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
       }
+      if (!draft) {
+        // いつ動く？ opens the block view as well, so a code error makes it pale in the same way; a press says why under
+        // it (headingBlockedNote) instead of doing nothing.
+        const heading = $('#sourceHeadingBtn');
+        if (!session.syntaxAst || invalidCodePending) {
+          heading.setAttribute('aria-disabled', 'true');
+          heading.setAttribute('aria-describedby', headingBlockedNote().id);
+        } else {
+          heading.removeAttribute('aria-disabled');
+          heading.removeAttribute('aria-describedby');
+          headingBlockedNote().hidden = true;
+        }
+      }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
         const mark = activeLoc || keptFail;
@@ -1470,9 +1483,26 @@
       }
       return note;
     }
-    function showModeBlockedNote(binding) {
-      const note = modeBlockedNote(binding);
+    // The same note under いつ動く？ in the row above the body.
+    function headingBlockedNote() {
+      let note = document.getElementById('headingBlockedNote');
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'headingBlockedNote';
+        note.className = 'mode-blocked-note';
+        note.setAttribute('role', 'status');
+        note.hidden = true;
+        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+        $('#sourceHeadingBtn').after(note);
+      }
+      return note;
+    }
+    function showModeBlockedNote(binding) { showBlockedNote(modeBlockedNote(binding)); }
+    function showBlockedNote(note) {
       note.hidden = false;
+      // Under いつ動く？, kept inside the row at narrow widths.
+      if (note.id === 'headingBlockedNote')
+        note.style.left = Math.max(8, Math.min($('#sourceHeadingBtn').offsetLeft, note.parentElement.clientWidth - note.offsetWidth - 8)) + 'px';
       const hide = () => {
         note.hidden = true;
         document.removeEventListener('pointerdown', hide, true);
@@ -6317,7 +6347,11 @@
     function updateCallableHeader() {
       if (syncingDraft) return;
       if (!syncCallableDraft()) return;
-      if (draftEditor.session?.mode !== 'blocks' && !saveCodeBinding(draftEditor)) return;
+      // A code error still renders the draft's toggle, so ブロック turns pale and its press says why (as in the main editor).
+      if (draftEditor.session?.mode !== 'blocks' && !saveCodeBinding(draftEditor)) {
+        if (draftEditor.view) renderEditorBinding(draftEditor);
+        return;
+      }
       paintCallable();
       if (draftEditor.view) {
         renderEditorBinding(draftEditor);
@@ -7759,7 +7793,7 @@
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -7832,7 +7866,8 @@
     };
     $('#sourceOverviewBtn').onclick = () => { if (flushActiveEditor()) showSourceOverview(); };
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
-    $('#sourceHeadingBtn').onclick = () => {
+    $('#sourceHeadingBtn').onclick = (event) => {
+      if (event.currentTarget.getAttribute('aria-disabled') === 'true') { showBlockedNote(headingBlockedNote()); return; }
       if (modelLocked() || !switchEditorMode(mainEditor, 'blocks')) return;
       const selected=$('#blockEditor .blockui-selected'),scope=selected?.closest('.blockui-script');
       const field=(scope||$('#blockEditor')).querySelector('[data-blockui-structured-role="heading.event"]');
