@@ -6,6 +6,10 @@ import assert from 'node:assert/strict';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
+import {chooseView,shownView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
+// The one view toggle (final call 22): a press is made only when the other view is on the screen, and the view asked
+// for must then show.
+const showMode=async(p,mode)=>{await chooseView(p,mode);assert.equal(await shownView(p),mode,'the '+mode+' view shows');};
 // Lets the registered product-confirm answer run before state is read directly.
 const productConfirmAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
 // The value field of the first number block of the open body. A number in a hole is typed into in place (1.5.0), so the
@@ -99,12 +103,12 @@ await withBrowser(browserPath,async browser=>{
       assert.deepEqual(startup,{overview:false,editable:true});
       const original='（（3をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。',changed='（（4をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。';
       for(const mode of ['code','blocks']){
-        await p.locator('#editorMode'+mode).click();
+        await showMode(p,mode);
         await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();await productConfirmAnswered(p);
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
         // A new work starts in はじめて (blocks); the check goes on in くわしく with the view it was in.
         assert.equal(await p.locator('#uiLevel').inputValue(),'entry','a new work starts in はじめて');
-        await p.locator('#uiLevel').selectOption('advanced');if(mode==='code')await p.locator('#editorModecode').click();
+        await p.locator('#uiLevel').selectOption('advanced');if(mode==='code')await showMode(p,'code');
         assert.equal(await p.locator('#eventSelect').inputValue(),'start');
         assert.equal(await p.evaluate(()=>Akari.app.project.scripts.every(s=>s.source==='')),true,'new work has empty source');
         await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();await p.locator('#samplePicker [data-sample-id="dance"]').click();
@@ -144,7 +148,7 @@ await withBrowser(browserPath,async browser=>{
         await p.locator('#objectSelect').selectOption('button-empty');
         assert.equal(await p.locator('#eventSelect').inputValue(),'start','all-empty target preserves current valid event');
       }
-      await p.locator('#editorModeblocks').click();
+      await showMode(p,'blocks');
       await p.locator('#formSurface .component[data-id="button-1"]').click();
       assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
       await p.locator('#sourceOverviewBtn').click();
@@ -175,13 +179,13 @@ await withBrowser(browserPath,async browser=>{
     });
     await test('OWNER-GUI-SYNTAX-ERROR-RAW-BODY',async()=>{
       await p.locator('#objectSelect').selectOption('button-1');await p.locator('#eventSelect').selectOption('message');
-      await p.locator('#editorModecode').click();
+      await showMode(p,'code');
       const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,source:Akari.app.editorState.main.sourceText}));
       await p.locator('#codeEditor').fill('もし');
       await p.locator('#sourceOverviewBtn').click();
-      // ブロック stays in its place, pale (aria-disabled): a press explains instead of switching.
-      await p.waitForFunction(()=>document.querySelector('#editorModeblocks').getAttribute('aria-disabled')==='true',null,{timeout:3000});
-      assert.equal(await p.locator('#editorModeblocks').getAttribute('aria-disabled'),'true','unfinished syntax cannot enter blocks');
+      // Unfinished syntax cannot enter blocks: a press of the toggle keeps the code and says why under it (final call 22).
+      await p.waitForFunction(()=>document.querySelector('#editorModeblocks').dataset.refused==='error',null,{timeout:3000});
+      await refusedViewPress(p,'error');
       assert.equal(await p.locator('#codeEditor').inputValue(),'もし','unfinished original remains visible');
       assert.equal(await p.locator('#sourceOverview').isVisible(),false,'unfinished input guards navigation');
       assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.ownerKey),'script:button-1:message');
@@ -192,7 +196,7 @@ await withBrowser(browserPath,async browser=>{
       assert.equal(await p.locator('#codeEditor').inputValue(),before.source);
       assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);
       assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
-      await p.locator('#sourceOverviewBtn').click();await p.locator('#editorModeblocks').click();
+      await p.locator('#sourceOverviewBtn').click();await showMode(p,'blocks');
       assert.equal(await p.locator('[data-source-key="script:button-1:click"] .blockui-script').count(),1);
     });
     await test('OWNER-GUI-DRAFT-OWNERSHIP',async()=>{
@@ -212,7 +216,7 @@ await withBrowser(browserPath,async browser=>{
       await p.locator('#callableSave').click();
       assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),revised);
       assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').ownerId),'stage');
-      await p.locator('#procClose').click();await openStageSources(p);await p.locator('#editorModecode').click();
+      await p.locator('#procClose').click();await openStageSources(p);await showMode(p,'code');
       assert.equal(await p.locator('[data-source-key="function:function-unused"] pre').textContent(),revised);
     });
     await test('OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT',async()=>{
@@ -233,7 +237,7 @@ await withBrowser(browserPath,async browser=>{
     });
     await test('OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY',async()=>{
       for(const width of [1440,768,390]){
-        await p.setViewportSize({width,height:900});await p.locator('#editorModecode').click();
+        await p.setViewportSize({width,height:900});await showMode(p,'code');
         await p.locator('#objectSelect').selectOption('button-1');
         await p.locator('#sourceOverviewBtn').click();
         const body=p.locator('[data-source-key="script:button-1:click"] pre');
