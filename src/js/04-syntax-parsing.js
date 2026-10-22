@@ -5,6 +5,8 @@
   const extensionMeijinOnly = (extension, operation, calculation = false) =>
     `${calculation ? '拡張計算' : '拡張'}「${extension}」「${operation}」は、名人の本文で だけ 使えます`;
   // S317 (LANGUAGE.md 名人): a 名人 form written in an ordinary body.
+  // A name that has a word of あかり in it is written in 【 】 (spaced as 03's message is, FCM-02).
+  const NAME_BRACKET_MESSAGE = 'この 名前は 【名前】のように 【 】で かこんでください';
   const MEIJIN_ONLY_MESSAGE = 'この 書き方は、名人の本文で だけ 使えます。使うときは、コードモードで「名人」を えらびます';
   class ExpressionParser {
     constructor(text, symbols, ctx = {}) {
@@ -489,7 +491,7 @@
         if (!token.exact && !BUILTIN_NAMES.has(token.name) && !bareName(token.name))
           this.err(
             'P205',
-            'この 名前は【名前】のように【 】で かこんでください',
+            NAME_BRACKET_MESSAGE,
           );
         validateName(token.name, { callable: !BUILTIN_NAMES.has(token.name) });
         const args = [];
@@ -587,7 +589,7 @@
       if (!t.exact && !bareName(t.name))
         this.err(
           'P205',
-          'この 名前は【名前】のように【 】で かこんでください',
+          NAME_BRACKET_MESSAGE,
         );
       validateName(t.name);
       this.i = t.end;
@@ -1112,7 +1114,7 @@
     if (!t.exact && !bareName(t.name))
       throw new AkariError(
         'P205',
-        'この 名前は【名前】のように【 】で かこんでください',
+        NAME_BRACKET_MESSAGE,
       );
     return {
       text: code.slice(0, t.end),
@@ -2294,7 +2296,7 @@
         if (reads) throw new AkariError('P205', `「${who[0].text}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, line.lineNo, 1);
       }
       // unreadName: the sentence began with a word that is no bare name (1秒休む), so the verb after it is looked at.
-      const nameMessage = error.message === 'この 名前は【名前】のように【 】で かこんでください' || !!error.unreadName;
+      const nameMessage = error.message === NAME_BRACKET_MESSAGE || !!error.unreadName;
       // 10歩進んでください / 10歩進め / 10歩進もう / 進んでね: a request or a call is written as 「進む」, also when the
       // whole sentence is not read (F-26).
       if (nameMessage || (error.code === 'P201' && !error.proposals?.length && /^「[\s\S]+」は 読めません。書き方を たしかめてください。$/.test(error.message))) {
@@ -3146,7 +3148,7 @@
       return sentenceDiagnostic(`おされる キャラクターや 部品の 名前は、「 」で かこまずに 書きます。れい：${nameSource(p[1])}がおされたとき、`,line,[{label:'「 」を とる',source}],{kind:'Script'});}
     // さくひんをうごかしたとき / 作品を動かすと: the start is 作品を動かしたとき、 (FM2-11).
     p=/^(?:作品|さくひん)を(?:うごか|動か)(?:した(?:とき|ら)|すと|すとき|したら)、?(.*)$/.exec(code);
-    if(p&&heads('作品を動かしたとき、'+p[1]))
+    if(p&&!/^作品を動かしたとき/.test(code)&&heads('作品を動かしたとき、'+p[1]))
       return sentenceDiagnostic('「▶ 動かす」を おした ときに 始めるときは、「作品を動かしたとき、」と 書きます',line,[{label:'「作品を動かしたとき、」に する',source:'作品を動かしたとき、'+p[1]}],{kind:'Script'});
     // 「スタート」を受けとったとき: a signal is received with 「スタート」という合図を受けたとき、.
     p=/^(「[^「」]+」)(?:を|の合図を)(?:受けとった|受け取った|うけとった|受けた|うけた|もらった)(?:とき|ら)、?(.*)$/.exec(code);

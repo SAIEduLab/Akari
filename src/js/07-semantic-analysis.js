@@ -1551,7 +1551,7 @@
   // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
   // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
   // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
-  const GENERIC_READING_ERRORS = [/^まだ 作っていない 名前/, /^この 名前は【名前】のように【 】で かこんでください/, /読みとれません|読めません|読めない ところ/, /が たりません/, /という 文は あかりに ありません/, /^つづける きまりの おわりを「あいだ」に/];
+  const GENERIC_READING_ERRORS = [/^まだ 作っていない 名前/, /^この 名前は ?【名前】のように ?【 】で かこんでください/, /読みとれません|読めません|読めない ところ/, /が たりません/, /という 文は あかりに ありません/, /^つづける きまりの おわりを「あいだ」に/];
   // Whether a part's body reads with no error as a 名人 text: as written (its own headings and procedures), or as the
   // part's sentences, which a 名人 text writes under a heading that names the part.
   function meijinTrialReads(project, source, targetId) {
@@ -1898,7 +1898,10 @@
         }
         // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
         const listed = MEIJIN_LISTED_IN_ORDER.get(n);
-        if (listed) note('I127', n, `「${listed.join('と')}は、順番に、」のように 主語を ならべた 文は、みんな いっしょに 始めます。一人ずつ じゅんばんに するときは、「なかまを、${listed.join('と')}にする。」と リストに 入れて、「なかまは、順番に、…」と 書きます`);
+        // The words quoted are the child's, with their spaces (FM2-14): ねこと だんごは、順番に.
+        const writtenLine = listed ? String(project.scripts.find(s => scriptSourceKey(s) === item.key)?.source || '').split('\n')[(n.sourceSpan?.startLine || 1) - 1] || '' : '';
+        const writtenOrder = listed && /^\s*(.+?順番に)、?/.exec(writtenLine)?.[1];
+        if (listed) note('I127', n, `「${writtenOrder ? writtenOrder + '、' : listed.join('と') + 'は、順番に、'}」のように 主語を ならべた 文は、みんな いっしょに 始めます。一人ずつ じゅんばんに するときは、「なかまを、${listed.join('と')}にする。」と リストに 入れて、「なかまは、順番に、…」と 書きます`);
         if (n.kind === 'ListRemoveValue' && n.value?.kind === 'VariableRead' && dataNameExists(project, n.value.name, 'lists'))
           note('I128', n, `「${n.target.name}から【${n.value.name}】を全部消す」は、リストの 中に リスト【${n.value.name}】を さがすので、何も 消えません。リストの 中身を 一つずつ 消すときは、「【${n.value.name}】の中身を先頭から一つずつ見て、次のことを行う。」の 中に「${n.target.name}から今見ているものを全部消す。」と 書きます`);
         for (const key of ['body', 'thenBody', 'elseBody']) if (Array.isArray(n[key])) visitList(n[key], inLoop || NOTICE_LOOPS.has(n.kind));
