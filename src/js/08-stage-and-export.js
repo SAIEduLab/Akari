@@ -4,7 +4,7 @@
   const AKARI_STAGE_CSS =
     ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;background-position:left -5px bottom -5px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }\n.sprite-bubble[data-show-speaker=\"false\"]::before{content:none;display:none}";
   const AKARI_PLAYER_CSS =
-    '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
+    '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerPause{display:inline-grid;justify-items:center}#playerPause[hidden]{display:none}#playerPause>span{grid-area:1/1}#playerPause[data-paused="true"]>.pl-pause,#playerPause:not([data-paused="true"])>.pl-cont,#playerPause[data-idle="true"]{visibility:hidden}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
     'use strict';
     const { LIMITS, clamp } = core,
@@ -116,31 +116,29 @@
       form.style.width = p.stage.width + 'px';
       form.style.height = p.stage.height + 'px';
       // While a work runs, a finger on the screen is the mouse wherever it starts: it does not scroll the page, and a
-      // sideways swipe does not go back to the page before (the edit screen keeps the page's own touch).
-      const touch = r ? 'none' : '';
+      // sideways swipe does not go back to the page before. On the edit screen and in a player before ▶ the page still
+      // scrolls up and down (and zooms) under a finger on the screen, but a sideways swipe does not leave the page.
+      const touch = r ? 'none' : 'pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
-        form.style.overscrollBehavior = touch;
+        form.style.overscrollBehavior = r ? 'none' : 'none auto';
       }
       if (canvas.width !== p.stage.width) canvas.width = p.stage.width;
       if (canvas.height !== p.stage.height) canvas.height = p.stage.height;
       const b =
         p.stage.backdrops.find((x) => x.id === (r?.stage.backdropId || p.stage.backdropId)) ||
         p.stage.backdrops[0];
-      // The dots lie over the backdrop on every 10 steps from the bottom-left corner, at any screen height.
-      const dots = 'radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px)';
-      form.style.backgroundRepeat = 'repeat, no-repeat';
-      form.style.backgroundPosition = 'left -5px bottom -5px, center';
-      if (b.kind === 'color') {
-        form.style.backgroundColor = b.value;
-        form.style.backgroundImage = dots;
-        form.style.backgroundSize = '10px 10px';
-      } else {
-        const url = options.imageUrl(b.assetId);
-        form.style.backgroundColor = b.fill;
-        form.style.backgroundImage = url ? `${dots}, url("${url}")` : dots;
-        form.style.backgroundSize = '10px 10px, ' + (b.fit === 'stretch' ? '100% 100%' : b.fit);
-      }
+      // The editor's 作る画面 and 動かす画面 draw the dots over the backdrop on every 10 steps from the bottom-left corner,
+      // at any screen height: a ruler for the frame. An exported work (dots: false) shows only its backdrop.
+      const dots = options.dots === false ? null : 'radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px)',
+        url = b.kind === 'color' ? null : options.imageUrl(b.assetId),
+        layers = [dots && [dots, 'repeat', 'left -5px bottom -5px', '10px 10px'],
+          url && [`url("${url}")`, 'no-repeat', 'center', b.fit === 'stretch' ? '100% 100%' : b.fit]].filter(Boolean);
+      form.style.backgroundColor = b.kind === 'color' ? b.value : b.fill;
+      form.style.backgroundImage = layers.length ? layers.map(x => x[0]).join(', ') : 'none';
+      form.style.backgroundRepeat = layers.length ? layers.map(x => x[1]).join(', ') : 'no-repeat';
+      form.style.backgroundPosition = layers.length ? layers.map(x => x[2]).join(', ') : 'center';
+      form.style.backgroundSize = layers.length ? layers.map(x => x[3]).join(', ') : 'auto';
       fitStage();
     }
     function positionBubbles() {
@@ -649,6 +647,9 @@
       // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
       // press) does nothing. endFrame looks, after a flow ended, whether the whole run has ended.
       startPressedAt = -Infinity,
+      // When ⏸ いったん止める or ▶ つづける was last pressed: a press of the same place within 0.5 s does nothing, so a
+      // double press does not pause and go on at once.
+      pausePressedAt = -Infinity,
       endFrame = null;
     const designUrls = new Map();
     // A file that cannot start cannot be put right here: whoever made it makes it again.
@@ -672,8 +673,10 @@
       output.appendChild(details);
     };
     // The buttons follow the editor's rule. Stopped: ▶ 動かす only. Getting ready: ■ 止める only. Running: ■ 止める (where
-    // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける. Finished (every body done, or 作品を全部止める), and
-    // stopped by a mistake (FAILED, which cannot go on): ■ 止める only, and the last picture stays.
+    // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける, in the same place and of the same width (the two
+    // labels share one button, and the one that does not apply is not seen). Finished (every body done, or 作品を全部止める),
+    // and stopped by a mistake (FAILED, which cannot go on): ■ 止める only, and the last picture stays. On the run screen
+    // the place of ⏸／▶ つづける stays while neither can be pressed, so nothing moves.
     function state() {
       // After every body ended, a body that starts again (on a touch, say) goes on running; after 作品を全部止める the
       // scheduler takes no input.
@@ -692,11 +695,14 @@
       }
       if (stop) stop.hidden = !runScreen;
       if (pause) {
-        pause.hidden = phase !== 'RUNNING' && phase !== 'PAUSED';
-        pause.textContent = phase === 'PAUSED' ? '▶ つづける' : '⏸ いったん止める';
+        const idle = phase !== 'RUNNING' && phase !== 'PAUSED';
+        pause.hidden = !runScreen;
+        pause.disabled = idle;
+        pause.dataset.idle = String(idle);
+        pause.dataset.paused = String(phase === 'PAUSED');
       }
       // The focus does not fall to the page when its button goes away.
-      if (document.activeElement?.hidden) form.focus({ preventScroll: true });
+      if (document.activeElement?.hidden || document.activeElement?.dataset?.idle === 'true') form.focus({ preventScroll: true });
       if (status) status.textContent =
         {
           LOADING: '読みこみ中',
@@ -769,11 +775,14 @@
       paintFrame = null;
       view?.clear();
     }
+    // 開いたら すぐに 動かす has no ▶ 動かす: when the question's ■ 止める stops it (LANGUAGE.md keeps 質問・回答・停止 there,
+    // and its run again is a reload of the page), the page says so instead of leaving a still stage with no word.
     function stopRun() {
       dispose();
       phase = 'STOPPED';
       flush();
       state();
+      if (artwork) message('止めたよ。もう一度 動かすときは、この ページを 読みこみなおしてね');
       (start || form).focus({ preventScroll: true });
     }
     async function audioActivation(localCache, attempt, gesture) {
@@ -920,13 +929,18 @@
       if (event.timeStamp - startPressedAt < 500) return;
       stopRun();
     };
-    if (pause) pause.onclick = () => {
+    if (pause) pause.onclick = (event) => {
+      // After ⏸ the keys go on to ▶ つづける in the same place; after ▶ つづける they go to the work, as after ▶ 動かす
+      // (also after a press that does nothing, which a click would otherwise leave on the button).
+      const focus = () => (scheduler?.running && scheduler.paused ? pause : form).focus({ preventScroll: true });
+      if (event.timeStamp - pausePressedAt < 500) return focus();
+      pausePressedAt = event.timeStamp;
       view?.clearInput();
       if (!scheduler?.running) return;
       scheduler.paused ? scheduler.resume() : scheduler.pause();
       flush();
       state();
-      form.focus({ preventScroll: true });
+      focus();
     };
     if (activationButton) {
       activationButton.onclick = activateRun;
@@ -997,6 +1011,8 @@
       view = makeView(core, {
         form,
         canvas,
+        // An exported work is the work alone: no dots (they are the editor's ruler).
+        dots: false,
         ...(artwork ? { getScale: () => 1 } : {
           // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
           // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
@@ -1148,11 +1164,13 @@
       AKARI_STAGE_CSS +
       '\n' +
       AKARI_PLAYER_CSS +
+      // No dots before the first paint either (renderStage paints the backdrop alone).
+      '\n#formSurface{background-image:none}' +
       (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
-      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ 動かす</button><button id="playerStop" hidden>■ 止める</button><button id="playerPause" hidden>⏸ いったん止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
+      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ 動かす</button><button id="playerStop" hidden>■ 止める</button><button id="playerPause" hidden><span class="pl-pause">⏸ いったん止める</span><span class="pl-cont">▶ つづける</span></button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
       '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここを おして はじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
       '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">■ 止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
       '<noscript>この 作品を 動かすには、JavaScriptを 使えるように してください。</noscript>\n<script>\n' +

@@ -129,7 +129,20 @@
       return !(error instanceof AkariError) && /^E70[1-8]$/.test(error?.code)
         ? new AkariError(error.code, error.message) : error;
     }
+    // What a handler is given (EXTENSIONS.md, API contract 1): the run's signal, the calling sentence's owner
+    // (runtimeId: a part, or "stage") and runtime.actor(runtimeId), a read-only view of a part. Each call makes a new
+    // frozen view of where the part is now, in the 座標と向き frame, so a long command reads the part again; the
+    // runtime itself is never handed out, so an extension cannot change a part except through the work's sentences.
+    function extensionPartView(runtime, runtimeId) {
+      const a = runtimeId === 'stage' ? null : runtime?.actor(runtimeId);
+      return a ? Object.freeze({ runtimeId: a.runtimeId, baseId: a.baseId, isClone: a.isClone, x: a.x, y: a.y, direction: a.direction }) : null;
+    }
+    function extensionContext(context) {
+      const runtime = context?.runtime, view = Object.freeze({ actor: runtimeId => extensionPartView(runtime, runtimeId) });
+      return context?.signal ? { signal: context.signal, runtimeId: context.runtimeId, runtime: view } : { runtimeId: context?.runtimeId, runtime: view };
+    }
     function invokeExtension(kind, name, args, context) {
+      context = extensionContext(context);
       try { return kind === 'calculation' ? extensions.invokeCalculation(name, args, context) : extensions.invokeCommand(name, args, context); }
       catch (error) { throw extensionError(error); }
     }
@@ -229,9 +242,19 @@
       if (other !== undefined) throw new AkariError('R411', `「みんな」「それぞれ」「順番に」の リストに、部品では ない「${valueText(other)}」が 入っています。部品だけを 入れた リストに 使います`);
       return v;
     };
-    // A target is a part's name (every instance of it) or a part value (that one instance).
-    const targetValue = (v) => isPart(v) ? v : stringv(v);
-    const targetName = (v) => isPart(v) ? v.name : stringv(v);
+    // A target is a part's name (every instance of it) or a part value (that one instance). What else is written there
+    // stops with the words need() makes (partNeeded), only then.
+    const targetValue = (v, need) => isPart(v) || typeof v === 'string' ? v : stringv(v, need?.());
+    const targetName = (v, need) => isPart(v) ? v.name : typeof v === 'string' ? v : stringv(v, need?.());
+    // The words when a part's name is needed: the kind of part the sentence takes, and an example from the child's own
+    // work, a part of that kind (for ふれる, きょり and 向く another part, or the mouse), never a name the work does not have.
+    const PART_KINDS = Object.freeze({ text: ['文字・ボタン・四角の 部品', ['label', 'button', 'box']], input: ['入力らん', ['input']], copy: ['キャラクター', ['sprite']] });
+    function partNeeded(ctx, kind = null) {
+      const [words, types] = PART_KINDS[kind] || ['キャラクターや 部品', null], own = ctx?.runtime?.actor?.(ctx.runtimeId)?.baseId,
+        part = ctx?.runtime?.project?.components?.find(c => (kind || c.id !== own) && (!types || types.includes(c.type))),
+        example = part ? '「' + part.name + '」' : kind ? null : '「マウス」';
+      return `ここには ${words}の 名前が いります` + (example ? '。れい：' + example : '');
+    }
     const listValue = (v) => Array.isArray(v) && v.every(scalar);
     function assertRuntimeValueLimit(v) {
       if (typeof v === 'number') ensureFinite(v);
@@ -1078,6 +1101,21 @@
     const samePose = (kept, a) => kept.x === a.x && kept.y === a.y && kept.direction === a.direction && kept.scalePercent === a.scalePercent &&
       kept.costumeId === a.costumeId && kept.w === a.w && kept.h === a.h;
     const watchPose = (a) => ({ ...pose(a), runtimeId: a.runtimeId, visible: a.visible });
+    // Whether a parallelogram (a corner p and its two sides a and b) and an upright rectangle overlap by more than eps
+    // on every line that could separate them: the rectangle's two sides and the parallelogram's two (RuntimeModel.partsTouch).
+    function overlap(px, py, ax, ay, bx, by, left, right, bottom, top, eps) {
+      if (Math.min(right, px + Math.max(0, ax) + Math.max(0, bx)) - Math.max(left, px + Math.min(0, ax) + Math.min(0, bx)) <= eps ||
+        Math.min(top, py + Math.max(0, ay) + Math.max(0, by)) - Math.max(bottom, py + Math.min(0, ay) + Math.min(0, by)) <= eps) return false;
+      const cx = (left + right) / 2, cy = (bottom + top) / 2, hx = (right - left) / 2, hy = (top - bottom) / 2;
+      // Across a side: the parallelogram spans p and p plus the other side, the rectangle its centre and half its size.
+      const apart = (nx, ny, ox, oy) => {
+        const len = Math.hypot(nx, ny);
+        if (!len) return false;
+        const p = px * nx + py * ny, d = ox * nx + oy * ny, c = cx * nx + cy * ny, h = hx * Math.abs(nx) + hy * Math.abs(ny);
+        return Math.min(p + Math.max(0, d), c + h) - Math.max(p + Math.min(0, d), c - h) <= eps * len;
+      };
+      return !apart(-ay, ax, bx, by) && !apart(-by, bx, ax, ay);
+    }
     const sameWatchPose = (kept, a) => kept.runtimeId === a.runtimeId && kept.visible === a.visible && samePose(kept, a);
     const samePoses = (kept, now) => !!kept && kept.length === now.length && now.every((x, i) => Object.keys(x).every(k => kept[i][k] === x[k]));
     // A subject or heading written 画面 is the work screen, unless a part is named 画面: then it is that part (as for
@@ -1465,8 +1503,10 @@
           (x) => x.runtimeId !== runtimeId && x.visible,
         );
         if (!targets.length) {
-          if (!isPart(target) && !this.project.components.some((c) => c.name === target))
-            throw new AkariError('R405', `部品「${target}」が ありません`);
+          if (!isPart(target) && !this.project.components.some((c) => c.name === target)) {
+            const other = this.project.components.find(c => c.id !== a.baseId);
+            throw new AkariError('R405', `部品「${target}」が ありません。ふれる 相手には、作品に ある キャラクターや 部品の 名前を 書きます。れい：「${other?.name ?? 'マウス'}」`);
+          }
           return false;
         }
         return targets.some((b) => this.partsTouch(a, b));
@@ -1564,12 +1604,14 @@
         const cell = (x, m) => (m ? Math.min((x.w * x.scalePercent) / 100 / m.w, (x.h * x.scalePercent) / 100 / m.h) : Infinity);
         const step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
         // A wider overlap (more than 32×32 points) is looked at cell by cell instead, which costs less and does not step
-        // over a thin seen strip as a coarser point grid could: each seen cell of the finer picture there is a small box on
-        // the screen, and the other part touches it where its own seen cells (or its box) overlap that box (cells that only
-        // meet at a side do not overlap). Only the cells around the overlap are looked at: the overlap turned back into the
-        // picture, widened by what a turned cell's box can reach beyond the cell.
+        // over a thin seen strip as a coarser point grid could: each seen cell of the finer picture there is a small turned
+        // square on the screen, and the other part touches it where one of its own seen cells (or its box) overlaps that
+        // square (cells that only meet at a side do not overlap). Only the cells around the overlap are looked at: the
+        // overlap turned back into the picture, widened by what a turned cell's box can reach beyond the cell. A cell's box
+        // on the screen (touches) only rules cells out, since a turned cell's box is wider than the cell; the cell itself
+        // decides (cellTouches).
         if ((rw / step) * (rh / step) > 1024) {
-          const [x, m, sx, other] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sa, sb] : [b, mb, sb, sa];
+          const [x, m, sx, other, om] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sa, sb, mb] : [b, mb, sb, sa, ma];
           const sc = x.scalePercent / 100, W = x.w * sc, H = x.h * sc, cs = cosDegrees(x.direction), sn = sinDegrees(x.direction);
           let c0 = Infinity, c1 = -Infinity, r0 = Infinity, r1 = -Infinity;
           for (const px of [left, right])
@@ -1589,6 +1631,23 @@
             const L = Math.max(l, left) + 1e-6, R = Math.min(rr, right) - 1e-6, B = Math.max(bo, bottom) + 1e-6, T = Math.min(to, top) - 1e-6;
             return L < R && B < T && (!other || other.anySeenIn(L, R, B, T));
           };
+          // The cell in column c and row r as it lies on the screen (a corner and its two sides), against what is seen of
+          // the other part: each of the other's seen cells that the cell, turned into the other picture, reaches (there the
+          // other's cells are squares of side 1), or the overlap of the boxes for a part with no picture. Two such shapes
+          // overlap when no line along a side of either separates them (overlap).
+          const ew = W / m.w, eh = H / m.h, e1x = ew * cs, e1y = ew * sn, e2x = eh * sn, e2y = -eh * cs, on = om?.counts, ow1 = om ? om.w + 1 : 0;
+          const cellTouches = (c, r) => {
+            const lx = (c / m.w - 0.5) * W, ly = (0.5 - r / m.h) * H, px = x.x + lx * cs - ly * sn, py = x.y + lx * sn + ly * cs;
+            if (!other) return overlap(px, py, e1x, e1y, e2x, e2y, left, right, bottom, top, 1e-6);
+            const [u0, v0] = other.cell(px, py), [u1, v1] = other.cell(px + e1x, py + e1y), [u2, v2] = other.cell(px + e2x, py + e2y),
+              f1u = u1 - u0, f1v = v1 - v0, f2u = u2 - u0, f2v = v2 - v0;
+            const c0 = Math.max(0, Math.floor(u0 + Math.min(0, f1u) + Math.min(0, f2u))), c1 = Math.min(om.w - 1, Math.ceil(u0 + Math.max(0, f1u) + Math.max(0, f2u)) - 1),
+              r0 = Math.max(0, Math.floor(v0 + Math.min(0, f1v) + Math.min(0, f2v))), r1 = Math.min(om.h - 1, Math.ceil(v0 + Math.max(0, f1v) + Math.max(0, f2v)) - 1);
+            if (c0 > c1 || r0 > r1 || on[(r1 + 1) * ow1 + c1 + 1] - on[r0 * ow1 + c1 + 1] - on[(r1 + 1) * ow1 + c0] + on[r0 * ow1 + c0] === 0) return false;
+            for (let rr = r0; rr <= r1; rr++)
+              for (let cc = c0; cc <= c1; cc++) if (om.cells[rr * om.w + cc] && overlap(u0, v0, f1u, f1v, f2u, f2v, cc, cc + 1, rr, rr + 1, 1e-9)) return true;
+            return false;
+          };
           // Blocks of 4×4 cells first: a block with no seen cell, or whose box the other part does not touch, holds no
           // cell that touches it, so the answer is that of looking at every cell.
           for (let br = rFrom; br <= rTo; br += 4)
@@ -1596,7 +1655,7 @@
               const br2 = Math.min(rTo, br + 3), bc2 = Math.min(cTo, bc + 3);
               if (n[(br2 + 1) * w1 + bc2 + 1] - n[br * w1 + bc2 + 1] - n[(br2 + 1) * w1 + bc] + n[br * w1 + bc] === 0 || !touches(bc, bc2, br, br2)) continue;
               for (let r = br; r <= br2; r++)
-                for (let c = bc; c <= bc2; c++) if (m.cells[r * m.w + c] && touches(c, c, r, r)) return keep(true);
+                for (let c = bc; c <= bc2; c++) if (m.cells[r * m.w + c] && touches(c, c, r, r) && cellTouches(c, r)) return keep(true);
             }
           return keep(false);
         }
@@ -2043,6 +2102,13 @@
         throw error;
       }
     }
+    // An example names a list of the child's own work (the work's first list, then the part's own), never one the work
+    // does not have; with none, the example has no name.
+    function exampleListName(ctx) {
+      const r = ctx?.runtime;
+      for (const lists of [r?.projectLists, r?.actor?.(ctx.runtimeId)?.lists]) if (lists?.size) return lists.keys().next().value;
+      return null;
+    }
     function evalBuiltin(ast, ctx, budget) {
       const name = ast.name,
         args = ast.args.map((x) => evalExpression(x, ctx, budget)),
@@ -2074,7 +2140,8 @@
         const a = args[0];
         if (Array.isArray(a)) return a.length;
         if (typeof a === 'string') return Array.from(a).length;
-        throw new AkariError('R411', '数えられるのは、リストに 入っている ものの 数か、文字の 数です。れい：かばんの数');
+        const list = exampleListName(ctx);
+        throw new AkariError('R411', '数えられるのは、リストに 入っている ものの 数か、文字の 数です。れい：' + (list ? list + 'の数' : '「あいう」の長さ'));
       }
       if (name === 'STRING_LENGTH') {
         return Array.from(stringv(args[0])).length;
@@ -2179,9 +2246,11 @@
           if (args.length < 2) throw new AkariError('R411', '「つなぐ」には つなぐ ものを 少なくとも 2つ 入れます。れい：つなぐ（「あ」、「い」）');
           {
             const s = args
-              .map((x) => {
-                if (Array.isArray(x))
-                  throw new AkariError('R411', 'リストは そのまま 文字に つなげません。「かばんの1番目」のように、中身を 1つずつ つなぎます');
+              .map((x, i) => {
+                if (Array.isArray(x)) {
+                  const list = ast.args[i]?.kind === 'VariableRead' ? ast.args[i].name : exampleListName(ctx);
+                  throw new AkariError('R411', 'リストは そのまま 文字に つなげません。' + (list ? `「${list}の1番目」のように、` : '') + '中身を 1つずつ つなぎます');
+                }
                 return valueText(x, true);
               })
               .join('');
@@ -2259,7 +2328,7 @@
         case '新しい背景名':
           return ctx.eventContext?.newName ?? '';
         case 'INPUT_VALUE': {
-          const name = targetName(evalExpression(ast.arg, ctx, budget));
+          const name = targetName(evalExpression(ast.arg, ctx, budget), () => partNeeded(ctx, 'input'));
           const c = r.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
           if (c.type !== 'input') throw new AkariError('R406', `「${name}」は 入力らんでは ありません`);
@@ -2267,11 +2336,11 @@
           return inst?.inputValue ?? c.text;
         }
         case 'DISTANCE_TO':
-          return quantity(r.distance(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget))), '歩');
+          return quantity(r.distance(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget), () => partNeeded(ctx))), '歩');
         case 'KEY_DOWN':
           return r.pressedKeys.has(stringv(evalExpression(ast.arg, ctx, budget)));
         case 'TOUCHING':
-          return r.touching(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget)));
+          return r.touching(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget), () => partNeeded(ctx)));
         case 'TOUCHING_COLOR':
           return r.touchingColor(ctx.runtimeId, stringv(evalExpression(ast.arg, ctx, budget)));
         default:
@@ -3128,7 +3197,9 @@
         return out;
       }
       // ふれたとき (every part's bodies and 名人), 〜になったとき and 〜秒ごとに (名人) are watched on the scheduler's clock:
-      // after every sentence of every flow and at every こま.
+      // after every sentence of every flow and at every こま. A body started by a change (ふれたとき, 〜になったとき)
+      // starts at most once in a こま for the same part (for 画面のはし: for each side); started keeps the こま of the last
+      // start, so a change back and forth inside that こま (かくして また見せる, a turn that flips the box) is only recorded.
       initializeWatches() {
         this.watches = [];
         for (const item of this.compiled.items || []) {
@@ -3136,7 +3207,7 @@
           const targetId = item.targetId || item.ownerId, scriptId = item.key.slice('script:'.length);
           const task = { taskId: `watch:${item.key}`, scriptId, runtimeId: targetId, targetId, eventType: item.event, eventContext: {},
             subject: { runtimeId: targetId }, callFrames: [], execStack: [], broadcastGroups: new Map(), state: 'RUNNING', currentNode: item.ast.body?.[0] };
-          const watch = { item, targetId, scriptId, event: item.event, task, last: new Map() };
+          const watch = { item, targetId, scriptId, event: item.event, task, last: new Map(), started: new Map() };
           if (item.event === 'interval') {
             try {
               watch.period = numberInUnit(evalExpression(item.ast.heading.seconds, this.context(task)), '秒');
@@ -3163,7 +3234,10 @@
               for (let guard = 0; now >= w.nextAt && guard < 100; guard++) { this.spawnWatch(w, w.targetId); w.nextAt += w.period * 1000; }
             } else if (w.event === 'conditionTrue') {
               const value = bool(evalExpression(w.item.ast.heading.condition, this.context(w.task)));
-              if (value && !w.last.get(w.targetId)) this.spawnWatch(w, w.targetId);
+              if (value && !w.last.get(w.targetId) && w.started.get(w.targetId) !== tick) {
+                w.started.set(w.targetId, tick);
+                this.spawnWatch(w, w.targetId);
+              }
               w.last.set(w.targetId, value);
             } else {
               // ふれたとき starts when not touching becomes touching. The first look at a part (the run's start, a new
@@ -3184,16 +3258,22 @@
                 const kept = w.poses.get(a.runtimeId);
                 if (!partnersMoved && kept && sameWatchPose(kept, a)) continue;
                 w.poses.set(a.runtimeId, watchPose(a));
-                // 画面のはし is any one of the four sides: a side the part did not touch before starts it too (a ball
-                // that bounced off the right side and goes on into the top one near a corner).
+                // 画面のはし watches the four sides one by one: a side that goes from not touched to touched starts it
+                // (also while another side stays touched, as for a ball that bounced off the right side and goes on into
+                // the top one near a corner), and two sides touched at once start it once.
                 if (target === '端') {
-                  const sides = EDGE_SIDES.filter(side => this.runtime.touching(a.runtimeId, side)), before = w.last.get(a.runtimeId);
-                  if (before && sides.some(side => !before.includes(side))) this.spawnWatch(w, a.runtimeId);
+                  const sides = EDGE_SIDES.filter(side => this.runtime.touching(a.runtimeId, side)), before = w.last.get(a.runtimeId),
+                    fresh = before ? sides.filter(side => !before.includes(side) && w.started.get(a.runtimeId + '|' + side) !== tick) : [];
+                  for (const side of fresh) w.started.set(a.runtimeId + '|' + side, tick);
+                  if (fresh.length) this.spawnWatch(w, a.runtimeId);
                   w.last.set(a.runtimeId, sides);
                   continue;
                 }
                 const touching = this.runtime.touching(a.runtimeId, target);
-                if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
+                if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId) && w.started.get(a.runtimeId) !== tick) {
+                  w.started.set(a.runtimeId, tick);
+                  this.spawnWatch(w, a.runtimeId);
+                }
                 w.last.set(a.runtimeId, touching);
               }
             }
@@ -3316,11 +3396,16 @@
           this.activeQuestion || this.extensionEvents?.length || this.extensionCompletions?.length);
       }
       // The run has ended by itself: it is idle, and no body can start again (none waits for input, a 名人 condition or
-      // interval, or an extension event while the extensions run). An extension that is only registered keeps nothing going.
+      // interval, or a registered extension event while the extensions run). An extension that is only registered, and
+      // an unregistered 「拡張:…」 name (an ordinary signal of the work), keep nothing going.
       ended() {
-        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) ||
-          (extensions.active && item.event === 'message' &&
-            String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '').startsWith('拡張:')));
+        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) || this.waitsForExtension(item));
+      }
+      // A body for an event that a running extension registered: the event comes from outside the work, as a key does
+      // (the editor's status names its 合図).
+      waitsForExtension(item) {
+        const name = String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '');
+        return extensions.active && item.event === 'message' && name.startsWith('拡張:') && !!extensions.describe(name.slice(3), 'events');
       }
       pause() {
         if (!this.running) return;
@@ -3440,9 +3525,10 @@
         task.subject = { runtimeId: this.runtime.resolveActorRef(node.actorRef, relative) };
       }
       // A turn of a loop that changed the screen (a part moved, turned or changed its looks, text, pen or speech) and
-      // waited nowhere: the next turn starts at the next こま of the logical clock (1/60 s, the grid of the continuous
-      // rules), so the motion shows without a wait sentence. A turn that only calculates goes on at once. Each loop
-      // frame keeps its own turn's marks; a lane marks the loops of the flow it belongs to. Not while stepping.
+      // waited nowhere: the flow waits for the next こま of the logical clock (1/60 s, the grid of the continuous rules)
+      // before it goes on, whatever comes next (the next turn, or the sentence after the loop), so the motion shows
+      // without a wait sentence. A turn that only calculates goes on at once. Each loop frame keeps its own turn's
+      // marks; a lane marks the loops of the flow it belongs to. Not while stepping.
       paceTurn(task, top) {
         if (top.visual && !top.waited && !top.yielded && !this.paused) {
           top.yielded = true;
@@ -3452,13 +3538,11 @@
         top.visual = top.waited = top.yielded = false;
         return false;
       }
-      // A 〜まで／〜あいだ loop checks its condition when a turn ends and waits for the こま only when another turn
-      // follows: the body goes on the stack under the こま's wait. When the condition ends the loop, it goes on at once.
+      // A 〜まで／〜あいだ loop reads its condition when the loop is reached and once before each next turn, after the
+      // こま's wait of a paced turn (normalizeStack), at the flow's own turn.
       enterLoopTurn(task, frame) {
-        const pace = frame.visual && !frame.waited && !this.paused;
         frame.visual = frame.waited = frame.yielded = false;
         this.enterBody(task, frame.node.body);
-        if (pace) task.execStack.push({ type: 'frameYield', node: frame.node });
       }
       markTurn(task, mark) {
         for (let t = task; t; t = t.laneParent)
@@ -3501,8 +3585,8 @@
             continue;
           }
           if (top.type === 'repeatCount') {
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             if (top.remaining > 0) {
-              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               top.remaining--;
               task.execStack.push({ type: 'seq', nodes: top.node.body, index: 0 });
               if (!top.node.body.some((n) => n.kind !== 'CommentLine'))
@@ -3520,8 +3604,8 @@
             continue;
           }
           if (top.type === 'foreach') {
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             if (top.index < top.values.length) {
-              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               const value = deepCopy(top.values[top.index++]);
               task.execStack.push({
                 type: 'seq',
@@ -3537,9 +3621,10 @@
             continue;
           }
           if (top.type === 'while' || top.type === 'until') {
-            // A turn has ended: its condition is read now, before any other flow takes its next step
-            // (くり返しと画面の動き). A body with no sentence, and a condition calculated a little at a time, keep the
-            // check as a step of its own.
+            // A paced turn waits for the next こま first; then the condition is read once, at this flow's own turn
+            // (くり返しと画面の動き), after the flows earlier in the order have taken that こま's steps. A body with no
+            // sentence, and a condition calculated a little at a time, keep the check as a step of its own.
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             const condition = top.condition || top.node.condition;
             if (!top.node.body.some((n) => n.kind !== 'CommentLine') ||
               (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(condition))) return top;
@@ -3808,8 +3893,10 @@
           }
           case 'Say': {
             const v = evalExpression(n.value, ctx);
-            if (Array.isArray(v))
-              throw new AkariError('R411', `リストは そのまま 言えません。中身を 言うときは「${n.value?.kind === 'VariableRead' ? n.value.name : 'かばん'}の1番目を言う」のように 書きます`);
+            if (Array.isArray(v)) {
+              const list = n.value?.kind === 'VariableRead' ? n.value.name : exampleListName(ctx);
+              throw new AkariError('R411', list ? `リストは そのまま 言えません。中身を 言うときは「${list}の1番目を言う」のように 書きます` : 'リストは そのまま 言えません。中身を 1つずつ 言います');
+            }
             const sec = n.seconds === undefined ? null : numberInUnit(evalExpression(n.seconds, ctx), '秒');
             if (sec !== null && sec < 0) throw valueError('R412', '話す 時間は 0より 小さく できません', n.seconds);
             const deadline = sec === null ? null : ensureFinite(this.runtime.now() + sec * 1000);
@@ -4018,6 +4105,9 @@
         // turn it is in. A frame of the pacing, a calculation step and the wait for the flow's own lanes are not.
         if (!reason.frame && reason.kind !== 'calculation' && !reason.lanes) this.markTurn(task, 'waited');
         if (!reason.frame && reason.kind !== 'calculation') task.paceTick = null;
+        // A こま's wait shows every change made so far: a loop around it waits again only for changes made after it.
+        if (reason.frame)
+          for (let t = task; t; t = t.laneParent) for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame.visual = false;
         if (reason.kind !== 'time' || !(reason.deadline >= this.dueAt)) this.dueAt = -Infinity;
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
@@ -4260,12 +4350,25 @@
         for (const frame of task.callFrames) frame.broadcastGroups?.clear();
         this.ui.renderMonitor?.();
       }
+      // Whose body a flow is and its きっかけ, by the words the child sees: the part (the part a copy was made from), the
+      // screen, or the 名人の本文, and the heading as the body selector names it (「星」に ふれたとき); never an internal id.
+      ownerName(task, item = null) {
+        const id = task.targetId;
+        if (item?.meijin || id === 'meijin') return '名人の本文';
+        if (id === 'stage') return this.project.stage?.name || '画面';
+        const c = this.project.components.find(x => x.id === id) || this.project.components.find(x => x.id === this.runtime.actor(id)?.baseId);
+        return c?.name ?? '動き';
+      }
+      flowName(task) {
+        const item = task.scriptId ? this.compiled.items?.find(x => x.scriptId === task.scriptId || x.key === 'script:' + task.scriptId) : null;
+        return `${this.ownerName(task, item)} / ${task.eventType === 'continuous' ? 'つづけて動くルール' : eventText(task.eventType, item?.filter) || task.eventType}`;
+      }
       taskError(task, err) {
         task.error =
           err instanceof AkariError ? err : new AkariError('R411', err?.message || String(err));
         const e = task.error;
         task.errorCallStack = [
-          `きっかけ ${task.targetId} / ${EVENT_LABELS[task.eventType] || task.eventType}`,
+          this.flowName(task),
           ...task.callFrames.map((f) => `自分で作ったブロック ${f.name}`),
           ...(e.akariCallStack || []),
         ];
@@ -4463,7 +4566,7 @@
               break;
             }
             // A target whose centre is at the part's own centre keeps the direction.
-            const target = targetValue(evalExpression(n.args[0], ctx)),
+            const target = targetValue(evalExpression(n.args[0], ctx), () => partNeeded(ctx)),
               p = this.runtime.nearestTarget(ctx.runtimeId, target),
               aa = this.runtime.aabb(a);
             if (p.x !== aa.cx || p.y !== aa.cy) a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
@@ -4512,15 +4615,22 @@
         this.ui.render?.();
       }
       // A picture part bounces with what is seen of it (final call 17); a picture of which nothing is seen does not.
+      // A touched side turns only the part of the direction that goes into it, as Scratch does: the right side a
+      // direction below 90 or above 270 (to 180 − direction), the left side one between 90 and 270, the top one between
+      // 0 and 180 (to − direction), the bottom one above 180. Going away from a side or along it, or touching both
+      // sides of one axis, keeps that part, so two bounces in one こま do not send the part back into the side.
       bounce(a) {
         const box = this.runtime.visibleBox(a),
           w = this.project.stage.width,
           h = this.project.stage.height;
         if (!box) return;
-        let hitX = box.left <= 0 || box.right >= w,
-          hitY = box.bottom <= 0 || box.top >= h;
-        if (hitX) a.direction = 180 - a.direction;
-        if (hitY) a.direction = -a.direction;
+        const hitX = box.left <= 0 || box.right >= w,
+          hitY = box.bottom <= 0 || box.top >= h,
+          d = normalizeDirection(a.direction),
+          lr = (box.left <= 0) !== (box.right >= w),
+          bt = (box.bottom <= 0) !== (box.top >= h);
+        if (lr && (box.right >= w ? d < 90 || d > 270 : d > 90 && d < 270)) a.direction = 180 - a.direction;
+        if (bt && (box.top >= h ? d > 0 && d < 180 : d > 180)) a.direction = -a.direction;
         if (hitX || hitY) {
           a.direction = normalizeDirection(a.direction);
           const b = this.runtime.visibleBox(a);
@@ -4605,7 +4715,7 @@
           return;
         }
         if (n.op === 'SET_TARGET_TEXT') {
-          const name = targetName(arg(0)),
+          const name = targetName(arg(0), () => partNeeded(ctx, 'text')),
             v = valueText(arg(1), true),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
@@ -4616,7 +4726,7 @@
           return;
         }
         if (n.op === 'SET_INPUT') {
-          const name = targetName(arg(0)),
+          const name = targetName(arg(0), () => partNeeded(ctx, 'input')),
             v = assertRuntimeValueLimit(stringv(arg(1))),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
@@ -4674,8 +4784,10 @@
           state.pitch = ensureFinite(state.pitch + (n.op === 'PITCH_UP' ? v : -v));
           return;
         }
+        // A sound's name is text (a へんすう whose value is a number stops here); the example is a sound of the work.
         if (n.op === 'SAMPLE' || n.op === 'SAMPLE_WAIT') {
-          const name = stringv(evalExpression(n.args[0], ctx)),
+          const value = evalExpression(n.args[0], ctx),
+            name = typeof value === 'string' ? value : stringv(value, `鳴らす 音の 名前は 文字です。れい：「${this.project.sounds?.[0]?.name || 'ベル'}」を鳴らす`),
             hid = this.runtime.startSample(name, ctx, n.op === 'SAMPLE_WAIT' ? ended : null);
           if (n.op === 'SAMPLE_WAIT') {
             this.block(task, { kind: 'audio', handleId: hid });
@@ -4699,7 +4811,7 @@
         if (n.op === 'CREATE_SELF') src = ctx.runtimeId;
         else if (n.op === 'CREATE_TARGET') {
           // 名人: the part may be a value (主役のコピーを作る copies the part held there).
-          const target = targetValue(evalExpression(n.args[0], ctx)), name = isPart(target) ? target.name : target,
+          const target = targetValue(evalExpression(n.args[0], ctx), () => partNeeded(ctx, 'copy')), name = isPart(target) ? target.name : target,
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
           if (c.type !== 'sprite')
