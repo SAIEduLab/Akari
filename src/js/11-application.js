@@ -4631,8 +4631,11 @@
         ['きっかけ', runtimeEventText(r.eventType, r.key)],
         ['動かしていた本文', r.source],
       ]);
-      const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
-      identifiers.querySelector('summary').textContent = 'くわしく見る（動きの番号）';
+      // The scheduler's numbers are くわしく facts (F-28).
+      if (document.body.dataset.uiLevel === 'advanced') {
+        const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
+        identifiers.querySelector('summary').textContent = 'くわしく見る（動きの番号）';
+      }
       for (const f of r.frames)
         renderMonitorSection(
           root,
@@ -5321,9 +5324,10 @@
           requestRuntimePaint(7);
           const stack = task.errorCallStack?.length
             ? `
-使った じゅんばん: ${task.errorCallStack.join(' → ')}`
+使った じゅんばん：${task.errorCallStack.join(' → ')}`
             : '';
-          log(`${err.code} 動きが うまく いかなかったよ: ${err.message}${stack}`, 'error');
+          // 出力 is the teacher's surface: one polite voice per line (F-18).
+          log(`${err.code} 動きが うまく いきませんでした：${err.message}${stack}`, 'error');
           setStatus('動きが とちゅうで 止まったよ');
           renderMonitor();
           showFailureDetails(task.failureRecordId);
@@ -5426,7 +5430,8 @@
             confirmTutorialOperation('run');
             scheduler.start();
             renderAll();
-            log(`動かしはじめました（たね=${seed}）`, 'ok');
+            // The seed is a くわしく fact (F-28).
+            log(document.body.dataset.uiLevel === 'advanced' ? `動かしはじめました（たね=${seed}）` : '動かしはじめました', 'ok');
             setStatus('動いているよ');
             el.form.focus({ preventScroll: true });
           } catch (err) {
