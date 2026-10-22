@@ -4043,6 +4043,7 @@
       return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
     }
     function beginGhost(state) {
+      hideDropNote();
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
         : state.element.closest('.blockui-node');
@@ -4144,10 +4145,15 @@
       dragReason.textContent = text;
     }
     // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
-    function showDropNote(text, x, y) {
-      announce(text);
+    // The next carry takes it away, so it never stays over the next drop (E2-10).
+    function hideDropNote() {
       clearTimeout(dropNoteTimer);
       dropNote?.remove();
+      dropNote = null;
+    }
+    function showDropNote(text, x, y) {
+      announce(text);
+      hideDropNote();
       dropNote = E('div', 'blockui-drop-note', text, { 'aria-hidden': 'true' });
       doc.body.append(dropNote);
       const w = dropNote.offsetWidth, h = dropNote.offsetHeight, view = doc.documentElement;
