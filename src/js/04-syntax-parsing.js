@@ -977,13 +977,15 @@
     try{read=parseConditionAsWritten(text,formatSymbols||undefined,{},'if');}catch(error){if(!(error instanceof AkariError))throw error;}
     return read&&shape(read)===shape({...compare,left:key(compare.left),right:key(compare.right)})?text:null;
   }
-  function formatCondition(node, form = 'plain') {
+  // short: 点数が2なら for one equality; a condition of several parts writes と同じ on every part (LANGUAGE.md: もし点数が1と
+  // 同じか、点数が2と同じなら、), so its parts are written without it.
+  function formatCondition(node, form = 'plain', short = true) {
     const negative=node.kind==='UnaryExpression'&&node.op==='NOT', value=negative?node.value:node;
     if (value.kind==='EventCount'&&!negative&&form==='until') return eventCountSource(value)+'まで';
     if (!negative && value.kind==='LogicalExpression' && ['if','while','until'].includes(form)) {
       const atomic=n => n.kind!=='LogicalExpression' && !(n.kind==='UnaryExpression' && n.op==='NOT' && n.value.kind==='LogicalExpression');
       if(atomic(value.left) && atomic(value.right)) {
-        const left=formatCondition(value.left,value.op==='AND'?'and':'plain'), right=value.op==='AND'&&form==='until'?stateUntil(formatCondition(value.right,'plain')):formatCondition(value.right,form);
+        const left=formatCondition(value.left,value.op==='AND'?'and':'plain'), right=value.op==='AND'&&form==='until'?stateUntil(formatCondition(value.right,'plain')):formatCondition(value.right,form,false);
         if(!left.startsWith('条件（') && !right.startsWith('条件（')) return `${left}${value.op==='OR'?'か':''}、${right}`;
       }
     }
@@ -999,7 +1001,7 @@
       // 点数が10になるまで: と同じ is not written before になるまで, unless the value itself ends in a predicate word.
       if(match&&record.plain==='と同じ'&&form==='until'&&!negative&&!/(?:と同じ|以上|以下|大きく|小さく|コピー)$/.test(surfaceMask(source.slice(0,-record.plain.length))))
         return source.slice(0,-record.plain.length)+'になるまで';
-      if(match&&record.plain==='と同じ'&&form==='if'&&!negative&&value.kind==='CompareExpression'&&value.op==='EQ'){const short=equalsIfSource(value);if(short)return short;}
+      if(short&&match&&record.plain==='と同じ'&&form==='if'&&!negative&&value.kind==='CompareExpression'&&value.op==='EQ'){const short=equalsIfSource(value);if(short)return short;}
       if(match) return (record.plain==='コピーである'&&!source.slice(0,-record.plain.length)?'自分が':'')+source.slice(0,-record.plain.length)+match[0];
     }
     if(!negative && form==='plain') return source;
