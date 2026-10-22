@@ -987,9 +987,14 @@
         // right end of the workspace under or above it. A mistake is always shown right under the field.
         if (!(pending.shown && pending.error)) {
           const own = pending.input.closest('.blockui-field') || pending.input,
+            // On a touch screen the place after the selected block can be pressed over 40 px (16 above its line, 24 below:
+            // editor.css), so they keep off all of it (AX-03).
+            coarse = doc.defaultView.matchMedia?.('(pointer: coarse)').matches,
             marks = [...world.querySelectorAll('.blockui-insertion, input, select, textarea, summary, button')]
               .filter(n => !own.contains(n) && n.checkVisibility?.({ visibilityProperty: true }) !== false)
-              .map(n => n.getBoundingClientRect()).filter(b => b.width && b.height >= 12),
+              .map(n => { const r = n.getBoundingClientRect();
+                return coarse && n.classList.contains('blockui-implied-destination') ? { left: r.left, right: r.right, top: r.top - 16, bottom: r.top + 24, width: r.width, height: 40 } : r; })
+              .filter(b => b.width && b.height >= 12),
             at = (x) => Math.max(4, Math.min(x, view.clientWidth - w - 4)),
             free = ([x, y]) => y >= Math.max(4, room.top) && y + h <= Math.min(room.bottom, view.clientHeight - 4) &&
               !marks.some(b => b.right > x && b.left < x + w && b.bottom > y && b.top < y + h),
