@@ -35,6 +35,47 @@ await run('runtime-picture-outline-touch',async p=>p.evaluate(async()=>{const A=
  at(cat,600,200,0);q.bounce(cat);out.noBounceUnseen=cat.direction;at(cat,650,200,0);q.bounce(cat);out.bounceSeen=[cat.direction,cat.x];
  const expected={seenHalf:true,unseenHalf:false,unseenHalfFromStar:false,turnedSeenHalf:true,textLookBox:true,mouseSeen:true,mouseUnseen:false,rightSideUnseen:false,rightSideSeenTurned:true,meijinTouchingUnseen:0,meijinTouchingSeen:1,noBounceUnseen:0,bounceSeen:[180,590]};
  if(JSON.stringify(out)!==JSON.stringify(expected))throw Error('outline touch '+JSON.stringify(out));return out;}));
+// Touch by outline with large pictures (C-touch-03): the seen cells are tested, not a coarser grid. すじ is a 256x64 picture
+// whose seen parts are three columns 4 pixels wide (one cell of its mask: the first, the middle and the last), shown 400x800,
+// so each seen column is 6.25 steps wide and the whole height. かべ is fully seen, shown 380x800, and stands over the middle
+// column only: the overlap holds far more than 4096 of the finest cells. かべ touches すじ at every one of 15 places a half
+// step apart (each gives another grid to the earlier sampling, which missed some); standing between the columns it does not.
+await run('runtime-picture-outline-thin-strip',async p=>p.evaluate(async()=>{const A=Akari,png=async(w,h,draw)=>{const c=new OffscreenCanvas(w,h),g=c.getContext('2d');draw(g);return new Uint8Array(await(await c.convertToBlob({type:'image/png'})).arrayBuffer());};
+ const asset=async(id,bytes,w,h)=>({id,kind:'image',mime:'image/png',bytes,sha256:await A.sha256(bytes),meta:{width:w,height:h}}),store=new A.AssetStore([await asset('a-strip',await png(256,64,g=>{g.fillStyle='#0a0';for(const x of [0,128,252])g.fillRect(x,0,4,64);}),256,64),await asset('a-wall',await png(64,64,g=>{g.fillStyle='#00f';g.fillRect(0,0,64,64);}),64,64)]);
+ const w=A.makeEmptyProject(),base=w.components[0],part=(id,name,assetId,w,h)=>({...structuredClone(base),id,name,x:0,y:0,w,h,direction:0,scalePercent:100,visible:true,costumes:[{id:id+'-pic',name:'絵',kind:'image',assetId}],costumeId:id+'-pic',localData:{variables:[],lists:[]}});
+ w.components=[part('s-strip','すじ','a-strip',400,800),part('s-wall','かべ','a-wall',380,800)];w.scripts=[];const compiled=A.compileProject(w),cache=new A.AssetRuntimeCache(store);await cache.prepare(w,A.collectRuntimeAssetRequirements(compiled,w),1);
+ const r=new A.RuntimeModel(w,{},cache),strip=r.actor('s-strip'),wall=r.actor('s-wall'),at=(a,x,y)=>Object.assign(a,{x,y,direction:0}),inside=[],outside=[];
+ // すじ at よこ300 is よこ100..500: its columns are よこ100..106.25, 300..306.25 and 493.75..500, たて-200..600. かべ at よこ300+d
+ // (d from -3.5 to 3.5) is よこ110+d..490+d, over the middle column only.
+ for(let d=-3.5;d<=3.5;d+=0.5){at(strip,300,200);at(wall,300+d,200);inside.push(r.touching('s-strip','かべ'),r.touching('s-wall','すじ'));}
+ wall.w=150;for(const x of [400,215]){at(strip,300,200);at(wall,x,200);outside.push(r.touching('s-strip','かべ'),r.touching('s-wall','すじ'));}
+ if(!inside.every(Boolean)||outside.some(Boolean))throw Error('thin strip touch '+JSON.stringify({inside,outside}));return{inside:inside.length,outside:outside.length};}));
+// The mouse stays within the screen (LANGUAGE.md: よこ0〜画面のはば、たて0〜画面の高さ, A-R1-02): a finger that starts on a part
+// and goes on past the bottom of the screen gives たて0, past the top the screen's 高さ, and past a side 0 or the screen's
+// はば (the side the page has room for); in the editor and in the exported player alike. The part follows the mouse with
+// 「マウスのところへ行く」, so its centre stands on that edge of the screen. Before the mouse comes in, it is at よこ0・たて0, so the
+// finger starts on the quarter of the part that is inside the screen and first brings it to the middle.
+await run('runtime-touch-drag-mouse-within-screen',async p=>{const work=await p.evaluate(()=>{const w=Akari.makeEmptyProject(),c=w.components[0];w.name='ゆびで うごかす';c.costumes=[{id:'drag-dot',name:'丸',kind:'text',value:'●'}];c.costumeId='drag-dot';Object.assign(c,{x:320,y:200,w:40,h:40});w.scripts=[{id:'drag',targetId:c.id,event:'start',source:'ずっとくり返す。\n  マウスのところへ行く。'}];const store=Akari.makeDefaultAssetStore();return{id:c.id,text:Akari.serializeProject(w,store),html:Akari.generateStandaloneHtml(w,store)};});
+ const drag=async(page,start)=>{await page.bringToFront();const cdp=await page.context().newCDPSession(page);try{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});await start();await page.waitForTimeout(300);
+  const box=async()=>page.evaluate(id=>{const s=document.querySelector('#formSurface').getBoundingClientRect(),e=document.querySelector('#formSurface [data-runtime-id="'+id+'"]').getBoundingClientRect();return{stage:{left:s.left,right:s.right,top:s.top,bottom:s.bottom,width:s.width},part:{x:e.left+e.width/2,y:e.top+e.height/2}};},work.id);
+  const before=await box(),grip=before.stage.width/640*8,grab={x:before.part.x+grip,y:before.part.y-grip},from={x:(before.stage.left+before.stage.right)/2,y:(before.stage.top+before.stage.bottom)/2};
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[grab]});for(let i=1;i<=6;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:grab.x+(from.x-grab.x)*i/6,y:grab.y+(from.y-grab.y)*i/6}]});await page.waitForTimeout(250);
+  const view=await page.evaluate(()=>({width:innerWidth,height:innerHeight})),room=view.width-before.stage.right>=40?'right':before.stage.left>=40?'left':null;assert.ok(room,'the page leaves room beside the screen: '+JSON.stringify(before.stage));
+  const beside=room==='right'?Math.min(view.width-4,before.stage.right+60):Math.max(4,before.stage.left-60);assert.ok(before.stage.bottom+20<view.height&&before.stage.top>20,'the page leaves room above and below the screen');
+  const out={middle:await box()};for(const [name,to] of [['below',{x:from.x,y:Math.min(view.height-4,before.stage.bottom+90)}],['above',{x:from.x,y:Math.max(4,before.stage.top-60)}],['beside',{x:beside,y:from.y}]]){
+   for(let i=1;i<=6;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.x+(to.x-from.x)*i/6,y:from.y+(to.y-from.y)*i/6}]});await page.waitForTimeout(250);out[name]=await box();}
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  const step=out.below.stage.width/640,near=(a,b,what)=>assert.ok(Math.abs(a-b)<=step+1.5,what+': '+a+' vs '+b);
+  near(out.middle.part.x,from.x,'the part follows the finger to the middle');near(out.middle.part.y,from.y,'the part follows the finger to the middle');
+  near(out.below.part.y,out.below.stage.bottom,'past the bottom the part stands at たて0');near(out.below.part.x,from.x,'the よこ stays under the finger');
+  near(out.above.part.y,out.above.stage.top,'past the top the part stands at the screen height');near(out.above.part.x,from.x,'the よこ stays under the finger');
+  near(out.beside.part.x,room==='right'?out.beside.stage.right:out.beside.stage.left,'past the '+room+' side よこ is '+(room==='right'?'the screen width':'0'));
+  return{before,room,below:out.below.part,above:out.above.part,beside:out.beside.part};}finally{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:false}).catch(()=>{});await cdp.detach().catch(()=>{});}};
+ await p.locator('#fileInput').setInputFiles({name:'ゆびで うごかす.akari.md',mimeType:'text/markdown',buffer:Buffer.from(work.text,'utf8')});await p.waitForFunction(()=>Akari.app.project.name==='ゆびで うごかす');
+ const editor=await drag(p,async()=>{await (await reveal(p.locator('#runBtn'))).click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');});await pressStop(await reveal(p.locator('#stopBtn')));
+ const file=L.path.join(dir,'touch-drag-player.html');L.fs.writeFileSync(file,work.html);const player=await p.context().newPage();await player.goto(pathToFileURL(file).href);
+ const exported=await drag(player,async()=>{await player.locator('#playerStart').click();await player.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='RUNNING');});await player.close();
+ return{editor,player:exported};});
 }finally{await b.close();}console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length,errors,network}));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;
 })().catch(e=>{console.error(e.message);process.exitCode=1;});
 

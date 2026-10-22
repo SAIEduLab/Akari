@@ -51,7 +51,9 @@
         "preparing-importing-lock-and-decode-failure-rollback",
         "question-answer-and-question-stop-both-modes",
         "runtime-loop-pacing-real-time",
-        "runtime-picture-outline-touch"
+        "runtime-picture-outline-touch",
+        "runtime-picture-outline-thin-strip",
+        "runtime-touch-drag-mouse-within-screen"
       ]
     },
     {
