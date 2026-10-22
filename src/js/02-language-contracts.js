@@ -146,13 +146,13 @@
         id: 'NumericUpdate:ADD',
         kind: 'NumericUpdate',
         op: 'ADD',
-        source: '点数を1増やす',
+        source: '点数を1ふやす',
       },
       {
         id: 'NumericUpdate:SUB',
         kind: 'NumericUpdate',
         op: 'SUB',
-        source: '点数を1減らす',
+        source: '点数を1へらす',
       },
       {
         id: 'ListAppend',
@@ -661,7 +661,7 @@
     if (!c.statementSlot)
       throw new AkariError(
         'P201',
-        'ここには やることを 入れられません。あいている 行か、1行 全部を えらんでから 入れてね',
+        'ここには やることを 入れられないよ。あいている 行か、1行 全部を えらんでから 入れてね',
       );
     const indent = c.indentText,
       body = (c.head ? '' : indent) + text.split('\n').join('\n' + indent),
@@ -762,7 +762,9 @@
       for (const a of c.localData.lists) bind(a.name, 'self', a.initialValue, 'list');
     }
     const n = bindings.find((x) => x.kind !== 'list' && typeof x.value === 'number'),
-      v = n?.text || '0',
+      // A condition example reads a number of the work, or よこのばしょ, which every part has (the stage: タイマー), so it
+      // means something as it is (F-25).
+      v = n?.text || (type === 'stage' ? 'タイマー' : 'よこのばしょ'),
       usedNames = new Set(bindings.map((x) => x.name)),
       binder = initialBlockName('これ', usedNames);
     // 名人 text also lists the extension commands only 名人 text may use.
@@ -880,7 +882,7 @@
       type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     // Holding a key to move is one sentence, the continuous rule (B-09, C-16); it is written in an event's body.
     add('ContinuousRule', '動き', '「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。', 'statement',
-      kind ? 'できごとの 本文で 使えます' : type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
+      kind ? 'きっかけの ある 本文で 使えます' : type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;
@@ -891,8 +893,8 @@
           if (typeof b.value === 'string' && !/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(b.value)) add('set:' + name, 'へんすう', `${name}を「こんにちは」にする`);
           else {
             add('set:' + name, 'へんすう', `${name}を0にする`);
-            add('add:' + name, 'へんすう', `${name}を1増やす`);
-            add('subtract:' + name, 'へんすう', `${name}を1減らす`);
+            add('add:' + name, 'へんすう', `${name}を1ふやす`);
+            add('subtract:' + name, 'へんすう', `${name}を1へらす`);
           }
         }
         if (b.kind !== 'scalar') {
@@ -1184,7 +1186,7 @@
         protectedAt[i] = 1;
         if (['」','』'].includes(quote) && ch === '\\') {
           if (!['\\', quote === '』' ? '『' : '「', quote].includes(text[i + 1]))
-            throw new AkariError('N103', '「」の 中で \\ を 使うときは、\\「、\\」、\\\\ の どれかに してね', 0, i + 1);
+            throw new AkariError('N103', '「」の 中で \\ を 使うときは、\\「、\\」、\\\\ の どれかに します', 0, i + 1);
           protectedAt[++i] = 1;
         } else if (ch === quote) quote = '';
         continue;
@@ -1220,7 +1222,7 @@
       const ch = raw[i];
       if (quote) {
         if (['」','』'].includes(quote) && ch === '\\') {
-          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','「」の 中の \\ の 使い方が ちがいます。\\「、\\」、\\\\ の どれかに してね');
+          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','「」の 中の \\ の 使い方が ちがいます。\\「、\\」、\\\\ の どれかに します');
           i++;
         } else if (ch === quote) quote = '';
       } else if (ch === '「' || ch === '『' || ch === '【') quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
@@ -1271,7 +1273,7 @@
     if (typeof name !== 'string' || cpLen(name) < 1 || cpLen(name) > 32)
       throw new AkariError(
         'F503',
-        '名前は 1〜32文字で つけてね',
+        '名前は 1〜32文字で つけます',
       );
     if (
       /[\p{Cc}\p{Zl}\p{Zp}\s\u300c\u300d\u3010\u3011\uff08\uff09\uff3b\uff3d\u3001\u203b]/u.test(
@@ -1280,10 +1282,10 @@
     )
       throw new AkariError(
         'F503',
-        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてね`,
+        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてください`,
       );
     if (callable && (BUILTIN_NAMES.has(name) || Object.values(BUILTIN_SURFACES).includes(name)))
-      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に してね`);
+      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に してください`);
     return name;
   }
 

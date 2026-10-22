@@ -188,6 +188,12 @@
         this.kind = kind;
       }
     }
+    // A mistake in one value of a sentence (a time below 0, a tone out of range) is placed at that value (F-06), so the
+    // block view marks its field and the code its place. A quantity (2秒) has the span of its number.
+    function valueError(code, message, value) {
+      const span = value?.sourceSpan || value?.value?.sourceSpan;
+      return new AkariError(code, message, span?.startLine || 0, span?.startColumn || 0);
+    }
     const cpLen = (s) => Array.from(String(s ?? '')).length;
     // Unitless numbers retain their primitive representation at host/UI boundaries.
     const UNIT_TAGS = Object.freeze(['歩', '秒', '度', '回', '番目', '点', '個', '％', 'Hz']);
@@ -241,11 +247,21 @@
       }
       return v;
     }
-    const valueText = (v) => {
+    // valueText writes every digit (the 「もとの 数」 and messages). A number made into text by the program (部品の文字,
+    // つなぐ, 文字（ ）) passes asText and keeps at most 12 significant digits, as the bubbles show it (F-32, LANGUAGE.md
+    // 数値の通常表示と実値): a safe integer as it is, any other number rounded at the 12th digit without its trailing
+    // zeros (11.1÷10 is 1.11, 0.1＋0.2 is 0.3). The value itself is never rounded.
+    const numberText = (n, asText = false) => {
+      if (Object.is(n, -0)) return '0';
+      if (!asText || Number.isSafeInteger(n) || !Number.isFinite(n)) return String(n);
+      const precise = n.toPrecision(12), parsed = Number(precise);
+      return Number.isFinite(parsed) ? String(parsed) : precise;
+    };
+    const valueText = (v, asText = false) => {
       if (isPart(v)) return v.name;
       if (typeof v === 'boolean') return v ? 'あてはまる' : 'あてはまらない';
-      if (isQuantity(v)) return valueText(v.magnitude) + (v.unit || '');
-      if (typeof v === 'number') return Object.is(v, -0) ? '0' : String(v);
+      if (isQuantity(v)) return valueText(v.magnitude, asText) + (v.unit || '');
+      if (typeof v === 'number') return numberText(v, asText);
       if (typeof v === 'string') return v;
       throw new AkariError('R411', 'これは 文字として 見せられません');
     };
@@ -259,9 +275,7 @@
       const rawText = valueText(v);
       if (!isNumberValue(v)) return { text: rawText, rawText, rounded: false };
       const n = ensureFinite(isQuantity(v) ? v.magnitude : v);
-      const precise = n.toPrecision(12), parsed = Number(precise);
-      const shown = Number.isSafeInteger(n) ? String(n) : Number.isFinite(parsed) ? String(parsed) : precise;
-      const text = shown + (isQuantity(v) ? v.unit || '' : '');
+      const text = numberText(n, true) + (isQuantity(v) ? v.unit || '' : '');
       return { text, rawText, rounded: text !== rawText };
     };
     const typeName = (v) =>
@@ -2075,7 +2089,7 @@
         case '文字':
           if (args.length !== 1 || Array.isArray(args[0]) || args[0] == null)
             throw new AkariError('R411', 'これは 文字に かえられません');
-          return valueText(args[0]);
+          return valueText(args[0], true);
         case 'つなぐ':
           if (args.length < 2) throw new AkariError('R411', '「つなぐ」には つなぐ ものを 少なくとも 2つ 入れます。れい：つなぐ（「あ」、「い」）');
           {
@@ -2083,7 +2097,7 @@
               .map((x) => {
                 if (Array.isArray(x))
                   throw new AkariError('R411', 'リストはそのまま文字へつなげません');
-                return valueText(x);
+                return valueText(x, true);
               })
               .join('');
             if (cpLen(s) > LIMITS.stringChars) throw new AkariError('R413', '文字が長すぎます');
@@ -2134,7 +2148,7 @@
         case 'タイマー':
           return quantity((r.now() - r.startTime - r.timerOffset) / 1000, '秒');
         case '拡張の値':
-          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張「できごとの値」は かくちょうの できごとの 中で 使ってください');
+          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張「できごとの値」は、かくちょうの きっかけの 本文で 使ってください');
           return assertRuntimeValueLimit(ctx.eventContext.payload);
         case '答え':
           return ctx.task?.lastAnswer ?? '';
@@ -3646,7 +3660,7 @@
             return;
           case 'WaitTime': {
             const sec = numberInUnit(evalExpression(n.seconds, ctx), '秒');
-            if (sec < 0) throw new AkariError('R412', '待つ 時間は 0より 小さく できません');
+            if (sec < 0) throw valueError('R412', '待つ 時間は 0より 小さく できません', n.seconds);
             if (sec === 0) return;
             const deadline = ensureFinite(this.runtime.now() + sec * 1000);
             if (!everyoneStatement(n)) { this.hold(task, { kind: 'time', deadline }); return; }
@@ -3665,7 +3679,7 @@
             const v = evalExpression(n.value, ctx);
             if (Array.isArray(v)) throw new AkariError('R411', 'リストはそのまま言えません');
             const sec = n.seconds === undefined ? null : numberInUnit(evalExpression(n.seconds, ctx), '秒');
-            if (sec !== null && sec < 0) throw new AkariError('R412', '話す 時間は 0より 小さく できません');
+            if (sec !== null && sec < 0) throw valueError('R412', '話す 時間は 0より 小さく できません', n.seconds);
             const deadline = sec === null ? null : ensureFinite(this.runtime.now() + sec * 1000);
             const token = {};
             this.speechTokens.set(ctx.runtimeId, token);
@@ -4272,7 +4286,7 @@
         // fixed when it starts (LANGUAGE.md 動きの文); a time of 0 moves at once.
         const seconds = n.seconds ? numberInUnit(evalExpression(n.seconds, ctx), '秒') : null;
         if (seconds !== null && seconds < 0)
-          throw new AkariError('R412', ['TURN_RIGHT', 'TURN_LEFT'].includes(n.op) ? '回る 時間（〜秒かけて）は 0より 小さく できません' : '動く 時間（〜秒かけて）は 0より 小さく できません');
+          throw valueError('R412', ['TURN_RIGHT', 'TURN_LEFT'].includes(n.op) ? '回る 時間（〜秒かけて）は 0より 小さく できません' : '動く 時間（〜秒かけて）は 0より 小さく できません', n.seconds);
         const timed = seconds !== null && seconds > 0;
         const leg = (key, dirKey, back) => n[key] ? numberInUnit(evalExpression(n[key], ctx), '歩') * (n[dirKey] === back ? -1 : 1) : 0;
         let target = null;
@@ -4426,7 +4440,8 @@
             if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
             const arr = c.costumes;
             if (n.op === 'SET_COSTUME') {
-              const name = stringv(arg(0)),
+              // A value that is not a name is answered with this character's own costume names (F-03).
+              const name = stringv(arg(0), 'すがたの 名前を 入れます。れい：' + arr.slice(0, 3).map(x => '「' + x.name + '」').join('、')),
                 co = arr.find((x) => x.name === name);
               if (!co) throw new AkariError('R405', `すがた「${name}」がありません`);
               a.costumeId = co.id;
@@ -4442,7 +4457,7 @@
         if (n.op === 'SET_BACKDROP' || n.op === 'NEXT_BACKDROP' || n.op === 'PREV_BACKDROP') {
           const ch =
             n.op === 'SET_BACKDROP'
-              ? this.runtime.setBackdropByName(stringv(arg(0)))
+              ? this.runtime.setBackdropByName(stringv(arg(0), 'はいけいの 名前を 入れます。れい：' + this.runtime.project.stage.backdrops.slice(0, 3).map(x => '「' + x.name + '」').join('、')))
               : this.runtime.stepBackdrop(n.op === 'NEXT_BACKDROP' ? 1 : -1);
           if (ch) this.spawnDistributed('backdropChanged', ch);
           return;
@@ -4452,13 +4467,13 @@
             c = this.runtime.component(ctx.runtimeId);
           if (!['label', 'button', 'box'].includes(c?.type))
             throw new AkariError('R406', '「文字を〜にする」は文字・ボタン・四角で使います');
-          a.text = valueText(arg(0));
+          a.text = valueText(arg(0), true);
           this.ui.render?.();
           return;
         }
         if (n.op === 'SET_TARGET_TEXT') {
           const name = targetName(arg(0)),
-            v = valueText(arg(1)),
+            v = valueText(arg(1), true),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
           if (!['label', 'button', 'box'].includes(c.type))
@@ -4538,7 +4553,7 @@
         const freq = num(0),
           sec = num(1);
         if (freq < 30 || freq > 5000 || sec < 0.01 || sec > 60)
-          throw new AkariError('R412', '音は30〜5000Hz、0.01〜60秒です');
+          throw valueError('R412', '音は30〜5000Hz、0.01〜60秒です', n.args[freq < 30 || freq > 5000 ? 0 : 1]);
         const hid = this.runtime.startTone(freq, sec, ctx, n.op === 'TONE_WAIT' ? ended : null);
         if (n.op === 'TONE_WAIT') {
           this.block(task, { kind: 'audio', handleId: hid });
@@ -4659,10 +4674,10 @@
           typeof d.name !== 'string' || !d.name || cpLen(d.name) > 32 || !Array.isArray(d.args) || d.args.length > 16 ||
           d.args.some(a => typeof a !== 'string' || !a || cpLen(a) > 32) || !safeId(d.scriptId) || !Number.isSafeInteger(d.line) || d.line < 1 ||
           p.actions.some(a => a.name === d.name))
-          fail('名人の 本文で 作った 手順が 正しくありません');
+          fail('名人の 本文で 作った てじゅんが 正しくありません');
         return { ...d, meijin: true };
       });
-      if (new Set(textActions.map(d => d.name)).size !== textActions.length) fail('名人の 本文で 作った 手順が 正しくありません');
+      if (new Set(textActions.map(d => d.name)).size !== textActions.length) fail('名人の 本文で 作った てじゅんが 正しくありません');
       const definitionKeys = new Map([
         ...p.actions.map(d => [`action:${d.id}`, d]),
         ...textActions.map(d => [`action:${d.id}`, d]),
