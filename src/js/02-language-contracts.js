@@ -679,7 +679,8 @@
       kind = options.definitionKind || null,
       pure = kind === 'function',
       component = project.components.find((c) => c.id === targetId),
-      type = kind ? 'any' : component?.type || 'stage',
+      // A 名人 text belongs to no part, and every part acts in it (each action names who does it, below).
+      type = kind || targetId === MEIJIN_OWNER ? 'any' : component?.type || 'stage',
       event = options.event || 'start',
       out = [],
       seen = new Set();
@@ -771,6 +772,17 @@
       binder = initialBlockName('これ', usedNames);
     // 名人 text also lists the extension commands only 名人 text may use.
     const catalog = targetId === MEIJIN_OWNER ? [...COMMAND_CATALOG, ...extensionCommandEntries('meijin').map(x => ({ ...x, source: x.source + '。' }))] : COMMAND_CATALOG;
+    // In 名人 text every action names who does it (E2E-R1-06): the examples use the work's first character, as the
+    // check's own example does (れい：ねこは前へ10歩進む).
+    const meijinActor = targetId === MEIJIN_OWNER ? (project.components.find((c) => c.type === 'sprite') || project.components[0])?.name : null,
+      meijinWho = meijinActor ? nameSource(meijinActor) : null;
+    const meijinHint = (x, text) => {
+      if (['IfStatement', 'RepeatWhile', 'RepeatUntil', 'RepeatCount', 'Forever'].includes(x.kind))
+        return text.replace(/よこのばしょ/g, meijinWho + 'のよこのばしょ').split('\n').map((line) => /^\s+(?:「|前へ|右に)/.test(line) ? line.replace(/^(\s+)/, '$1' + meijinWho + 'は') : line).join('\n');
+      if (!['Say', 'Ask', 'MotionCommand', 'LooksCommand', 'PenCommand', 'SoundCommand', 'CloneCommand'].includes(x.kind) || /^「[^」]+」の(?:文字|コピー)|^はいけい|^「[^」]+」に「/.test(text)) return text;
+      if (/^自分の/.test(text)) return text.replace(/^自分の/, meijinWho + 'の');
+      return canonicalStatementSource(meijinWho + 'は' + text.replace(/。$/, ''), null) + '。';
+    };
     for (const x of catalog) {
       let text = x.source,
         reason = '';
@@ -807,12 +819,27 @@
       ].includes(x.kind);
       if (pure && effect) continue;
       if (['Break', 'Continue'].includes(x.kind) && !place.insideLoop) continue;
+      // The examples of もし and くり返す do something that is seen, and a loop on a number ends (F-25): a number of the
+      // work counts up, よこのばしょ grows as the part goes right, and the stage waits. Only a calculation (pure) has no
+      // action to put inside.
+      const counter = n && !n.readonly ? n.text : null, body = pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '前へ10歩進む。';
       if (x.kind === 'IfStatement')
-        text = `もし${v}が10以上なら、\n  何もしない。\nそうでなければ、\n  何もしない。`;
+        text = pure ? `もし${v}が10以上なら、\n  何もしない。` : n ? `もし${v}が10以上なら、\n  「やったね」と言う。`
+          : type === 'stage' ? 'もしタイマーが10以上なら、\n  「10秒 たったよ」と言う。'
+          : 'もしよこのばしょが300より大きいなら、\n  「右の ほうだよ」と言う。\nそうでなければ、\n  「左の ほうだよ」と言う。';
       if (x.kind === 'RepeatWhile')
-        text = `${v}が10より小さいあいだ、くり返す。\n  何もしない。`;
+        text = counter && !pure ? `${counter}が10より小さいあいだ、くり返す。\n  ${counter}を1ふやす。`
+          : pure ? `${v}が10より小さいあいだ、くり返す。\n  何もしない。`
+          : type === 'stage' ? 'タイマーが3より小さいあいだ、くり返す。\n  1秒待つ。' : 'よこのばしょが300より小さいあいだ、くり返す。\n  前へ10歩進む。';
       if (x.kind === 'RepeatUntil')
-        text = `「スペース」キーがおされるまで、くり返す。\n  何もしない。`;
+        text = `「スペース」キーがおされるまで、くり返す。\n  ${body}`;
+      if (x.kind === 'RepeatCount')
+        text = `3回くり返す。\n  ${body}`;
+      if (x.kind === 'Forever')
+        text = `ずっとくり返す。\n  ${pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '右に15度回る。'}`;
+      // A character's line is said in its own voice (F-18: no です・ます in what a part says).
+      if (x.id === 'Say')
+        text = '「やったね」と言う';
       if (x.kind === 'WaitUntil')
         text = '「スペース」キーがおされるまで待つ';
       // With data named 色, 色を「赤」にする would change that data: the character's colour is then 表示色 (F-25).
@@ -833,7 +860,7 @@
       if (x.kind === 'LooksCommand' && x.op.includes('COSTUME')) {
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
-          const co = component?.costumes?.[0];
+          const co = (component || project.components.find((c) => c.name === meijinActor))?.costumes?.[0];
           text = `すがたを「${co?.name || 'たくどん'}」にかえる`;
           if (!co)
             reason =
@@ -846,7 +873,7 @@
       if (
         x.kind === 'LooksCommand' &&
         x.op === 'SET_SELF_TEXT' &&
-        !['label', 'button', 'box', 'any'].includes(type)
+        (!['label', 'button', 'box', 'any'].includes(type) || (meijinActor && !['label', 'button', 'box'].includes(project.components.find((c) => c.name === meijinActor)?.type)))
       )
         reason = '文字・ボタン・四角だけで 使えます';
       if (x.op === 'SET_INPUT') {
@@ -880,13 +907,14 @@
         text = `「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
         if (!snd) reason = '音を 先に 入れます';
       }
+      if (meijinWho && !reason) text = meijinHint(x, text);
       add(x.id, labels[x.kind] || 'もし・くり返し', text, 'statement', reason);
     }
     // The timed move is the same block with its time (〇秒かけて、); it is shown as a second example.
-    if (!pure) add('MotionCommand:MOVE_BY:timed', '動き', '1秒かけて、いまのばしょから、右へ10歩動く。', 'statement',
+    if (!pure) add('MotionCommand:MOVE_BY:timed', '動き', meijinWho ? `${meijinWho}は1秒かけて、いまのばしょから、右へ10歩動く。` : '1秒かけて、いまのばしょから、右へ10歩動く。', 'statement',
       type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     // Holding a key to move is one sentence, the continuous rule (B-09, C-16); it is written in an event's body.
-    add('ContinuousRule', '動き', '「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。', 'statement',
+    add('ContinuousRule', '動き', meijinWho ? `「右」キーがおされているあいだ、${meijinWho}は右へ1秒に200歩の速さで動き続ける。` : '「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。', 'statement',
       kind ? 'きっかけの ある 本文で 使えます' : type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
@@ -922,7 +950,7 @@
         add(
           'each:' + name,
           '\u30ea\u30b9\u30c8',
-          blockSource('ForEach',{list:name,binder:nameSource(binder)})+'。\n  何もしない。',
+          blockSource('ForEach',{list:name,binder:nameSource(binder)})+(pure ? '。\n  何もしない。' : `。\n  ${meijinWho ? meijinWho + 'は' : ''}${nameSource(binder)}を1秒話す。`),
         );
         for (const suffix of [
           '\u306e\u9577\u3055',

@@ -87,7 +87,8 @@
     [/言い終わ/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
     [/(?:と同じように|(?<!次)のように)/, '「〜のように」では、まねる はんいが 決まりません。する ことを 一つずつ 文に 書きます'],
     [/(?:はし|端)まで(?:進む|動く|行く)$/, '速さが 決まりません。「1秒に20歩の速さで、画面のはしにふれるまで前へ動き続ける」のように 書きます'],
-    [/て(?:ください|くれ|ほしい)$/, 'お願いの 形は 読みません。「ねこは前へ10歩進む」のように、する ことを 書きます'],
+    // ねこは前へ10歩進んでください: the example is the child's sentence as a plain action.
+    [/[てで](?:ください|くれ|ほしい)$/, (m, code) => { const plain = sentenceInfinitive(code.slice(0, m.index + 1)); return `お願いの 形は 読みません。「${plain !== code.slice(0, m.index + 1) ? plain : 'ねこは前へ10歩進む'}」のように、する ことを 書きます`; }],
     [/ので、/, '「〜ので」は 理由を 言う ことばで、いつ するかは 決まりません。しらべるときは「もし〜なら、」、そうなるまで 待つときは「〜になったら、」と 書きます'],
     [/ても、/, '「〜ても」では、いつ 何を するかが 決まりません。「もし〜なら、」と「そうでなければ、」で 書きます'],
     [/(?:たり|だり)、.+(?:たり|だり)する$/, '「〜たり、〜たりする」では、どちらを いつ するかが 決まりません。する ことを 一つずつ 文に 書きます'],
@@ -296,9 +297,9 @@
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
       if (seconds.kind !== 'NumberLiteral')
-        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。かわる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', `「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。かわる 時間で くり返すときは「ずっとくり返す。」の 中に「${p[0].text}秒待つ。」と 書きます`);
       if (!(seconds.value > 0))
-        throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。かわる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。かわる 時間で くり返すときは「ずっとくり返す。」の 中に「〇秒待つ。」と 書きます');
       return { heading: { event: 'interval', actorRef: { kind: 'self' }, seconds: sentenceQuantity(seconds, '秒') }, body: p[1] };
     }
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)になったとき、(.*)$/d, code, mask))) {
@@ -768,7 +769,7 @@
     // ねこは、犬にいちばん近い星の方を向く: what it is near is chosen from a list.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)にいちばん近い(.+?)の方を向く$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
       throw sentenceDiagnostic(`何に 近いかを 書くときは、リストから えらびます。れい：えらんだ部品を、なかまのうち、${p[1].text}にいちばん近いものにする`, line, [], { kind: 'MotionCommand' });
-    // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
+    // Words that give no single meaning to a program (名人の本文でも読めない書き方): say how to write it.
     const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
     // ねこが「星」にふれたら、 with what to do on the next lines: 〜にふれたら waits once for the action on its own line;
     // what is done each time is written under the heading 〜にふれたとき、.
@@ -789,7 +790,7 @@
     // ねこは前へ十歩進む: numbers are written in digits (一つ in 一つ消す・一つずつ is a word, not a count).
     for (const m of mask.matchAll(/[〇一二三四五六七八九十百千万]+(?:歩|秒|回|度|個|番目|点|つ)/g))
       if (!/^一つ$/.test(m[0]) && !/[\p{Script=Han}]/u.test(mask[m.index - 1] || ''))
-        throw sentenceDiagnostic(`「${m[0]}」は 漢数字です。名人モードでも、数は「${meijinDigits(m[0])}」のように 数字で 書きます`, line, [], { kind: 'Sequence' });
+        throw sentenceDiagnostic(`「${m[0]}」は 漢数字です。名人の本文でも、数は「${meijinDigits(m[0])}」のように 数字で 書きます`, line, [], { kind: 'Sequence' });
     if (!scope.meijinProbe) {
       const near = meijinNearMiss(code, mask, symbols, scope, env, line, read, attempt);
       if (near) throw sentenceDiagnostic(near, line, [], { kind: 'Sequence' });

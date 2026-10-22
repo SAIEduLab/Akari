@@ -431,11 +431,12 @@
       [field('actorRef', 'だれが', 'actor-ref', { kind: 'self' })],
       [expression('count', '何回', 3)], [], op('event', 'click'),
       { capability: 'event-count:click', semanticRoles: ['actorRef', 'count'] });
-    add('ContinuousRule', 'rule', 'きまりに あてはまる間、動きつづける',
+    // One name for the rule on every surface (F-23: ルール); a new one moves while the 右 key is held, as the hint does.
+    add('ContinuousRule', 'rule', 'つづけて動くルール',
       [field('actorRef', 'だれが動く', 'actor-ref', { kind: 'self' }),
         field('direction', '進む向き', 'direction', 'right')],
       [expression('condition', 'つづける きまり', true), expression('seconds', '何秒に', 1),
-        expression('distance', '何歩の速さ', 20)], [], null,
+        expression('distance', '何歩の速さ', 200)], [], null,
       { capability: 'continuous-state-motion', semanticRoles: ['actorRef', 'condition', 'direction', 'seconds', 'distance'] });
     // The move blocks keep one leg per axis (右・左 and 上・下). 決めたばしょへ行く always has both legs; いまのばしょから動く
     // has one or two. Every move and turn takes an optional time (〇秒かけて、).
@@ -461,8 +462,8 @@
     add('CommentLine', 'statement', 'メモ', [field('text', 'メモの中身', 'comment', '')]);
     add('Assignment', 'statement', '中身を決める', [], [target(), expression('value', '中身')]);
     for (const [value, label] of [
-      ['ADD', 'かずを足す'],
-      ['SUB', 'かずを引く'],
+      ['ADD', '数を ふやす'],
+      ['SUB', '数を へらす'],
     ])
       add(
         'NumericUpdate',
@@ -561,7 +562,8 @@
     add(
       'UserActionCall',
       'statement',
-      '自分で作ったブロックを動かす',
+      // 動かす is kept for movement and ▶ 動かす (F-22); the face reads 【…】というてじゅんを行う.
+      'てじゅんを 行う',
       [name('name', '作ったブロックの名前', 'てじゅん', true), field('argumentNames', '入れるものの名前', 'argument-names', undefined, { required: false })],
       [
         args([], {
@@ -1011,6 +1013,14 @@
     };
     return visit(root, expected, 'root', 0, expected === 'expression' ? 1 : 0);
   }
+  // A new block runs as it is and does something (FCB-05, F-25): the values the 書ける ことば examples use, never 0 where
+  // 0 stops the run (ペンの太さ), silences it (音の大きさ) or does nothing (重なり, 音の高さ, ふやす).
+  const NEW_BLOCK_VALUES = Object.freeze({
+    'PenCommand:SET_SIZE|args': 3, 'SoundCommand:SET_VOLUME|args': 50, 'LooksCommand:FORWARD_LAYERS|args': 1,
+    'LooksCommand:BACKWARD_LAYERS|args': 1, 'SoundCommand:PITCH_UP|args': 1, 'SoundCommand:PITCH_DOWN|args': 1,
+    'LooksCommand:SET_SELF_TEXT|args': 'こんにちは', 'NumericUpdate:ADD|value': 1, 'NumericUpdate:SUB|value': 1,
+    'Ask|question': '名前は？', 'Broadcast|message': 'スタート', 'BroadcastAndWait|message': 'スタート',
+  });
   function createSyntaxNode(schema, context = {}) {
     const draft = context.draft === true;
     const hole = (role, label) => ({ kind: 'Hole', role, label });
@@ -1035,7 +1045,7 @@
     for (const slot of schema.inputs) {
       if (slot.required === false) continue;
       const make = () => draft ? hole(slot.type, slot.label)
-        : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(slot.initial ?? (
+        : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(NEW_BLOCK_VALUES[schema.id + '|' + slot.key] ?? slot.initial ?? (
           schema.id === 'LooksCommand:SET_SCALE' ? 100 :
           ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 :
           // A colour is named as the child names it (F-21), as the hints write it: 色を「赤」に, ペンの色を「青」に.
@@ -1052,13 +1062,17 @@
               ? valueNode(named) : !draft && tone && index < tone.length
               ? valueNode(tone[index]) : !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
               ? valueNode('入力らん') : !draft && schema.id === 'MotionCommand:MOVE' && index === 0
-                ? valueNode(10) : !draft && schema.id === 'MotionCommand:GOTO_PART' && index === 0
+                ? valueNode(10) : !draft && ['MotionCommand:GOTO_PART', 'MotionCommand:POINT_TO'].includes(schema.id) && index === 0
                   // The first part in the work other than the body's owner, or the mouse (LANGUAGE.md 動きの文).
-                  ? valueNode(typeof context.partTarget === 'string' && context.partTarget ? context.partTarget : 'マウス') : make())
+                  ? valueNode(typeof context.partTarget === 'string' && context.partTarget ? context.partTarget : 'マウス')
+                  // A copy is made of a character: the one the editor names, else the first other part.
+                  : !draft && schema.id === 'CloneCommand:CREATE_TARGET' && index === 0 && [context.spriteTarget, context.partTarget].some(name => typeof name === 'string' && name && name !== 'マウス')
+                    ? valueNode([context.spriteTarget, context.partTarget].find(name => typeof name === 'string' && name && name !== 'マウス')) : make())
         : make();
     }
     // A new いまのばしょから動く moves 右へ10歩; its second leg and the time are added in the block.
     if (schema.id === 'MotionCommand:MOVE_BY') node.x = valueNode(10);
+    if (schema.id === 'ContinuousRule' && !draft) node.condition = { kind: 'SensorRead', sensor: 'KEY_DOWN', arg: valueNode('右') };
     for (const slot of schema.bodies)
       node[slot.key] =
         slot.requiredExecutable && (!slot.when || node[slot.when])
@@ -1124,7 +1138,11 @@
           tree.annotations[annotation.key] = node[annotation.key] ?? '';
       return tree;
     };
-    return { tree: encode(root, rootType, []), nodeMap, nodeIds };
+    // The names the code was read with stay with the blocks, so block→code writes what 整える writes (F-34:
+    // 点数を言う, 持ち物の数).
+    const tree = encode(root, rootType, []), symbols = context.symbols || FORMAT_SYMBOLS.get(root);
+    if (symbols) BLOCK_TREE_SYMBOLS.set(tree, symbols);
+    return { tree, nodeMap, nodeIds };
   }
   function blockDecode(tree, context = {}) {
     const seen = new WeakSet(),
@@ -1226,6 +1244,8 @@
     const rootType = context.expected || BLOCK_SCHEMA_BY_ID.get(tree?.schemaId)?.category;
     const ast = decode(tree, rootType, 'root', 0, rootType === 'expression' ? 1 : 0);
     validateSyntaxAst(ast, rootType, context);
+    const symbols = context.symbols || (tree && typeof tree === 'object' ? BLOCK_TREE_SYMBOLS.get(tree) : null);
+    if (symbols && ast && typeof ast === 'object') FORMAT_SYMBOLS.set(ast, symbols);
     return ast;
   }
   function createBlock(schemaId, context = {}) {
