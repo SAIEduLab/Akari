@@ -4,7 +4,7 @@ const AkariMeijinExample = {
   manifest: {
     id: 'demo.meijin', name: '名人の記録', version: '1.1.0', apiContract: 1,
     standard: { languageContractId: 4, runtimeContractId: 4 },
-    description: '名人モードの本文でだけ使える、数を記録する命令と、記録した数を読む計算。',
+    description: '名人の本文でだけ使える、数を記録する命令と、記録した数を読む計算。',
     dependencies: [], capabilities: [], offline: true, selfContained: true,
     state: { formatVersion: 1, initial: { value: 0 } },
     commands: [{ id: 'record', name: '数を記録する', description: '数を記録し、記録したできごとを出す。', scope: 'meijin',

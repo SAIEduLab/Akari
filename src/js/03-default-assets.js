@@ -3122,7 +3122,7 @@
         if (x.document !== undefined) {
           const d = x.document;
           if (!exactKeys(d, ['revision', 'unitIds']) || !Number.isSafeInteger(d.revision) || d.revision < 0 || !Array.isArray(d.unitIds) || !d.unitIds.length || d.unitIds.length > LIMITS.scripts)
-            throw new AkariError('F503', 'コードの まとまりの きろくが 正しくありません');
+            throw new AkariError('F503', '本文の まとまりの きろくが 正しくありません');
           for (const id of d.unitIds) addId(id);
         }
         if (cpLen(x.source) > LIMITS.sourceEach) throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
@@ -3133,21 +3133,21 @@
         ...(Object.hasOwn(x || {}, 'id') ? ['id'] : []),
         ...(Object.hasOwn(x || {}, 'document') ? ['document'] : []),
         ...(Object.hasOwn(x || {}, 'filter') ? ['filter'] : [])]))
-        throw new AkariError('F503', 'コードの 中身が 正しくありません');
+        throw new AkariError('F503', '本文の 中身が 正しくありません');
       if (x.id !== undefined) addId(x.id);
       if(x.document!==undefined){
         const d=x.document;
         if(!x.id||!exactKeys(d,['revision','unitIds'])||!Number.isSafeInteger(d.revision)||d.revision<0||!Array.isArray(d.unitIds)||!d.unitIds.length||d.unitIds.length>LIMITS.scripts)
-          throw new AkariError('F503','コードの まとまりの きろくが 正しくありません');
+          throw new AkariError('F503','本文の まとまりの きろくが 正しくありません');
         for(const id of d.unitIds)addId(id);
       }
       const target =
         x.targetId === 'stage' ? { type: 'stage' } : p.components.find((c) => c.id === x.targetId);
-      if (!target) throw new AkariError('F503', 'コードで 動かす 部品が 見つかりません');
+      if (!target) throw new AkariError('F503', '本文の 持ち主の 部品が 見つかりません');
       if (!EVENT_BY_TYPE[target.type]?.includes(x.event))
-        throw new AkariError('F506', 'この部品では使えないきっかけです');
+        throw new AkariError('F506', 'この 部品では 使えない きっかけです');
       const key = x.id || `${x.targetId}::${x.event}`;
-      if (sk.has(key)) throw new AkariError('F503', '同じ きっかけの 動きが 2つ いじょう あります');
+      if (sk.has(key)) throw new AkariError('F503', '同じ 本文が 2つ いじょう あります');
       sk.add(key);
       // A touch body names what it touches (filter.target: a part's name, or 端 and its sides).
       if (x.event === 'touchStart' && (x.filter == null || !x.filter.target))
