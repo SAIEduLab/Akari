@@ -3260,6 +3260,16 @@
       if ($('#assetModal').classList.contains('show')) renderAppearance();
     }
     let propHelpSerial = 0;
+    // A rename that the work refuses (prepareResourceRename), said in the status line's voice.
+    const PROPERTY_REFUSALS = Object.freeze({
+      '同じ 名前が あります': 'ほかの キャラクターや 部品と ちがう 名前に してね',
+      '同じ ところに 同じ 名前が あります。ちがう 名前に してください': 'ほかの キャラクターや 部品や 画面と ちがう 名前に してね',
+      '書きかけを 先に 決めてから、名前を かえてください': '書きかけを 先に 決めてから、名前を かえてね',
+      '名前を 使っているか しらべられない 本文が あります。先に 本文を 書きおえてから、名前を かえてください':
+        '名前を 使っているか しらべられない 本文が あるよ。先に 本文を 書きおえてから、名前を かえてね',
+      '同じ 名前が、いくつかの ものを さしています。どれの ことか、はっきり 書いてから 名前を かえてください':
+        '同じ 名前が、いくつかの ものを さしているよ。どれの ことか、はっきり 書いてから 名前を かえてね',
+    });
     function propRow(name, value, onchange, type = 'text', options = {}) {
       const r = document.createElement('div');
       r.className = 'prop-row';
@@ -3281,7 +3291,7 @@
         const before = cloneDesignProject(project);
         try {
           if (type === 'number' && (inp.value.trim() === '' || !finite(Number(inp.value))))
-            throw new Error('数を 入れてください');
+            throw new Error('数を 入れてね');
           onchange(type === 'checkbox' ? inp.checked : inp.value);
           validateDesignProject(project);
           markDirty();
@@ -3291,6 +3301,9 @@
         } catch (err) {
           log(`${err.code || ''} ${err.message}`, 'error');
           rollbackDesign(before);
+          // The field goes back to what it was; the status line says why and what to write, in its own voice (F-11: no
+          // silent no-op; F-18). Another check of the work (with a code) is said in the teacher log only.
+          setStatus(err.code ? PROPERTY_REFUSALS[err.message] || `「${name}」は その 中身に できなかったよ。もとに もどしたよ` : err.message);
         }
       });
       v.appendChild(inp);
@@ -3378,7 +3391,7 @@
             'きほん',
             propRow('\u540d\u524d', project.stage.name, (v) => {
               if (!v.trim())
-                throw new Error('名前を からっぽには できません。名前を 書いてください');
+                throw new Error('画面の 名前を 書いてね');
               project = prepareResourceRename(project,'component:stage',v.trim(),{drafts:resourceDraftRecords()});
               invalidateEditors();
             }),
@@ -3390,7 +3403,7 @@
               project.stage.width,
               (v) => {
                 const n = Number(v);
-                if (!finite(n) || n < 200 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。200から1200までの 数を 入れてください');
+                if (!finite(n) || n < 200 || n > 1200) throw new Error('画面の はばは 200から1200までの 数に してね');
                 project.stage.width = n;
               },
               'number',
@@ -3402,7 +3415,7 @@
               (v) => {
                 const n = Number(v);
                 if (!finite(n) || n < 150 || n > 800)
-                  throw new Error('高さが 大きすぎるか 小さすぎます。150から800までの 数を 入れてください');
+                  throw new Error('画面の 高さは 150から800までの 数に してね');
                 project.stage.height = n;
               },
               'number',
@@ -3445,10 +3458,9 @@
           'きほん',
           propRow('\u540d\u524d', c.name, (v) => {
             v = v.trim();
-            if (!v || project.components.some((x) => x !== c && x.name === v))
-              throw new Error(
-                '部品の名前は 空にできません。ほかの部品と 同じ名前にも できません。',
-              );
+            if (!v) throw new Error('名前を 書いてね');
+            if (project.components.some((x) => x !== c && x.name === v))
+              throw new Error('ほかの キャラクターや 部品と ちがう 名前に してね');
             project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
             invalidateEditors();
           }),
@@ -3487,7 +3499,7 @@
             c.w,
             (v) => {
               const n = Number(v);
-              if (n < 8 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。8から1200までの 数を 入れてください');
+              if (n < 8 || n > 1200) throw new Error('はばは 8から1200までの 数に してね');
               c.w = n;
             },
             'number',
@@ -3498,7 +3510,7 @@
             c.h,
             (v) => {
               const n = Number(v);
-              if (n < 8 || n > 1200) throw new Error('高さが 大きすぎるか 小さすぎます。8から1200までの 数を 入れてください');
+              if (n < 8 || n > 1200) throw new Error('高さは 8から1200までの 数に してね');
               c.h = n;
             },
             'number',
@@ -3522,7 +3534,7 @@
             c.scalePercent,
             (v) => {
               const n = Number(v);
-              if (n < 1 || n > 1000) throw new Error('大きさが 大きすぎるか 小さすぎます。1から1000までの 数を 入れてください');
+              if (n < 1 || n > 1000) throw new Error('大きさは 1から1000までの 数に してね');
               c.scalePercent = n;
             },
             'number',
