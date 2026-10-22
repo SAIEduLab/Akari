@@ -1693,8 +1693,10 @@
     // and pressing a block always checks the place it goes (paletteAdd).
     const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
     function listedPlace(location) {
-      const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
-      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
+      const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null,
+        // In 答えを もとめる the last line is 「〜を答えとして返す」: the list is checked just before it (PERF-R2-01).
+        end = siblings?.[siblings.length - 1]?.schemaId === 'ReturnStatement' ? siblings.length - 1 : siblings?.length;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: end } : location;
     }
     function paletteAvailability(schema, location) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
@@ -1845,9 +1847,12 @@
           '',
           'palette-add',
           () => {
-            if (!a.enabled) {
+            // The list is checked at the end of the body; a press checks the place the block really goes (PERF-01).
+            const real = !a.enabled && schema.category === 'statement' && location?.body && !schema.candidateReason
+              ? availability(schema.id, location, schema.candidateNode) : a;
+            if (!real.enabled) {
               reason.hidden = false;
-              announce(a.reason, true);
+              announce(real.reason || a.reason, true);
               return;
             }
             paletteAdd(schema);
