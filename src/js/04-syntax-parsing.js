@@ -2531,6 +2531,9 @@
       const near=(message,label,source,kind)=>{const fix=choice(label,source);throw sentenceDiagnostic(message.replace('〔文〕',fix[0]?.source||source),line,fix,{kind});};
       if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)すがたを(?:かえる|変える)$/d,code,mask))&&unread())
         near('どの すがたに するかを 書きます。つぎの すがたに するときは「〔文〕」と 書きます','つぎの すがたに する',p[0].text+'つぎのすがたにかえる','LooksCommand');
+      // 消える: a part hides itself; a copy is taken away.
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:消える|きえる)$/d,code,mask))&&unread())
+        throw sentenceDiagnostic('見えなく するときは「すがたをかくす」、コピーを 消すときは「このコピーだけを消す」と 書きます',line,[...choice('すがたを かくす',p[0].text+'すがたをかくす')],{kind:'LooksCommand'});
       if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)音を(?:止める|とめる)$/d,code,mask))&&unread())
         near('鳴っている 音を 止めるときは「〔文〕」と 書きます','すべての 音を 止める',p[0].text+'すべての音を止める','SoundCommand');
       if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([0-9０-９.．]+)歩(?:下がる|さがる)$/d,code,mask))&&unread())
