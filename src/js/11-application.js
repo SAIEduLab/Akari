@@ -1039,9 +1039,7 @@
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
           button.type = 'button'; button.dataset.intentChoice = '';
-          button.textContent = (proposal.label || proposal.source)
-            .replace('台詞として画面に言う', 'そのままの文字を話す')
-            .replace('データの値を言う（名前の定義を確認）', '覚えたデータを話す（作った名前をたしかめる）');
+          button.textContent = proposal.label || proposal.source;
           button.title = proposal.description || proposal.source;
           button.onclick = () => {
             if (modelLocked() || binding.textarea.value !== original) return;
@@ -1064,12 +1062,17 @@
           choices.append(button);
         }
         const cancel = document.createElement('button');
-        cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = '書いた文のまま考える';
+        cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = 'この あんないを とじる';
         cancel.onclick = () => { choices.remove(); binding.textarea.focus(); };
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error, binding.textarea?.value);
+      // The status line speaks in Akari's voice (F-18): in code it points at the line and the explanation by the code,
+      // which keeps the rule's own wording; a block view's message is said as it is.
+      const firstDiagnostic = error?.diagnostics?.[0] || error, issueLine = firstDiagnostic?.line || error?.line;
+      editorFailureStatus = binding.session?.mode === 'blocks' ? childDiagnosticText(firstDiagnostic, binding.textarea?.value)
+        : issueLine ? `書き方に 直す ところが あるよ。コードの ${issueLine}行目を 見てね`
+        : '書き方に 直す ところが あるよ。コードの 上の せつめいを 見てね';
       setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
@@ -1278,9 +1281,10 @@
         if (binding.session?.blockDraft){
           if (preserveView) return false;
           const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
-          const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'ブロックや 数・文字';
+          const label=hole?.node.fields.label||'ブロックや 数・文字';
+          // The focus goes to the empty place; the message says what to put there (FCB-03, I5V-14).
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `${name}・${eventText(context.event, context.filter)||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
+          return showEditorFailure(binding, `あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
         }
         return true;
       }
@@ -7892,7 +7896,8 @@
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"]')
+          // ▶ 動かす closes the input itself and says why it does not run (startRun).
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn')
         )
           return;
         if (!flushActiveEditor()) {
