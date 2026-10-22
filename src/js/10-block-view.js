@@ -33,7 +33,7 @@
     if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message))
       return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【点数】が10より大きい';
     if (/言う ことは「「文字」と言う」/.test(message))
-      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。おぼえた 点数を 話すときは：点数を言う。';
+      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。へんすうの 中身を 話すときは「点数を言う」のように 書きます。';
     if (/そのまま 言う 文字か、入れた 音か/.test(message))
       return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：「おはよう」と言う／「ベル」を鳴らす／点数を言う。';
     if (/重ねるときは、次の 行に 書いて/.test(message))
@@ -58,8 +58,12 @@
       return '「答えを もとめる」では、作品や 部品の へんすう・リストの 中身を かえられません。かえる やることは「てじゅん」へ 入れます。';
     if (/「待つ」と「動く」の 2つの 文に 分けます/.test(message))
       return '待ってから 動くときは、2つの 文に 分けます。\nれい：1秒待つ。\n前へ10歩進む。';
-    if (/「N番目」はリスト/.test(message))
-      return '何番目かを えらぶには、ならんだ ものを おぼえる リストを 使います。れい：【買うもの】の2番目。話す 文字の「買うもの」とは ちがいます。';
+    if (/「N番目」はリスト/.test(message)) {
+      // The name the child wrote before 〜番目, when the line is known; no list of another work is named.
+      const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
+        name = /([^\s（）「」【】、。]+?)の(?:[0-9０-９]+|（[^）]*）)番目/.exec(line)?.[1];
+      return (name ? '「' + name + '」は リストでは ないので、何番目かを えらべません。' : '') + '何番目かを えらべるのは、ならんだ ものを おぼえる リストです。';
+    }
     if (/使われていない絵や音か、足りない絵や音/.test(message))
       return '作品で使う絵や音と、ほぞんする絵や音の組み合わせが合っていません。理由は 下の くわしい せつめいに のこしています。「絵や音」の画面で、使う絵や音を たしかめてください。';
     if (/絵や音の中身を表す文字|同じしるし|絵や音の番号|使うはずの絵や音|同じ中身の絵や音|ではないものを使っています|絵や音「[^」]*」がありません|の種類が、正しくありません|記録と合いません|記録とちがいます|絵や音の記録の形|使える大きさの外|あかりで使えない(?:形|種類)の|中身をたしかめるしるし|同じ絵や音が2つ以上|おまけの情報|ほぞんした音|ほぞんしたときと合いません/.test(message))
@@ -133,6 +137,24 @@
       branchLines = new Map(),
       branchSourceLines = new Map();
     const phraseCache = new Map();
+    // The なかま of the list, in their order: the chips, and the names of the list's blocks elsewhere (FCB-21).
+    const PALETTE_GROUP_LABELS = new Map([
+      ['basic', 'よく使う'],
+      ['', 'すべて'],
+      ['motion', '動き'],
+      ['look', '見た目'],
+      ['control', 'もし・くり返し'],
+      ['event', '合図'],
+      ['data', 'へんすう・リスト'],
+      ['operator', '計算'],
+      ['sense', 'しらべる'],
+      ['sound', '音'],
+      ['pen', 'ペン'],
+      ['action', '自分で作ったブロック'],
+      ['clone', 'コピー'],
+      ['comment', 'メモ'],
+    ]);
+    let faceSymbols = null;
     const openEditors = new Set();
     const openAnnotations = new Set(),
       collapsed = new Set(),
@@ -280,10 +302,10 @@
     root.setAttribute('aria-label', 'ブロックで作るところ');
     const controls = E('div', 'blockui-view-controls'),
       destinationLabel = E('div', 'blockui-destination', '本文の いちばん下に入れる'),
-      cancelButton = button('とちゅうで やめる', 'cancel', () => cancel()),
+      cancelButton = button('入力を やめる', 'cancel', () => cancel()),
       commitButton = button('決める', 'commit', () => flush({explicit:true})),
       messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' }),
-      // An input's mistake is shown right under the field, in the floating 決める・とちゅうで やめる (E-12).
+      // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
     root.append(controls, messageBox);
@@ -293,7 +315,7 @@
       }),
       workspace = E('div', 'blockui-workspace', null, {
         tabindex: '0',
-        'aria-label': '\u30d6\u30ed\u30c3\u30af\u306e\u4f5c\u696d\u53f0',
+        'aria-label': 'ブロックの作業台',
       }),
       paletteControls = E('div', 'blockui-palette-controls');
     const workspaceShell = E('div', 'blockui-workspace-shell'),
@@ -306,18 +328,18 @@
       'aria-label': '大きさを100%に もどす',
     });
     // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
-    const minus = button('\u2212', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '\u5c0f\u3055\u304f\u898b\u308b',
+    const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
+        'aria-label': '小さく見る',
       }),
-      plus = button('\uff0b', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '\u5927\u304d\u304f\u898b\u308b',
+      plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
+        'aria-label': '大きく見る',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
-    const home = button('\u3055\u3044\u3057\u3087\u3078', 'workspace-home', () => {
+    const home = button('さいしょへ', 'workspace-home', () => {
         workspace.scrollTo({ left: 0, top: 0 });
         workspace.focus({ preventScroll: true });
       }),
-      fit = button('\u898b\u308f\u305f\u3059', 'workspace-fit', () => fitBlocks());
+      fit = button('見わたす', 'workspace-fit', () => fitBlocks());
     // 「ブロックを しまう」 puts the block list away so the body gets its width, and reads 「ブロックを 出す」 while it is
     // away (F-09). はじめて has no such button: its short list always stays.
     const libraryToggle = button(
@@ -349,13 +371,13 @@
     }
     const wide = options.onExpand
       ? button(
-          '\u4f5c\u696d\u53f0\u3092\u5e83\u304f',
+          '作業台を広く',
           'workspace-expand',
           () => {
             const expanded = options.onExpand();
             wide.textContent = expanded
-              ? '\u753b\u9762\u3082\u898b\u308b'
-              : '\u4f5c\u696d\u53f0\u3092\u5e83\u304f';
+              ? '画面も見る'
+              : '作業台を広く';
             wide.setAttribute('aria-pressed', String(expanded));
             scheduleGeometry();
           },
@@ -413,17 +435,20 @@
     });
     paletteControls.append(restoreSearch);
     if(options.onData)paletteControls.append(button('＋ へんすう・リストを作る','create-data',()=>options.onData()));
+    // ＾ is a くわしく block (F-21): its help shows there only (renderPalette).
+    const powerHelp=E('p','','「同じ数を くり返し かける」（＾）は、同じ 数を 何回も かける 計算だよ。2＾3 は 2×2×2 で 8 に なるよ。');
     const help=E('details','blockui-local-help');help.append(E('summary','','いまの作り方のヒント'),
-      E('p','','「＋ ここに入れる」で ブロックを 入れます。あいている ところには 文字・数・へんすう・リストを えらびます。「たずねる」で 待った 返事は「答え」で 使えます。とちゅうでも ほぞんできます。'),
-      E('p','','あいている ところに 入れる 中身には、文字「おはよう」、数の 10、「あてはまる・あてはまらない」などが あります。'),
-      E('p','','つなぐブロックは、「話す」「待つ」など、してほしい ことです。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところです。'),
-      E('p','','ブロックは なかまごとに 分かれています。れい：「よく使う」には「話す」「待つ」が あります。「ブロックを さがす」に ことばを 入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない 理由も 読めます。'),
-      E('p','','とちゅうに 入れる：本、ぼうしの 間に かさを 入れると、本、かさ、ぼうしに なります。入れかえる：かさを ぼうしに かえるように、えらんだ 中身を かえます。'),
-      E('p','','リストには、中身が 1つずつ ならんでいます。「中身を 一つずつ 見る」ブロックでは、前から じゅんに 同じ 動きを します。'),
-      E('p','','「同じ数を くり返し かける」（＾）は、同じ 数を 何回も かける 計算です。2＾3 は 2×2×2 で 8 に なります。計算や くらべ方の しるしだけを かえても、左右の 中身は のこります。'),
-      E('p','','メモは、あとで 思い出せるように 書く ひとことです。動きは かわりません。'),
-      E('p','','「見た目のコピー」は、見た目と せっていが 同じ 部品を もう1つ 作ります。本文は コピーしません。「自分のコピーを作る」の コピーは、動いている あいだだけの 部品で、もとの 部品の 本文で 動きます。'),
-      E('p','','「とちゅうで やめる」は、いま えらんだ 入れる ばしょや、かえかけている 文字・組み立てを やめます。「もとにもどす」は、もう 決めた ことを 1つ もどします。'));
+      E('p','','「＋ ここに入れる」で ブロックを 入れるよ。あいている ところには 文字・数・へんすう・リストを えらぶよ。「たずねる」で 待った 返事は「答え」で 使えるよ。とちゅうでも ほぞんできるよ。'),
+      E('p','','あいている ところに 入れる 中身には、文字「おはよう」、数の 10、「あてはまる・あてはまらない」などが あるよ。'),
+      E('p','','つなぐブロックは、「話す」「待つ」など、してほしい ことだよ。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところだよ。'),
+      E('p','','ブロックは なかまごとに 分かれているよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。'),
+      E('p','','とちゅうに 入れる：本、ぼうしの 間に かさを 入れると、本、かさ、ぼうしに なるよ。入れかえる：かさを ぼうしに かえるように、えらんだ 中身を かえるよ。'),
+      E('p','','リストには、中身が 1つずつ ならんでいるよ。「中身を 一つずつ 見る」ブロックでは、前から じゅんに 同じ 動きを するよ。'),
+      E('p','','計算や くらべ方の しるしだけを かえても、左右の 中身は のこるよ。'),
+      powerHelp,
+      E('p','','メモは、あとで 思い出せるように 書く ひとことだよ。動きは かわらないよ。'),
+      E('p','','「見た目のコピー」は、見た目と せっていが 同じ 部品を もう1つ 作るよ。本文は もたないよ。「自分のコピーを作る」の コピーは、動いている あいだだけの 部品で、もとの 部品の 本文で 動くよ。'),
+      E('p','','「入力を やめる」「入れるのを やめる」「もっていくのを やめる」は、いま している ことを やめるよ。「もとにもどす」は、もう 決めた ことを 1つ もどすよ。'));
     paletteControls.append(help);
     paletteControls.id = viewId + '-palette-tools';
     paletteControls.hidden = true;
@@ -453,8 +478,19 @@
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         placeActions(menu, menu.querySelector('.blockui-action-items'));
       placeControls();
-      placeNodeTools();
+      placeNodeToolsSoon();
     });
+    // While the workspace scrolls, the selected block's tools are placed at most once a frame, and only while that block
+    // is in view (PERF-06): placing them reads the box of every block.
+    let toolsFrame = null;
+    function placeNodeToolsSoon() {
+      if (toolsFrame !== null) return;
+      toolsFrame = doc.defaultView.requestAnimationFrame(() => {
+        toolsFrame = null;
+        const box = workspace.querySelector('.blockui-node.blockui-selected')?.getBoundingClientRect(), room = workspace.getBoundingClientRect();
+        if (box && box.bottom > room.top && box.top < room.bottom) placeNodeTools();
+      });
+    }
     listen(doc.defaultView, 'resize', () => {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
       placeControls();
@@ -495,7 +531,7 @@
       const items = [...paletteList.querySelectorAll('.blockui-palette-item > button')], at = items.indexOf(event.target);
       event.preventDefault(); event.stopPropagation();
       if (event.key === 'ArrowDown') items[Math.min(items.length - 1, at + 1)]?.focus();
-      else if (at <= 0) search.focus(); else items[at - 1].focus();
+      else if (at <= 0) { if (paletteControls.hidden) paletteToggle.click(); search.focus(); } else items[at - 1].focus();
     });
     listen(modeSelect, 'change', () => {
       paletteMode = modeSelect.value;
@@ -547,7 +583,10 @@
         // Persisting a new event gives the same document its permanent key.
         if(displaySession?.ownerKey===owner)displaySession={...displaySession,ownerKey:transition.to};
       }
-      announce(result.changed === false ? '中身は かわっていないよ' : 'ブロックを かえたよ');
+      announce(result.changed === false ? '中身は かわっていないよ'
+        : ['insert', 'wrap', 'expression', 'variadic-insert'].includes(op.type) ? 'ブロックを 入れたよ'
+        : ['remove', 'variadic-remove'].includes(op.type) ? 'ブロックを けしたよ'
+        : ['move', 'move-run'].includes(op.type) ? 'ブロックを もっていったよ' : op.type === 'duplicate' ? 'ブロックを もう1つ 作ったよ' : 'ブロックを かえたよ');
       if (!fromPending) render({ force: true });
       return result;
     }
@@ -704,13 +743,13 @@
           ok: false,
           pending: true,
           reason: replacement
-            ? 'もとの ばしょに 入れる ブロックを えらぶか、「とちゅうで やめる」を おしてね'
+            ? 'もとの ばしょに 入れる ブロックを えらぶか、「' + cancelLabel() + '」を おしてね'
             : 'ブロックを おく ところで はなしてね。やめるときは Esc キーを おしてね',
         };
       if (!pending) return { ok: true };
       const p = pending;
       if(p.field.type==='heading'&&!explicit){
-        const reason='いつ動くかを えらんだら「この動きの きっかけを かえる」を おしてね';
+        const reason='いつ動くかを えらんだら「この 本文の きっかけを かえる」を おしてね';
         announce(reason,true);return {ok:false,pending:true,reason};
       }
       // A mistake found when the input is to be decided is shown right under the field (E-12).
@@ -726,12 +765,12 @@
       if (p.composing || p.input.dataset.composing === 'true')
         return refused('日本語の へんかんを おわらせてから、もう一度 やってね');
       if (session()?.ownerKey !== p.ownerKey)
-        return refused('入れている とちゅうで、なおしていた ところが かわったよ。「決める」を おすか、「とちゅうで やめる」を おしてね');
+        return refused('入れている とちゅうで、なおしていた ところが かわったよ。「決める」を おすか、「' + cancelLabel() + '」を おしてね');
       if (
         session()?.sourceRevision !== p.sourceRevision ||
         session()?.contextRevision !== p.contextRevision
       ) {
-        return refused('入れている とちゅうで、本文や まわりが かわったよ。「とちゅうで やめる」を おして、もう一度 あいている ところを えらんでね');
+        return refused('入れている とちゅうで、本文や まわりが かわったよ。「' + cancelLabel() + '」を おして、もう一度 あいている ところを えらんでね');
       }
       let value;
       try {
@@ -807,7 +846,13 @@
       announce('入れるのを やめたよ。組み立てていた ブロックは のこっているよ');
       return { ok: true };
     }
+    // One やめる per state, named by what it stops (F-23): a block put in that still has holes, the input being typed, a
+    // block being moved, or the place chosen for the next block.
+    function cancelLabel() {
+      return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もっていくのを やめる' : '入れるのを やめる';
+    }
     function cancel() {
+      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ');
       const field = pending;
       pending = null;
       destination = null;
@@ -833,7 +878,7 @@
               : String(value ?? '');
         field.input.setAttribute('aria-invalid', 'false');
       }
-      announce('とちゅうで やめたよ');
+      announce(stopped);
       render({ force: true });
       return { ok: true };
     }
@@ -856,6 +901,7 @@
       commitButton.disabled = isLocked() || !pending;
       const draft = session()?.blockDraft;
       cancelButton.disabled = !pending && !moving && !drag && !replacement && !destination && !draft;
+      cancelButton.textContent = cancelLabel();
       // While a block is only being carried, what it does is shown by the pointer (E-04): no controls cover the blocks.
       controls.hidden = !pending && !moving && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
@@ -941,7 +987,7 @@
       }
       clearOfControls();
     }
-    // The selected field's tools never lie under 決める・とちゅうで やめる: they go down below them.
+    // The selected field's tools never lie under 決める and やめる: they go down below them.
     function clearOfControls() {
       if (controls.hidden) return;
       const c = controls.getBoundingClientRect();
@@ -1279,11 +1325,19 @@
       availabilityCache.set(key, result);
       return result;
     }
+    // A new continuous rule moves 1秒に200歩, as the example 「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける
+    // does; what it waits for is chosen, never filled in (LANGUAGE.md: a condition stays to be chosen).
+    function newRule() {
+      const rule = createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true });
+      for (const [key, value] of [['seconds', 1], ['distance', 200]])
+        if (rule.inputs[key]?.schemaId === 'Hole:expression') Object.assign(rule.inputs[key], { schemaId: 'NumberLiteral', fields: { value } });
+      return rule;
+    }
     // A continuous rule found by search goes into the rules of the body's heading, as with 「＋ つづけて動くルール」.
     function ruleAvailability() {
       const slot = tree && BLOCK_SCHEMA_BY_ID.get(tree.schemaId)?.inputs.find(s => s.key === 'rules');
-      if (!slot) return { enabled: false, reason: 'きっかけの ある 本文で 使えます' };
-      if ((tree.inputs.rules || []).length >= slot.maxItems) return { enabled: false, reason: 'つづけて動くルールは これ以上 ふやせません' };
+      if (!slot) return { enabled: false, reason: 'きっかけの ある 本文で 使えるよ' };
+      if ((tree.inputs.rules || []).length >= slot.maxItems) return { enabled: false, reason: 'つづけて動くルールは これ以上 ふやせないよ' };
       return { enabled: true };
     }
     function paletteAdd(schema) {
@@ -1292,7 +1346,7 @@
         const a = ruleAvailability();
         if (!a.enabled) { announce(a.reason, true); return; }
         const result = operate({ type: 'variadic-insert', parentId: tree.id, input: 'rules', index: (tree.inputs.rules || []).length,
-          node: createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true }) });
+          node: newRule() });
         if (result.ok) announce('つづけて動くルールを 入れたよ。きまりと 速さを 決めてね');
         return;
       }
@@ -1307,7 +1361,7 @@
         announce(a.reason, true);
         return;
       }
-      const node = a.node || createBlock(schema.id, { ...context(), idPrefix: viewId });
+      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), idPrefix: viewId }), project(), context().targetId);
       const wraps = wrapCount(schema, node, location);
       const op = location.body
         ? { type: wraps ? 'wrap' : 'insert', ...location, node }
@@ -1408,10 +1462,10 @@
       if (value) {
         if (schema.kind === 'RepeatCount') {
           const token = value.find((p) => p?.slot?.key === 'count');
-          if (token) value = [token, ' \u56de\u304f\u308a\u8fd4\u3059'];
+          if (token) value = [token, ' 回くり返す'];
         } else if (schema.kind === 'IfStatement') {
           const token = value.find((p) => p?.slot?.key === 'condition');
-          if (token) value = ['\u3082\u3057 ', token, ' \u306a\u3089'];
+          if (token) value = ['もし ', token, ' なら'];
         } else if (schema.kind === 'Forever') value = ['ずっと'];
         else if (schema.kind === 'CompareExpression') {
           // The same order as the code: 1が2とちがう.
@@ -1436,14 +1490,30 @@
     }
     // A call that hands nothing over is written without 「をわたして、」 (【てじゅん】という手順を行う), so its block and its
     // face in the list read the same as its code (E-14).
+    // The work's names, read once per drawing of the blocks or the list (render and renderPalette start it again).
+    const workSymbols = () => {
+      const work = project();
+      if (!work) return null;
+      if (faceSymbols?.work !== work) faceSymbols = { work, symbols: buildSymbols(work) };
+      return faceSymbols.symbols;
+    };
+    // A list's length reads 持ち物の数, as 整える and block-to-code write it (F-34), where that reads back: the name is a
+    // list of the work and no data is called 持ち物の数. Otherwise it keeps 〜の長さ.
+    function listCountFace(node) {
+      const list = node?.inputs?.args?.[0], s = list?.schemaId === 'VariableRead' ? workSymbols() : null;
+      if (!s) return false;
+      const lists = [s.projectLists, ...[...(s.individualByTargetId?.values?.() || [])].map(d => d.lists)];
+      return lists.some(m => m?.has?.(list.fields.name)) && !s.allDataNames?.has?.(list.fields.name + 'の数');
+    }
     function shownPhrase(schema, node) {
       const parts = phrase(schema);
       // The character's colour reads 色を〔赤〕にする, as block-to-code writes it, unless the work has data named 色 (F-25).
       if (parts && schema.id === 'LooksCommand:SET_COLOR') {
-        const work = project();
-        if (!work || buildSymbols(work).allDataNames?.has?.('色')) return parts;
+        if (!project() || workSymbols()?.allDataNames?.has?.('色')) return parts;
         return parts.map((part) => (typeof part === 'string' ? part.replace(/^表示色を/, '色を') : part));
       }
+      if (parts && schema.id === 'BuiltinCall:LENGTH' && listCountFace(node))
+        return parts.map((part) => (typeof part === 'string' ? part.replace(/^の長さ$/, 'の数') : part));
       if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
       return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
     }
@@ -1473,7 +1543,7 @@
     const FACE_READINGS = [['四捨五入', 'ししゃごにゅう'], ['条件', 'じょうけん'], ['手順', 'てじゅん'], ['順番', 'じゅんばん'],
       ['変数', 'へんすう'], ['結果', 'けっか'], ['最初', 'さいしょ'], ['最後', 'さいご'], ['最小', 'さいしょう'], ['最大', 'さいだい'],
       ['表示', 'ひょうじ'], ['段階', 'だんかい'], ['以上', 'いじょう'], ['以下', 'いか'], ['未満', 'みまん'], ['値', 'あたい'],
-      ['成', 'な', 'り'], ['求', 'もと', 'め'], ['増', 'ふ', 'や'], ['減', 'へ', 'ら'], ['残', 'のこ', 'り'], ['呼', 'よ', 'ぶ'], ['捨', 'す', 'て']];
+      ['成', 'な', 'り'], ['求', 'もと', 'め'], ['増', 'ふ', 'や'], ['減', 'へ', 'ら'], ['残', 'のこ', 'り'], ['呼', 'よ', 'ぶ'], ['捨', 'す', 'て'], ['続', 'つづ', 'け']];
     const FACE_READING_SOURCE = FACE_READINGS.map(([word, , next]) => next ? word + '(?=' + next + ')' : word).join('|'),
       FACE_READING_SKIP = '.blockui-node, input, select, textarea, ruby, .blockui-preview-slot, [data-blockui-field]';
     function faceRuby(root) {
@@ -1499,9 +1569,15 @@
       }
       return root;
     }
+    // A speech without a time reads like its code (F-27, F-34): 「こんにちは」と言う for words, 点数を言う for a value, and
+    // （…）の値を言う for a condition.
+    function sayParticle(value) {
+      return value?.schemaId === 'StringLiteral' ? 'と'
+        : /^(?:CompareExpression|LogicalExpression):|^UnaryExpression:NOT$/.test(value?.schemaId || '') ? 'の値を' : 'を';
+    }
     function previewNode(schema, candidate) {
       const node =
-          candidate || createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId + '-preview' }),
+          candidate || applyCreationDefaults(createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId + '-preview' }), project(), context().targetId),
         box = E('span', 'blockui-preview', null, { 'data-shape-kind': blockShapeKind(schema) }),
         main = E('span', 'blockui-preview-main');
       attachShape(box, blockShapeKind(schema));
@@ -1525,11 +1601,11 @@
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral'].includes(schema.kind))
         main.append(pill(scalar(node) || schema.fields[0]?.label));
       else if (schema.kind === 'CommentLine')
-        main.append(doc.createTextNode('\u203b \u30e1\u30e2'));
+        main.append(doc.createTextNode('※ メモ'));
       else if (schema.kind === 'Say') {
         main.append(pill(scalar(node.inputs.value) ?? 'ことば'));
         if (node.inputs.seconds) main.append(doc.createTextNode(node.inputs.value?.schemaId === 'StringLiteral' ? 'と ' : 'を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
-        else main.append(doc.createTextNode(' と言う'));
+        else main.append(doc.createTextNode(' ' + sayParticle(node.inputs.value) + '言う'));
       }
       else if (schema.kind === 'VariableRead')
         main.append(pill(node.fields.name || 'へんすう'));
@@ -1578,8 +1654,17 @@
       if (schema.bodies.length) box.append(E('span', 'blockui-preview-cavity'));
       return box;
     }
+    // The list is checked at the end of the body the next block goes into, not right after the selected block, so choosing
+    // another block of that body asks nothing again (PERF-01). A block whose answer depends on its place is checked there,
+    // and pressing a block always checks the place it goes (paletteAdd).
+    const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
+    function listedPlace(location) {
+      const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
+    }
     function paletteAvailability(schema, location) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
+      if (location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
       if (schema.category === 'rule') return ruleAvailability();
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
@@ -1595,6 +1680,8 @@
     function renderPalette() {
       if (options.readOnly) return;
       if (destroyed) return;
+      faceSymbols = null;
+      powerHelp.hidden = document.body.dataset.uiLevel !== 'advanced';
       modeSelect.value = paletteMode;
       syncLibraryToggle();
       const entry = document.body.dataset.uiLevel === 'entry';
@@ -1609,22 +1696,7 @@
         && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id) && entryWorks(s)) && (unitChoice || s.id !== 'QuantityLiteral')
         && (unitChoice || !ADVANCED_ONLY_SCHEMA_IDS.has(s.id)));
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
-      const groups = [
-        ['basic', 'よく使う'],
-        ['', '\u3059\u3079\u3066'],
-        ['motion', '\u52d5\u304d'],
-        ['look', '\u898b\u305f\u76ee'],
-        ['control', '\u3082\u3057\u30fb\u304f\u308a\u8fd4\u3057'],
-        ['event', '合図'],
-        ['data', 'へんすう・リスト'],
-        ['operator', '\u8a08\u7b97'],
-        ['sense', '\u3057\u3089\u3079\u308b'],
-        ['sound', '\u97f3'],
-        ['pen', '\u30da\u30f3'],
-        ['action', '自分で作ったブロック'],
-        ['clone', 'コピー'],
-        ['comment', '\u30e1\u30e2'],
-      ];
+      const groups = [...PALETTE_GROUP_LABELS];
       const categoryScroll = categorySelect.scrollTop;
       categorySelect.replaceChildren();
       for (const [g, label] of groups) {
@@ -1658,7 +1730,15 @@
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
       const speech=searched.find(s=>s.id==='Say');
-      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'言うことと 秒数を 決めて 話す'});}
+      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'話す':'ことばと 時間を 決めて 話す'});}
+      // はじめて: the loop comes with its number of times (F-03); what it repeats goes into its hole, from the next block
+      // put in or the blocks below it (E-03).
+      const loopAt = entry ? searched.findIndex(s => s.id === 'RepeatCount' && !s.candidateNode) : -1;
+      if (loopAt >= 0) {
+        const loop = createBlock('RepeatCount', { idPrefix: viewId + '-loop', draft: true, allowHoles: true }), count = createBlock('NumberLiteral', { idPrefix: viewId + '-count' });
+        count.fields.value = 3; loop.inputs.count = count;
+        searched.splice(loopAt, 1, { ...searched[loopAt], candidateNode: loop, candidateKey: 'entry-repeat' });
+      }
       let candidates = searched.filter(
         (s) =>
           (entry || query || !category || (category === 'basic'
@@ -1691,7 +1771,7 @@
           reason = E(
             'small',
             'blockui-unavailable',
-            a.reason || '\u3053\u306e\u5834\u6240\u3067\u306f\u4f7f\u3048\u307e\u305b\u3093',
+            a.reason || 'この ばしょでは 使えないよ',
           );
         const b = button(
           '',
@@ -1739,7 +1819,9 @@
           E(
             'p',
             'blockui-empty',
-            location?.input
+            // A search already looks through every なかま: it asks for other words.
+            query ? '「' + searchText.trim() + '」に 合う ブロックが ないよ。ほかの ことばで さがしてみてね。れい：うごく・まつ・いう'
+            : location?.input
               ? 'ここに 入れられる ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね'
               : 'この ばしょで 使える ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。',
           ),
@@ -1803,6 +1885,14 @@
     // tools (actorTool), so the sentence itself has no control for it.
     function subjectFace(node, field) {
       const value = node.fields[field.key], owner = node.schemaId === 'ActorQualifiedRead';
+      // A subject carried over from a sentence before (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is not written in
+      // this one, but another part does it: the face shows it pale and in （ ） (E2E-R1-04). The body's own part is not shown.
+      if (!owner && value?.kind === 'named' && !schemaOf(node)?.bodies?.length && !subjectWritten(node, value.name) &&
+          value.name !== project()?.components.find(c => c.id === context().targetId)?.name) {
+        const carried = E('span', 'blockui-phrase-text blockui-subject-text blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id });
+        carried.style.opacity = '0.6';
+        return carried;
+      }
       if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
       const name = value?.kind === 'named' ? value.name : subjectName(node);
       return E('span', 'blockui-phrase-text blockui-subject-text', owner ? name : name + (value?.particle || 'は'), { 'data-block-id': node.id });
@@ -1892,16 +1982,16 @@
           restore = () => { mode.value = value === undefined ? 'positional' : 'named'; names.forEach((name, i) => { name.value = value?.[i] || ''; }); sync(); };
         } else {
           const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'},currentFilter=value?value.filter:context().filter;
-          const actorName = ref => ref?.kind==='named' ? ref.name : project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name||'この動き';
+          const actorName = ref => ref?.kind==='named' ? ref.name : project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name||'この 本文';
           const owners=new Set([actorName(currentActor)]),scan=part=>{
             if(!part||typeof part!=='object')return;
             if(part.fields?.actorRef)owners.add(actorName(part.fields.actorRef.kind==='self'?currentActor:part.fields.actorRef));
             for(const [key,child]of Object.entries(part))if(key!=='units'&&child&&typeof child==='object')Array.isArray(child)?child.forEach(scan):scan(child);
           };scan(node.bodies);scan(node.inputs.rules);
           const location=session()?.nodeMap?.get(node.bodies.body?.[0]?.id)?.surface,range=location?.range||location?.extent,
-            preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ありません';
-          group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${eventText(currentEvent,currentFilter)}\n${preview}
-この 本文の きっかけだけを かえます。ほかの 本文は かえません。`));
+            preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ないよ';
+          group.append(E('p','blockui-trigger-scope',`かえる 本文：${[...owners].join('・')} ／ ${eventText(currentEvent,currentFilter)}\n${preview}
+この 本文の きっかけだけを かえるよ。ほかの 本文は そのままだよ。`));
           // The stage touches nothing, so its bodies are not offered ふれたとき.
           const stageOwned = context().targetId === 'stage' && currentActor?.kind !== 'named';
           const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key) && !(key === 'touchStart' && stageOwned && currentEvent !== 'touchStart')), currentEvent);
@@ -1915,7 +2005,7 @@
           touchTarget.parentElement.classList.add('blockui-trigger-choice');
           const syncTouch = () => { touchTarget.parentElement.hidden = event.value !== 'touchStart'; };
           syncTouch(); listen(event, 'change', syncTouch);
-          const details=E('details','blockui-trigger-details');details.append(E('summary','','くわしく（きっかけ・だれ・どれで動くか）'));group.append(details);
+          const details=E('details','blockui-trigger-details');details.append(E('summary','','もっと えらぶ（だれ・どの キー・どの 合図）'));group.append(details);
           const detailStart=group.children.length;
           const enabled = choice('きっかけ', 'enabled', [['no', '本文だけ'], ['yes', 'きっかけを 決める']], value ? 'yes' : 'no');
           const subject = actor(currentActor, 'actorRef.');
@@ -1957,7 +2047,7 @@
         listen(group, 'change', () => { changed = true; group.dispatchEvent(new doc.defaultView.Event('input', { bubbles: true })); });
         if (!options.readOnly) {
           editInput(group, node, field, annotation);
-          if(field.type==='heading')group.append(button('この動きの きっかけを かえる','heading-commit',()=>flush({explicit:true})),button('かえるのを やめる','heading-cancel',()=>cancel()));
+          if(field.type==='heading')group.append(button('この 本文の きっかけを かえる','heading-commit',()=>flush({explicit:true})),button('かえるのを やめる','heading-cancel',()=>cancel()));
           listen(group, 'change', event => { if (field.type!=='heading'&&event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
             if (field.type!=='heading'&&!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
@@ -2165,7 +2255,10 @@
           moving = null;
           destination = null;
           render({ force: true });
-          if (wraps) attendEmptyValue(placedAt(location, info.node.schemaId));
+          // The block moved keeps the focus, as after putting one in or あとへ (AX-10).
+          const placed = placedAt(location, info.node.schemaId);
+          if (placed) focus({ id: placed });
+          if (wraps) attendEmptyValue(placed);
         }
         return;
       }
@@ -2203,8 +2296,10 @@
           'aria-label': 'もとの ばしょに 入れる ブロック',
           'data-blockui-replacement-schema': 'true',
         });
-      for (const s of BLOCK_SCHEMAS.filter((x) => x.category === 'expression'))
-        select.append(E('option', '', s.palette + ' / ' + s.label, { value: s.id }));
+      // The same blocks as the list at this level, named by the list's なかま (FCB-21).
+      const advanced = document.body.dataset.uiLevel === 'advanced';
+      for (const s of BLOCK_SCHEMAS.filter((x) => x.category === 'expression' && !x.draftOnly && (advanced || (x.id !== 'QuantityLiteral' && !ADVANCED_ONLY_SCHEMA_IDS.has(x.id)))))
+        select.append(E('option', '', (PALETTE_GROUP_LABELS.get(blockPaletteGroup(s)) || s.palette) + ' / ' + s.label, { value: s.id }));
       select.value = 'NumberLiteral';
       const accept = button('このブロックを おいて もっていく', 'confirm-expression-move', () => {
         const action = replacement;
@@ -2568,7 +2663,10 @@
         head.append(up, down, remove);
       }
       // A field's tools show when it has some; a name alone is its accessible name (E-12: no noise for beginners).
-      box.append(renderNode(child));
+      const shown = renderNode(child);
+      // A number in its place is read by the place's name (AX-09).
+      if (child?.schemaId === 'NumberLiteral') shown.querySelector(':scope > .blockui-node-content [data-blockui-field="value"]')?.setAttribute('aria-label', label);
+      box.append(shown);
       if (head.childElementCount > 1) box.append(head);
       if (!options.readOnly && parent.schemaId === 'ListRead' && slot.key === 'list' && child.schemaId === 'StringLiteral') {
         const recovery = E('div', 'blockui-list-repair'), select = E('select', '', null, { 'aria-label':'文字の代わりに使うリストを えらぶ' });
@@ -2664,6 +2762,8 @@
       const label = slotLabel(location), wrap = E('span', 'blockui-input-slot blockui-flat-value', null, { 'data-block-id': literal.id, 'aria-label': label });
       if (!options.readOnly) markDrop(wrap, location);
       wrap.append(fieldControl(literal, BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value')));
+      // The number is read by its place (秒数, よこの歩数 …), not as 「数」 (AX-09).
+      if (label) wrap.querySelector('[data-blockui-field="value"]')?.setAttribute('aria-label', label);
       if (valueToolsShown()) {
         const head = E('div', 'blockui-slot-head');
         head.append(E('span', 'blockui-slot-label', label), ...valueTools(location, label, literal));
@@ -2967,7 +3067,7 @@
             list.append(row);
           }
           const add = button('＋ つづけて動くルール', 'rule-add', () => operate({ type: 'variadic-insert', parentId: node.id, input: 'rules', index: rules.length,
-            node: createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true }) }));
+            node: newRule() }));
           add.disabled = isLocked() || !!options.readOnly || rules.length >= ruleSlot.maxItems;
           list.append(add); main.append(list);
         }
@@ -2988,12 +3088,11 @@
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
-          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place. はじめて has no value
-          // blocks to put there, so it shows neither 計算で決める nor 計算の答えを話す (E-12).
+          // 2 秒, 3 回: the unit is text (E-02); 計算を入れる (with the value's tools) puts a calculation in the number's place.
+          // はじめて has no value blocks to put there, so it shows no 計算の答えを話す either (E-12).
           const entry=document.body.dataset.uiLevel==='entry';
           const numberSlot=(key,unit)=>{
             main.append(...unitValue(node,key,undefined,unit));
-            if(!entry)extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
             main.append(slot('value'));
@@ -3014,7 +3113,7 @@
             });if(data.options.length>1)extraControls.append(data);
             // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
             if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
-            else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
+            else {main.append(E('span','blockui-phrase-text',sayParticle(node.inputs.value)+'言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
           if(extraControls.childElementCount)main.append(extra);
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
@@ -3172,6 +3271,13 @@
       box.append(content);
       return box;
     }
+    // The block view shows no line numbers (FCM-07): a mistake is named by the words of its sentence, with a full-width
+    // colon (I5V-15).
+    function diagnosticPlace(d) {
+      const line = d.line && typeof session()?.sourceText === 'string' ? session().sourceText.split(/\r\n?|\n/)[d.line - 1] : null,
+        words = line ? splitComment(line).code.trim().replace(/。$/, '') : '';
+      return words ? '「' + (Array.from(words).length > 24 ? Array.from(words).slice(0, 23).join('') + '…' : words) + '」の ブロック：' : '';
+    }
     function diagnosticSummary() {
       const diagnostics = session()?.diagnostics || [];
       if (!diagnostics.length) return null;
@@ -3185,7 +3291,7 @@
       diagnosticPage = Math.min(diagnosticPage, pages - 1);
       const ul = E('ul');
       for (const d of diagnostics.slice(diagnosticPage * 20, (diagnosticPage + 1) * 20)) {
-        const item = E('li', 'diagnostic-help', (d.line ? d.line + '行目: ' : '') + childDiagnosticText(d, session()?.sourceText));
+        const item = E('li', 'diagnostic-help', diagnosticPlace(d) + childDiagnosticText(d, session()?.sourceText));
         appendDiagnosticDetails(item, d); ul.append(item);
       }
       details.append(ul);
@@ -3274,6 +3380,7 @@
       }
     }
     function renderView(force) {
+      faceSymbols = null;
       const s = session(),
         nextSignature = [
           s?.ownerKey,
@@ -3462,7 +3569,20 @@
       if (highlightedId === key) return;
       for (const n of workspace.querySelectorAll('.blockui-current')) n.classList.remove('blockui-current');
       highlightedId = key;
-      locationElement(point)?.classList.add('blockui-current');
+      markedElement(point)?.classList.add('blockui-current');
+    }
+    // The element that shows a running or failing place: its block, a number that is its own field in the sentence
+    // (1 秒, 99999 Hz: E-02, F-06), else the nearest block that holds it.
+    function markedElement(point) {
+      const own = locationElement(point);
+      if (own || point.body || !point.id) return own;
+      const flat = [...workspace.querySelectorAll('.blockui-flat-value')].find(n => n.dataset.blockId === point.id);
+      if (flat) return flat;
+      for (let entry = index.get(point.id); entry?.parentId; entry = index.get(entry.parentId)) {
+        const holder = locationElement({ id: entry.parentId });
+        if (holder) return holder;
+      }
+      return null;
     }
     function revealNode(id) {
       let entry = index.get(id),
@@ -3539,7 +3659,7 @@
         p = project(),
         [kind, id, event] = session()?.ownerKey?.split(':') || [],
         who = id === 'stage' ? p?.stage : p?.components.find((c) => c.id === id),
-        name = tree?.fields.heading?.actorRef?.kind==='named'?tree.fields.heading.actorRef.name:who?.name||p?.components.find(c=>c.id===ctx.targetId)?.name||ctx.definition?.name||'この動き';
+        name = tree?.fields.heading?.actorRef?.kind==='named'?tree.fields.heading.actorRef.name:who?.name||p?.components.find(c=>c.id===ctx.targetId)?.name||ctx.definition?.name||'この 本文';
       const hat = E('div', 'blockui-event-hat', null, {
         'data-palette-tone': kind === 'script' ? 'event' : 'action',
         'data-shape-kind': 'hat',
@@ -3553,8 +3673,8 @@
           kind === 'script'
             ? eventText(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
             : kind === 'function'
-              ? 'このブロックで 答えを出すとき'
-              : 'このブロックを 使ったとき',
+              ? 'この ブロックで 答えを 出すとき'
+              : 'この ブロックを 使ったとき',
         ),
       );
       return hat;
@@ -4404,7 +4524,11 @@
     // Finish pointer activation before folding the old selection or growing the new one.
     // Keyboard focus selects immediately so Tab can discover the selected block's tools.
     function focusBlockField(target) {
-      if (target.closest('button,summary,.blockui-slot-head')) return;
+      if (target.closest('button,summary,.blockui-slot-head')) {
+        // A field's tools close when the focus goes on to a control outside that field (AX-10).
+        for (const n of root.querySelectorAll('.blockui-slot-active')) if (!n.contains(target)) n.classList.remove('blockui-slot-active');
+        return;
+      }
       const slot = target.closest('.blockui-input-slot'),
         node = target.closest('.blockui-node'),
         field = target.closest('.blockui-field');
@@ -4421,7 +4545,9 @@
       for (const n of root.querySelectorAll('.blockui-slot-active'))
         n.classList.remove('blockui-slot-active');
       node?.classList.add('blockui-focused');
-      if (node) {
+      // The 本文 itself, passed on the way from a block to the list with the keyboard, keeps the selected block, so the
+      // next block from the list still goes right after it (E-08, AX-10).
+      if (node && !(target === node && schemaOf(index.get(node.dataset.blockId)?.node)?.category === 'script')) {
         const id = node.dataset.blockId,
           wrapper = target.closest('[data-blockui-body-wrapper]'),
           body = wrapper?.dataset.blockOwner === id
@@ -4452,6 +4578,21 @@
         for (const field of root.querySelectorAll('.blockui-editing-field'))
           field.classList.remove('blockui-editing-field');
       }
+      // A value alone is not deleted (FCB-20): Delete says what to do instead of doing nothing.
+      if (['Delete', 'Backspace'].includes(event.key) && event.target.matches?.('.blockui-world .blockui-node.blockui-expression') &&
+          !options.readOnly && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        announce('この ブロックは けせないよ。ほかの ブロックと 入れかえてね', true);
+        return;
+      }
+      // Space on a focused block selects it, as a press does, and does not scroll the workspace away from it (AX-10).
+      if (event.key === ' ' && event.target.matches?.('.blockui-world .blockui-node') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        selection(event.target.dataset.blockId);
+        return;
+      }
       // Delete or Backspace on a selected sentence deletes it (E-05); in a field they delete characters.
       if (['Delete', 'Backspace'].includes(event.key) && event.target.matches?.('.blockui-world .blockui-node.blockui-statement') &&
           !options.readOnly && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -4479,7 +4620,7 @@
           notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
           for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
           for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
-          announce('えらぶのを やめたよ。組み立てている ものは「とちゅうで やめる」、決めた ことは「もとにもどす」で もどせるよ');
+          announce('えらぶのを やめたよ。' + (session()?.blockDraft ? '入れかけの ブロックは「入れるのを やめる」で やめられるよ。' : '') + '決めた ことは「もとにもどす」で もどせるよ');
         }
         return;
       }
@@ -4500,6 +4641,7 @@
       shapeObserver?.disconnect();
       bodyObserver?.disconnect();
       if (geometryFrame !== null) doc.defaultView.cancelAnimationFrame(geometryFrame);
+      if (toolsFrame !== null) doc.defaultView.cancelAnimationFrame(toolsFrame);
       abort.abort();
       destroyed = true;
       root.replaceChildren();
@@ -4622,18 +4764,18 @@
   // Color picker data is presentation-only. Persist the existing fg/bg hex or null.
   const COLOR_PRESETS = Object.freeze(
     [
-      '\u8d64',
-      '\u6a59',
-      '\u9ec4',
-      '\u7dd1',
-      '\u6c34\u8272',
-      '\u9752',
-      '\u7d2b',
-      '\u6843',
-      '\u8336',
-      '\u767d',
-      '\u7070',
-      '\u9ed2',
+      '赤',
+      '橙',
+      '黄',
+      '緑',
+      '水色',
+      '青',
+      '紫',
+      '桃',
+      '茶',
+      '白',
+      '灰',
+      '黒',
     ].map((name) => Object.freeze({ name, label: COLOR_LABELS[name] || name, value: COLOR_NAMES[name] })),
   );
   function pickerHex(value) {

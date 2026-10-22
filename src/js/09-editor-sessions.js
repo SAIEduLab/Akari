@@ -306,13 +306,34 @@
     const newIndex = buildBlockIndex(tree);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
-      if (schema.category === 'expression')
-        return formatExpression(keyLiteralAt(newIndex, node.id) ? { ...ast, value: keySurface(ast.value) } : ast, PREC.ATOM, { symbols });
+      if (schema.category === 'expression') {
+        // A said value is written as its sentence writes it, with no （ ） around 持ち物の数 (F-34); a condition keeps them.
+        const at = newIndex.get(node.id), bare = newIndex.get(at?.parentId)?.node?.schemaId === 'Say' && at.input === 'value' && !isConditionValue(ast);
+        return formatExpression(keyLiteralAt(newIndex, node.id) ? { ...ast, value: keySurface(ast.value) } : ast, bare ? 0 : PREC.ATOM, { symbols });
+      }
       if (schema.category === 'target') return formatTarget(ast);
       if (schema.category === 'script') return structuralLines(formatScript(ast, { symbols })).join(newline);
       if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]}, { symbols })).join(newline);
       // Format a replacement in its destination scope, adding self only when needed.
       return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id), symbols})).join(newline);
+    };
+    // A sentence that reads as block-to-code writes it gets its words written again when a value in it changes, so the
+    // value takes its F-34 form and only the （ ） its place needs (かばんの数を言う。, もしかばんの数が0なら、). Its memo and
+    // the spaces before the memo stay as written; a sentence in the child's own words is left to the value-only change.
+    const rewrittenAsStandard = (before, after) => {
+      const location = surface(before), schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId),
+        range = schema.bodies.length ? location?.range : location?.extent;
+      if (!range || location.inline || location.inlineContainer) return null;
+      const first = text => splitComment(String(text || '').split(/\r\n?|\n/)[0]).code.trimEnd(), bare = text => text.trim().replace(/。$/, '');
+      let was, now;
+      try {
+        was = first(structuralLines(formatScript({kind:'Script', body:[blockDecode(before)]}, {inheritedActor:originalActors.get(before.id), symbols}))[0]);
+        now = first(standard(after)).trim();
+      } catch (_) { return null; }
+      const written = first(source.slice(range.start, range.end)), lead = written.match(/^\s*/)[0];
+      if (!written.trim() || bare(written) !== bare(was)) return null;
+      if (!written.endsWith('。')) now = now.replace(/。$/, '');
+      return now === written.trim() ? [] : [{ start: range.start, end: range.start + written.length, text: lead + now }];
     };
     const sameActorContext = (before, after) => {
       if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
@@ -451,6 +472,11 @@
         [before.inputs.arg, after.inputs.arg].some(n => n?.schemaId === 'StringLiteral' && isEdgeTarget(n.fields.value)))
         return fallback(before, after);
       const schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId), changes = [];
+      // A value changed in a sentence written as block-to-code writes it: the sentence's words are written again.
+      if (schema.category === 'statement' && same(before.bodies, after.bodies) && !same(before.inputs, after.inputs)) {
+        const whole = rewrittenAsStandard(before, after);
+        if (whole) return whole;
+      }
       for (const slot of schema.inputs) {
         if (slot.required === false) {
           const had = Object.hasOwn(before.inputs, slot.key), has = Object.hasOwn(after.inputs, slot.key);
@@ -467,7 +493,8 @@
         }
       }
       if(before.schemaId==='Say' && !same(before.inputs.value,after.inputs.value)) {
-        const value=blockDecode(after.inputs.value),needsNoun=value.kind==='VariableRead',
+        // 点数を言う (F-34) for a name the work knows; の値 is added only where a bare name would not read back.
+        const value=blockDecode(after.inputs.value),needsNoun=value.kind==='VariableRead'&&!(value.qualifier!=='exact'&&symbols?.allDataNames?.has?.(value.name)),
           changesQuote=before.inputs.value.schemaId==='StringLiteral'&&value.kind!=='StringLiteral';
         if(needsNoun||changesQuote){
           const range=surface(before.inputs.value)?.range,
@@ -590,7 +617,7 @@
       const parent = lookup(parentId).node,
         schema = BLOCK_SCHEMA_BY_ID.get(parent.schemaId),
         slot = schema.inputs.find((x) => x.key === key);
-      if (!slot) editorError('そこには 計算を 入れられないよ。ほかの ばしょを えらんでね。');
+      if (!slot) editorError('そこには はめるブロックを 入れられないよ。ほかの ばしょを えらんでね。');
       if (slot.required === false && slot.multiple && !Object.hasOwn(parent.inputs, key)) parent.inputs[key] = [];
       if (slot.multiple) position(index, parent.inputs[key].length, append);
       else if (index !== undefined && index !== null) editorCheckError('固定入力に番号は指定しません');
@@ -598,7 +625,7 @@
     };
     const setInput = (location, node) => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
-      if (schema?.category !== location.slot.type) editorError('その 計算は そこには 入れられないよ。合う ばしょを えらんでね。');
+      if (schema?.category !== location.slot.type) editorError('その ブロックは そこには 入れられないよ。合う ばしょを えらんでね。');
       if (location.slot.multiple) location.array[location.index] = node;
       else location.parent.inputs[location.slot.key] = node;
     };
@@ -615,7 +642,7 @@
       if (!entry.parentId) editorCheckError('本文全体はこの操作では置換できません');
       if (entry.body) {
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
-          editorError('ここには ブロックを つなげてね。計算は ここには 入れられないよ。');
+          editorError('ここには つなぐブロックを 入れてね。はめるブロックは ここには 入れられないよ。');
         lookup(entry.parentId).node.bodies[entry.body][entry.index] = node;
       } else setInput(inputSlot(entry.parentId, entry.input, entry.index), node);
     };
@@ -676,7 +703,7 @@
           at = position(op.index, destination.array.length, true),
           node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node, op.type === 'duplicate');
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
-          editorError('ここには ブロックを 入れてね。計算は ここには 入れられないよ。');
+          editorError('ここには つなぐブロックを 入れてね。はめるブロックは ここには 入れられないよ。');
         // A visible body placeholder is replaced by the command the child chooses (inserted, copied or moved there).
         // Complete existing bodies still use ordinary insertion semantics.
         if (loneHole(destination.array)) destination.array.splice(0, 1, node);
@@ -734,7 +761,7 @@
       }
       if (op.type === 'remove') {
         const entry = lookup(op.id);
-        if (!entry.body) editorError('この 計算は けせないよ。ほかの 計算と 入れかえてね。ならんでいる ものは「外す」で 外せるよ。');
+        if (!entry.body) editorError('この ブロックは けせないよ。ほかの ブロックと 入れかえてね。ならんでいる ものは「外す」で 外せるよ。');
         const parent=lookup(entry.parentId).node,array=parent.bodies[entry.body],slot=BLOCK_SCHEMA_BY_ID.get(parent.schemaId).bodies.find(s=>s.key===entry.body);
         if(slot.requiredExecutable&&!array.some((node,i)=>i!==entry.index&&!['CommentLine','Hole:statement'].includes(node.schemaId))){
           if(!options.draft)editorError(`${slot.label}には ブロックが 1つ いるよ。先に 新しい ブロックを 入れるか、「何もしない」に 入れかえてね`);
@@ -794,7 +821,7 @@
           !entry.input ||
           BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.category !== 'expression'
         )
-          editorError('この 計算は ここから もっていけないよ。');
+          editorError('この ブロックは ここから もっていけないよ。');
         const destination = inputSlot(op.parentId, op.input, op.index);
         if (target.node.id === op.id || target.ancestors.includes(op.id))
           editorError('ブロックを 自分の 中には もっていけないよ。ほかの ところを えらんでね。');
@@ -1066,6 +1093,22 @@
       backdrop: next(project?.stage?.backdrops, project?.stage?.backdropId),
     };
   }
+  // A new block from the list comes with values that run and change something, as the 書ける ことば examples have them
+  // (FCB-05): the other part (or the mouse) to face, a part to copy (the other part, else itself), ペンの太さ 3, 音の大きさ
+  // 50％, 1つ and 1段階. A value other than the 0 of a new block is kept. The block is changed in place.
+  const CREATION_NUMBERS = new Map([['PenCommand:SET_SIZE', 3], ['SoundCommand:SET_VOLUME', 50], ['LooksCommand:FORWARD_LAYERS', 1],
+    ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1]]);
+  function applyCreationDefaults(node, project, targetId) {
+    const first = node?.inputs?.args?.[0];
+    if (first?.schemaId !== 'NumberLiteral' || first.fields.value !== 0) return node;
+    const parts = project?.components || [], other = parts.find(c => c.id !== targetId)?.name,
+      character = (parts.find(c => c.id !== targetId && c.type === 'sprite') || parts.find(c => c.id === targetId && c.type === 'sprite'))?.name;
+    // Only a character (not a button or a label) has copies.
+    const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? character : null;
+    if (name) Object.assign(first, { schemaId: 'StringLiteral', fields: { value: name } });
+    else if (CREATION_NUMBERS.has(node.schemaId)) first.fields.value = CREATION_NUMBERS.get(node.schemaId);
+    return node;
+  }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
     if (!schema) return { enabled: false, reason: 'この ブロックは 使えないよ', diagnostics: [] };
@@ -1076,7 +1119,8 @@
       creationProject = options.project || session.project,
       component = creationProject?.components?.find(c => c.id === creationContext.targetId),
       { designPosition, partTarget, costume, backdrop } = blockCreationDefaults(creationProject, creationContext.targetId);
-    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop });
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode))
+      : applyCreationDefaults(createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop }), creationProject, creationContext.targetId);
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -1217,8 +1261,8 @@
         'SensorRead:KEY_DOWN',
         'SensorRead:TOUCHING',
         'SensorRead:TOUCHING_COLOR',
-        'SensorRead:\u30de\u30a6\u30b9\u304c\u62bc\u3055\u308c\u3066\u3044\u308b',
-        'SensorRead:\u30af\u30ed\u30fc\u30f3\u3067\u3042\u308b',
+        'SensorRead:マウスが押されている',
+        'SensorRead:クローンである',
       ].includes(schema.id);
     return boolean ? 'boolean' : 'value';
   }
@@ -1311,7 +1355,7 @@
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
-    speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
+    speech:{label:'話す',source:'「こんにちは」と1秒話す。'},
     escape:{label:'ちがう ばしょへ にげる',source:'画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
     randomSwim:{label:'あちこちへ泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
@@ -1323,7 +1367,7 @@
     score:{label:'点数を見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
     bonus:{label:'3ひきなら',source:'もし点数が3と同じなら、\n  0秒待つ。',hole:'thenBody'},
-    bonusPoint:{label:'おまけの点を足す',source:'点数を2ふやす。'},
+    bonusPoint:{label:'おまけの点を ふやす',source:'点数を2ふやす。'},
     cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
     remaining:{label:'のこりを見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
     tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
@@ -1727,7 +1771,9 @@
     // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
     'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
     'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],
-    'SensorRead:KEY_DOWN': ['おす', '押す'],
+    // The keyboard's names, as the block face and the code write them (F-34: 「スペース」キー).
+    'SensorRead:KEY_DOWN': ['おす', '押す', 'キー', 'スペース', 'スペースキー', 'エンター', 'エンターキー', 'やじるし'],
+    'SensorRead:押されたキー': ['キー'],
     // Holding a key to move: the continuous rule first, the repeat while it is held second (C-16).
     ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける', 'はやく', 'はやい'],
     RepeatWhile: ['おしているあいだ', 'おしっぱなし', 'あいだ', '間'],
