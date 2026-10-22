@@ -75,17 +75,22 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    let old=await state();const drag=async()=>{let h=await handle.boundingBox(),d=await drop.boundingBox();await page.mouse.move(h.x+h.width/2,h.y+h.height/2);await page.mouse.down();await page.mouse.move(d.x+20,d.y+d.height/2,{steps:7});d=await drop.boundingBox();await page.mouse.move(d.x+20,d.y+d.height/2);};
    await drag();assert.equal(await root.locator('.blockui-drop-preview').count(),1);assert.equal((await state()).source,old.source);await page.mouse.up();assert.deepEqual((await state()).ast.body.map(x=>x.value.value),[2,3,1]);assert.equal((await state()).history,old.history+1);await page.waitForTimeout(400);
    old=await state();await drag();await root.dispatchEvent('pointercancel',{pointerId:1});await page.mouse.up();assert.equal((await state()).source,old.source);assert.equal((await state()).history,old.history);assert.equal((await state()).pending,null);
-   // Right over a value place a sentence turns grey and says why, and let go there it puts nothing in (E-04). Over the
-   // block list only the block list is the red delete zone (E-05).
-   await page.waitForTimeout(400);await fixture('右に15度回る。\n1秒待つ。');old=await state();
-   const wait=nodes('WaitTime').locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').last(),slot=nodes('MotionCommand:TURN_RIGHT').locator('.blockui-input-slot[data-blockui-drop]').first(),list=root.locator('.blockui-palette');
+   // Right over an empty value hole a sentence turns grey and says why, and let go there it puts nothing in (E-04;
+   // LANGUAGE.md: 命令を値の穴へ入れる). The hole is the empty condition of a もし put in from the block list; a sentence over a
+   // value already in a block goes before or after that block (UI-carry-over-a-value-not-refused). Over the block list
+   // only the block list is the red delete zone (E-05).
+   await page.waitForTimeout(400);await fixture('1秒待つ。');
+   const ifItem=root.locator('.blockui-palette-item [data-blockui-schema="IfStatement"]').first();await ifItem.scrollIntoViewIfNeeded();await ifItem.click();await page.waitForTimeout(300);old=await state();
+   const wait=nodes('WaitTime').locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').last(),slot=nodes('IfStatement').locator('.blockui-input-slot[data-blockui-drop]').filter({has:page.locator('.blockui-node[data-schema-id="Hole:expression"]')}).first(),list=root.locator('.blockui-palette');
+   assert.equal(await slot.count(),1,'the もし has an empty condition hole');
    let w=await wait.boundingBox(),s=await slot.boundingBox();await page.mouse.move(w.x+w.width/2,w.y+w.height/2);await page.mouse.down();await page.mouse.move(s.x+s.width/2,s.y+s.height/2,{steps:7});s=await slot.boundingBox();await page.mouse.move(s.x+s.width/2,s.y+s.height/2);
    assert.equal(await page.locator('.blockui-drag-ghost.blockui-ghost-invalid').count(),1);assert.equal((await page.locator('.blockui-drag-reason').textContent()).trim(),'ここには おけないよ');
    const l=await list.boundingBox();await page.mouse.move(l.x+l.width/2,l.y+l.height/2,{steps:7});
    const zone=await list.evaluate(p=>{const a=getComputedStyle(p,'::after');return{on:p.classList.contains('blockui-delete-zone'),w:parseFloat(a.width),h:parseFloat(a.height),cw:p.clientWidth,ch:p.clientHeight};});
    assert(zone.on&&Math.abs(zone.w-zone.cw)<=2&&Math.abs(zone.h-zone.ch)<=2,JSON.stringify(zone));
    s=await slot.boundingBox();await page.mouse.move(s.x+s.width/2,s.y+s.height/2,{steps:7});await page.mouse.up();
-   assert.equal((await state()).source,old.source);assert.equal((await state()).history,old.history);assert.equal((await page.locator('.blockui-drop-note').textContent()).trim(),'ここには おけないよ');await page.waitForTimeout(400);
+   assert.equal((await state()).source,old.source);assert.equal((await state()).history,old.history);assert.deepEqual((await state()).pending,old.pending);assert.equal(await slot.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1,'the hole stays empty');
+   assert.equal((await page.locator('.blockui-drop-note').textContent()).trim(),'ここには おけないよ');await page.waitForTimeout(400);
   });
   await test('UI-IME-switch-hold-end-commit',async()=>{
    await fixture('1を言う');const old=await state(),field=nodes('NumberLiteral').locator('input');await field.dispatchEvent('compositionstart');await (await reveal(field)).fill('24');await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();assert.equal((await state()).mode,'blocks');assert.equal((await state()).source,old.source);await field.dispatchEvent('compositionend');await field.press('Enter');assert.equal((await state()).ast.body[0].value.value,24);
