@@ -107,6 +107,7 @@
     execFunctionNodes,
     execListMutation,
     EventScheduler,
+    namesStage,
   } = AKARI_RUNTIME;
   const LANGUAGE_CONTRACT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.languageContractId;
   const PROJECT_FORMAT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.projectFormatVersion;

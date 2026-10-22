@@ -191,7 +191,7 @@
         analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
       }
       if (!ref || ref.kind !== 'named') return ctx;
-      const c = ref.name === project.stage.name || ref.name === '画面'
+      const c = namesStage(project, ref.name)
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
       if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
       // 名人 (決まり5): a part's name with data of the same name is not one reading, wherever it is written.
@@ -761,7 +761,7 @@
         availableLocalNames: new Set(),
         // 名人: under a heading that names the stage (作品を動かしたとき、画面1は、) the sentences are the stage's, as in
         // the stage's own body; elsewhere a 名人 text belongs to no part.
-        meijin: !!item.meijin && !(item.ast?.heading?.actorRef?.kind === 'named' && [project.stage.name, '画面'].includes(item.ast.heading.actorRef.name)),
+        meijin: !!item.meijin && !(item.ast?.heading?.actorRef?.kind === 'named' && namesStage(project, item.ast.heading.actorRef.name)),
       };
       for (const d of staticScaleDiagnostics(item.ast, item.key))
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
@@ -775,8 +775,10 @@
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
       // ふれたとき's partner is a part or the edge (端, 端:上 …); the message is at the heading, or the body's first line.
+      // 画面の右にふれたとき names one side of the screen: 画面の右のはし.
+      const side = /^画面の(上|下|右|左)$/.exec(item.filter?.target ?? '')?.[1];
       if (item.event === 'touchStart' && !isEdgeTarget(item.filter?.target) && !componentByName(item.filter?.target))
-        add('S301', `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
+        add('S301', side ? `画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます` : `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
       walk(item.ast.body, base, item.key, 0, true);
       for (const rule of item.ast.rules || []) {
         const c = actorContext(rule.actorRef, { ...base, node: rule }, rule, item.key);
@@ -825,7 +827,7 @@
   function scriptMetadataFromHeading(heading, script, project) {
     if (!heading) return { targetId: script.targetId, event: script.event, filter: script.filter };
     const targetId = heading.actorRef?.kind === 'named'
-      ? (heading.actorRef.targetId || ((heading.actorRef.name === '画面' || heading.actorRef.name === project.stage.name) ? 'stage' :
+      ? (heading.actorRef.targetId || (namesStage(project, heading.actorRef.name) ? 'stage' :
         project.components.find((c) => c.name === heading.actorRef.name)?.id)) : script.targetId;
     const type = targetId === 'stage' ? 'stage' : project.components.find((c) => c.id === targetId)?.type;
     if (!type) throw new AkariError('S301', 'きっかけに 書いた キャラクターや 部品が 見つかりません。名前を たしかめてください');
@@ -947,7 +949,7 @@
     for (const d of meijinProjectDefinitions(project)) records.push({ key: `script:${d.scriptId}`, ownerId: MEIJIN_OWNER, kind: 'action', title: `名人の本文の手順「${d.name}」`,
       source: d.source, lineOffset: d.line - 1, pathPrefix: ['meijinDefinition', d.id],
       context: { ownerId: 'stage', targetId: null, targetType: null, event: null, args: d.args, definition: d, definitionKind: 'action', meijin: true } });
-    const actor = ref => ref?.kind === 'named' ? ref.targetId || (ref.name === '画面' || ref.name === project.stage.name ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
+    const actor = ref => ref?.kind === 'named' ? ref.targetId || (namesStage(project, ref.name) ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
     for (const record of records) {
       const parsed = parseSyntax(record.source, { ...record.context, symbols });
       const ownerName = record.ownerId === 'stage' ? project.stage.name : project.components.find(c => c.id === record.ownerId)?.name;
@@ -1368,7 +1370,7 @@
       const unitKey=context.unitIds||index?'script:'+id:key,heading=unit.heading;
       let resolved={...context,...(ast.units||context.unitIds?{id,scriptId:id,documentKey:key}:{})};
       if(heading){
-        const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
+        const ref=heading.actorRef,actor=ref?.kind==='named'?(namesStage(project,ref.name)?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
         if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?(context.meijin&&targetExists({name:ref.name,qualifier:null},buildSymbols(project),{})?`見出しの 主語には、部品の 名前を 一つ 書きます（「${ref.name}」のような へんすうや リストは 書けません）。中身の 文に 主語を 書きます`:`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`):'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else if(heading.event==='touchStart'&&actor.type==='stage')errors.push({code:'S304',message:STAGE_TOUCH_MESSAGE,line:unit.sourceSpan?.startLine||1,column:1,where:key});
@@ -1612,7 +1614,14 @@
         const message = across
           ? 'よこの歩数を書いていないので、右へ0歩（画面の左のはし）へ行きます。よこを今のままにするときは「右へ（よこのばしょ）歩」を書きます'
           : 'たての歩数を書いていないので、上へ0歩（画面の下のはし）へ行きます。たてを今のままにするときは「上へ（たてのばしょ）歩」を書きます';
-        const location = SOURCE_RANGES.get(node), range = location && !location.rewritten ? location.range : null, proposals = [];
+        const location = SOURCE_RANGES.get(node), proposals = [];
+        let range = location && !location.rewritten ? location.range : null, chained = false;
+        // Inside a 「〜して、」 chain (…のばしょへ行って、) the sentence was read as 行く: the fix is made for the clause as
+        // written and keeps the て-form.
+        if (!range && location?.rewritten && location.extent && source && !lanes) {
+          const clause = /^[^。\n]*?の(?:ばしょ|場所)(?:へ|に)(?:行って|いって|行き|いき)(?=、)/.exec(source.slice(location.extent.start));
+          if (clause) { range = { start: location.extent.start, end: location.extent.start + clause[0].length }; chained = true; }
+        }
         if (range && source) {
           const original = source.slice(range.start, range.end), write = (leg, subject) => {
             const fixed = { ...goto, inlineComment: '', [missing]: exprNode('QuantityLiteral', { unit: '歩', value: leg }) };
@@ -1622,6 +1631,7 @@
           for (const [label, leg] of [[across ? '「右へ（よこのばしょ）歩」を 書く' : '「上へ（たてのばしょ）歩」を 書く', exprNode('SensorRead', { sensor: across ? '横位置' : '縦位置' })],
             [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
             let text = lanes ? null : write(leg, STATEMENT_EXPLICIT_ACTORS.has(goto));
+            if (text && chained) text = text.replace(/行く$/, '行って');
             if (lanes) {
               const bare = write(leg, false), named = write(leg, true);
               if (bare && named?.endsWith(bare)) text = group.replace(/、$/, '') + (named.slice(0, -bare.length).endsWith('、') ? '、' : '') + bare;
@@ -1675,8 +1685,10 @@
         // 「空白」キーがおされるまで待つ twice: the second wait ends at once on the key still held (0 seconds).
         if (n.kind === 'WaitUntil') {
           const key = keyOf(n.condition);
-          if (key !== null && heldKey === key)
-            note('I125', n, `「${key}」キーが おされるまで 待つ 文が つづくと、2つ目は、おしたままの キーで すぐに 終わります（時間は 0秒です）。あいだに「「${key}」キーがおされなくなるまで待つ。」を 書きます`);
+          // The key is named as 整える writes it.
+          const shown = key !== null && heldKey === key ? formatExpression(n.condition.arg) : null;
+          if (shown)
+            note('I125', n, `${shown}キーが おされるまで 待つ 文が つづくと、2つ目は、おしたままの キーで すぐに 終わります（時間は 0秒です）。あいだに「${shown}キーがおされなくなるまで待つ。」を 書きます`);
           // A wait for the key to be let go (or for anything else) ends the held press.
           heldKey = key;
         } else if (NOTICE_WAITS.has(n.kind) || NOTICE_LOOPS.has(n.kind) || n.kind === 'IfStatement' || (n.kind === 'Say' && n.seconds)) heldKey = null;
@@ -1710,7 +1722,7 @@
         // マウスがおされているあいだ in an おされたとき body: that body starts when the button is let go.
         if (item.event === 'click') expressions(n, (e, negated) => {
           if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている')
-            note('I126', n, '「おされたとき」は、マウスの ボタンを はなしたときに 始まるので、「マウスがおされている」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 本文の「ずっとくり返す。」の 中に「もしマウスがおされていれば、」を 書きます');
+            note('I126', n, '「おされたとき」は、マウスの ボタンを はなしたときに 始まるので、「マウスがおされている」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 本文の「ずっとくり返す。」の 中に「もしマウスがおされていて、「マウス」にふれていれば、」を 書きます');
         });
         // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
         const listed = MEIJIN_LISTED_IN_ORDER.get(n);

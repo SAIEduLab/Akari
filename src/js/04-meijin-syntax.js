@@ -272,7 +272,13 @@
     // ねこが「星」にふれたとき、/ ねこが星にふれるたびに、/ ねこが画面のはしにふれたとき、(上・下・右・左のはしも): who touches is
     // written first. Under the edge's heading a sentence with no subject is the toucher's; under a part's, it names who acts.
     if ((p = surfaceCapture(/^(.+?)が(.+?)に(?:(?:ふれ|触れ)たとき|(?:ふれ|触れ)るたびに)、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx)) {
-      const target = touchTarget(p[1].text, symbols);
+      let target;
+      try { target = touchTarget(p[1].text, symbols); }
+      catch (error) {
+        // マウス or a colour is looked at with もし; a 名人 condition names who touches (もしねこが「マウス」にふれていれば、).
+        if (error instanceof AkariError && error.code === 'P205' && error.message.includes('「もし「')) throw new AkariError('P205', error.message.replace('「もし「', `「もし${meijinBare(p[0].text)}が「`));
+        throw error;
+      }
       if (target !== null && (isEdgeTarget(target) || isMeijinPart(target, symbols, ctx)))
         return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(target) } }, body: p[2], actor: p[0],
           bodyTopic: isEdgeTarget(target) ? { kind: 'self' } : { kind: 'self', mustName: 'touch' } };

@@ -7672,6 +7672,7 @@ function createAkariExtensionHost(options) {
     // The touch targets that are no part: the whole stage edge (端) and its four sides, by the words code writes.
     const EDGE_TARGETS = Object.freeze({ 端: '画面のはし', '端:上': '画面の上のはし', '端:下': '画面の下のはし', '端:右': '画面の右のはし', '端:左': '画面の左のはし' });
     const isEdgeTarget = (target) => typeof target === 'string' && Object.hasOwn(EDGE_TARGETS, target);
+    const EDGE_SIDES = Object.freeze(['端:上', '端:下', '端:右', '端:左']);
     // A body is named by its event; a touch body also by what it touches (「星」に ふれたとき, 画面のはしに ふれたとき).
     const eventText = (event, filter) => event === 'touchStart' && typeof filter?.target === 'string' && filter.target
       ? (isEdgeTarget(filter.target) ? EDGE_TARGETS[filter.target] : '「' + filter.target + '」') + 'に ふれたとき' : EVENT_LABELS[event];
@@ -8532,6 +8533,11 @@ function createAkariExtensionHost(options) {
     const watchPose = (a) => ({ ...pose(a), runtimeId: a.runtimeId, visible: a.visible });
     const sameWatchPose = (kept, a) => kept.runtimeId === a.runtimeId && kept.visible === a.visible && samePose(kept, a);
     const samePoses = (kept, now) => !!kept && kept.length === now.length && now.every((x, i) => Object.keys(x).every(k => kept[i][k] === x[k]));
+    // A subject or heading written 画面 is the work screen, unless a part is named 画面: then it is that part (as for
+    // 今 and はし), and the screen is still named by its own name (画面1).
+    function namesStage(project, name) {
+      return name === project.stage.name || (name === '画面' && !project.components.some((c) => c.name === '画面'));
+    }
     class RuntimeModel {
       constructor(project, ui = {}, assetCache = null) {
         this.project = project;
@@ -8644,7 +8650,7 @@ function createAkariExtensionHost(options) {
         let id = relativeRuntimeId;
         // みんな ({kind:'all'}, a wait of the whole flow) reads its time or condition as 自分.
         if (ref && ref.kind === 'named') {
-          id = ref.targetId || (ref.name === '画面' || ref.name === this.project.stage.name ? 'stage' :
+          id = ref.targetId || (namesStage(this.project, ref.name) ? 'stage' :
             this.project.components.find((c) => c.name === ref.name)?.id);
         }
         if (id !== 'stage' && !this.actor(id))
@@ -8981,8 +8987,8 @@ function createAkariExtensionHost(options) {
       }
       // Whether two parts touch: their boxes overlap, as for every part, and where they overlap a point is seen of both
       // — of a picture where its cells are seen, of any other part anywhere in its box (final call 17). The overlap is
-      // looked at in at most 64×64 points, no further apart than the finest picture cell. A pair's answer is kept until
-      // either part moves, turns, or changes its size or look.
+      // looked at in points no further apart than the finest picture cell (at most 64×64 of them; a wider overlap cell by
+      // cell). A pair's answer is kept until either part moves, turns, or changes its size or look.
       partsTouch(a, b) {
         const aa = this.aabb(a), bb = this.aabb(b);
         if (!(aa.left <= bb.right && aa.right >= bb.left && aa.bottom <= bb.top && aa.top >= bb.bottom)) return false;
@@ -9005,8 +9011,26 @@ function createAkariExtensionHost(options) {
         const sa = ma && this.pictureSampler(a, ma), sb = mb && this.pictureSampler(b, mb);
         if ((sa && !sa.anySeenIn(left, right, bottom, top)) || (sb && !sb.anySeenIn(left, right, bottom, top))) return keep(false);
         const cell = (x, m) => (m ? Math.min((x.w * x.scalePercent) / 100 / m.w, (x.h * x.scalePercent) / 100 / m.h) : Infinity);
-        let step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
-        if ((rw / step) * (rh / step) > 4096) step = Math.sqrt((rw * rh) / 4096);
+        const step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
+        // A wider overlap is looked at cell by cell instead (a point grid coarser than a cell could step over a thin seen
+        // strip): each seen cell of the finer picture there is a small box on the screen, and the other part touches it
+        // where its own seen cells (or its box) overlap that box (cells that only meet at a side do not overlap).
+        if ((rw / step) * (rh / step) > 4096) {
+          const [x, m, other] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sb] : [b, mb, sa];
+          const sc = x.scalePercent / 100, W = x.w * sc, H = x.h * sc, cs = cosDegrees(x.direction), sn = sinDegrees(x.direction);
+          for (let r = 0; r < m.h; r++)
+            for (let c = 0; c < m.w; c++) {
+              if (!m.cells[r * m.w + c]) continue;
+              let l = Infinity, rr = -Infinity, bo = Infinity, to = -Infinity;
+              for (const [u, v] of [[c, r], [c + 1, r], [c, r + 1], [c + 1, r + 1]]) {
+                const lx = (u / m.w - 0.5) * W, ly = (0.5 - v / m.h) * H, px = x.x + lx * cs - ly * sn, py = x.y + lx * sn + ly * cs;
+                l = Math.min(l, px); rr = Math.max(rr, px); bo = Math.min(bo, py); to = Math.max(to, py);
+              }
+              const L = Math.max(l, left) + 1e-6, R = Math.min(rr, right) - 1e-6, B = Math.max(bo, bottom) + 1e-6, T = Math.min(to, top) - 1e-6;
+              if (L < R && B < T && (!other || other.anySeenIn(L, R, B, T))) return keep(true);
+            }
+          return keep(false);
+        }
         const nx = Math.max(1, Math.ceil(rw / step)), ny = Math.max(1, Math.ceil(rh / step));
         for (let j = 0; j < ny; j++) {
           const y = bottom + ((j + 0.5) * rh) / ny;
@@ -10584,6 +10608,14 @@ function createAkariExtensionHost(options) {
                 const kept = w.poses.get(a.runtimeId);
                 if (!partnersMoved && kept && sameWatchPose(kept, a)) continue;
                 w.poses.set(a.runtimeId, watchPose(a));
+                // 画面のはし is any one of the four sides: a side the part did not touch before starts it too (a ball
+                // that bounced off the right side and goes on into the top one near a corner).
+                if (target === '端') {
+                  const sides = EDGE_SIDES.filter(side => this.runtime.touching(a.runtimeId, side)), before = w.last.get(a.runtimeId);
+                  if (before && sides.some(side => !before.includes(side))) this.spawnWatch(w, a.runtimeId);
+                  w.last.set(a.runtimeId, sides);
+                  continue;
+                }
                 const touching = this.runtime.touching(a.runtimeId, target);
                 if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
                 w.last.set(a.runtimeId, touching);
@@ -10830,6 +10862,14 @@ function createAkariExtensionHost(options) {
         top.visual = top.waited = top.yielded = false;
         return false;
       }
+      // A 〜まで／〜あいだ loop checks its condition when a turn ends and waits for the こま only when another turn
+      // follows: the body goes on the stack under the こま's wait. When the condition ends the loop, it goes on at once.
+      enterLoopTurn(task, frame) {
+        const pace = frame.visual && !frame.waited && !this.paused;
+        frame.visual = frame.waited = frame.yielded = false;
+        this.enterBody(task, frame.node.body);
+        if (pace) task.execStack.push({ type: 'frameYield', node: frame.node });
+      }
       markTurn(task, mark) {
         for (let t = task; t; t = t.laneParent)
           for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame[mark] = true;
@@ -10906,7 +10946,7 @@ function createAkariExtensionHost(options) {
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return this.paceTurn(task, top) ? task.execStack.at(-1) : top;
+          if (top.type === 'while' || top.type === 'until') return top;
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
@@ -11010,7 +11050,7 @@ function createAkariExtensionHost(options) {
         this.blocked.delete(task); task.blockReason=null; task.state='RUNNING';
         if (reason.loopFrame) {
           const keep=bool(evalExpression(outcome.value.condition,this.context(task)));
-          if (reason.loopFrame.type==='while'?keep:!keep) this.enterBody(task,reason.loopFrame.node.body);
+          if (reason.loopFrame.type==='while'?keep:!keep) this.enterLoopTurn(task,reason.loopFrame);
           else task.execStack.pop();
         } else { this.executePreparedNode(task,outcome.value,reason.originalNode); this.markMoved(task,reason.originalNode); }
         if (task.state==='RUNNING') {
@@ -11032,9 +11072,8 @@ function createAkariExtensionHost(options) {
         if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && this.prepareCooperativeNode(task, frame.node, frame)) return;
         const v = bool(evalExpression(frame.condition || frame.node.condition, this.context(task)));
         const keep = frame.type === 'while' ? v : !v;
-        if (keep) {
-          task.execStack.push({ type: 'seq', nodes: frame.node.body, index: 0 });
-        } else task.execStack.pop();
+        if (keep) this.enterLoopTurn(task, frame);
+        else task.execStack.pop();
         return { requeue: true };
       }
       enterBody(task, nodes, binder = null) {
@@ -12396,6 +12435,7 @@ function createAkariExtensionHost(options) {
       execFunctionNodes,
       execListMutation,
       EventScheduler,
+      namesStage,
       BUILTIN_DEFINITIONS,
       EXECUTABLE_CONTRACT,
       validProducerLabel,
@@ -12512,6 +12552,7 @@ function createAkariExtensionHost(options) {
     execFunctionNodes,
     execListMutation,
     EventScheduler,
+    namesStage,
   } = AKARI_RUNTIME;
   const LANGUAGE_CONTRACT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.languageContractId;
   const PROJECT_FORMAT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.projectFormatVersion;
@@ -17358,18 +17399,18 @@ function createAkariExtensionHost(options) {
         else if (this.take('\u306b\u89e6\u308c\u3066\u3044\u306a\u3044'))
           n = exprNode('UnaryExpression', {
             op: 'NOT',
-            value: exprNode('SensorRead', { sensor: 'TOUCHING', arg: componentTarget(n, this.symbols, this.ctx) }),
+            value: exprNode('SensorRead', { sensor: 'TOUCHING', arg: touchingTarget(n, this.symbols, this.ctx) }),
           });
         else if (this.take('キーがおされている') || this.take('キーが押されている'))
           n = exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: keyArg(n, this.symbols, this.ctx) });
         else if (this.take('の色に触れている') || this.take('色に触れている'))
           n = exprNode('SensorRead', { sensor: 'TOUCHING_COLOR', arg: colorWord(n, this.symbols, this.ctx) });
         else if (this.take('に触れている'))
-          n = exprNode('SensorRead', { sensor: 'TOUCHING', arg: componentTarget(n, this.symbols, this.ctx) });
-        else if (this.take('にふれていない')) n = exprNode('UnaryExpression', {op:'NOT',value:exprNode('SensorRead',{sensor:'TOUCHING',arg:componentTarget(n, this.symbols, this.ctx)})});
+          n = exprNode('SensorRead', { sensor: 'TOUCHING', arg: touchingTarget(n, this.symbols, this.ctx) });
+        else if (this.take('にふれていない')) n = exprNode('UnaryExpression', {op:'NOT',value:exprNode('SensorRead',{sensor:'TOUCHING',arg:touchingTarget(n, this.symbols, this.ctx)})});
         else if (this.take('の色にふれていない') || this.take('色にふれていない')) n = exprNode('UnaryExpression',{op:'NOT',value:exprNode('SensorRead',{sensor:'TOUCHING_COLOR',arg:colorWord(n, this.symbols, this.ctx)})});
         else if (this.take('の色にふれている') || this.take('色にふれている')) n = exprNode('SensorRead',{sensor:'TOUCHING_COLOR',arg:colorWord(n, this.symbols, this.ctx)});
-        else if (this.take('にふれている')) n = exprNode('SensorRead',{sensor:'TOUCHING',arg:componentTarget(n, this.symbols, this.ctx)});
+        else if (this.take('にふれている')) n = exprNode('SensorRead',{sensor:'TOUCHING',arg:touchingTarget(n, this.symbols, this.ctx)});
         else if (this.starts('の') && !this.starts('の中で') && !this.starts('の中に')) {
           const saved = this.i;
           this.i++;
@@ -18016,7 +18057,7 @@ function createAkariExtensionHost(options) {
         if(split<1) fail('ふれる相手の名前を「に」の前に書いてください');
         const color=body.slice(0,split).endsWith('の色'), target=body.slice(0,split-(color?2:0)), t=readNameToken(target);
         const operand=t && t.end===target.length ? exprNode('StringLiteral',{value:t.name}) : parseExpression(target,symbols,ctx);
-        const touch=exprNode('SensorRead',{sensor:color?'TOUCHING_COLOR':'TOUCHING',arg:operand});
+        const touch=exprNode('SensorRead',{sensor:color?'TOUCHING_COLOR':'TOUCHING',arg:color?operand:touchingTarget(operand,symbols,ctx)});
         // 自分が…にふれている is the same as …にふれている.
         node=subject.name==='自分'&&!subject.exact?touch:exprNode('ActorQualifiedRead',{actorRef:{kind:'named',name:subject.name},value:touch});
         const actorRange=sourceRange(ctx.sourcePositions||[],0,subject.end);if(actorRange&&node!==touch)SOURCE_RANGES.set(node,{actorRange});
@@ -18127,6 +18168,13 @@ function createAkariExtensionHost(options) {
   // Whether a bare data name is a list or a variable anywhere in the work (parts included); null when unknown.
   // A part's own name written without 「」 (ねこの方を向く, ねこまでのきょり, ねこにふれている) names that part when no data
   // has that name.
+  // 画面の下にふれている reads as 画面's 「下」: the side of the screen is 画面の下のはし (the run would look for a part 下).
+  function touchingTarget(node, symbols, ctx = {}) {
+    const side = node?.kind === 'ActorQualifiedRead' && node.actorRef?.kind === 'named' && node.actorRef.name === '画面' && symbols?.project && namesStage(symbols.project, '画面') &&
+      ({ StringLiteral: node.value?.value, VariableRead: node.value?.name }[node.value?.kind]);
+    if (['上', '下', '右', '左'].includes(side)) throw new AkariError('P205', `画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます`);
+    return componentTarget(node, symbols, ctx);
+  }
   function componentTarget(node, symbols, ctx = {}) {
     if (node?.kind !== 'VariableRead' || node.qualifier || dataNameKind(node.name, symbols, ctx) || !symbols?.project?.components?.some((c) => c.name === node.name)) return node;
     const literal = exprNode('StringLiteral', { value: node.name }), location = SOURCE_RANGES.get(node);
@@ -18463,7 +18511,7 @@ function createAkariExtensionHost(options) {
     ['知らせて','知らせる'], ['鳴らして','鳴らす'], ['くり返して','くり返す'], ['繰り返して','繰り返す'], ['くりかえして','くりかえす'],
     ['増やして','増やす'], ['ふやして','ふやす'], ['減らして','減らす'], ['へらして','へらす'], ['下ろして','下ろす'], ['おろして','下ろす'],
     ['押して','押す'], ['おして','おす'], ['止めて','止める'], ['作って','作る'], ['つくって','作る'],
-    ['送って','送る'], ['上げて','上げる'], ['あげて','上げる'], ['下げて','下げる'], ['下がって','下がる'],
+    ['送って','送る'], ['上げて','上げる'], ['あげて','上げる'], ['下げて','下げる'], ['下がって','下がる'], ['さがって','さがる'],
     ['出て','出る'], ['はね返って','はね返る'], ['聞いて','たずねて、答えを待つ'], ['きいて','たずねて、答えを待つ'], ['たずねて','たずねて、答えを待つ'], ['して','する'],
   ].map(Object.freeze));
   function surfaceCapture(pattern, code, protectedCode = surfaceMask(code)) {
@@ -18540,7 +18588,7 @@ function createAkariExtensionHost(options) {
     const protectedCode = surfaceMask(code);
     const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],
       // Every action's verb: a specific ending comes before the general します.
-      ['向きます','向く'],['行きます','行く'],['いきます','いく'],['歩きます','歩く'],['あるきます','あるく'],['すべります','すべる'],['下がります','下がる'],['はね返ります','はね返る'],
+      ['向きます','向く'],['行きます','行く'],['いきます','いく'],['歩きます','歩く'],['あるきます','あるく'],['うごきます','うごく'],['すべります','すべる'],['下がります','下がる'],['さがります','さがる'],['はね返ります','はね返る'],
       ['かくします','かくす'],['隠します','隠す'],['見せます','見せる'],['出ます','出る'],
       ['かえます','かえる'],['変えます','変える'],['鳴らし始めます','鳴らし始める'],['鳴らします','鳴らす'],['止めます','止める'],
       ['送ります','送る'],['作ります','作る'],['消します','消す'],['けします','けす'],['入れます','入れる'],['足します','足す'],['引きます','引く'],
@@ -18588,7 +18636,9 @@ function createAkariExtensionHost(options) {
       return action[1]?node('RepeatCount',{count:q(action[1],'回'),body:[call]}):call;
     }
     // よこのばしょを100にする / たてのばしょを10減らす are not read (B-08): the guidance comes before the data readers.
-    {const removed=/^(?:よこ|たて|横|縦)(?:のばしょ|の場所|位置)を/.test(protectedCode)&&removedMoveGuidance(code);if(removed)throw new AkariError('P205',removed.message);}
+    // ねこのよこのばしょを… / 自分のよこのばしょを… too, when ねこ is a part.
+    {const owned=/^(?:([^、。]+?)の)?(?:よこ|たて|横|縦)(?:のばしょ|の場所|位置)を/.exec(protectedCode),owner=owned?.[1]&&code.slice(0,owned[1].length).replace(/^「(.*)」$/,'$1');
+      const removed=owned&&(!owned[1]||owner==='自分'||symbols?.project?.components?.some(c=>c.name===owner))&&removedMoveGuidance(code);if(removed)throw new AkariError('P205',removed.message);}
     for (const form of SENTENCE_FORMS) {
       if(!form.pattern)continue;
       const ending=SENTENCE_ROLE_ENDINGS[form.role];
@@ -18683,7 +18733,7 @@ function createAkariExtensionHost(options) {
     return { axis, dir, amount: quantity(amount.text.slice(0, -1), '歩', start + amount.start) };
   }
   // One leg, or two of different axes: 右へ10歩、上へ5歩 (also without the comma, and either order).
-  function readMoveLegs(text, start, quantity) {
+  function readMoveLegs(text, start, quantity, example = 'いまのばしょから、右へ10歩、上へ5歩動く') {
     const mask = surfaceMask(text), splits = [];
     for (let i = 0; i < mask.length; i++) if (mask[i] === '、') splits.push([i, i + 1]);
     for (let i = 1; i < mask.length; i++) if (mask[i - 1] === '歩' && /^(?:右|左|上|下)(?:へ|に)/.test(mask.slice(i))) splits.push([i, i]);
@@ -18693,7 +18743,7 @@ function createAkariExtensionHost(options) {
       try { one = readMoveLeg(text.slice(0, a), start, quantity); two = one && readMoveLeg(text.slice(b), start + b, quantity); }
       catch (error) { if (!(error instanceof AkariError)) throw error; firstError ||= error; continue; }
       if (!one || !two) continue;
-      if (one.axis === two.axis) throw new AkariError('P205', '「右へ」「左へ」と「上へ」「下へ」を1つずつ書きます。れい：いまのばしょから、右へ10歩、上へ5歩動く');
+      if (one.axis === two.axis) throw new AkariError('P205', '「右へ」「左へ」と「上へ」「下へ」を1つずつ書きます。れい：' + example);
       return { [one.axis]: one, [two.axis]: two };
     }
     const single = readMoveLeg(text, start, quantity);
@@ -18734,7 +18784,7 @@ function createAkariExtensionHost(options) {
       if (!seconds && (p = surfaceCapture(new RegExp('^(.+歩)、?(.+?)' + MOVE_TIME + '$', 'd'), legs))) { seconds = time(p[1], legsStart); legs = p[0].text; }
       if (!MOVE_VERBS.here.includes(verb)) throw new AkariError('P205', 'いまの ばしょから 動くときは「動く」と 書きます。れい：' + MOVE_EXAMPLE_HERE);
     }
-    const read = readMoveLegs(legs, legsStart, quantity);
+    const read = readMoveLegs(legs, legsStart, quantity, fixed ? MOVE_EXAMPLE_FIXED : undefined);
     if (!read) throw new AkariError('P205', fixed
       ? '「右へ100歩、上へ50歩」のように、向きと 歩数を 書きます。れい：' + MOVE_EXAMPLE_FIXED
       : '「右へ10歩」のように、向きと 歩数を 書きます。れい：' + MOVE_EXAMPLE_HERE);
@@ -18836,7 +18886,7 @@ function createAkariExtensionHost(options) {
   // The 1.4.0 move forms that are not read (LANGUAGE.md 読めない書き方): each names the 1.5.0 form. A move along the
   // screen's directions means the same from いまのばしょ, so it gets a proposal; a place counted the 1.4.0 way (from the
   // top-left corner) would land somewhere else, so it gets the message only. null for any other sentence.
-  const MOVE_OLD_VERB = '(?:動く|うごく|進む|すすむ|歩く|あるく|動かす|うごかす)';
+  const MOVE_OLD_VERB = '(?:動く|うごく|進む|すすむ|歩く|あるく|動かす|うごかす|行く|いく)';
   function removedMoveGuidance(code) {
     const mask = surfaceMask(code);
     // The subject (ねこは / ねこが, and ねこを before 動かす) is kept; を becomes は.
@@ -18844,16 +18894,19 @@ function createAkariExtensionHost(options) {
     let at = subjectAt(/^((?:[^、。]+?[はが]、?)?)/), rest = code.slice(at), rmask = mask.slice(at);
     const subject = code.slice(0, at);
     let p;
-    // よこのばしょを100にする / たてのばしょを10減らす (also 横・縦 and の場所, and 横位置・縦位置).
-    if ((p = /^(よこ|たて|横|縦)(?:のばしょ|の場所|位置)を(.+?)(?:歩)?(?:だけ)?(増やす|ふやす|減らす|へらす|にする|にかえる|に変える)$/.exec(rmask))) {
-      const horizontal = ['よこ', '横'].includes(p[1]), amount = rest.slice(rmask.indexOf('を') + 1, rest.length - p[3].length).replace(/歩?(?:だけ)?$/, '');
-      if (/(?:増やす|ふやす|減らす|へらす)$/.test(p[3])) {
-        const up = /^(?:増|ふ)/.test(p[3]), word = horizontal ? (up ? '右' : '左') : (up ? '上' : '下');
+    // よこのばしょを100にする / たてのばしょを10減らす (also 横・縦 and の場所, and 横位置・縦位置). ねこのよこのばしょを…
+    // names who moves (自分の…: the body's own part); the example then names that part, as a 名人 text needs.
+    if ((p = /^(?:([^、。]+?)の)?(よこ|たて|横|縦)(?:のばしょ|の場所|位置)を(.+?)(?:歩)?(?:だけ)?(増やす|ふやす|減らす|へらす|にする|にかえる|に変える)$/.exec(rmask))) {
+      const owner = p[1] ? rest.slice(0, p[1].length).replace(/^「(.*)」$/, '$1') : null, who = owner && owner !== '自分' ? owner + 'は' : subject;
+      const named = owner && owner !== '自分' ? owner : /^(.+?)[はが]、?$/.exec(subject)?.[1].replace(/^「(.*)」$/, '$1'), of = named ? `「${named}」の` : '';
+      const horizontal = ['よこ', '横'].includes(p[2]), amount = rest.slice(rmask.indexOf('を', p[1] ? p[1].length : 0) + 1, rest.length - p[4].length).replace(/歩?(?:だけ)?$/, '');
+      if (/(?:増やす|ふやす|減らす|へらす)$/.test(p[4])) {
+        const up = /^(?:増|ふ)/.test(p[4]), word = horizontal ? (up ? '右' : '左') : (up ? '上' : '下');
         return { message: 'ばしょを ふやす・へらすときは「いまのばしょから、右へ10歩動く」のように 書きます',
-          source: `${subject}いまのばしょから、${word}へ${amount}歩動く`, label: 'いまのばしょから 動く' };
+          source: `${who}いまのばしょから、${word}へ${amount}歩動く`, label: 'いまのばしょから 動く' };
       }
       const value = /^[0-9０-９]+$/.test(amount) ? amount : null;
-      const example = horizontal ? `画面の左下のはしから、右へ${value || 100}歩、上へ（たてのばしょ）歩のばしょへ行く` : `画面の左下のはしから、右へ（よこのばしょ）歩、上へ${value || 50}歩のばしょへ行く`;
+      const example = who.replace(/、$/, '') + (horizontal ? `画面の左下のはしから、右へ${value || 100}歩、上へ（${of}たてのばしょ）歩のばしょへ行く` : `画面の左下のはしから、右へ（${of}よこのばしょ）歩、上へ${value || 50}歩のばしょへ行く`);
       return { message: `ばしょを 決めるときは「${example}」のように 書きます` };
     }
     // ねこを右へ10歩動かす: the part moved is the subject.
@@ -19150,7 +19203,8 @@ function createAkariExtensionHost(options) {
         ['作り、', '作って、'], ['送り、', '送って、'], ['下ろし、', '下ろして、'], ['上げ、', '上げて、'], ['向き、', '向いて、'], ['行き、', '行って、'], ['にし、', 'にして、'], ['かえ、', 'かえて、'],
         ['すすみ、', '進んで、'], ['まわり、', '回って、'], ['ふやし、', '増やして、'], ['へらし、', '減らして、'], ['まち、', '待って、'], ['おろし、', '下ろして、'],
         ['ならし、', '鳴らして、'], ['つくり、', '作って、'], ['いい、', '言って、'], ['むき、', '向いて、'], ['いれ、', '入れて、'], ['おくり、', '送って、'],
-        ['とめ、', '止めて、'], ['あげ、', '上げて、'], ['うごき、', '動いて、'], ['歩き、', '歩いて、'], ['あるき、', 'あるいて、']])
+        ['とめ、', '止めて、'], ['あげ、', '上げて、'], ['うごき、', '動いて、'], ['歩き、', '歩いて、'], ['あるき、', 'あるいて、'],
+        ['へいき、', 'へ行って、'], ['にいき、', 'に行って、'], ['下がり、', '下がって、'], ['さがり、', '下がって、']])
         text = word(text, from, to);
       // 〜て with no 、 before the next action
       for (const te of ['鳴らし始めて', '鳴らして', '進んで', 'すすんで', '動いて', 'うごいて', '歩いて', 'あるいて', '回って', 'まわって', '向いて', '待って', '言って', '話して',
@@ -19283,6 +19337,8 @@ function createAkariExtensionHost(options) {
       const tail=code.slice(start,end);
       let replacement=tail.slice(0,-pair[0].length)+pair[1];
       if(pair[0]==='行って'&&!replacement.endsWith('手順を行う'))replacement=tail.slice(0,-pair[0].length)+'行く';
+      // …へいって、 / …にいって、 is going (いく); 「…」といって、 is saying.
+      if(pair[0]==='いって'&&/[へに]いって$/.test(mask.slice(start,end)))replacement=tail.slice(0,-pair[0].length)+'いく';
       const part=surfaceLineSlice(line,start,i,replacement),head=readBlockHead(replacement,symbols,{...scope,sourceLine:part,lineNo:line.lineNo});
       let node;
       if(head?.inlineBody){const fields={...head};delete fields.inlineBody;delete fields.kind;node=statementNode(head.kind,part,{...fields,body:head.inlineBody,actorRef:{...(head.actorRef||scope.topicActor||{kind:'self'})}});}
@@ -19355,6 +19411,12 @@ function createAkariExtensionHost(options) {
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).
     const reads=source=>{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。',source+'。\n  何もしない。']){try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
+    // 画面の下にふれていれば / 画面の右にふれたとき: one side of the screen is 画面の下のはし (no part may be named 画面).
+    const sideTouch=/(^|もし、?|、|が|は)画面の(上|下|右|左)に(?:ふれ|触れ)/.exec(mask);
+    if(sideTouch&&symbols?.project&&namesStage(symbols.project,'画面')){
+      const at=sideTouch.index+sideTouch[1].length+3+sideTouch[2].length,source=code.slice(0,at)+'のはし'+code.slice(at),side=sideTouch[2];
+      throw sentenceDiagnostic(`画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます`,line,reads(source)?[{label:`画面の ${side}の はしに ふれている`,source}]:[]);
+    }
     // ── ふれる (decisions §3, C-04 … C-10, C-18, final call 6). Each form below is not read, so the line never reads as
     // written; a fix is offered only when the whole line reads with it.
     {
@@ -19486,7 +19548,7 @@ function createAkariExtensionHost(options) {
       for(const clause of [...clauses].reverse()){
         // そのあと上へ5歩動く: a lead word of a later sentence stays in front of it.
         clause.start+=leadOf(mask.slice(clause.start,clause.end)).length;
-        const text=code.slice(clause.start,clause.end),plain=clause.pair?text.slice(0,-clause.pair[0].length)+(clause.pair[0]==='行って'?'行く':clause.pair[1]):text;
+        const text=code.slice(clause.start,clause.end),plain=clause.pair?text.slice(0,-clause.pair[0].length)+(clause.pair[0]==='行って'||clause.pair[0]==='いって'&&/[へに]いって$/.test(text)?'行く':clause.pair[1]):text;
         const found=removedMoveGuidance(plain);
         if(!found)continue;
         first=found;
@@ -19542,6 +19604,11 @@ function createAkariExtensionHost(options) {
     // 右に回る: the angle is needed.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(右|左)に(?:回る|まわる)$/d,code,mask)))
       throw fixed('回るときは、何度 回るかを 書きます',`${p[0].text}${p[1].text}に90度回る`,'90度 回る','MotionCommand');
+    // 右に90度、1秒かけて回る: the time comes first, as in the other timed moves.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)((?:右|左)(?:に|へ)[^、。]+?度|[^、。]+?度(?:右|左)(?:に|へ))、?([^、。]+?)秒(?:かけて|で)(?:回る|まわる)$/d,code,mask))){
+      const source=`${p[0].text}${p[2].text}秒かけて、${p[1].text}回る`;
+      if(reads(source))throw fixed('「〇秒かけて、」は 文の はじめに 書きます。れい：'+canonicalStatementSource(source,symbols),source,'時間を はじめに 書く','MotionCommand');
+    }
     // 1秒まって / 10歩進んだ: an action is written 〜する.
     {const past=/(?:った|んだ|いた|いだ|した)$/.exec(mask);const te=past?code.slice(0,-past[0].length)+({った:'って',んだ:'んで',いた:'いて',いだ:'いで',した:'して'})[past[0]]:/(?:って|んで|いて|いで|して|えて|めて|げて|せて|れて|ねて|べて|けて)$/.test(mask)?code:null;
       if(te){const plain=sentenceInfinitive(te);if(plain&&plain!==te&&reads(plain))throw fixed(past?'これから する ことは「進む」のように 書きます':'文の おわりは「待つ」のように 書きます',plain,'〜する に する');}}
@@ -19563,7 +19630,7 @@ function createAkariExtensionHost(options) {
       if(group&&(!group[2]||(who&&!EVERYONE_WORDS.includes(who))))
         throw sentenceDiagnostic(who&&!EVERYONE_WORDS.includes(who)?'この 文は、いつも みんなで 待ちます。だれが 待つかは 書かずに「その合図で始まったことが全部終わるまで待つ」と 書きます':'「その合図で始まったことが全部終わるまで待つ」と 書きます',line,[{label:'書きかえる',source:'その合図で始まったことが全部終わるまで待つ'}],{kind:'WaitBroadcastGroup'});}
     // ベルを鳴らす / スタートの合図を送る: a sound's or signal's name is written in 「 」.
-    {const sound=/^(?:(.+?)は、?)?(.+?)を(?:鳴らす|ならす|鳴らし始める|ならし始める|最後まで鳴らす)$/.exec(code),signal=/^(?:(.+?)は、?)?(.+?)の合図を送(?:る|って.+)$/.exec(code);
+    {const sound=/^(?:(.+?)は、?)?(.+?)(?:の音)?を(?:鳴らす|ならす|鳴らし始める|ならし始める|最後まで鳴らす)$/.exec(code),signal=/^(?:(.+?)は、?)?(.+?)の合図を送(?:る|って.+)$/.exec(code);
       const bare=name=>name&&!/^[「【（]/.test(name)&&!dataNameKind(name,symbols,ctx)&&/^[\p{L}ー0-9０-９]+$/u.test(name);
       if(sound&&bare(sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
       if(signal&&bare(signal[2]))throw fixed('合図の 名前は「 」で かこんで 書きます',code.replace(signal[2]+'の合図','「'+signal[2]+'」の合図'),'「 」で かこむ','Broadcast');}
@@ -19626,6 +19693,10 @@ function createAkariExtensionHost(options) {
       const way=p[1]?.text||p[2]?.text||'前',facing=['前','後ろ'].includes(way);
       throw fixed('ゆっくり 動くときは、「1秒かけて、前へ10歩進む」のように かける 時間を 書きます',`${p[0].text}1秒かけて、${facing?'':'いまのばしょから、'}${way}へ${p[3].text}歩${way==='前'?'進む':'動く'}`,'時間を かけて 動く','MotionCommand');
     }
+    // ゆっくりいまのばしょから、… / ゆっくり「ロケット」のところへ行く / ゆっくり右に90度回る: the same, with the time first.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)ゆっくり(?:と)?、?(.+)$/d,code,mask))&&!/秒(?:かけて|で)/.test(surfaceMask(p[1].text))&&
+      /(?:動く|うごく|進む|すすむ|歩く|あるく|行く|いく|回る|まわる)$/.test(mask)&&reads(p[0].text+'1秒かけて、'+p[1].text))
+      throw fixed('ゆっくり 動くときは、「1秒かけて、前へ10歩進む」のように かける 時間を 書きます',p[0].text+'1秒かけて、'+p[1].text,'時間を かけて 動く','MotionCommand');
     // 2秒かけてゆっくり10歩動く / ゆっくり1秒待つ: the time already says how slowly; ゆっくり is not written.
     if((p=surfaceCapture(/^(.*?)ゆっくり(?:と)?、?(.*(?:秒|歩).*)$/d,code,mask))&&/(?:秒かけて|秒(?:間)?(?:待つ|まつ)$)/.test(surfaceMask(code))&&reads(p[0].text+p[1].text))
       throw fixed('かける 時間を 書いたときは、「ゆっくり」は 書きません',p[0].text+p[1].text,'「ゆっくり」を けす','MotionCommand');
@@ -20773,7 +20844,13 @@ function createAkariExtensionHost(options) {
     // ねこが「星」にふれたとき、/ ねこが星にふれるたびに、/ ねこが画面のはしにふれたとき、(上・下・右・左のはしも): who touches is
     // written first. Under the edge's heading a sentence with no subject is the toucher's; under a part's, it names who acts.
     if ((p = surfaceCapture(/^(.+?)が(.+?)に(?:(?:ふれ|触れ)たとき|(?:ふれ|触れ)るたびに)、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx)) {
-      const target = touchTarget(p[1].text, symbols);
+      let target;
+      try { target = touchTarget(p[1].text, symbols); }
+      catch (error) {
+        // マウス or a colour is looked at with もし; a 名人 condition names who touches (もしねこが「マウス」にふれていれば、).
+        if (error instanceof AkariError && error.code === 'P205' && error.message.includes('「もし「')) throw new AkariError('P205', error.message.replace('「もし「', `「もし${meijinBare(p[0].text)}が「`));
+        throw error;
+      }
       if (target !== null && (isEdgeTarget(target) || isMeijinPart(target, symbols, ctx)))
         return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(target) } }, body: p[2], actor: p[0],
           bodyTopic: isEdgeTarget(target) ? { kind: 'self' } : { kind: 'self', mustName: 'touch' } };
@@ -22958,7 +23035,7 @@ function createAkariExtensionHost(options) {
         analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
       }
       if (!ref || ref.kind !== 'named') return ctx;
-      const c = ref.name === project.stage.name || ref.name === '画面'
+      const c = namesStage(project, ref.name)
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
       if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
       // 名人 (決まり5): a part's name with data of the same name is not one reading, wherever it is written.
@@ -23528,7 +23605,7 @@ function createAkariExtensionHost(options) {
         availableLocalNames: new Set(),
         // 名人: under a heading that names the stage (作品を動かしたとき、画面1は、) the sentences are the stage's, as in
         // the stage's own body; elsewhere a 名人 text belongs to no part.
-        meijin: !!item.meijin && !(item.ast?.heading?.actorRef?.kind === 'named' && [project.stage.name, '画面'].includes(item.ast.heading.actorRef.name)),
+        meijin: !!item.meijin && !(item.ast?.heading?.actorRef?.kind === 'named' && namesStage(project, item.ast.heading.actorRef.name)),
       };
       for (const d of staticScaleDiagnostics(item.ast, item.key))
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
@@ -23542,8 +23619,10 @@ function createAkariExtensionHost(options) {
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
       // ふれたとき's partner is a part or the edge (端, 端:上 …); the message is at the heading, or the body's first line.
+      // 画面の右にふれたとき names one side of the screen: 画面の右のはし.
+      const side = /^画面の(上|下|右|左)$/.exec(item.filter?.target ?? '')?.[1];
       if (item.event === 'touchStart' && !isEdgeTarget(item.filter?.target) && !componentByName(item.filter?.target))
-        add('S301', `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
+        add('S301', side ? `画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます` : `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
       walk(item.ast.body, base, item.key, 0, true);
       for (const rule of item.ast.rules || []) {
         const c = actorContext(rule.actorRef, { ...base, node: rule }, rule, item.key);
@@ -23592,7 +23671,7 @@ function createAkariExtensionHost(options) {
   function scriptMetadataFromHeading(heading, script, project) {
     if (!heading) return { targetId: script.targetId, event: script.event, filter: script.filter };
     const targetId = heading.actorRef?.kind === 'named'
-      ? (heading.actorRef.targetId || ((heading.actorRef.name === '画面' || heading.actorRef.name === project.stage.name) ? 'stage' :
+      ? (heading.actorRef.targetId || (namesStage(project, heading.actorRef.name) ? 'stage' :
         project.components.find((c) => c.name === heading.actorRef.name)?.id)) : script.targetId;
     const type = targetId === 'stage' ? 'stage' : project.components.find((c) => c.id === targetId)?.type;
     if (!type) throw new AkariError('S301', 'きっかけに 書いた キャラクターや 部品が 見つかりません。名前を たしかめてください');
@@ -23714,7 +23793,7 @@ function createAkariExtensionHost(options) {
     for (const d of meijinProjectDefinitions(project)) records.push({ key: `script:${d.scriptId}`, ownerId: MEIJIN_OWNER, kind: 'action', title: `名人の本文の手順「${d.name}」`,
       source: d.source, lineOffset: d.line - 1, pathPrefix: ['meijinDefinition', d.id],
       context: { ownerId: 'stage', targetId: null, targetType: null, event: null, args: d.args, definition: d, definitionKind: 'action', meijin: true } });
-    const actor = ref => ref?.kind === 'named' ? ref.targetId || (ref.name === '画面' || ref.name === project.stage.name ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
+    const actor = ref => ref?.kind === 'named' ? ref.targetId || (namesStage(project, ref.name) ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
     for (const record of records) {
       const parsed = parseSyntax(record.source, { ...record.context, symbols });
       const ownerName = record.ownerId === 'stage' ? project.stage.name : project.components.find(c => c.id === record.ownerId)?.name;
@@ -24135,7 +24214,7 @@ function createAkariExtensionHost(options) {
       const unitKey=context.unitIds||index?'script:'+id:key,heading=unit.heading;
       let resolved={...context,...(ast.units||context.unitIds?{id,scriptId:id,documentKey:key}:{})};
       if(heading){
-        const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
+        const ref=heading.actorRef,actor=ref?.kind==='named'?(namesStage(project,ref.name)?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
         if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?(context.meijin&&targetExists({name:ref.name,qualifier:null},buildSymbols(project),{})?`見出しの 主語には、部品の 名前を 一つ 書きます（「${ref.name}」のような へんすうや リストは 書けません）。中身の 文に 主語を 書きます`:`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`):'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else if(heading.event==='touchStart'&&actor.type==='stage')errors.push({code:'S304',message:STAGE_TOUCH_MESSAGE,line:unit.sourceSpan?.startLine||1,column:1,where:key});
@@ -24379,7 +24458,14 @@ function createAkariExtensionHost(options) {
         const message = across
           ? 'よこの歩数を書いていないので、右へ0歩（画面の左のはし）へ行きます。よこを今のままにするときは「右へ（よこのばしょ）歩」を書きます'
           : 'たての歩数を書いていないので、上へ0歩（画面の下のはし）へ行きます。たてを今のままにするときは「上へ（たてのばしょ）歩」を書きます';
-        const location = SOURCE_RANGES.get(node), range = location && !location.rewritten ? location.range : null, proposals = [];
+        const location = SOURCE_RANGES.get(node), proposals = [];
+        let range = location && !location.rewritten ? location.range : null, chained = false;
+        // Inside a 「〜して、」 chain (…のばしょへ行って、) the sentence was read as 行く: the fix is made for the clause as
+        // written and keeps the て-form.
+        if (!range && location?.rewritten && location.extent && source && !lanes) {
+          const clause = /^[^。\n]*?の(?:ばしょ|場所)(?:へ|に)(?:行って|いって|行き|いき)(?=、)/.exec(source.slice(location.extent.start));
+          if (clause) { range = { start: location.extent.start, end: location.extent.start + clause[0].length }; chained = true; }
+        }
         if (range && source) {
           const original = source.slice(range.start, range.end), write = (leg, subject) => {
             const fixed = { ...goto, inlineComment: '', [missing]: exprNode('QuantityLiteral', { unit: '歩', value: leg }) };
@@ -24389,6 +24475,7 @@ function createAkariExtensionHost(options) {
           for (const [label, leg] of [[across ? '「右へ（よこのばしょ）歩」を 書く' : '「上へ（たてのばしょ）歩」を 書く', exprNode('SensorRead', { sensor: across ? '横位置' : '縦位置' })],
             [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
             let text = lanes ? null : write(leg, STATEMENT_EXPLICIT_ACTORS.has(goto));
+            if (text && chained) text = text.replace(/行く$/, '行って');
             if (lanes) {
               const bare = write(leg, false), named = write(leg, true);
               if (bare && named?.endsWith(bare)) text = group.replace(/、$/, '') + (named.slice(0, -bare.length).endsWith('、') ? '、' : '') + bare;
@@ -24442,8 +24529,10 @@ function createAkariExtensionHost(options) {
         // 「空白」キーがおされるまで待つ twice: the second wait ends at once on the key still held (0 seconds).
         if (n.kind === 'WaitUntil') {
           const key = keyOf(n.condition);
-          if (key !== null && heldKey === key)
-            note('I125', n, `「${key}」キーが おされるまで 待つ 文が つづくと、2つ目は、おしたままの キーで すぐに 終わります（時間は 0秒です）。あいだに「「${key}」キーがおされなくなるまで待つ。」を 書きます`);
+          // The key is named as 整える writes it.
+          const shown = key !== null && heldKey === key ? formatExpression(n.condition.arg) : null;
+          if (shown)
+            note('I125', n, `${shown}キーが おされるまで 待つ 文が つづくと、2つ目は、おしたままの キーで すぐに 終わります（時間は 0秒です）。あいだに「${shown}キーがおされなくなるまで待つ。」を 書きます`);
           // A wait for the key to be let go (or for anything else) ends the held press.
           heldKey = key;
         } else if (NOTICE_WAITS.has(n.kind) || NOTICE_LOOPS.has(n.kind) || n.kind === 'IfStatement' || (n.kind === 'Say' && n.seconds)) heldKey = null;
@@ -24477,7 +24566,7 @@ function createAkariExtensionHost(options) {
         // マウスがおされているあいだ in an おされたとき body: that body starts when the button is let go.
         if (item.event === 'click') expressions(n, (e, negated) => {
           if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている')
-            note('I126', n, '「おされたとき」は、マウスの ボタンを はなしたときに 始まるので、「マウスがおされている」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 本文の「ずっとくり返す。」の 中に「もしマウスがおされていれば、」を 書きます');
+            note('I126', n, '「おされたとき」は、マウスの ボタンを はなしたときに 始まるので、「マウスがおされている」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 本文の「ずっとくり返す。」の 中に「もしマウスがおされていて、「マウス」にふれていれば、」を 書きます');
         });
         // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
         const listed = MEIJIN_LISTED_IN_ORDER.get(n);
@@ -26618,9 +26707,10 @@ function createAkariExtensionHost(options) {
         p = project(),
         rect = form.getBoundingClientRect();
       if (!r || !rect.width || !rect.height) return;
+      // Within the screen (よこ0〜はば・たて0〜高さ), also for a finger dragged on past the edge (the part keeps the pointer).
       scheduler().inputBoundary(() => {
-        r.mouseX = Math.round(((e.clientX - rect.left) * p.stage.width) / rect.width);
-        r.mouseY = Math.round(((rect.bottom - e.clientY) * p.stage.height) / rect.height);
+        r.mouseX = Math.min(p.stage.width, Math.max(0, Math.round(((e.clientX - rect.left) * p.stage.width) / rect.width)));
+        r.mouseY = Math.min(p.stage.height, Math.max(0, Math.round(((rect.bottom - e.clientY) * p.stage.height) / rect.height)));
       });
     }
     on(form, 'pointerdown', (e) => {
@@ -26744,9 +26834,8 @@ function createAkariExtensionHost(options) {
       automaticAttempted = false,
       backgroundPaused = false,
       runtimeFailed = false,
-      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press within 0.5 s (a
-      // repeated click, or a tap or a pen press) does nothing. endFrame looks, after a flow ended, whether the whole run
-      // has ended.
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
+      // press) does nothing. endFrame looks, after a flow ended, whether the whole run has ended.
       startPressedAt = -Infinity,
       endFrame = null;
     const designUrls = new Map();
@@ -27005,7 +27094,7 @@ function createAkariExtensionHost(options) {
     }
     if (start) start.onclick = (event) => { startPressedAt = event.timeStamp; startRun(); };
     if (stop) stop.onclick = (event) => {
-      if (event.timeStamp - startPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      if (event.timeStamp - startPressedAt < 500) return;
       stopRun();
     };
     if (pause) pause.onclick = () => {
@@ -29130,7 +29219,7 @@ function createAkariExtensionHost(options) {
     };
     const subjectContext = node => {
       const subject = subjectName(node),
-        targetId = subject === '画面' || subject === project()?.stage?.name ? 'stage'
+        targetId = (project() ? namesStage(project(), subject) : subject === '画面') ? 'stage'
           : project()?.components.find(c => c.name === subject)?.id;
       return { ...context(), targetId };
     };
@@ -31601,29 +31690,30 @@ function createAkariExtensionHost(options) {
       const quantity = (key, unit, index) => main.append(...unitValue(node, key, index, unit));
       const actor = fieldOf('actorRef');
       if (actor) main.append(fieldControl(node, actor));
-      // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く
-      // or 前へ進む); a time already written can always be taken off.
+      // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く,
+      // 前へ進む or a 〜のところへ行く of a work made at another level); a time already written can always be taken off.
       const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
       if (node.inputs.seconds) {
         quantity('seconds', '秒'); main.append(text('かけて、'));
         extraControls.append(button('時間を外す', 'motion-untimed', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'seconds' })));
-      } else if (doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE'].includes(value))
+      } else if (doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE', 'GOTO_PART'].includes(value))
         extraControls.append(button(timeLabel, 'motion-timed', () => { const seconds = createBlock('NumberLiteral', { idPrefix: viewId }); seconds.fields.value = 1; return operate({ type: 'expression', parentId: node.id, input: 'seconds', node: seconds }); }));
       const steps = n => { const literal = createBlock('NumberLiteral', { idPrefix: viewId }); literal.fields.value = n; return literal; };
       if (value === 'GOTO' || value === 'MOVE_BY') {
         main.append(text(value === 'GOTO' ? '画面の左下のはしから、' : 'いまのばしょから、'));
         const both = !!(node.inputs.x && node.inputs.y);
         if (value === 'MOVE_BY' && !both) {
-          // One direction: 右・左・上・下 in one choice; a choice on the other axis moves the steps there (one undo step).
+          // One direction: 右・左・上・下 in one choice; a choice on the other axis moves the steps there (one undo step),
+          // and the axis left behind goes back to its plain direction (右・上), as the code read back has it.
           const key = node.inputs.x ? 'x' : 'y', current = node.fields[key === 'x' ? 'xDir' : 'yDir'];
           const select = E('select', 'blockui-motion-direction', null, { 'aria-label': schema.label + 'の 向き', 'data-block-id': node.id, 'data-blockui-action': 'motion-direction' });
           for (const [v, word] of [['right', '右'], ['left', '左'], ['up', '上'], ['down', '下']]) select.append(E('option', '', word, { value: v }));
           select.value = current; select.disabled = isLocked() || !!options.readOnly;
           listen(select, 'change', () => {
             const to = select.value, toKey = ['right', 'left'].includes(to) ? 'x' : 'y', replacement = structuredClone(node);
-            if (toKey !== key) { replacement.inputs[toKey] = replacement.inputs[key]; delete replacement.inputs[key]; }
+            if (toKey !== key) { replacement.inputs[toKey] = replacement.inputs[key]; delete replacement.inputs[key]; replacement.fields[key === 'x' ? 'xDir' : 'yDir'] = key === 'x' ? 'right' : 'up'; }
             replacement.fields[toKey === 'x' ? 'xDir' : 'yDir'] = to;
-            operate({ type: 'replace', id: node.id, node: replacement });
+            if (!operate({ type: 'replace', id: node.id, node: replacement }).ok) select.value = current;
           });
           main.append(select, text('へ')); quantity(key, '歩');
         } else {
@@ -31640,8 +31730,10 @@ function createAkariExtensionHost(options) {
         if (value === 'MOVE_BY') {
           if (!node.inputs.y) extraControls.append(button('＋ たてにも動く', 'motion-leg-add-y', () => operate({ type: 'expression', parentId: node.id, input: 'y', node: steps(10) })));
           if (!node.inputs.x) extraControls.append(button('＋ よこにも動く', 'motion-leg-add-x', () => operate({ type: 'expression', parentId: node.id, input: 'x', node: steps(10) })));
-          if (both) extraControls.append(button('たてを外す', 'motion-leg-remove-y', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'y' })),
-            button('よこを外す', 'motion-leg-remove-x', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'x' })));
+          // Taking a leg off also sets its direction back to 右・上 (the code no longer writes it).
+          const removeLeg = key => { const replacement = structuredClone(node); delete replacement.inputs[key]; replacement.fields[key === 'x' ? 'xDir' : 'yDir'] = key === 'x' ? 'right' : 'up'; return operate({ type: 'replace', id: node.id, node: replacement }); };
+          if (both) extraControls.append(button('たてを外す', 'motion-leg-remove-y', () => removeLeg('y')),
+            button('よこを外す', 'motion-leg-remove-x', () => removeLeg('x')));
         }
       } else if (value === 'MOVE') {
         main.append(fieldControl(node, fieldOf('direction')), text('へ')); quantity('args', '歩', 0);
@@ -33706,8 +33798,8 @@ function createAkariExtensionHost(options) {
       appState = 'DESIGN',
       // The run screen after the run ended (every body done, or 作品を全部止める): the last picture stays, ■ 止める only.
       runFinished = false,
-      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press (a repeated click, or
-      // a tap) within 0.5 s does nothing.
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
+      // press) does nothing.
       runPressedAt = -Infinity,
       generationToken = 0,
       designObjectUrls = new Map(),
@@ -34482,7 +34574,7 @@ function createAkariExtensionHost(options) {
           const out = {};
           for (const [key, child] of Object.entries(value)) {
             if (key === 'actorRef' && child?.kind === 'named') {
-              const id = child.targetId || (child.name === project.stage.name || child.name === '画面'
+              const id = child.targetId || (namesStage(project, child.name)
                 ? 'stage' : project.components.find(c => c.name === child.name)?.id);
               out[key] = id === targetId ? { kind: 'self' } : visit(child);
             } else out[key] = visit(child);
@@ -40503,10 +40595,10 @@ function createAkariExtensionHost(options) {
     };
 
     $('#runBtn').addEventListener('click', (event) => { runPressedAt = event.timeStamp; startRun(); });
-    // ■ 止める takes ▶ 動かす's place: the second press of a double press within 0.5 s of ▶ (a repeated click, or a tap or
-    // a pen press) does nothing; a press of its own (one click, a key) stops at once.
+    // ■ 止める takes ▶ 動かす's place: a press within 0.5 s of ▶ is the second press of a double press and does nothing
+    // (a click, a tap, a pen press or a key alike).
     $('#stopBtn').addEventListener('click', (event) => {
-      if (event.timeStamp - runPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      if (event.timeStamp - runPressedAt < 500) return;
       stopRun();
     });
     $('#pauseBtn').onclick = () => scheduler?.pause();
