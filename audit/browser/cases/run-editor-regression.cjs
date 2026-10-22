@@ -55,8 +55,8 @@ async function main() {
       await page.locator('#stopBtn').click();const singleAfterMs=Date.now()-pressedAt;await page.waitForTimeout(150);
       assert.ok(singleAfterMs<DOUBLE_PRESS_MS,'the single press of ■ came '+singleAfterMs+' ms after ▶, too late to show the 0.5 s rule');assert.notEqual(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN','a single press of ■ within 0.5 s of ▶ does nothing');
       await score().filter({hasText:/^3$/}).waitFor();assert.equal(await page.locator('#codeEditor').getAttribute('readonly'),'');
-      await pressStop(await reveal(page.locator('#stopBtn')));await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
-      return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true,singlePressWithinHalfSecondRuns:true,singleAfterMs};
+      await pressStop(await reveal(page.locator('#stopBtn')));await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっているよ');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
+      return {diagnosis,runtimeScore:3,stopState:'止まっているよ',sourcePreserved:true,singlePressWithinHalfSecondRuns:true,singleAfterMs};
     });
     await test('callable-draft-save-action-function-run',async()=>{
       await (await reveal(page.locator('#procBtn'))).click();await (await reveal(page.locator('#callableNewAction'))).click();await (await reveal(page.locator('#callableName'))).fill('増加');await (await reveal(page.locator('#callableArgs'))).fill('値');await (await reveal(page.locator('#callableCode'))).fill('点数に値を足す。');
