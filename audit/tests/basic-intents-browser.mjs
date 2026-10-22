@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),product=currentProductFile(),dir=output.replace(/\.json$/,'')+'.artifacts',fixture=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json'));
 const report={schema:'akari-basic-intents-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]};fs.mkdirSync(dir,{recursive:true});const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 try{await withBrowser(chrome,async browser=>{
@@ -55,7 +56,7 @@ try{await withBrowser(chrome,async browser=>{
     await page.waitForFunction(()=>document.body.classList.contains('run-finished'));
     const pos=await read();assert.ok(Math.abs(pos.x-100)<.01&&Math.abs(pos.y-100)<.01);const ink=await page.locator('#penCanvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;return n;});assert.ok(ink>=60);detail={closedSquare:true,ink};
    }
-   await page.screenshot({path:path.join(dir,draft.id+'.png')});await page.locator('#stopBtn').click();assert.equal(await page.evaluate(()=>Akari.app.project.components[0].x),100);assert.equal(await page.evaluate(()=>Akari.app.project.components[0].direction),0);
+   await page.screenshot({path:path.join(dir,draft.id+'.png')});await pressStop(page.locator('#stopBtn'));assert.equal(await page.evaluate(()=>Akari.app.project.components[0].x),100);assert.equal(await page.evaluate(()=>Akari.app.project.components[0].direction),0);
     const pending=page.waitForEvent('download');await page.locator('#saveBtn').click();const download=await pending,saved=path.join(dir,draft.id+'.akari.md');await download.saveAs(saved);const sources=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>r.project.scripts.filter(s=>s.source.trim()).map(s=>s.source)),fs.readFileSync(saved,'utf8'));assert.deepEqual(sources,[draft.source]);await page.locator('#newBtn').click();await page.waitForFunction(()=>Akari.app.project.scripts.every(s=>!s.source.trim()));await page.locator('#fileInput').setInputFiles(saved);await page.waitForFunction(s=>document.querySelector('#fileInput').value===''&&Akari.app.project.scripts.some(t=>t.source===s),draft.source);assert.equal(await page.evaluate(()=>Akari.app.project.scripts.find(s=>s.source.trim()).source),draft.source);
    return{source:draft.source,inputHash:draft.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true,detail};
   }catch(error){await page.screenshot({path:path.join(dir,draft.id+'-failure.png')}).catch(()=>{});throw error;}

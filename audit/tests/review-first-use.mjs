@@ -6,6 +6,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {snapshot, withBrowser, pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const [browserPath, productArg, outputArg] = process.argv.slice(2);
 assert.ok(browserPath && productArg && outputArg,
@@ -196,7 +197,7 @@ async function reviewModePreference(page) {
 }
 
 async function reviewBlockDiscoverability(page) {
-  await page.locator('#stopBtn').click();
+  await pressStop(page.locator('#stopBtn'));
   await page.locator('#editorModecode').click();
   const original = '「おやつにしよう」と言う。\n「ただいま」と言う。';
   await page.locator('#codeEditor').fill(original);

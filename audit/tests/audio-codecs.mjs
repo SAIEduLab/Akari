@@ -7,6 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {audioFixtures,audioIds,codecBrowser,verifyAudio} from '../lib/feature-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const require=createRequire(import.meta.url);
 const [browserPath,output]=process.argv.slice(2);
@@ -48,7 +49,7 @@ async function player(browser,file,expected,invalid=false){
       assert.equal(await p.evaluate(()=>typeof globalThis.Akari),'undefined');
       assert.ok(!(await p.locator('#playerOutput').textContent()).includes('R415'));
       // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
-      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
+      await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
     }
   }finally{await context.close();}
 }
@@ -83,7 +84,7 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   await click(p,'#editorModeblocks');await click(p,'#editorModecode');
   assert.equal(await p.evaluate(()=>Akari.compileProject(Akari.app.project).errors.length),0);
   await click(p,'#runBtn');await p.waitForFunction(marker=>document.querySelector('#console').textContent.includes(marker),marker);
-  await click(p,'#stopBtn');
+  await pressStop(await reveal(p.locator('#stopBtn')));
   const saved=path.join(dir,name+'.akari.md');let pending=p.waitForEvent('download');
   await click(p,'#saveBtn');await(await pending).saveAs(saved);
   assert.ok(fs.readFileSync(saved,'utf8').startsWith(("# あかり "+currentProductVersion()+" の作品")));

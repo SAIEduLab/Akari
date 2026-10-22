@@ -163,6 +163,7 @@
     "audit/lib/speech-display-contract.mjs",
     "audit/lib/speech-name-layout-contract.mjs",
     "audit/lib/speech-preview-contract.mjs",
+    "audit/lib/stop-press.cjs",
     "audit/lib/ui-buttons-contract.mjs",
     "audit/lib/ux-edit-contract.mjs",
     "audit/lib/ux-normal-contract.mjs",

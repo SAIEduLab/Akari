@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {LICENSE_TEXT,COPYRIGHT,verifyLicensedArtifact,verifyLicenseBrowserReport,licensingSnapshot,sha} from '../lib/license-contract.cjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url);
 const {setupRegressionPage,revealRegressionControl}=require('../browser/cases/regression-setup.cjs');
 const [browserPath,output]=process.argv.slice(2);assert.ok(browserPath&&output);
@@ -37,7 +38,7 @@ await withBrowser(browserPath,async browser=>{
       await player.goto(pathToFileURL(playerFile).href);await player.locator('#playerStart:not([disabled])').waitFor();
       await player.locator('#playerStart').click();await player.waitForFunction(()=>document.querySelector('#playerOutput')?.textContent.includes('MIT監査'));
       // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
-      const output=await player.locator('#playerOutput').textContent();await player.locator('#playerStop').click();
+      const output=await player.locator('#playerOutput').textContent();await pressStop(player.locator('#playerStop'));
       assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);await player.close();
       return{id,status:'PASS',copyright:COPYRIGHT,offline:true,nativeDownload:true,playerStopped:true,output,
         editor:{file:path.basename(editor),sha256:sha(fs.readFileSync(editor))},player:{file:playerName,sha256:sha(fs.readFileSync(playerFile))}};

@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {root,withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.slice(2),output=path.resolve(outputArg),product=path.join(root,currentProductFile()),dir=output.replace(/\.json$/,'')+'.artifacts';
 const report={schema:'akari-resource-references-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]};
 fs.mkdirSync(dir,{recursive:true});const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
@@ -52,7 +53,7 @@ try{await withBrowser(chrome,async browser=>{
    const name=page.locator('#properties input[aria-label="名前"]');await name.fill('灯り');await name.press('Tab');await page.waitForFunction(()=>Akari.app.project.components[0].name==='灯り');await page.waitForFunction(n=>Akari.app.editorState.history===n,before.history+1);
    const renamed=await state(page);assert.equal(JSON.parse(renamed.project).scripts[0].source,source.replace('あかりは','灯りは'));await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,renamed.project);
    await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===260);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'あかり🐈');
-   await page.locator('#stopBtn').click();
+   await pressStop(page.locator('#stopBtn'));
    const prefixSource='灯は画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く。\n【灯合図】という手順を行う。\n「灯合図🐈」と言う。';
    const prefixFile=await page.evaluate(source=>{const p=Akari.makeDefaultProject();p.name='主語と手順の保護';p.components[0].name='灯';p.scripts=[{id:'prefix-body',targetId:'sprite-1',event:'start',source}];p.actions=[{id:'prefix-action',ownerId:'stage',name:'灯合図',args:[],source:'何もしない。'}];p.functions=[];return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},prefixSource);
    const askedLoseQuestion=[];
@@ -65,7 +66,7 @@ try{await withBrowser(chrome,async browser=>{
    const prefixPending=page.waitForEvent('download');await page.locator('#saveBtn').click();const prefixDownload=await prefixPending,prefixPath=path.join(dir,'renamed-actor-prefix.akari.md');await prefixDownload.saveAs(prefixPath);
    const savedPrefix=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>JSON.stringify(r.project)),fs.readFileSync(prefixPath,'utf8'));assert.equal(savedPrefix,prefixRenamed.project);
    await openFixture(page,prefixPath,'主語と手順の保護');assert.equal(JSON.parse((await state(page)).project).components[0].name,'灯新');assert.equal((await state(page)).project,prefixRenamed.project);assert.deepEqual(await referenceIds(),beforeIds);
-   await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===10);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'灯合図🐈');await page.locator('#stopBtn').click();assert.equal((await state(page)).project,prefixRenamed.project);
+   await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===10);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'灯合図🐈');await pressStop(page.locator('#stopBtn'));assert.equal((await state(page)).project,prefixRenamed.project);
 return{referenceOnly:true,undoRedo:true,runtimeX:260,proseUnchanged:true};
   });
   await run('references/browser-data-rename',async page=>{

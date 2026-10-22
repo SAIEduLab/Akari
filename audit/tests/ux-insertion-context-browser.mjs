@@ -6,6 +6,7 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {insertionSources,verifyInsertionContextObservation,verifyInsertionContextReport} from '../lib/insertion-context-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2);
 if(!chrome||!out)throw Error('Usage: ux-insertion-context-browser.mjs <browser> <fresh-report>');
 const output=path.resolve(out),artifacts=output+'.artifacts',product=currentProductFile(),started=performance.now();
@@ -129,7 +130,7 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
       await p.locator('#runBtn').click();await p.waitForFunction(()=>insertionRuntimeCompleted.some(t=>t.scriptId==='insertion-main'&&t.state==='DONE'),null,{timeout:8000});
       const recorded=await p.evaluate(()=>({words:insertionRuntime.filter(r=>r.kind==='Say').map(r=>r.word),waits:insertionRuntime.filter(r=>r.kind==='WaitTime'),
         finished:insertionRuntimeCompleted.some(t=>t.scriptId==='insertion-main'&&t.state==='DONE'),error:insertionRuntimeErrors[0]||null}));
-      runs.push(recorded);await p.locator('#stopBtn').click();
+      runs.push(recorded);await pressStop(p.locator('#stopBtn'));
     }
     return{before,runs,after:await read(p)};
   });

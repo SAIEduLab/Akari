@@ -2,6 +2,7 @@ import {auditRoute,auditOperation,routeLeaves} from '../lib/entry-lesson-routes.
 import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';import crypto from 'node:crypto';import assert from 'node:assert/strict';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';import {currentProductFile} from '../lib/product-path.cjs';
 import {tutorialSteps,browserIds,deniedRoutes,verifyEntryReport,entryProvenance} from '../lib/entry-workshop-contract.mjs';
+import {pressStop,DOUBLE_PRESS_MS} from '../lib/stop-press.cjs';
 const [chrome,out]=process.argv.slice(2);if(!chrome||!out)throw Error('browser and fresh report are required');
 const product=currentProductFile(),output=path.resolve(out),artifacts=output+'.artifacts';
 assert.ok(!fs.existsSync(output)&&!fs.existsSync(artifacts),'fresh evidence');fs.mkdirSync(artifacts,{recursive:true});
@@ -66,7 +67,8 @@ async function positive(p,id){
   await p.waitForFunction(fieldInView,ref.id);
   if(id.endsWith('-change'))p.entryOldValue=ref.value;await edit(p,ref.id,op.value);if(id.endsWith('-change'))assert.equal((await fieldAt(p,op.ref)).value,op.value);return null;}
  if(id.startsWith('run-')){await activate(p,p.locator('#runBtn'));return null;}
- if(id.startsWith('stop-')){await activate(p,p.locator('#stopBtn'));return null;}
+ // ■ (a click or a tap) comes after the 0.5 s in which it would be the second press of a double press of ▶.
+ if(id.startsWith('stop-')){await p.waitForTimeout(DOUBLE_PRESS_MS+50);await activate(p,p.locator('#stopBtn'));return null;}
  if(id.endsWith('-undo')){await activate(p,p.locator('#undoBtn'));const change=auditOperation(course+'-'+leaf+'-change',course,leaf);assert.equal((await fieldAt(p,change.ref)).value,p.entryOldValue,'ordinary Undo restores the freely chosen numeric edit');return null;}
  if(id.startsWith('try-')){
   const count=id==='try-original'?3:id==='try-'+course?2:course==='score'?6:2,actor=p.locator('#formSurface .component[data-id="sprite-1"]');
@@ -271,7 +273,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   const before=await read(p);await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
   const actor=p.locator('#formSurface .component[data-id="sprite-1"]');assert.equal(await actor.getAttribute('role'),'button');assert.equal(await actor.getAttribute('tabindex'),'0');await actor.focus();await actor.press('Enter');
   await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キーボードで起動');const observed=await read(p);assert.equal(observed.project,before.project);assert.equal(observed.source,before.source);
-  await p.locator('#stopBtn').click();return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
+  await pressStop(p.locator('#stopBtn'));return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
  });
  await row(browser,browserIds[14],async()=>{const routes=[];
   for(const [course,leaves]of Object.entries(routeLeaves))for(const leaf of leaves){

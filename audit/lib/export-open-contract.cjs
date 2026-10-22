@@ -34,7 +34,7 @@ const ids=[
 ];
 const fixed={
   'EXPORT-CHOICE-CANCEL-FOCUS':{downloads:0,staticExamples:0},
-  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true},
+  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true,singlePressWithinHalfSecondRuns:true},
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':{noControls:true,nativeButtonAndKey:true},
   'EXPORT-ARTWORK-QUESTION-ANSWER-STOP':{answer:true,stop:true},
   'EXPORT-ARTWORK-AUDIO-PERMITTED':{automatic:true},

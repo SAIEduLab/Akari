@@ -1,3 +1,4 @@
+const {DOUBLE_PRESS_MS}=require('../../lib/stop-press.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
@@ -91,7 +92,8 @@ async function runCase(browser,id,fn){let t;const evidence={};try{t=await setup(
   e.down=await downMouse(t);await t.page.locator('#runBtn').press('Enter');await t.page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');e.running=await assertSources(t);
   assert.equal(e.running.shell,'blocks','execution lock releases the deferred layout');
   await t.cdp.send('Input.dispatchMouseEvent',{type:'mouseMoved',x:t.point.x+10,y:t.point.y+10,buttons:0});e.moveWhileRunning=await assertSources(t);assert.equal(e.moveWhileRunning.x,t.before.x);assert.equal(e.moveWhileRunning.y,t.before.y);
-  await t.page.locator('#stopBtn').press('Enter');await t.page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await t.page.mouse.up();
+  // ■ by key, after the 0.5 s in which a press of ■ is the second press of a double press of ▶ (stop-press.cjs).
+  await t.page.waitForTimeout(DOUBLE_PRESS_MS+50);await t.page.locator('#stopBtn').press('Enter');await t.page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await t.page.mouse.up();
  });
  }finally{await browser.close();}
  const finalSha=L.sha(L.fs.readFileSync(file)),report={file,sha,sha256:sha,finalSha,sourceFileUnchanged:sha===finalSha,sourceUnchanged:sha===finalSha&&results.every(r=>r.evidence?.sourceUnchanged===true),browser:browserVersion,scope:'Targeted real-browser stage gesture and source-owner regression checks; not a full release audit.',results,pageErrors,networkRequests};

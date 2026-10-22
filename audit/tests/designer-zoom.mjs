@@ -8,6 +8,7 @@ import {withBrowser, pageFor, snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {designerZoomIds, verifyDesignerZoom} from '../lib/feature-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh designer evidence required');
@@ -192,7 +193,7 @@ const cases = {
       for (const button of ['#stageZoomIn', '#stageZoomFit']) await p.locator(button).click();
       assert.equal(await p.locator('#continueBtn').isEnabled(), true);
       assert.deepEqual(await state(p), before, 'zoom during run/pause preserves design');
-      await p.locator('#stopBtn').click(); await assertFit(p);
+      await pressStop(p.locator('#stopBtn')); await assertFit(p);
     }
   },
   async 'DESIGN-ZOOM-SAVE-EXPORT'(p) {

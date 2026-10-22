@@ -8,6 +8,7 @@ import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {reveal} from '../lib/ux-normal-ui.mjs';
 import {previewCases,previewNames,previewShortTexts,previewLongTexts} from '../fixtures/speech-preview.mjs';
 import {verifyPreviewObserved,verifyPreviewReport} from '../lib/speech-preview-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,out='audit-evidence/speech-preview.json']=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output+'.artifacts';
 fs.mkdirSync(dir,{recursive:true});
 const inputs=snapshot(product),report={schema:'akari-speech-preview-v1',status:'RUNNING',snapshot:inputs,uxAcceptance:false,classification:'automated native UI evidence; final acceptance requires Dango independent operation audit',environment:{browser:null,playwright:require('playwright/package.json').version,os:process.platform},pageErrors:[],networkRequests:[],results:[]};
@@ -93,7 +94,7 @@ try{await withBrowser(chrome,async browser=>{
      d.closeInput=input;d.closed=!(await p.locator('#valueModal').isVisible());o.openings.push(d);
     }
    }
-   verifyPreviewObserved(c.id,o);await p.locator('#stopBtn').click();
+   verifyPreviewObserved(c.id,o);await pressStop(p.locator('#stopBtn'));
   });row.status='PASS';}catch(e){row.status='FAIL';row.error=e.stack;}
   save();console.log(row.status+' '+c.id);
  }

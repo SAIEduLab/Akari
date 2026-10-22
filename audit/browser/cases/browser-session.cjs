@@ -1,3 +1,4 @@
+const {pressStop}=require('../../lib/stop-press.cjs');
 const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory, completeRegressionHoles, openPaletteTools} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
@@ -63,11 +64,11 @@ async function main(){
    assert.equal(await root(p).evaluate(e=>e.contains(document.activeElement)),true,'stop returns keyboard focus to the visible block editor');
    const stopped=await state(p);
    for(const editorMode of ['code','blocks']){
-    await mode(p,editorMode);await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.locator('#stopBtn').click();
+    await mode(p,editorMode);await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await pressStop(p.locator('#stopBtn'));
     assert.equal((await state(p)).project,stopped.project);
     assert.equal(await p.evaluate(mode=>mode==='blocks'?document.querySelector('#blockEditor').contains(document.activeElement):document.activeElement.id==='codeEditor',editorMode),true,'stop focuses the current editor in '+editorMode);
    }
-   await p.locator('#sourceOverviewBtn').click();await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.locator('#stopBtn').click();
+   await p.locator('#sourceOverviewBtn').click();await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await pressStop(p.locator('#stopBtn'));
    assert.equal(await p.locator('#sourceOverview').isVisible(),true);assert.equal(await p.evaluate(()=>document.activeElement.id),'sourceEditBtn');assert.equal((await state(p)).project,stopped.project);
    return{runPauseStepResumeStop:true,editingLockedBothModes:true,locationHighlighted:true,stopFocusBothModesAndOverview:true,repeatedRunsPreserveProject:true};
   });

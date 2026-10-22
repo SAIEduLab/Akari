@@ -9,6 +9,7 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {editorAssetIds,verifyEditorAssets} from '../lib/feature-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh feature evidence required');
@@ -247,7 +248,7 @@ const cases = {
     await select(p,'sprite-1');const duplicate=await reveal(p.locator('.prop-duplicate'));assert.equal(await duplicate.isEnabled(),true);
     await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
     assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await duplicate.isDisabled(),true);assert.equal(await duplicate.isVisible(),false);
-    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);
+    await pressStop(await reveal(p.locator('#stopBtn')));assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);
   },
   async 'paint-small-viewport-touch'(p) {
     await p.setViewportSize({width:390,height:844});await open(p);

@@ -4,6 +4,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const [browserPath,product,output]=process.argv.slice(2),dir=path.resolve(path.dirname(output));
 fs.mkdirSync(dir,{recursive:true});
 const before=snapshot(product),literal="'); globalThis.__injected = true; //",source='「'+literal+'」と言う。';
@@ -54,7 +55,7 @@ const evidence=await withBrowser(browserPath,async browser=>{
   assert.equal(await p.evaluate(()=>globalThis.Akari),undefined);
   await p.screenshot({path:path.join(dir,'normal-player.png'),fullPage:true});
   // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
-  await p.locator('#playerStop').click();
+  await pressStop(p.locator('#playerStop'));
   assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
  } finally {await context.close();}
  assert.deepEqual(errors,[]);assert.deepEqual(network,[]);

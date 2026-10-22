@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {snapshot,withBrowser,sha} from '../lib/product-test-host.mjs';
 import {meijinExampleErrors} from '../lib/meijin-example-world.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 // Additional documentation checks; does not replace any product acceptance test.
 const [browserPath,output]=process.argv.slice(2);
@@ -125,7 +126,7 @@ if(browserPath!=='--static'){
       await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
       await node.click();
       await page.waitForFunction(({target,start})=>Math.abs(parseFloat(document.querySelector('.component[data-id="'+target+'"]').style.left)-start-10)<0.1,{target,start});
-      await (await reveal(page.locator('#stopBtn'))).click();
+      await pressStop(await reveal(page.locator('#stopBtn')));
       assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors),[]);
       await page.screenshot({path:path.join(output,'first-work-editor.png'),fullPage:true});
       report.firstWork={status:'PASS',target,targetName,source:executableFirst,expectedMovement:10,editorMode:'code selected through UI'};

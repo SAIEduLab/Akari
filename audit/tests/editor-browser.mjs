@@ -8,6 +8,7 @@ import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
 const dir=path.dirname(output);fs.mkdirSync(dir,{recursive:true});
@@ -180,7 +181,7 @@ await withBrowser(browser,async b=>{
     await click(p,'runtimeInspectBtn');await mode(p,'code');await mode(p,'blocks');assert.ok(await p.locator('#blockEditor .blockui-current').count());await click(p,'runtimeInspectorClose');
     await click(p,'continueBtn');await p.locator('#failureModal.show').waitFor();await click(p,'failureClose');
     const highlighted=await p.locator('#blockEditor .blockui-current').getAttribute('data-schema-id');assert.equal(highlighted,'BinaryExpression:DIV');
-    assert.match(await p.locator('#failureBody').textContent(),/R/);await click(p,'stopBtn');
+    assert.match(await p.locator('#failureBody').textContent(),/R/);await pressStop(await reveal(p.locator('#stopBtn')));
     return{sameLineBody:true,errorRole:highlighted,pausedModeSwitch:true};
   });
   await run('RELEASE-GUI/save-reload-generated-offline',async p=>{
@@ -191,7 +192,7 @@ await withBrowser(browser,async b=>{
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
-    try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await player.locator('#playerStop').click();assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);}finally{await c.close();}
+    try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await pressStop(player.locator('#playerStop'));assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);}finally{await c.close();}
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
     return{sourceExact:true,offline:true,saveSha256:sha(saved),generatedSha256:sha(fs.readFileSync(generated))};
   });

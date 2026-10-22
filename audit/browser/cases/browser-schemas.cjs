@@ -2,6 +2,7 @@
 // edit every declared role, run the structural operations, compare block and source
 // ASTs, and save and reopen. Rows listed in the schema contract's semanticRows also
 // check the hand-written sentence and runtime result LANGUAGE.md gives them.
+const {pressStop}=require('../../lib/stop-press.cjs');
 const {setupRegressionPage, completeRegressionHoles, openPaletteTools, openBodyForTest} = require('./regression-setup.cjs');
 const U=require('./ui-routes.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
@@ -170,7 +171,7 @@ const runObserve=async row=>{const design=await projectText(),observed={};
  if(row.run?.stepsPerSecond!==undefined){await p.waitForTimeout(150);const start=await p.evaluate(id=>({x:parseFloat(document.querySelector('#formSurface .component[data-id="'+id+'"]').style.left),t:performance.now()}),row.run.actor);await p.waitForTimeout(row.run.observeMs);const end=await p.evaluate(id=>({x:parseFloat(document.querySelector('#formSurface .component[data-id="'+id+'"]').style.left),t:performance.now()}),row.run.actor);const seconds=(end.t-start.t)/1000,moved=end.x-start.x;assert.ok(Math.abs(moved-row.run.stepsPerSecond*seconds)<=row.run.tolerance,'continuous motion '+moved+' in '+seconds+'s');observed.continuous={seconds,moved};}
  if(row.speech!==undefined){await p.waitForFunction(text=>[...document.querySelectorAll('#formSurface .sprite-bubble-text')].some(e=>e.textContent===text),row.speech,{timeout:5000}).catch(()=>{});observed.speech=await p.locator('#formSurface .sprite-bubble-text').allTextContents();assert.ok(observed.speech.includes(row.speech),'speech '+JSON.stringify(observed.speech));}
  if(row.monitor){await p.waitForFunction(()=>true);for(let i=0;i<50;i++){const m=await readMonitor();if(Object.entries(row.monitor).every(([k,v])=>m[k]===v))break;await p.waitForTimeout(100);}observed.monitor=await readMonitor();for(const [k,v]of Object.entries(row.monitor))assert.equal(observed.monitor[k],v,'monitor '+k);}
- await (await reveal(p.locator('#stopBtn'))).click();await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await root().waitFor({state:'visible'});assert.equal(await projectText(),design,'running leaves the design unchanged');return observed;};
+ await pressStop(await reveal(p.locator('#stopBtn')));await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await root().waitFor({state:'visible'});assert.equal(await projectText(),design,'running leaves the design unchanged');return observed;};
 // The GUI result must mean the hand-written LANGUAGE.md sentence (same AST in the same
 // body context) and end every generated sentence with one 。 (LANGUAGE.md 233). The
 // generated wording itself is owned by the command catalog, not by these rows.

@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {formatCompatibilityIds,verifyFormatCompatibility,checkFormatValidatorNegatives} from '../lib/format-compatibility-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const require=createRequire(import.meta.url);
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
@@ -267,7 +268,7 @@ await withBrowser(browserPath,async browser=>{
       await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('形式互換')||
         document.querySelector('#formSurface').textContent.includes('形式互換'));
       // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
-      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
+      await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
     }finally{await context.close();}
     pageErrors.push(...errors);networkRequests.push(...network);
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);

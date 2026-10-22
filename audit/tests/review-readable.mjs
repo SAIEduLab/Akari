@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,snapshot} from '../lib/product-test-host.mjs';
 import {verifyReviewReport} from '../lib/review-regression-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const [browserPath,productArg,outputArg]=process.argv.slice(2);
 assert.ok(browserPath&&productArg&&outputArg,
@@ -92,7 +93,7 @@ async function stageSpeechReview(browser){
         await page.locator('#continueBtn').click();
         await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
       }
-      await page.locator('#stopBtn').click();
+      await pressStop(page.locator('#stopBtn'));
       await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
       assert.equal(await page.locator('#uiLevel').inputValue(),level,'stop returns to the same detail level');
       if(level==='advanced')
@@ -149,7 +150,7 @@ async function questionInputReview(browser){
       await page.locator('#questionAnswer').fill('あかり');
       await page.locator('#questionAnswer').press('Enter');
       await page.waitForFunction(()=>!document.querySelector('#questionModal').classList.contains('show'));
-      await page.locator('#stopBtn').click();
+      await pressStop(page.locator('#stopBtn'));
       await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
       observations.push({viewport,level,source,prompt,focused,modal,answerAccepted:true,stopReturnsToEditor:true});
       await context.close();

@@ -1,3 +1,4 @@
+const {pressStop,DOUBLE_PRESS_MS}=require('../../lib/stop-press.cjs');
 const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
@@ -48,10 +49,14 @@ async function main() {
     });
     await test('diagnose-run-stop',async()=>{
       await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();const diagnosis=await page.locator('#diagnosisBody').innerText();assert.match(diagnosis,/✓ 作品は 動かせます/);await (await reveal(page.locator('#diagnosisClose'))).click();
-      await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='動いているよ');
+      // A single press of ■ within 0.5 s of ▶ is the second press of a double press and does nothing (a click the browser
+      // does not count as a double click); the run is stopped on purpose later.
+      const pressedAt=Date.now();await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='動いているよ');
+      await page.locator('#stopBtn').click();const singleAfterMs=Date.now()-pressedAt;await page.waitForTimeout(150);
+      assert.ok(singleAfterMs<DOUBLE_PRESS_MS,'the single press of ■ came '+singleAfterMs+' ms after ▶, too late to show the 0.5 s rule');assert.notEqual(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN','a single press of ■ within 0.5 s of ▶ does nothing');
       await score().filter({hasText:/^3$/}).waitFor();assert.equal(await page.locator('#codeEditor').getAttribute('readonly'),'');
-      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
-      return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true};
+      await pressStop(await reveal(page.locator('#stopBtn')));await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
+      return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true,singlePressWithinHalfSecondRuns:true,singleAfterMs};
     });
     await test('callable-draft-save-action-function-run',async()=>{
       await (await reveal(page.locator('#procBtn'))).click();await (await reveal(page.locator('#callableNewAction'))).click();await (await reveal(page.locator('#callableName'))).fill('増加');await (await reveal(page.locator('#callableArgs'))).fill('値');await (await reveal(page.locator('#callableCode'))).fill('点数に値を足す。');
@@ -64,7 +69,7 @@ async function main() {
       source='点数を0にする。\n増加（3）を実行する。\n点数を二倍（点数）にする。\nつなぐ（「検証完了：」、点数）を言う。';
       await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await waitHistory();assert.deepEqual(await compileErrors(),[]);
       await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='動いているよ');await score().filter({hasText:/^6$/}).waitFor();
-      await (await reveal(page.locator('#stopBtn'))).click();assert.equal(await currentSource(),source);
+      await pressStop(await reveal(page.locator('#stopBtn')));assert.equal(await currentSource(),source);
       return {draftsUnregisteredUntilSave:true,action:'増加（値）',function:'二倍（元値）',runtimeScore:6};
     });
     await test('responsive-controls-resize-preservation',async()=>{
@@ -100,7 +105,7 @@ async function main() {
       const text=fs.readFileSync(exported,'utf8');assert.ok(text.includes('SPDX-License-Identifier: MIT'));assert.ok(text.includes('Copyright (c) 2026 SAIEduLab'));assert.ok(text.includes(fs.readFileSync(path.resolve(__dirname,'../../../LICENSE'),'utf8')));
       const player=await context.newPage();await player.goto(pathToFileURL(exported).href);await player.waitForFunction(()=>!document.querySelector('#playerStart').disabled);await (await reveal(player.locator('#playerStart'))).click();
       await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('検証完了：6')||document.querySelector('#formSurface').textContent.includes('検証完了：6'));
-      const output=await player.locator('#playerOutput').textContent(),stage=await player.locator('#formSurface').textContent();await (await reveal(player.locator('#playerStop'))).click();
+      const output=await player.locator('#playerOutput').textContent(),stage=await player.locator('#formSurface').textContent();await pressStop(await reveal(player.locator('#playerStop')));
       // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
       assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);
       await player.close();return {downloadName:download.suggestedFilename(),bytes:fs.statSync(exported).size,licenseRetained:true,output,stage,stopped:true};

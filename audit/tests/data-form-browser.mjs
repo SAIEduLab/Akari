@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.slice(2),output=path.resolve(outputArg),product=currentProductFile();
 const report={schema:'akari-data-form-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],results:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true});const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
@@ -15,7 +16,7 @@ try{await withBrowser(chrome,async browser=>{
   await page.locator('#dataBtn').click();await page.locator('#dataName').fill('得点');await page.locator('#dataInitial').fill('0');await page.locator('#dataUnit').selectOption('点');await page.locator('#dataAdd').click();
   const declared=await page.evaluate(()=>Akari.app.project.projectData.variables.find(d=>d.name==='得点'));assert.equal(declared.expectedUnit,'点');assert.deepEqual(declared.initialValue,{magnitude:0,unit:'点'});
   await page.locator('#dataClose').click();await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModecode').click();
-  await page.locator('#codeEditor').fill('3回くり返す。\n  得点に1点を足す。\n得点を言う。');await page.locator('#runBtn').click();await page.waitForFunction(()=>document.querySelector('#formSurface').textContent.includes('3点'));await page.locator('#stopBtn').click();
+  await page.locator('#codeEditor').fill('3回くり返す。\n  得点に1点を足す。\n得点を言う。');await page.locator('#runBtn').click();await page.waitForFunction(()=>document.querySelector('#formSurface').textContent.includes('3点'));await pressStop(page.locator('#stopBtn'));
   assert.deepEqual(await page.evaluate(()=>Akari.app.project.projectData.variables.find(d=>d.name==='得点').initialValue),{magnitude:0,unit:'点'});return{initial:{magnitude:0,unit:'点'},runtime:'3点',designUnchanged:true};
  });
  await run('data/browser-list-lines-and-local-error',async page=>{

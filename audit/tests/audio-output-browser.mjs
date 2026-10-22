@@ -7,6 +7,7 @@ import {withBrowser,snapshot,sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {audioOutputCases,fixtureWave,wave,measureWave,verifyAudioOutput} from '../lib/audio-output-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),baseDir=path.dirname(output),dir=path.join(baseDir,'audio-output-browser.artifacts'),product=currentProductFile();
 assert.ok(!fs.existsSync(output),'fresh output required');fs.mkdirSync(dir,{recursive:true});
 const report={schema:'akari-audio-output-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,observation:'WebAudio final output PCM; original destination connection retained',environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]};
@@ -55,7 +56,7 @@ try{await withBrowser(chrome,async browser=>{
   const raw=await page.evaluate(()=>({markers:audioOutputProbe.markers,voices:audioOutputProbe.voices.map(v=>({rate:v.rate,connectedAt:v.connectedAt,endTime:v.endTime,sourceType:v.sourceType,samples:v.frames.flat()}))}));
   row.observed={source:c.source,other:c.other||'',designUnchanged:(await page.evaluate(()=>JSON.stringify(Akari.app.project)))===design,marker:raw.markers.find(m=>m.text==='通過'),otherMarker:raw.markers.find(m=>m.text!=='通過')||null,voices:[]};
   for(const[j,v]of raw.voices.entries()){const bytes=wave(v.samples,v.rate),name=c.id+'-'+j+'.wav';fs.writeFileSync(path.join(dir,name),bytes);row.observed.voices.push({file:'audio-output-browser.artifacts/'+name,sha256:sha(bytes),connectedAt:v.connectedAt,endTime:v.endTime,sourceType:v.sourceType,measurement:measureWave(bytes)});}
-  await page.screenshot({path:path.join(dir,c.id+'.png')});await page.locator('#stopBtn').click();row.status='PASS';
+  await page.screenshot({path:path.join(dir,c.id+'.png')});await pressStop(page.locator('#stopBtn'));row.status='PASS';
  }catch(error){row.status='FAIL';row.error=error.stack;}finally{await context.close();}save();console.log(row.status+' output '+c.id);}
 },180000);}catch(error){report.hostFailure=error.stack;}
 report.status=!report.hostFailure&&!report.pageErrors.length&&!report.networkRequests.length&&report.results.length===audioOutputCases.length&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';save();

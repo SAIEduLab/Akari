@@ -13,6 +13,7 @@ import { answerProductConfirms } from '../lib/product-dialogs.cjs';
 import { installGreetingFixture } from '../lib/gate-ui-fixture.mjs';
 import { browserEnvironment } from '../lib/browser-environment.mjs';
 import { extensionFoundationIds, extensionExpectedObservations, verifyExtensionFoundation } from '../lib/extension-foundation-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const require = createRequire(import.meta.url), [browserPath, output, productOverride] = process.argv.slice(2);
 assert.ok(browserPath && output, 'Usage: node extension-foundation.mjs <fixed browser> <new report.json>');
@@ -129,8 +130,8 @@ await withOrdinaryFileBrowser(async browser=>{
   if(fork)await answerProductConfirms(fork.page,true);
   const productQuestionAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
   // The first work has no sentence and does not run (LANGUAGE.md 新しい作品とお手本、吹出し), so a running work is opened first.
-  await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await installGreetingFixture(standard.page,{keepRunning:true});await standard.page.locator('#runBtn').click();await standard.page.locator('#stopBtn').click();await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
-  await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await installGreetingFixture(fork.page,{keepRunning:true});await fork.page.locator('#runBtn').click();await fork.page.locator('#stopBtn').click();await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
+  await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await installGreetingFixture(standard.page,{keepRunning:true});await standard.page.locator('#runBtn').click();await pressStop(standard.page.locator('#stopBtn'));await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
+  await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await installGreetingFixture(fork.page,{keepRunning:true});await fork.page.locator('#runBtn').click();await pressStop(fork.page.locator('#stopBtn'));await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
   async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);return fork.page.evaluate(fn);});}
   await evaluate('EXTENSION-REGISTRATION-COLLISION-TYPES',()=>{
     const R=Akari.createAkariRuntime({extensions:auditDefinitions}),host=R.extensions;let duplicateRejected=false,invalidNumberRejected=false,promiseCalculationRejected=false;

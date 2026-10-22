@@ -1,5 +1,6 @@
 import {openPaletteTools,revealRegressionControl} from '../browser/cases/regression-setup.cjs';
 import U from '../browser/cases/ui-routes.cjs';
+import {pressStop} from './stop-press.cjs';
 export const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState;return {source:s.main.sourceText,project:JSON.stringify(a.project),history:s.history,redo:s.redo,dirty:s.dirty,pending:s.main.pendingEdit,block:s.main.blockView,draft:s.main.blockDraft,ast:s.main.syntaxAst,owner:s.main.ownerKey};});
 export const node=(p,s)=>p.locator('#blockEditor .blockui-node[data-schema-id="'+s+'"]').first();
 export async function reveal(locator){await revealRegressionControl(locator);const closed=()=>locator.locator('xpath=ancestor::details[not(@open)]');for(let i=0;await closed().count();i++){if(i>=12)throw new Error('disclosure ancestors did not open');await closed().first().locator(':scope > summary').click();}return locator;}
@@ -23,4 +24,4 @@ export async function install(p,source,{mode='blocks',level='advanced',event='st
 export async function add(p,schema,search){await openPaletteTools(p.locator('#blockEditor'));const q=p.locator('#blockEditor [data-blockui-search]');await q.fill(search);await p.locator('#blockEditor [data-blockui-schema="'+schema+'"]').click();}
 export async function edit(field,value){await reveal(field);await field.fill(value);await field.press('Enter');}
 export async function action(n,name){await U.nodeAction(n,name);}
-export async function speak(p,text){await p.locator('#runBtn').click();await p.waitForFunction(t=>[...document.querySelectorAll('.sprite-bubble-text')].some(n=>n.textContent===t),text);await p.locator('#stopBtn').click();}
+export async function speak(p,text){await p.locator('#runBtn').click();await p.waitForFunction(t=>[...document.querySelectorAll('.sprite-bubble-text')].some(n=>n.textContent===t),text);await pressStop(p.locator('#stopBtn'));}

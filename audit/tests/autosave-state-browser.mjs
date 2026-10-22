@@ -4,6 +4,7 @@ import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {autosaveSources,autosaveSuffix,autosaveCallable,verifyAutosaveStateReport} from '../lib/autosave-state-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),product=currentProductFile(),artifacts=output+'.artifacts';
 fs.mkdirSync(artifacts,{recursive:true});
@@ -94,7 +95,7 @@ try{await withBrowser(chrome,async browser=>{
     const o=await pausedScenario(p,'second',{document:{revision:7,unitIds:['first-event','second-event']},restored:true});
     await p.locator('#failureEditList').click();o.opened=await state(p);await p.locator('#listRepairChoice').selectOption('0');await p.locator('#listRepairApply').click();o.applied=await state(p);
     await p.locator('#undoBtn').click();o.undo=await state(p);await p.locator('#redoBtn').click();o.redo=await state(p);
-    await p.locator('#runBtn').click();await p.waitForFunction(()=>[...document.querySelectorAll('#runtimeMonitor .monitor-row')].some(r=>r.querySelector('.monitor-key')?.textContent==='点数'&&r.querySelector('.monitor-value')?.textContent==='パン'));o.rerun=await state(p);await p.locator('#stopBtn').click();await settled(p);o.afterRecord=await record(p);
+    await p.locator('#runBtn').click();await p.waitForFunction(()=>[...document.querySelectorAll('#runtimeMonitor .monitor-row')].some(r=>r.querySelector('.monitor-key')?.textContent==='点数'&&r.querySelector('.monitor-value')?.textContent==='パン'));o.rerun=await state(p);await pressStop(p.locator('#stopBtn'));await settled(p);o.afterRecord=await record(p);
     await restore(p);o.finalRestore=await state(p);await p.locator('#undoBtn').click();o.restoredUndo=await state(p);await p.locator('#redoBtn').click();o.restoredRedo=await state(p);return o;
   });
   await run('paused/plain-script',p=>pausedScenario(p,'plain'));
@@ -126,7 +127,7 @@ try{await withBrowser(chrome,async browser=>{
     await p.locator('#failureClose').click();
     // 保存 cannot be pressed on the run screen (1.5.0, LANGUAGE.md 「作る画面と動かす画面」): stop first, then save.
     o.saveDisabledWhilePaused=await p.locator('#saveBtn').isDisabled();if(!o.saveDisabledWhilePaused)throw Error('保存 can be pressed while paused');
-    await p.locator('#stopBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
+    await pressStop(p.locator('#stopBtn'));await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
     const [download]=await Promise.all([p.waitForEvent('download'),p.locator('#saveBtn').click()]),file=await download.path();
     if(!file)throw Error('Manual project download did not complete');
     o.exported=await p.evaluate(async text=>{const parsed=await Akari.parseProjectFile(text);return{project:parsed.project,editorState:parsed.editorState};},fs.readFileSync(file,'utf8'));
