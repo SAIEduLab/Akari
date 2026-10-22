@@ -7693,6 +7693,9 @@
       }
       baseUiLevel = $('#uiLevel').value;
       applyUiLevel();
+      // はじめて has no すべての本文 (nor its 「本文を なおす ところへ もどる」): the list closes, and the body it was opened
+      // from is shown again, as that button would.
+      if (baseUiLevel === 'entry' && sourceOverviewOpen) { hideSourceOverview(); loadEditor(); }
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
