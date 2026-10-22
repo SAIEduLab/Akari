@@ -3462,7 +3462,19 @@
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return top;
+          if (top.type === 'while' || top.type === 'until') {
+            // A turn has ended: its condition is read now, before any other flow takes its next step
+            // (くり返しと画面の動き). A body with no sentence, and a condition calculated a little at a time, keep the
+            // check as a step of its own.
+            const condition = top.condition || top.node.condition;
+            if (!top.node.body.some((n) => n.kind !== 'CommentLine') ||
+              (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(condition))) return top;
+            this.selectSubject(task, top.node);
+            const v = bool(evalExpression(condition, this.context(task)));
+            if (top.type === 'while' ? v : !v) this.enterLoopTurn(task, top);
+            else task.execStack.pop();
+            continue;
+          }
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
