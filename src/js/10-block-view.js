@@ -155,6 +155,8 @@
       diagnosticPage = 0,
       diagnosticsOpen = false,
       diagnosticsByLine = new Map(),
+      // 作品チェックの知らせ of the shown body by line (P11 (d)); the host puts them on session.notices.
+      noticesByLine = new Map(),
       branchLines = new Map(),
       branchSourceLines = new Map();
     const phraseCache = new Map();
@@ -3115,10 +3117,34 @@
           },
         );
         head.prepend(warning);
+      } else if (schema.category === 'statement' && (noticesByLine.get(line) || []).length && lineNodes.get(line) === node.id) {
+        // A notice says how a correct sentence runs (P11 (d)): blue and ⓘ, never the orange of a mistake. Its text opens
+        // under the block, with the rewrite it names when it has one.
+        const notices = noticesByLine.get(line);
+        box.classList.add('blockui-notice');
+        const ul = E('ul', 'blockui-node-notices', null, { 'data-block-id': node.id });
+        ul.hidden = true;
+        Object.assign(ul.style, { gridColumn: '1/-1', color: '#1f4f7a', background: '#eef5fc', padding: '7px 10px 7px 25px', margin: '5px 0',
+          fontSize: '12px', overflowWrap: 'anywhere', whiteSpace: 'normal', maxWidth: '660px', position: 'relative', zIndex: '2' });
+        for (const d of notices) {
+          const item = E('li', 'notice-help', d.message);
+          for (const proposal of options.onNoteProposal ? d.proposals || [] : []) {
+            if (typeof proposal?.source !== 'string') continue;
+            item.append(' ', button(proposal.label || proposal.source, 'notice-fix', () => options.onNoteProposal(d, proposal),
+              { title: proposal.source, 'data-note-fix': '' }));
+          }
+          ul.append(item);
+        }
+        box.append(ul);
+        const mark = button('ⓘ 知らせ', 'notices', () => { selection(node.id); ul.hidden = !ul.hidden; mark.setAttribute('aria-expanded', String(!ul.hidden)); },
+          { 'aria-label': notices.length + 'この 知らせを 見せる', 'aria-expanded': 'false', title: notices.map(d => d.message).join(' ／ ') });
+        Object.assign(mark.style, { color: '#1f5f99', fontSize: '12px' });
+        head.prepend(mark);
       }
       const content = E('div', 'blockui-node-content'),
         main = E('div', 'blockui-node-main');
       content.hidden = collapsed.has(node.id);
+      if (box.classList.contains('blockui-notice')) Object.assign(main.style, { outline: '2px dashed #3b82c4', outlineOffset: '0', borderRadius: '6px' });
       if (schema.category === 'script') {
         for (const field of schema.fields) {
           const edit = E('details', 'blockui-heading-editor');
@@ -3461,6 +3487,7 @@
           s?.contextRevision,
           s?.mode,
           !!isLocked(),
+          (s?.notices || []).map(d => d.line + ':' + d.code + ':' + d.message).join(','),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
       if (drag && nextSignature !== signature) cancelDrag();
@@ -3535,6 +3562,12 @@
       lineNodes = new Map();
       highlightedId = null;
       diagnosticsByLine = new Map();
+      noticesByLine = new Map();
+      // The notice marks are edit-screen controls: the run screen shows none (P11 (d), reconciled).
+      if (!isLocked()) for (const d of s?.notices || []) if (d?.line && (!d.where || d.where === s?.ownerKey)) {
+        if (!noticesByLine.has(d.line)) noticesByLine.set(d.line, []);
+        noticesByLine.get(d.line).push(d);
+      }
       for (const [id, entry] of index) {
         const line = s?.nodeMap?.get?.(id)?.sourceSpan?.startLine;
         if (line && schemaOf(entry.node)?.category === 'statement' && !lineNodes.has(line))
