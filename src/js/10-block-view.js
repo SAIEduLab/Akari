@@ -3822,9 +3822,11 @@
         if (!n.classList.contains('blockui-insertion-end')) right = Math.max(right, (r.right - box.left) / zoom);
         bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
       }
-      const across = (workspace.clientWidth - 24) / (right + 24),
+      // A body that fits at 100% stays at 100% (LANGUAGE.md 250); the margin is kept only for one that has to shrink.
+      const fits = right <= workspace.clientWidth && bottom <= workspace.clientHeight,
+        across = (workspace.clientWidth - 24) / (right + 24),
         down = (workspace.clientHeight - 24) / (bottom + 24);
-      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
+      setZoom(fits ? 1 : Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
