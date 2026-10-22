@@ -339,6 +339,22 @@
     function nowMs() {
       return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
     }
+    // A wake of the scheduler with no delay. In a page it is a message on a channel: the browser holds a setTimeout(0)
+    // that follows others back for 4 ms, which left the runtime idle for a third of the time while turns were due. A
+    // page still draws and takes input between two wakes. Elsewhere (node) it is a setTimeout.
+    const wakeSoon = (() => {
+      if (typeof MessageChannel !== 'function' || typeof document === 'undefined') return null;
+      let channel = null;
+      const queue = [];
+      return (fn) => {
+        if (!channel) {
+          channel = new MessageChannel();
+          channel.port1.onmessage = () => queue.shift()?.();
+        }
+        queue.push(fn);
+        channel.port2.postMessage(0);
+      };
+    })();
     // A wait with a subject (だんごは0.2秒待つ) holds only that part: the flow goes on, and the next statement of
     // that part waits until the hold ends. A wait without one (みんな, {kind:'all'}) stops the whole flow.
     function everyoneWaitKind(kind) {
@@ -3336,11 +3352,17 @@
         }
         this.loopScheduled = true;
         this.loopDue = due;
-        this.loopTimer = setTimeout(() => {
+        const wake = () => {
           this.loopTimer = null;
           this.loopScheduled = false;
           this.loop();
-        }, delay);
+        };
+        // A wake on the channel cannot be taken back: one that pause, stop or an earlier wake has let go of
+        // (loopTimer is no longer its own) does nothing.
+        if (delay <= 0 && wakeSoon) {
+          const token = (this.loopTimer = { soon: true });
+          wakeSoon(() => { if (this.loopTimer === token) wake(); });
+        } else this.loopTimer = setTimeout(wake, delay);
       }
       loop() {
         if (!this.running || this.paused) return;
@@ -3349,18 +3371,23 @@
         let count = 0;
         try {
           // A slice runs for at most 8 ms. The count only bounds a slice when the clock does not move (a test's clock);
-          // it is large enough for 300 paced copies to take their turn at every こま (final call 17).
-          while (
-            this.running &&
-            !this.paused &&
-            this.ready.length &&
-            count < 2000 &&
-            nowMs() - started < 8
-          ) {
-            this.runTurn(false);
-            count++;
+          // it is large enough for 300 paced copies to take their turn at every こま (final call 17). The flows that
+          // waited for this time (a paced loop's こま, a wait that ends) become ready when the waits are looked at
+          // (recheckBlocked): their turns run once more in this same wake, not one wake later.
+          for (let pass = 0; pass < 2; pass++) {
+            while (
+              this.running &&
+              !this.paused &&
+              this.ready.length &&
+              count < 2000 &&
+              nowMs() - started < 8
+            ) {
+              this.runTurn(false);
+              count++;
+            }
+            this.recheckBlocked();
+            if (!this.ready.length || count >= 2000 || nowMs() - started >= 8) break;
           }
-          this.recheckBlocked();
         } finally {
           this.inLoop = false;
         }
