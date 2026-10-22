@@ -215,7 +215,10 @@ async function reviewBlockDiscoverability(page) {
     await page.setViewportSize({width,height});
     const root = page.locator('#blockEditor');
     const candidate = root.locator('[data-blockui-action="palette-add"][data-blockui-schema="Say:timed"]');
-    await candidate.scrollIntoViewIfNeeded();
+    // A new width lays the block list out again a frame later; the candidate is read once that is done (a node
+    // replaced while it is scrolled to is looked up again, once).
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    try { await candidate.scrollIntoViewIfNeeded(); } catch (error) { if (!/not attached/.test(error.message)) throw error; await candidate.scrollIntoViewIfNeeded(); }
     const hint = await candidate.evaluate(button => {
       const preview=button.querySelector('.blockui-preview').getBoundingClientRect();
       const label=button.querySelector('.blockui-bound-name'),box=label.getBoundingClientRect();
