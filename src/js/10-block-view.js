@@ -881,6 +881,8 @@
       }
       announce(stopped);
       render({ force: true });
+      // The pressed やめる is no longer shown: the keys stay in the block view, not on the page (E2-01).
+      if (!doc.activeElement || doc.activeElement === doc.body) keepKeys();
       return { ok: true };
     }
     function destinationDescription() {
@@ -2529,12 +2531,12 @@
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
         announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
-      if (result.ok) focusAfterRemove();
+      if (result.ok) keepKeys();
       return result;
     }
-    // After a block is deleted (けす, a drop on the list, Delete), the keys stay in the block view: on the block now
-    // selected, else on the workspace. On the page, the next Delete would delete the whole part (E2-01).
-    function focusAfterRemove() {
+    // After a block is deleted (けす, a drop on the list, Delete) or a やめる is pressed, the keys stay in the block view: on
+    // the block now selected, else on the workspace. On the page, the next Delete would delete the whole part (E2-01).
+    function keepKeys() {
       const id = session()?.blockSelection;
       ((id && locationElement({ id })) || workspace).focus({ preventScroll: true });
     }
@@ -4493,7 +4495,7 @@
         const ids = carriedIds(state);
         const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
           : removeBlock(index.get(state.id)?.node || { id: state.id });
-        if (result.ok) { focusAfterRemove(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
+        if (result.ok) { keepKeys(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
         return;
       }
       if (!state.valid || !state.location) {
