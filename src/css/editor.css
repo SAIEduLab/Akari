@@ -6027,8 +6027,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px
 
 
 /* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
-   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). */
+   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). The キャラクター・部品
+   list under the stage is no higher than on the edit screen (170 px) and scrolls inside, so a work with many parts
+   does not take the stage's height. */
 body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
 
