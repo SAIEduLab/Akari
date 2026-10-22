@@ -3948,8 +3948,12 @@
         bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
       }
       const across = (workspace.clientWidth - 24) / (right + 24),
-        down = (workspace.clientHeight - 24) / (bottom + 24);
-      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
+        down = (workspace.clientHeight - 24) / (bottom + 24),
+        // A body that fits at 100% stays at 100%; the 24 px margin is kept only when it has to shrink (E2-07).
+        frame = workspace.getBoundingClientRect(),
+        fits = box.left - frame.left + workspace.scrollLeft + right <= workspace.clientWidth &&
+          box.top - frame.top + workspace.scrollTop + bottom <= workspace.clientHeight;
+      setZoom(fits ? 1 : Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
