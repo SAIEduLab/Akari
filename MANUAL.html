@@ -278,7 +278,7 @@ p,li,td,a{overflow-wrap:anywhere}
 details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
 summary{font-weight:800;cursor:pointer;color:#234f93}
 .mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
-.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
 .task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
 .code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
