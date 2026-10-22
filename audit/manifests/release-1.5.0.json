@@ -6,7 +6,7 @@
   "projectFormat": 5,
   "programFormat": 4,
   "files": {
-    "Akari_1_5_0.html": "b009e50f6957bb4acf8d4d2c3069537ae8be75471fa5fe90ca7e38e48d6d9a0a",
+    "Akari_1_5_0.html": "e770fc30a286f27820018cb186c4d187751c2ffaa727693248221d624bacc83c",
     "EXTENSIONS.md": "74f6bace4c88564df591428f3a96158e1ed821e42d1dd483b0c6d307ac8f69ca",
     "LANGUAGE.md": "6a80ce79aa49d0985bc129ac3d7a19268b68c0dde628f08452c98d008bcbc453",
     "LICENSE": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf",
@@ -25,6 +25,6 @@
     "extensions/foundation.js": "55bf284486c1c773b11f0a7cb84a6c8931069c03506140c717926e5a6076f35a",
     "extensions/limits.md": "30d3e6f9556bc588cb92cb521a0e51dd6152f7500121eb9d5b7389ffe56cea6b",
     "extensions/profiles.js": "3f6fae012780518785ac7cedb0326a7975283536ab37afd7249bbf46a042b3e5",
-    "extensions/types.d.ts": "17709f93ad72ed6dd052fb3a996e65bffcff8589a2537aa9f5918f964e37425a"
+    "extensions/types.d.ts": "48ca00aed891b8d33fe739e318fda06967f1aa714410cc8d54f8c59185090bcb"
   }
 }

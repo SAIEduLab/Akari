@@ -5873,10 +5873,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
-  /* The run screen shows neither the level nor the toggle (they change nothing there). */
-  body.runtime[data-editor-mode] .menutool {
-    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
-  }
+  /* The run screen shows neither the level nor the toggle (they change nothing there), but keeps their room, so the
+     buttons wrap as on the edit screen and ■ 止める comes where ▶ 動かす was. */
   body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
     position: absolute;
     margin: 0;
@@ -5966,13 +5964,18 @@ body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspe
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
 body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
-body.runtime .menutool > :is(.ui-level-label, .editor-modes, .mode-blocked-note) { display: none !important; }
+/* The level and the toggle are not shown on the run screen; their room stays, so no toolbar button moves. */
+body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
+body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
-:is(#editorModeblocks, #callableModeblocks)[aria-disabled="true"] { opacity: 0.5; }
+:is(#editorModeblocks, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
 /* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
 .mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
 .mode-blocked-note[hidden] { display: none !important; }
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
+/* The same note under いつ動く？ (its left is set to the button's when it opens). */
+.source-nav { position: relative; }
+.source-nav > .mode-blocked-note { position: absolute; top: calc(100% + 6px); z-index: 61; width: max-content; max-width: min(20rem, calc(100% - 16px)); box-shadow: 0 6px 16px #18364b30; }
 
 /* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
    the sentence itself in a box. Its height never depends on the sentence, so the stage keeps its size from sentence
@@ -6006,7 +6009,7 @@ body { overflow: visible !important; }
 /* While the work runs a menu stays in its place, pale like the other toolbar buttons, and does not open. */
 .menutool > details.toolbar-menu > summary[aria-disabled="true"] { opacity: 0.5; cursor: default; }
 .menutool > #basicActionGuide > .child-help-panel,
-.menutool > #entryProjectMenu > .entry-project-actions { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
+.menutool > #entryProjectMenu > .entry-project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
 .menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
 .menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
 body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
@@ -6039,8 +6042,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px
 
 
 /* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
-   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). */
+   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). The キャラクター・部品
+   list under the stage is no higher than on the edit screen (170 px) and scrolls inside, so a work with many parts
+   does not take the stage's height. */
 body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
 
@@ -6219,6 +6225,9 @@ body[data-editor-mode] :is(#blockEditor, #callableBlocks) .blockui-palette.block
 /* The text of the blocks, the block list and the workspace controls is not selected by a press or a drag (E-11);
    the text in an input is. */
 #blockEditor, #callableBlocks, .blockui-drag-ghost { -webkit-user-select: none; user-select: none; }
+/* The same for the rows above the workspace (本文・動かすもの, the event buttons, すべての本文 … もとにもどす): a drag that
+   starts in their empty space selects nothing. */
+body[data-editor-mode="blocks"] .codewin > :is(.win-title, .code-head, #entryEvents, .source-nav, .debugbar) { -webkit-user-select: none; user-select: none; }
 #blockEditor :is(input, textarea), #callableBlocks :is(input, textarea) { -webkit-user-select: text; user-select: text; }
 body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
 
@@ -6233,6 +6242,9 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   .status, #statusText, .editor-pending, #entryOutside, .mode-blocked-note, .monitor-empty, .blockui-trigger-scope, .diagnostic-help) {
   word-break: auto-phrase;
 }
+/* The notes under ブロック and いつ動く？ are one short sentence whose phrases are spaced: they break at the spaces
+   (「…ブロックに」 then 「もどれるよ」), never inside a phrase. */
+:is(#modeBlockedNote, #callableModeBlockedNote, #headingBlockedNote) { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* Touch screens (E-19): what a finger presses is at least 40 × 40 px — the fields, choices and buttons in the blocks,
    the category buttons (36 px to see, 40 px to press), the stage's size handles and zoom buttons, and the right
@@ -6289,6 +6301,14 @@ body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side 
 body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .win-title,
 body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .run-strip { display: none; }
 body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .designer-wrap { height: 158px; padding: 6px; overflow: hidden; }
+/* はじめて keeps the stage in the page's grid, not in the right column: it becomes the same small stage at the bottom
+   right, the part list under it is put away, and the blocks take the whole width. */
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .main > .side { display: none !important; }
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .main > #designerWindow {
+  position: fixed; z-index: 400; right: 18px; bottom: 44px; box-sizing: border-box; width: 228px; height: 158px; min-height: 0; margin: 0;
+  overflow: hidden; border-radius: 12px; box-shadow: 0 6px 18px #12324d40; background: #fff;
+}
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > #designHelp { display: none; }
 #stageThumbnail {
   position: absolute; inset: 0; z-index: 3500; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0;
   border: 2px solid #6c8ca5; border-radius: 12px; background: transparent; cursor: pointer;
@@ -10786,16 +10806,18 @@ function createAkariExtensionHost(options) {
         this.ui.closeQuestion?.();
         this.ui.state?.();
       }
-      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, and no question is open. A body
-      // may still start again (ended).
+      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, no question is open, and no
+      // extension event or answer waits to be taken in. A body may still start again (ended).
       idle() {
         return !(!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
-          this.activeQuestion || this.extensionEvents?.length || extensions.active);
+          this.activeQuestion || this.extensionEvents?.length || this.extensionCompletions?.length);
       }
       // The run has ended by itself: it is idle, and no body can start again (none waits for input, a 名人 condition or
-      // interval, or an extension).
+      // interval, or an extension event while the extensions run). An extension that is only registered keeps nothing going.
       ended() {
-        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
+        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) ||
+          (extensions.active && item.event === 'message' &&
+            String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '').startsWith('拡張:')));
       }
       pause() {
         if (!this.running) return;
@@ -11000,7 +11022,19 @@ function createAkariExtensionHost(options) {
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return top;
+          if (top.type === 'while' || top.type === 'until') {
+            // A turn has ended: its condition is read now, before any other flow takes its next step
+            // (くり返しと画面の動き). A body with no sentence, and a condition calculated a little at a time, keep the
+            // check as a step of its own.
+            const condition = top.condition || top.node.condition;
+            if (!top.node.body.some((n) => n.kind !== 'CommentLine') ||
+              (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(condition))) return top;
+            this.selectSubject(task, top.node);
+            const v = bool(evalExpression(condition, this.context(task)));
+            if (top.type === 'while' ? v : !v) this.enterLoopTurn(task, top);
+            else task.execStack.pop();
+            continue;
+          }
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
@@ -12288,11 +12322,16 @@ function createAkariExtensionHost(options) {
         const events = ['start', 'click', 'keyDown', 'message', 'backdropChanged',
           ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : []),
           ...(type && type !== 'stage' ? ['touchStart'] : []), ...(type === 'stage' ? ['conditionTrue', 'interval'] : [])];
+        // A later heading of a body saved without unit IDs keeps the key analysis gives it:
+        // script:document:<the body's key>:unit:<n>, where the body's key is script:<id> or script:<owner>:<event>.
+        const documentUnit = parts[1] === 'document' && parts[2] === 'script' && parts.at(-2) === 'unit' &&
+          /^[1-9][0-9]{0,4}$/.test(parts.at(-1)) && parts.at(-1) !== '1' &&
+          ((parts.length === 6 && safeId(parts[3])) || (parts.length === 7 && ownerIds.has(parts[3]) && /^[A-Za-z]{1,32}$/.test(parts[4])));
         if (
           typeof item.key !== 'string' ||
           !ownerIds.has(item.ownerId) ||
           (item.key.startsWith('script:')
-            ? !((parts.length === 2 && safeId(parts[1]) && item.id === parts[1] &&
+            ? !((((parts.length === 2 && safeId(parts[1])) || documentUnit) && item.id === parts.slice(1).join(':') &&
                 item.targetId === item.ownerId && events.includes(item.event)) ||
               (parts.length === 3 && parts[1] === item.ownerId && events.includes(parts[2])))
             : definitionKeys.get(item.key)?.ownerId !== item.ownerId) ||
@@ -14347,7 +14386,7 @@ function createAkariExtensionHost(options) {
           "id": "game-click",
           "targetId": "star",
           "event": "click",
-          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数を1増やす。\n  「点数表示」の文字を（「てんすう：」と点数をつなげた文字）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    たくどんは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      たくどんは右に90度回る。\n      0.1秒待つ。\n  そうでなければ、\n    星は画面の左下のはしから、右へ170歩から540歩のどれか、上へ100歩から250歩のどれかのばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
+          "source": "もし受付が1なら、\n  受付を0にする。\n  点数を1ふやす。\n  「点数表示」の文字を（「てんすう：」と点数をつなげた文字）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    たくどんは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      たくどんは右に90度回る。\n      0.1秒待つ。\n  そうでなければ、\n    星は画面の左下のはしから、右へ170歩から540歩のどれか、上へ100歩から250歩のどれかのばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
         }
       ],
       "actions": [],
@@ -15391,13 +15430,13 @@ function createAkariExtensionHost(options) {
           "id": "maze-retry",
           "targetId": "retry",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんは画面の左下のはしから、右へ38歩、上へ282歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
+          "source": "もし【動いている】が0なら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんは画面の左下のはしから、右へ38歩、上へ282歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
         },
         {
           "id": "maze-go",
           "targetId": "go",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんは画面の左下のはしから、右へ38歩、上へ282歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  たくどんは進む方向を「右」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「右」、マス数を3として、【道を進む】という手順を行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし【列】が6と同じで、【行】が4と同じなら、\n      たくどんは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      たくどんは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  たくどんは【動いている】を0にする。"
+          "source": "もし【動いている】が0なら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんは画面の左下のはしから、右へ38歩、上へ282歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  たくどんは進む方向を「右」、マス数を2として、【道を進む】というてじゅんを行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】というてじゅんを行う。\n  たくどんは進む方向を「右」、マス数を3として、【道を進む】というてじゅんを行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】というてじゅんを行う。\n  たくどんは進む方向を「右」、マス数を1として、【道を進む】というてじゅんを行う。\n  もし【失敗】が0なら、\n    もし【列】が6と同じで、【行】が4なら、\n      たくどんは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      たくどんは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  たくどんは【動いている】を0にする。"
         }
       ],
       "actions": [
@@ -15409,7 +15448,7 @@ function createAkariExtensionHost(options) {
             "進む方向",
             "マス数"
           ],
-          "source": "もし【失敗】が0と同じなら、\n  【順番】を1増やす。\n  【歩いた道】を（【歩いた道】と【順番】と「：」と進む方向と「へ 」とマス数と「マス\n」をつなげた文字）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字を（【順番】と「番：」と進む方向と「へ 」とマス数と「マス」をつなげた文字）にかえる。\n  【マス数】回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし進む方向が「右」と同じなら、\n      【次の列】を1増やす。\n    もし進む方向が「左」と同じなら、\n      【次の列】を1減らす。\n    もし進む方向が「下」と同じなら、\n      【次の行】を1増やす。\n    もし進む方向が「上」と同じなら、\n      【次の行】を1減らす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      このくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    たくどんは0.35秒かけて、画面の左下のはしから、右へ（38＋【列】×43）歩、上へ（282－【行】×43）歩のばしょへ行く。\n    0.1秒待つ。"
+          "source": "もし【失敗】が0なら、\n  【順番】を1ふやす。\n  【歩いた道】を（【歩いた道】と【順番】と「：」と進む方向と「へ 」とマス数と「マス\n」をつなげた文字）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字を（【順番】と「番：」と進む方向と「へ 」とマス数と「マス」をつなげた文字）にかえる。\n  【マス数】回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし進む方向が「右」なら、\n      【次の列】を1ふやす。\n    もし進む方向が「左」なら、\n      【次の列】を1へらす。\n    もし進む方向が「下」なら、\n      【次の行】を1ふやす。\n    もし進む方向が「上」なら、\n      【次の行】を1へらす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0なら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1なら、\n        【失敗】を1にする。\n    もし【失敗】が1なら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      このくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    たくどんは0.35秒かけて、画面の左下のはしから、右へ（38＋【列】×43）歩、上へ（282－【行】×43）歩のばしょへ行く。\n    0.1秒待つ。"
         }
       ],
       "functions": [],
@@ -16205,145 +16244,145 @@ function createAkariExtensionHost(options) {
           "id": "music-start",
           "targetId": "stage",
           "event": "start",
-          "source": "【演奏中】を0にする。\n【再生番号】を0にする。\n【音を見せる】という手順を行う。"
+          "source": "【演奏中】を0にする。\n【再生番号】を0にする。\n【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-play",
           "targetId": "play",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【演奏中】を1にする。\n  【再生番号】を1増やす。\n  今回を【再生番号】として、【曲を聞く】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【演奏中】を1にする。\n  【再生番号】を1ふやす。\n  今回を【再生番号】として、【曲を聞く】というてじゅんを行う。"
         },
         {
           "id": "music-stop",
           "targetId": "stop",
           "event": "click",
-          "source": "【再生番号】を1増やす。\n【演奏中】を0にする。\nすべての音を止める。\n「お知らせ」の文字を「止めたよ。音をかえて また聞こう」にかえる。"
+          "source": "【再生番号】を1ふやす。\n【演奏中】を0にする。\nすべての音を止める。\n「お知らせ」の文字を「止めたよ。音をかえて また聞こう」にかえる。"
         },
         {
           "id": "music-note-1",
           "targetId": "note-1",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を1にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を1にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-2",
           "targetId": "note-2",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を2にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を2にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-3",
           "targetId": "note-3",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を3にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を3にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-4",
           "targetId": "note-4",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を4にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を4にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-5",
           "targetId": "note-5",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を5にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を5にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-6",
           "targetId": "note-6",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を6にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を6にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-7",
           "targetId": "note-7",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を7にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を7にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-8",
           "targetId": "note-8",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を8にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を8にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-9",
           "targetId": "note-9",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を9にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を9にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-10",
           "targetId": "note-10",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を10にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を10にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-11",
           "targetId": "note-11",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を11にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を11にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-12",
           "targetId": "note-12",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を12にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を12にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-13",
           "targetId": "note-13",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を13にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を13にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-14",
           "targetId": "note-14",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を14にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を14にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-15",
           "targetId": "note-15",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を15にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を15にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-note-16",
           "targetId": "note-16",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【選んだ音】を16にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【選んだ音】を16にする。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-pitch",
           "targetId": "pitch",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【メロディー】の【選んだ音】番目を【メロディー】の【選んだ音】番目÷8のあまり＋1にかえる。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  【メロディー】の【選んだ音】番目を【メロディー】の【選んだ音】番目÷8のあまり＋1にかえる。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-length",
           "targetId": "length",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  もし【音の長さ】の【選んだ音】番目が2と同じなら、\n    【音の長さ】の【選んだ音】番目を0.5にかえる。\n  そうでなければ、\n    【音の長さ】の【選んだ音】番目を【音の長さ】の【選んだ音】番目×2にかえる。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0なら、\n  もし【音の長さ】の【選んだ音】番目が2なら、\n    【音の長さ】の【選んだ音】番目を0.5にかえる。\n  そうでなければ、\n    【音の長さ】の【選んだ音】番目を【音の長さ】の【選んだ音】番目×2にかえる。\n  【音を見せる】というてじゅんを行う。"
         },
         {
           "id": "music-swap",
           "targetId": "swap",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  もし【選んだ音】が16より小さければ、\n    【音の番号】を【メロディー】の【選んだ音】番目にする。\n    【メロディー】の【選んだ音】番目を【メロディー】の（【選んだ音】＋1）番目にかえる。\n    【メロディー】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音の番号】を【音の長さ】の【選んだ音】番目にする。\n    【音の長さ】の【選んだ音】番目を【音の長さ】の（【選んだ音】＋1）番目にかえる。\n    【音の長さ】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音を見せる】という手順を行う。\n  そうでなければ、\n    「お知らせ」の文字を「さいごの音だよ。1〜15番を えらんでね」にかえる。"
+          "source": "もし【演奏中】が0なら、\n  もし【選んだ音】が16より小さければ、\n    【音の番号】を【メロディー】の【選んだ音】番目にする。\n    【メロディー】の【選んだ音】番目を【メロディー】の（【選んだ音】＋1）番目にかえる。\n    【メロディー】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音の番号】を【音の長さ】の【選んだ音】番目にする。\n    【音の長さ】の【選んだ音】番目を【音の長さ】の（【選んだ音】＋1）番目にかえる。\n    【音の長さ】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音を見せる】というてじゅんを行う。\n  そうでなければ、\n    「お知らせ」の文字を「さいごの音だよ。1〜15番を えらんでね」にかえる。"
         },
         {
           "id": "music-tempo",
           "targetId": "tempo",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【テンポ】を30増やす。\n  もし【テンポ】が180より大きければ、\n    【テンポ】を60にする。\n  「速さをかえる」の文字を（「速さ：」と【テンポ】をつなげた文字）にかえる。"
+          "source": "もし【演奏中】が0なら、\n  【テンポ】を30ふやす。\n  もし【テンポ】が180より大きければ、\n    【テンポ】を60にする。\n  「速さをかえる」の文字を（「速さ：」と【テンポ】をつなげた文字）にかえる。"
         },
         {
           "id": "music-restore",
           "targetId": "restore",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【メロディー】を［1、3、5、3、4、6、5、3、2、4、6、5、3、2、1、1］にする。\n  【音の長さ】を［1、1、1、1、1、1、1、1、1、1、1、1、1、1、1、1］にする。\n  【テンポ】を120にする。\n  【選んだ音】を1にする。\n  「速さをかえる」の文字を「速さ：120」にかえる。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を「元の曲に もどしたよ」にかえる。"
+          "source": "もし【演奏中】が0なら、\n  【メロディー】を［1、3、5、3、4、6、5、3、2、4、6、5、3、2、1、1］にする。\n  【音の長さ】を［1、1、1、1、1、1、1、1、1、1、1、1、1、1、1、1］にする。\n  【テンポ】を120にする。\n  【選んだ音】を1にする。\n  「速さをかえる」の文字を「速さ：120」にかえる。\n  【音を見せる】というてじゅんを行う。\n  「お知らせ」の文字を「元の曲に もどしたよ」にかえる。"
         }
       ],
       "actions": [
@@ -16361,7 +16400,7 @@ function createAkariExtensionHost(options) {
           "args": [
             "今回"
           ],
-          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】とちがえば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を（「いま 」と【音の番号】と「番の音 ♪」をつなげた文字）にかえる。\n  【鳴らす高さ】を【音のHz】の（【メロディー】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を（60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85）秒鳴らし始める。\n  （60÷【テンポ】×【音の長さ】の【音の番号】番目）秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
+          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】とちがえば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】というてじゅんを行う。\n  「お知らせ」の文字を（「いま 」と【音の番号】と「番の音 ♪」をつなげた文字）にかえる。\n  【鳴らす高さ】を【音のHz】の（【メロディー】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を（60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85）秒鳴らし始める。\n  （60÷【テンポ】×【音の長さ】の【音の番号】番目）秒待つ。\n  【音の番号】を1ふやす。\nもし今回が【再生番号】なら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
         }
       ],
       "functions": [],
@@ -16625,13 +16664,13 @@ function createAkariExtensionHost(options) {
           "id": "story-left",
           "targetId": "left",
           "event": "click",
-          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を1にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「花の道：小さな出会い」にかえる。\n  「お話」の文字を「花が いっぱい！\nだんごが 花を 見つめている。\n木の上から ことりの声も。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「花かんむりを 作る」にかえる。\n  「右のえらび方」の文字を「ことりの歌を 聞く」にかえる。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：花かんむりの ピクニック」にかえる。\n      「お話」の文字を「花を すこし わけてもらい、\nふたりで 花かんむりを 作った。\nにあうね！\n花のにおいの おひるごはん。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：石の橋の ピクニック」にかえる。\n      「お話」の文字を「手をつないで 石を わたり、\nむこう岸の 木かげに とうちゃく。\nいっしょなら できたね！\n川の音を 聞いて おひるごはん。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
+          "source": "もし【場面】が0なら、\n  【選んだ道】を1にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「花の道：小さな出会い」にかえる。\n  「お話」の文字を「花が いっぱい！\nだんごが 花を 見つめている。\n木の上から ことりの声も。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「花かんむりを 作る」にかえる。\n  「右のえらび方」の文字を「ことりの歌を 聞く」にかえる。\nそうでなければ、\n  もし【場面】が1なら、\n    【場面】を2にする。\n    もし【選んだ道】が1なら、\n      「場面の名前」の文字を「おわり：花かんむりの ピクニック」にかえる。\n      「お話」の文字を「花を すこし わけてもらい、\nふたりで 花かんむりを 作った。\nにあうね！\n花のにおいの おひるごはん。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：石の橋の ピクニック」にかえる。\n      「お話」の文字を「手をつないで 石を わたり、\nむこう岸の 木かげに とうちゃく。\nいっしょなら できたね！\n川の音を 聞いて おひるごはん。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
         },
         {
           "id": "story-right",
           "targetId": "right",
           "event": "click",
-          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を2にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「川の道：きらきらの水」にかえる。\n  「お話」の文字を「川に 小さな 石の橋がある。\nたくどんは むこう岸を 見ている。\n足もとには きれいな 石。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「石の橋を わたる」にかえる。\n  「右のえらび方」の文字を「川べりを あるく」にかえる。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：ことりと ピクニック」にかえる。\n      「お話」の文字を「木の下で しずかに 待つと、\nことりが うたってくれた。\nすてきな うただね！\nふたりで 小さく はくしゅ。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：きらきら ピクニック」にかえる。\n      「お話」の文字を「川べりで きれいな 石を 見つけた。\n水に もどして あげよう。\n石は 水の中で きらり。\nふたりの ひみつの たからもの。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
+          "source": "もし【場面】が0なら、\n  【選んだ道】を2にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「川の道：きらきらの水」にかえる。\n  「お話」の文字を「川に 小さな 石の橋がある。\nたくどんは むこう岸を 見ている。\n足もとには きれいな 石。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「石の橋を わたる」にかえる。\n  「右のえらび方」の文字を「川べりを あるく」にかえる。\nそうでなければ、\n  もし【場面】が1なら、\n    【場面】を2にする。\n    もし【選んだ道】が1なら、\n      「場面の名前」の文字を「おわり：ことりと ピクニック」にかえる。\n      「お話」の文字を「木の下で しずかに 待つと、\nことりが うたってくれた。\nすてきな うただね！\nふたりで 小さく はくしゅ。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：きらきら ピクニック」にかえる。\n      「お話」の文字を「川べりで きれいな 石を 見つけた。\n水に もどして あげよう。\n石は 水の中で きらり。\nふたりの ひみつの たからもの。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
         }
       ],
       "actions": [],
@@ -17917,6 +17956,8 @@ function createAkariExtensionHost(options) {
     const mask0 = surfaceMask(source);
     if (mask0.includes('になったら')) return out;
     const word = (text, from, to) => {
+      // A word that is not in the text is not in its mask either (the mask only hides characters).
+      if (!text.includes(from)) return text;
       const mask = surfaceMask(text);
       let result = '', at = 0, i;
       while ((i = mask.indexOf(from, at)) >= 0) { result += text.slice(at, i) + to; at = i + from.length; }
@@ -18614,7 +18655,7 @@ function createAkariExtensionHost(options) {
     ['鳴らし始めて','鳴らし始める'], ['言わせて','言わせる'], ['かくして','かくす'], ['隠して','隠す'],
     ['うごかして','うごかす'], ['動かして','動かす'], ['うごいて','うごく'], ['動いて','動く'],
     ['すすんで','すすむ'], ['進んで','進む'], ['あるいて','あるく'], ['歩いて','歩く'], ['まわって','まわる'], ['回って','回る'],
-    ['むいて','むく'], ['向いて','向く'], ['行って','行う'], ['すべって','すべる'], ['滑って','滑る'],
+    ['むいて','むく'], ['向いて','向く'], ['行って','行う'],
     ['変えて','変える'], ['かえて','かえる'], ['言って','言う'], ['いって','いう'], ['話して','話す'], ['はなして','はなす'],
     ['待って','待つ'], ['まって','まつ'], ['見せて','見せる'], ['みせて','みせる'], ['入れて','入れる'], ['いれて','いれる'],
     ['足して','足す'], ['たして','たす'], ['引いて','引く'], ['ひいて','ひく'], ['消して','消す'], ['けして','けす'],
@@ -18624,6 +18665,8 @@ function createAkariExtensionHost(options) {
     ['送って','送る'], ['上げて','上げる'], ['あげて','上げる'], ['下げて','下げる'], ['下がって','下がる'], ['さがって','さがる'],
     ['出て','出る'], ['はね返って','はね返る'], ['聞いて','たずねて、答えを待つ'], ['きいて','たずねて、答えを待つ'], ['たずねて','たずねて、答えを待つ'], ['して','する'],
   ].map(Object.freeze));
+  // すべる (滑る) is no longer read. Its て-form only lets the move guidance find the clause and name 〇秒かけて.
+  const GUIDED_TE_FORMS = Object.freeze([...SENTENCE_TE_FORMS, ...[['すべって','すべる'], ['滑って','滑る']].map(Object.freeze)]);
   function surfaceCapture(pattern, code, protectedCode = surfaceMask(code)) {
     const match = pattern.exec(protectedCode);
     if (!match) return null;
@@ -18698,7 +18741,7 @@ function createAkariExtensionHost(options) {
     const protectedCode = surfaceMask(code);
     const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],
       // Every action's verb: a specific ending comes before the general します.
-      ['向きます','向く'],['行きます','行く'],['いきます','いく'],['歩きます','歩く'],['あるきます','あるく'],['うごきます','うごく'],['すべります','すべる'],['下がります','下がる'],['さがります','さがる'],['はね返ります','はね返る'],
+      ['向きます','向く'],['行きます','行く'],['いきます','いく'],['歩きます','歩く'],['あるきます','あるく'],['うごきます','うごく'],['下がります','下がる'],['さがります','さがる'],['はね返ります','はね返る'],
       ['かくします','かくす'],['隠します','隠す'],['見せます','見せる'],['出ます','出る'],
       ['かえます','かえる'],['変えます','変える'],['鳴らし始めます','鳴らし始める'],['鳴らします','鳴らす'],['止めます','止める'],
       ['送ります','送る'],['作ります','作る'],['消します','消す'],['けします','けす'],['入れます','入れる'],['足します','足す'],['引きます','引く'],
@@ -18838,13 +18881,13 @@ function createAkariExtensionHost(options) {
   // Which legs a fixed place wrote before the unwritten one became 0歩 (the notice of B-17 reads it).
   const MOVE_WRITTEN_LEGS = new WeakMap();
   // One leg: 右へ10歩 / 10歩右へ. A comma inside one leg (10歩、右へ) is not read.
-  function readMoveLeg(text, start, quantity) {
-    const mask = surfaceMask(text);
+  // mask: the text's surfaceMask, when the caller already has it (a slice of a longer mask cut outside any 「 」 or （ ）).
+  function readMoveLeg(text, start, quantity, mask = surfaceMask(text)) {
     let p = surfaceCapture(/^(右|左|上|下)(?:へ|に)(.*)$/d, text, mask), word, amount;
     if (p) { word = p[0].text; amount = p[1]; }
     else if ((p = surfaceCapture(/^([^、]+歩)(右|左|上|下)(?:へ|に)$/d, text, mask))) { word = p[1].text; amount = p[0]; }
     else return null;
-    const [axis, dir] = MOVE_AXIS[word], amountMask = surfaceMask(amount.text);
+    const [axis, dir] = MOVE_AXIS[word], amountMask = mask.slice(amount.start, amount.end);
     if (!amountMask || amountMask.includes('、')) return null;
     if (!amountMask.endsWith('歩')) throw new AkariError('P205', `歩数の あとに「歩」を 書きます。れい：${word}へ10歩`);
     if (amountMask.length === 1) return null;
@@ -18852,13 +18895,16 @@ function createAkariExtensionHost(options) {
   }
   // One leg, or two of different axes: 右へ10歩、上へ5歩 (also without the comma, and either order).
   function readMoveLegs(text, start, quantity, example = 'いまのばしょから、右へ10歩、上へ5歩動く') {
-    const mask = surfaceMask(text), splits = [];
+    const mask = surfaceMask(text), splits = [], firstComma = mask.indexOf('、'), lastComma = mask.lastIndexOf('、');
     for (let i = 0; i < mask.length; i++) if (mask[i] === '、') splits.push([i, i + 1]);
     for (let i = 1; i < mask.length; i++) if (mask[i - 1] === '歩' && /^(?:右|左|上|下)(?:へ|に)/.test(mask.slice(i))) splits.push([i, i]);
     let firstError = null;
     for (const [a, b] of splits) {
+      // A leg has no 、 of its own (readMoveLeg reads none), so a side with a 、 is no leg; skipping it keeps a long
+      // run of 右へ1歩、… linear.
+      if (firstComma >= 0 && firstComma < a) continue;
       let one = null, two = null;
-      try { one = readMoveLeg(text.slice(0, a), start, quantity); two = one && readMoveLeg(text.slice(b), start + b, quantity); }
+      try { one = readMoveLeg(text.slice(0, a), start, quantity, mask.slice(0, a)); two = one && lastComma < b && readMoveLeg(text.slice(b), start + b, quantity, mask.slice(b)); }
       catch (error) { if (!(error instanceof AkariError)) throw error; firstError ||= error; continue; }
       if (!one || !two) continue;
       if (one.axis === two.axis) throw new AkariError('P205', '「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：' + example);
@@ -18944,7 +18990,9 @@ function createAkariExtensionHost(options) {
     });
     if(place)return place;
     // 「ロケット」のところへ行く / マウスのところへ行く (the mouse needs no 「 」), with the time first.
-    if(MOVE_VERBS.part.includes(verb)&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)$','d'),body))){
+    // The ところ forms are tried only when ところ is written (on a long line without it these patterns are slow).
+    const partPlace=/のところ(?:へ|に)/.test(mask);
+    if(partPlace&&MOVE_VERBS.part.includes(verb)&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)$','d'),body))){
       const text=p[1].text,mouse=['マウス','「マウス」'].includes(text),screen=screenPlaceSource(surfaceMask(text),symbols);
       if(screen)throw new AkariError('P205',screen.message);
       const target=mouse?exprNode('StringLiteral',{value:'マウス'}):partNameTarget(componentTarget(e(text,p[1].start),symbols,ctx),symbols,ctx);
@@ -18973,11 +19021,11 @@ function createAkariExtensionHost(options) {
         return made;
       }
     }
-    // A 1.4.0 move form names the 1.5.0 one (the proposal is made for the whole line by diagnoseSentenceIntent).
+    // A removed move form names the one written now (the proposal is made for the whole line by diagnoseSentenceIntent).
     const removed=removedMoveGuidance(code);
     if(removed)throw new AkariError('P205',removed.message);
     // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く: a part's place is gone to with 行く, the time first.
-    if((p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?$','d'),body)))
+    if(partPlace&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?$','d'),body)))
       throw new AkariError('P205',partPlaceGuidance(p[1].text,(p[0]||p[2])?.text,verb,!!p[2],symbols).message);
     // The steps are asked for only when none are written (3回、前へ10歩進む is no move sentence: other readers take it).
     if(/(?:動く|うごく|進む|すすむ|歩く|あるく)/.test(verb)&&!surfaceMask(body).includes('歩'))throw new AkariError('P205','動くときは 歩数を 書きます。れい：前へ10歩進む／'+MOVE_EXAMPLE_HERE);
@@ -19001,8 +19049,8 @@ function createAkariExtensionHost(options) {
       ? {message:'「〇秒かけて、」は 文の はじめに 書きます。れい：'+source,source,label:'時間を はじめに 書く'}
       : {message:'部品の ところへは「行く」と 書きます。れい：'+source,source,label:'「行く」と 書く'};
   }
-  // The 1.4.0 move forms that are not read (LANGUAGE.md 読めない書き方): each names the 1.5.0 form. A move along the
-  // screen's directions means the same from いまのばしょ, so it gets a proposal; a place counted the 1.4.0 way (from the
+  // The removed move forms that are not read (LANGUAGE.md 読めない書き方): each names the form written now. A move along
+  // the screen's directions means the same from いまのばしょ, so it gets a proposal; a place counted the old way (from the
   // top-left corner) would land somewhere else, so it gets the message only. null for any other sentence.
   const MOVE_OLD_VERB = '(?:動く|うごく|進む|すすむ|歩く|あるく|動かす|うごかす|行く|いく)';
   // ねこは、いまのばしょから、…: the subject before いまのばしょから takes 、 as the formatter writes it (B-06).
@@ -19035,19 +19083,21 @@ function createAkariExtensionHost(options) {
     // いまの位置から / 〜の位置へ行く: 位置 is written ばしょ.
     const ichi = () => /位置/.test(mask) && /(?:行く|いく|動く|うごく|進む|すすむ|歩く|あるく|滑る|すべる)$/.test(mask)
       ? { message: '「位置」は 読みません。「ばしょ」と 書きます。れい：' + code.replace(/位置/g, 'ばしょ'), source: code.replace(/位置/g, 'ばしょ'), label: '「ばしょ」と 書く' } : null;
-    // いまのばしょから… and 画面の左下のはしから… are the 1.5.0 sentences.
+    // いまのばしょから… and 画面の左下のはしから… are the sentences of today.
     if (/^(?:(?:いま|今)の|画面の左下)/.test(rmask)) return ichi();
     // 右へ10歩動く / 画面の右へ10歩動く / 10歩右へ動く / 右へ10歩、上へ5歩動く, with the time first or before the verb.
     const LEG = '(?:画面の)?(右|左|上|下)(?:へ|に)([^、]+?)歩', LEG_BACK = '([^、]+?)歩、?(?:画面の)?(右|左|上|下)(?:へ|に)';
     const TIME_FIRST = '((?:[^、。]+?秒(?:かけて|で)、?)?)', TIME_LAST = '((?:、?[^、。]+?秒(?:かけて|で))?)';
     let legs = null, time = '';
-    if ((p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG + '(?:、?' + LEG + ')?' + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
+    // Every leg form has 歩 and a direction word; without them the patterns below only search a long line.
+    const stepsWritten = rmask.includes('歩') && /(?:右|左|上|下)(?:へ|に)/.test(rmask);
+    if (stepsWritten && (p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG + '(?:、?' + LEG + ')?' + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
       legs = [[p[1].text, p[2].text], ...(p[3] ? [[p[3].text, p[4].text]] : [])];
       time = (p[0].text || (p[5]?.text || '').replace(/^、/, '')).replace(/、$/, '');
-    } else if ((p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG_BACK + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
+    } else if (stepsWritten && (p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG_BACK + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
       legs = [[p[2].text, p[1].text]];
       time = (p[0].text || (p[3]?.text || '').replace(/^、/, '')).replace(/、$/, '');
-    } else if ((p = surfaceCapture(new RegExp('^([^、]+?)歩、?([^、。]+?秒(?:かけて|で))、?(?:画面の)?(右|左|上|下)(?:へ|に)' + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
+    } else if (stepsWritten && (p = surfaceCapture(new RegExp('^([^、]+?)歩、?([^、。]+?秒(?:かけて|で))、?(?:画面の)?(右|左|上|下)(?:へ|に)' + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
       // 10歩、2秒かけて画面の右へ動く: the time between the steps and the direction.
       legs = [[p[2].text, p[0].text]];
       time = p[1].text;
@@ -19056,7 +19106,7 @@ function createAkariExtensionHost(options) {
       const source = `${movingSubject(proposalSubject)}${time ? time + '、' : ''}いまのばしょから、${legs.map(([word, amount]) => word + 'へ' + amount + '歩').join('、')}動く`;
       return { message: '画面の 向きへ 動くときは、「いまのばしょから、」を 書きます。れい：' + source, source, label: 'いまのばしょから 動く' };
     }
-    // よこ100歩、たて50歩のばしょへ行く / 横100、縦50の位置へ行く / 1秒で横200、縦100の位置へ滑る: the 1.4.0 numbers
+    // よこ100歩、たて50歩のばしょへ行く / 横100、縦50の位置へ行く / 1秒で横200、縦100の位置へ滑る: the old numbers
     // count from the top-left corner, so the place is written again from the bottom-left corner.
     if (/(?:よこ|たて|横|縦)[^、]+、(?:よこ|たて|横|縦)[^、]+?の(?:ばしょ|場所|位置)(?:へ|に)/.test(rmask) && /(?:行く|いく|動く|うごく|滑る|すべる)$/.test(rmask))
       return { message: '決めた ばしょへ 行くときは、画面の 左下の はしから 数えて「' + MOVE_EXAMPLE_FIXED + '」のように 書きます。ばしょは 部品の まん中で 数えます' };
@@ -19315,6 +19365,8 @@ function createAkariExtensionHost(options) {
     const add = text => { if (text && text !== code && !out.includes(text)) out.push(text); };
     // Replace every unprotected occurrence of a fixed word.
     const word = (text, from, to) => {
+      // A word that is not in the text is not in its mask either (the mask only hides characters).
+      if (!text.includes(from)) return text;
       const mask = surfaceMask(text);
       let result = '', at = 0, i;
       while ((i = mask.indexOf(from, at)) >= 0) { result += text.slice(at, i) + to; at = i + from.length; }
@@ -19341,6 +19393,7 @@ function createAkariExtensionHost(options) {
       for (const te of ['鳴らし始めて', '鳴らして', '進んで', 'すすんで', '動いて', 'うごいて', '歩いて', 'あるいて', '回って', 'まわって', '向いて', '待って', '言って', '話して',
         'かくして', '見せて', '消して', 'けして', '入れて', '足して', '引いて', '変えて', 'かえて', 'すべって', '滑って',
         '増やして', '減らして', '止めて', '作って', '送って', '上げて', '下ろして', 'にして', '行って', 'たずねて', 'はね返って', '追加して', '削除して', '挿入して']) {
+        if (!text.includes(te)) continue;
         const mask = surfaceMask(text);
         let result = '', at = 0, i;
         while ((i = mask.indexOf(te, at)) >= 0) {
@@ -19508,11 +19561,14 @@ function createAkariExtensionHost(options) {
   }
   // 点数が10になったら (no もし): three meanings, each in the child's words (LANGUAGE.md 読めない書き方): now, once by
   // waiting, or each time (名人's 〜になったとき).
+  // The condition of 点数が10になったら (点数が10と同じ), or null when it does not read.
+  function becomesCondition(written,symbols,ctx){
+    try{return parseCondition(/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(written))?written:written+'と同じ',symbols,ctx,'plain');}
+    catch(error){if(!(error instanceof AkariError))throw error;return null;}
+  }
   function becomesMessage(written,symbols,ctx){
-    let now='もし〜なら、',wait='〜になるまで待つ。';
-    try{const raw=/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(written))?written:written+'と同じ',condition=parseCondition(raw,symbols,ctx,'plain');
-      now='もし'+formatCondition(condition,'if')+'、';wait=formatCondition(condition,'until')+'待つ。';}
-    catch(error){if(!(error instanceof AkariError))throw error;}
+    const condition=becomesCondition(written,symbols,ctx);
+    const now=condition?'もし'+formatCondition(condition,'if')+'、':'もし〜なら、',wait=condition?formatCondition(condition,'until')+'待つ。':'〜になるまで待つ。';
     return `「${written}になったら、」は、いくつかの 意味に とれます。いま しらべるなら「${now}」、そうなるまで 待つなら「${wait}」、そうなる たびに するなら 名人モードで「${written}になったとき、」と 書きます`;
   }
   function sentenceDiagnostic(message,line,choices=[],draftRole=null) {
@@ -19683,17 +19739,17 @@ function createAkariExtensionHost(options) {
         break;
       }
     }
-    // 書21: a 1.4.0 move form (右へ10歩動く, よこ100歩、たて50歩のばしょへ行く, よこのばしょを10増やす …) names the 1.5.0 form,
+    // 書21: a removed move form (右へ10歩動く, よこ100歩、たて50歩のばしょへ行く, よこのばしょを10増やす …) names the form of today,
     // also as one 「〜して、」 of a longer sentence and after a lead word (そして) or an inline もし…なら、. The proposal
     // rewrites every such sentence of the chain, in the whole line; the message is the first one's.
     {
-      // A lead word may come right before the old move (そのあと上へ5歩動く): the 1.4.0 forms began with 上へ・下へ too.
+      // A lead word may come right before the old move (そのあと上へ5歩動く): the removed forms began with 上へ・下へ too.
       const leadOf=text=>LEAD_BEFORE.exec(text)?.[0]||new RegExp('^(?:'+LEAD_WORDS+')(?=(?:上|下)(?:へ|に)|よこ|たて|横|縦)').exec(text)?.[0]||'';
       const lead=leadOf(mask),inlineHead=/^(?:もし.+?(?:なら(?:ば)?|れば|えば|てば|たら)|そうでなければ|でなければ|それ以外なら|そうでないなら|そうでなかったら)、/.exec(mask.slice(lead.length))?.[0]||'';
       const clauses=[];let start=lead.length+inlineHead.length;
       for(let i=start;i<mask.length;i++){
         if(mask[i]!=='、')continue;
-        const pair=SENTENCE_TE_FORMS.find(([te])=>i-start>te.length&&mask.startsWith(te,i-te.length));
+        const pair=GUIDED_TE_FORMS.find(([te])=>i-start>te.length&&mask.startsWith(te,i-te.length));
         if(pair){clauses.push({start,end:i,pair});start=i+1;}
       }
       clauses.push({start,end:code.length,pair:null});
@@ -19716,7 +19772,7 @@ function createAkariExtensionHost(options) {
         }
         whole=rewritten&&whole!==null?whole.slice(0,clause.start)+rewritten+whole.slice(clause.end):null;
       }
-      if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'1.5.0の 書き方に する',source:whole}]:[],{kind:'MotionCommand'});
+      if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'書き方を なおす',source:whole}]:[],{kind:'MotionCommand'});
     }
     // 横位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ.
     if(/(?:横|縦)位置/.test(mask)){
@@ -19786,7 +19842,8 @@ function createAkariExtensionHost(options) {
     // ベルを鳴らす / スタートの合図を送る: a sound's or signal's name is written in 「 」.
     {const sound=/^(?:(.+?)は、?)?(.+?)(?:の音)?を(?:鳴らす|ならす|鳴らし始める|ならし始める|最後まで鳴らす)$/.exec(code),signal=/^(?:(.+?)は、?)?(.+?)の合図を送(?:る|って.+)$/.exec(code);
       const bare=name=>name&&!/^[「【（]/.test(name)&&!dataNameKind(name,symbols,ctx)&&/^[\p{L}ー0-9０-９]+$/u.test(name);
-      if(sound&&bare(sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
+      // ドの音を鳴らす is read as the sound named ド (LANGUAGE.md 音と待機), so a ドレミ name is not sent to 「 」.
+      if(sound&&bare(sound[2])&&!Object.hasOwn(SOLFEGE_HZ,sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
       if(signal&&bare(signal[2]))throw fixed('合図の 名前は「 」で かこんで 書きます',code.replace(signal[2]+'の合図','「'+signal[2]+'」の合図'),'「 」で かこむ','Broadcast');}
     // ゴールに着いたら、: reaching a part is touching it, and 〜たら has the three meanings of 〜にふれたら (C-09): each time
     // (the heading, offered at the left margin of an ordinary body), now (もし…ていれば) or once by waiting (offered when
@@ -19828,7 +19885,7 @@ function createAkariExtensionHost(options) {
       throw sentenceDiagnostic('画面の 外へ 出る 文は ありません。画面の はしの 外まで 動いてから、すがたを かくします。れい：「2秒かけて、いまのばしょから、右へ800歩動く。」と 書いて、次に「すがたをかくす。」と 書きます',line,[],{kind:'MotionCommand'});
     // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く / 画面のまん中のところへ行く: the readable sentence, with the
     // fix when the place is a part, the mouse or a place of the screen.
-    if((p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.here,...MOVE_VERBS.part].join('|')+')$','d'),code,mask))){
+    if(/のところ(?:へ|に)/.test(mask)&&(p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.here,...MOVE_VERBS.part].join('|')+')$','d'),code,mask))){
       const [who,before,target,after,verb]=p,name=target.text.replace(/^「(.*)」$/,'$1'),screen=screenPlaceSource(surfaceMask(target.text),symbols);
       if(screen||after||!MOVE_VERBS.part.includes(verb.text)){
         const found=partPlaceGuidance(target.text,(before||after)?.text,verb.text,!!after,symbols),source=who.text+found.source;
@@ -19837,20 +19894,26 @@ function createAkariExtensionHost(options) {
       }
     }
     // 点数が10になったら、 (no もし): waiting or checking is not decided; 10歩進んだら、1秒待つ: an order is 「〜して、」.
-    if(!/^もし/.test(mask)&&(p=surfaceCapture(/^(.+?)になったら、?$/d,code,mask)))
-      throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,[],{kind:'IfStatement',missing:['mode']});
+    // The body is written below, so only the もし line is proposed (a wait cannot hold the body).
+    if(!/^もし/.test(mask)&&(p=surfaceCapture(/^(.+?)になったら、?$/d,code,mask))){
+      const condition=becomesCondition(p[0].text,symbols,ctx);
+      throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,condition?[{label:'いま そうなっていたら する',source:'もし'+formatCondition(condition,'if')+'、'}]:[],{kind:'IfStatement',missing:['mode']});
+    }
     {const after=/^(?!もし)([^、。]+?)(んだら|ったら|いたら|いだら|したら|えたら|けたら|めたら|れたら|せたら|ねたら|てたら)、(.+)$/.exec(mask);
       if(after){const head=code.slice(0,after[1].length),rest=code.slice(after[1].length+after[2].length+1),te=head+after[2].replace(/たら$/,'て').replace(/だら$/,'で')+'、'+rest;
         if(reads(te))throw fixed(ctx.meijin?'「〜したら、」は 読みません。じゅんに するときは「〜して、」で つなぎます。そう なるのを 待つときは「〜になったら、」と 書きます':'「〜たら」は「もし」の 文で 使います。じゅんに するときは「〜して、」で つなぎます',te,'「〜して、」で つなぐ','Sequence');}}
     // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左|上|下)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左|上|下)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく|歩く|あるく)$/d,code,mask))){
-      const way=p[1]?.text||p[2]?.text||'前',facing=['前','後ろ'].includes(way);
-      throw fixed('ゆっくり 動くときは、「1秒かけて、前へ10歩進む」のように かける 時間を 書きます',`${p[0].text}1秒かけて、${facing?'':'いまのばしょから、'}${way}へ${p[3].text}歩${way==='前'?'進む':'動く'}`,'時間を かけて 動く','MotionCommand');
+      const way=p[1]?.text||p[2]?.text||'前',facing=['前','後ろ'].includes(way),slow=`${p[0].text}1秒かけて、${facing?'':'いまのばしょから、'}${way}へ${p[3].text}歩${way==='前'?'進む':'動く'}`;
+      throw fixed(`ゆっくり 動くときは、「${canonicalStatementSource(slow,symbols)}」のように かける 時間を 書きます`,slow,'時間を かけて 動く','MotionCommand');
     }
     // ゆっくりいまのばしょから、… / ゆっくり「ロケット」のところへ行く / ゆっくり右に90度回る: the same, with the time first.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)ゆっくり(?:と)?、?(.+)$/d,code,mask))&&!/秒(?:かけて|で)/.test(surfaceMask(p[1].text))&&
-      /(?:動く|うごく|進む|すすむ|歩く|あるく|行く|いく|回る|まわる)$/.test(mask)&&reads(p[0].text+'1秒かけて、'+p[1].text))
-      throw fixed('ゆっくり 動くときは、「1秒かけて、前へ10歩進む」のように かける 時間を 書きます',p[0].text+'1秒かけて、'+p[1].text,'時間を かけて 動く','MotionCommand');
+      /(?:動く|うごく|進む|すすむ|歩く|あるく|行く|いく|回る|まわる)$/.test(mask)&&reads(p[0].text+'1秒かけて、'+p[1].text)){
+      // The example is the child's own sentence with the time, so it names the kind of move that was written.
+      const slow=p[0].text+'1秒かけて、'+p[1].text,turn=/(?:回る|まわる)$/.test(mask);
+      throw fixed(`ゆっくり ${turn?'回る':'動く'}ときは、「${canonicalStatementSource(slow,symbols)}」のように かける 時間を 書きます`,slow,turn?'時間を かけて 回る':'時間を かけて 動く','MotionCommand');
+    }
     // 2秒かけてゆっくり10歩動く / ゆっくり1秒待つ: the time already says how slowly; ゆっくり is not written.
     if((p=surfaceCapture(/^(.*?)ゆっくり(?:と)?、?(.*(?:秒|歩).*)$/d,code,mask))&&/(?:秒かけて|秒(?:間)?(?:待つ|まつ)$)/.test(surfaceMask(code))&&reads(p[0].text+p[1].text))
       throw fixed('かける 時間を 書いたときは、「ゆっくり」は 書きません',p[0].text+p[1].text,'「ゆっくり」を けす','MotionCommand');
@@ -19899,10 +19962,11 @@ function createAkariExtensionHost(options) {
     if((p=surfaceCapture(/^(.+?)になったら、(.+)$/d,code,mask))){
       let raw=p[0].text;
       if(!/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
-      const condition=parseCondition(raw,symbols,ctx,'plain'),negative=exprNode('UnaryExpression',{op:'NOT',value:condition}),body=p[1].text,indent=' '.repeat(line.indent||0);
+      const condition=parseCondition(raw,symbols,ctx,'plain'),body=p[1].text,indent=' '.repeat(line.indent||0);
+      // The wait is the one the message names (点数が10になるまで待つ): when it is so already, it does not wait.
       throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,[
         {label:'いま そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
-        {label:'そうなるのを 待ってから する',source:`${formatCondition(negative,'until')}待つ。\n${indent}${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
+        {label:'そうなるのを 待ってから する',source:`${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
       ],{kind:'Condition',missing:['stateOrTransition']});
     }
     if((p=surfaceCapture(/^(それ|これ|あれ|その子)を(.+(?:動かす|うごかす))$/d,code,mask))){
@@ -20123,8 +20187,12 @@ function createAkariExtensionHost(options) {
     // Keep the comma mandatory, and accept only a complete finite control form.
     if(!ctx.explicitControlActor){
       const actor=surfaceCapture(/^(.+?)は、(.+)$/d,code);
-      if(actor){
-        const actorRef=sentenceActor(actor[0].text),fragment=surfaceLineSlice(line,actor[1].start,actor[1].end);
+      // A part's name is looked up first (こはるは、… names the part こはる). Words that are no name (そのあと、星は、…)
+      // are not a control's subject: the line is read as a sentence instead.
+      let actorRef=null;
+      if(actor){try{actorRef=sentenceActor(actor[0].text,symbols);}catch(error){if(!(error instanceof AkariError))throw error;}}
+      if(actorRef){
+        const fragment=surfaceLineSlice(line,actor[1].start,actor[1].end);
         fragment.comment=line.comment;
         const head=readBlockHead(actor[1].text,symbols,{...ctx,sourceLine:fragment,topicActor:actorRef,explicitControlActor:true});
         if(head&&head.kind!=='Else'){
@@ -20310,8 +20378,14 @@ function createAkariExtensionHost(options) {
       }
     }
     if(unclear)throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと 入れかえるのか 分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと 入れかえる（何番目かを えらぶ）',source:`${unclear[0].text}の〔番号を入れる〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
-    const delayed=surfaceCapture(/^(.+)秒後に(.+)$/d,code);
-    if(delayed)throw sentenceDiagnostic('待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
+    // 10秒後に右へ10歩動く: the move is written as the code writes it (いまのばしょから、右へ10歩動く), so the
+    // second sentence of the fix reads too.
+    const delayed=surfaceCapture(/^(.+)秒後に、?(.+)$/d,code);
+    if(delayed){
+      const rest=delayed[1].text,readable=text=>{try{return !!parseSyntax(text+'。',{symbols}).ast;}catch(error){if(!(error instanceof AkariError))throw error;return false;}};
+      const then=[rest,'いまのばしょから、'+rest].find(readable);
+      throw sentenceDiagnostic('待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${then?canonicalStatementSource(then,symbols):rest}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
+    }
     if(directError)throw directError;
     // The preserved advanced spellings are parsed structurally by the original finite parser.
     try {const legacy=parseLegacySimpleStatement(working,symbols,ctx);legacy.actorRef={...(ctx.topicActor||{kind:'self'})};return everyoneWait(legacy,ctx);}
@@ -20363,6 +20437,8 @@ function createAkariExtensionHost(options) {
   // One length-preserving scan protects strings, exact names and nested expressions.
   // Only outer fixed markers select a surface frame; names and values never select it.
   function surfaceMask(text) {
+    // Without a quote, a bracket or ※ nothing is hidden (and no bracket can be left open).
+    if (typeof text === 'string' && !/[「『【（［）］※]/.test(text)) return text;
     const out = text.split(''), stack = [];
     let quote = '';
     for (let i = 0; i < text.length; i++) {
@@ -20937,7 +21013,7 @@ function createAkariExtensionHost(options) {
       ...(until ? { condition: parseCondition(until.text + 'まで', symbols, local, 'until') } : {}) };
   }
 
-  // A 1.4.0 move form as the action of 〜あいだ／〜うちに／〜ながら names the 1.5.0 form (B-10), as a sentence of its own
+  // A removed move form as the action of 〜あいだ／〜うちに／〜ながら names the form written now (B-10), as a sentence of its own
   // does. The fix rewrites that action in its own verb form (動くあいだ, 動いているうちに, 動きながら) and is offered
   // when the rewritten action reads. null when the action is no such form.
   function meijinRemovedMove(action, line, before, after, form, reads) {
@@ -20946,7 +21022,7 @@ function createAkariExtensionHost(options) {
       if (!found) continue;
       const stem = found.source && /動く$/.test(found.source) ? found.source.slice(0, -2) : null;
       const fixed = stem !== null && reads(stem + '動く') ? before + stem + { ながら: '動き', ている: '動いている', plain: '動く' }[form] + after : null;
-      return sentenceDiagnostic(found.message, line, fixed ? [{ label: found.label || '1.5.0の 書き方に する', source: fixed }] : [], { kind: 'Parallel' });
+      return sentenceDiagnostic(found.message, line, fixed ? [{ label: found.label || '書き方を なおす', source: fixed }] : [], { kind: 'Parallel' });
     }
     return null;
   }
@@ -22560,6 +22636,9 @@ function createAkariExtensionHost(options) {
             0,
           );
       }
+      // いまのばしょから動く has one or two legs; with none it would be written いまのばしょから、動く, which does not read.
+      if (schema.kind === 'MotionCommand' && node.op === 'MOVE_BY' && !Object.hasOwn(node, 'x') && !Object.hasOwn(node, 'y'))
+        blockStructureError('よこか たての どちらかの 歩数を 入れてください', path);
       if (schema.kind === 'IfStatement' && !node.hasElse && node.elseComment)
         blockDataError('「そうでなければ」がないのに、そこにメモがあります', path);
       if (schema.kind === 'CommentLine' && node.inlineComment)
@@ -24181,7 +24260,10 @@ function createAkariExtensionHost(options) {
     const reads = text => { const after = read(text, next); return !!want && !!after.ast && stableJson(shape(after.ast, false)) === want; };
     // Which quotes name the thing is found by trying them (a few quotes at most; more are tried all or none).
     const choices = quotes.length <= 6 ? [...Array(1 << quotes.length).keys()].map(mask => new Set(quotes.filter((_, i) => mask & (1 << i)))) : [new Set(), new Set(quotes)];
-    for (const written of [newName, '【' + newName + '】']) for (const changed of choices) { const text = renamed(written, changed); if (reads(text)) return text; }
+    // The new name is tried first as a renamed block (and 整える) writes it: bare when it can stand bare, otherwise in
+    // 【 】 (ねこ → 【ねこが】は、…), even where the bare name would also read now that the part has that name.
+    const writings = bareName(newName) ? [newName, '【' + newName + '】'] : ['【' + newName + '】', newName];
+    for (const written of writings) for (const changed of choices) { const text = renamed(written, changed); if (reads(text)) return text; }
     const lines = source.split('\n'), after = renamed(newName, new Set(quotes)).split('\n');
     const line = lines.findIndex((text, i) => text !== after[i] && !(() => { const a = read(text.trim(), project), b = read(after[i].trim(), next); return a.ast && b.ast && stableJson(shape(a.ast, true)) === stableJson(shape(b.ast, false)); })());
     throw new AkariError('S301', line < 0 ? '名人の 本文の 中で、名前を かえても 同じ ものを さすかを たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください'
@@ -26537,7 +26619,7 @@ function createAkariExtensionHost(options) {
       if (options.getScale && (!scaleParent.clientWidth || !scaleParent.clientHeight)) return;
       const p = project(),
         style = getComputedStyle(scaleParent),
-        available =
+        available = options.availableWidth ? options.availableWidth() :
           scaleParent.clientWidth -
           parseFloat(style.paddingLeft || 0) -
           parseFloat(style.paddingRight || 0);
@@ -27431,7 +27513,15 @@ function createAkariExtensionHost(options) {
       view = makeView(core, {
         form,
         canvas,
-        ...(artwork ? { getScale: () => 1 } : {}),
+        ...(artwork ? { getScale: () => 1 } : {
+          // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
+          // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
+          availableWidth: () => {
+            const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage'));
+            return document.documentElement.clientWidth - parseFloat(page.paddingLeft || 0) - parseFloat(page.paddingRight || 0) -
+              parseFloat(box.borderLeftWidth || 0) - parseFloat(box.borderRightWidth || 0);
+          },
+        }),
         getProject: () => session.project,
         getRuntime: () => runtime,
         getScheduler: () => scheduler,
@@ -27484,7 +27574,9 @@ function createAkariExtensionHost(options) {
       if (value && typeof value === 'object') {
         const out = {};
         for (const [key, v] of Object.entries(value))
-          if (
+          // 名人: topicEnded and mustName on a 自分 subject are read only by 作品チェック.
+          if (value.kind === 'self' && ['topicEnded', 'mustName'].includes(key)) continue;
+          else if (
             ![
               'source',
               'raw',
@@ -27548,11 +27640,14 @@ function createAkariExtensionHost(options) {
     if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
     const artwork = presentation === 'artwork';
     const payload = packExecutable(project, assetStore),
+      payloadJson = inlineJson(payload),
       title = escapeHtmlText(payload.project.name);
+    // The file is made only when its player would open it: the same check the player runs on the same JSON.
+    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson));
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
-    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${inlineJson(payload)},${inlineJson({artwork})});`;
+    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${payloadJson},${inlineJson({artwork})});`;
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',
@@ -29067,6 +29162,7 @@ function createAkariExtensionHost(options) {
     '鳴らす':'ならす','止める':'とめる','止まる':'とまる','終わる':'おわる','終わり':'おわり','始める':'はじめる',
     '始まる':'はじまる','続ける':'つづける','続き':'つづき','変える':'かえる','変わる':'かわる','決める':'きめる',
     '決まる':'きまる','入れる':'いれる','入る':'はいる','入っ':'はいっ','出す':'だす','書く':'かく','回る':'まわる','回し':'まわし',
+    '回す':'まわす','比べる':'くらべる','数える':'かぞえる','戻る':'もどる',
     '下ろす':'おろす','下げる':'さげる','下がる':'さがる','上げる':'あげる','上がる':'あがる','行う':'おこなう','行った':'おこなった','行く':'いく','答え':'こたえ','後ろ':'うしろ','速さ':'はやさ','長さ':'ながさ',
     '高さ':'たかさ','太さ':'ふとさ','向き':'むき','余り':'あまり','一つ':'ひとつ','同じ':'おなじ','歩く':'あるく',
     '点数':'てんすう','代金':'だいきん','変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
@@ -29247,13 +29343,31 @@ function createAkariExtensionHost(options) {
     // よく使う blocks first, then the ones whose name starts with the word (or has it right after a particle): まつ
     // finds 秒待つ before …まで待つ (E-13). The order is otherwise kept.
     const words = searchQueryVariants(query).map(searchReading).filter(word => [...word].length >= 2 || word === searchReading(query));
+    const marks = ['を', 'に', 'の', 'で', 'と', 'へ', 'が', 'は', 'て', '、', '・', 'びょう', 'かい', 'ばんめ'];
     const wordStart = schema => {
       const names = [schema.searchLabel, schema.label].filter(Boolean).map(searchReading);
       if (words.some(word => names.some(name => name.startsWith(word)))) return 0;
-      const marks = ['を', 'に', 'の', 'で', 'と', 'へ', 'が', 'は', 'て', '、', '・', 'びょう', 'かい', 'ばんめ'];
       return words.some(word => names.some(name => marks.some(mark => name.includes(mark + word)))) ? 1 : 2;
     };
-    const rank = schema => (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 3) + wordStart(schema);
+    // How the word is found in the block's own words (its name, its search words, a bound name): 0 a whole word, 1 the
+    // start of a word, 2 only inside another word (てん in かいてん, ど in いどう, かく in かくす) or only in the words
+    // a whole family of blocks shares (線をかく・スタンプをおす for every ペン block). 2 comes after every other block
+    // (E-13). A verb written whole (かく, おす) is not the start of a longer one.
+    const kana = /[ぁ-ゟ゠-ヿ]/, verb = /[うくぐすつぬぶむる]$/, particles = marks.slice(0, 11);
+    const found = (text, word) => {
+      if (text === word) return 0;
+      for (let at = text.indexOf(word); at >= 0; at = text.indexOf(word, at + 1)) {
+        const before = text.slice(0, at), after = text[at + word.length];
+        if ((!before || !/[\p{L}ー]$/u.test(before) || particles.some(mark => before.endsWith(mark))) && !(verb.test(word) && after && kana.test(after))) return 1;
+      }
+      return 2;
+    };
+    const quality = schema => {
+      const own = [schema.searchLabel, schema.label, schema.binding?.name,
+        ...((BLOCK_SEARCH_SYNONYMS[schema.id] || BLOCK_SEARCH_SYNONYMS[schema.kind]) || [])].filter(Boolean).map(searchReading);
+      return Math.min(2, ...words.flatMap(word => own.map(text => found(text, word))));
+    };
+    const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
@@ -29261,26 +29375,32 @@ function createAkariExtensionHost(options) {
     return out;
   }
 
+  // The words a child uses for what a block does find it too (E-13): くらべる, ランダム, まわす, やめる, へる, クリック …
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
     'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける',
-      'おちる', '落ちる', 'さがる', 'のぼる', 'ゆっくり'],
+      'おちる', '落ちる', 'さがる', 'のぼる', 'ゆっくり', 'ジャンプ', 'とぶ', 'とびはねる'],
     ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
-    'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし'],
+    'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし', 'もどる', '戻る'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
-    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '向きを変える', '回転'],
-    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '向きを変える', '回転'],
+    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:BOUNCE': ['はね返る', 'はねかえる', 'はねる', 'かべ', 'ぶつかる'],
+    CompareExpression: ['くらべる', '比べる'],
+    'BuiltinCall:乱数': ['ランダム', 'でたらめ', 'さいころ'],
     // The words of what a child wants to make lead to the block too (E-13): でてくる, きえる, しつもん, おわる …
     'LooksCommand:SHOW': ['見せる', '表示', '出す', 'でてくる', '出てくる', 'あらわれる', 'みえる'],
     'LooksCommand:HIDE': ['隠す', 'かくす', '非表示', 'きえる', '消える', 'かくれる', 'みえなくする'],
     'LooksCommand:SET_COSTUME': ['きがえる', 'みため', '見た目'],
     // 「「点数らん」に点数を出す」 is how a child says it (F-31): 出す, 書く and 表示 lead to the part's text block.
     'LooksCommand:SET_TARGET_TEXT': ['出す', '書く', '表示', '文字', '点数'],
-    'StopCommand:ALL': ['とめる', '止める', 'おわる', 'おわり'],
-    'StopCommand:THIS': ['とめる', '止める'],
+    'StopCommand:ALL': ['とめる', '止める', 'とまる', '止まる', 'やめる', 'ストップ', 'おわる', 'おわり', 'おしまい'],
+    'StopCommand:THIS': ['とめる', '止める', 'とまる', '止まる', 'やめる', 'ストップ'],
+    'StopCommand:OTHERS': ['とめる', '止める', 'とまる', '止まる', 'やめる'],
+    Break: ['やめる', 'ぬける', 'おわる'],
     'PenCommand:DOWN': ['せん', '線', 'かく', 'えがく'],
     'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
-    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう'],
+    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう', 'せりふ', 'ふきだし', 'こえ'],
     Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
@@ -29288,14 +29408,25 @@ function createAkariExtensionHost(options) {
     UserActionCall: ['動作', '手順', '呼び出す', '実行'],
     UserFunctionCall: ['計算', '答え', '関数', '値を求める'],
     Assignment: ['変数', '記録', '代入', '値を入れる'],
-    NumericUpdate: ['増やす', '減らす', '足す', '引く', '点数'],
-    VariableRead: ['変数', '値', '読む'],
+    // ふやす and へらす each keep their own words, so ひく finds へらす, not ふやす.
+    'NumericUpdate:ADD': ['増やす', 'ふやす', '増える', 'ふえる', '足す', 'たす', 'プラス', '数える', 'かぞえる', '点数', 'スコア'],
+    'NumericUpdate:SUB': ['減らす', 'へらす', '減る', 'へる', '引く', 'ひく', 'マイナス', '点数', 'スコア'],
+    VariableRead: ['変数', '値', '読む', 'スコア'],
+    Broadcast: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
+    BroadcastAndWait: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
+    // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them.
+    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
+    'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
+    'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],
+    'SensorRead:KEY_DOWN': ['おす', '押す'],
     // Holding a key to move: the continuous rule first, the repeat while it is held second (C-16).
-    ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける'],
+    ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける', 'はやく', 'はやい'],
     RepeatWhile: ['おしているあいだ', 'おしっぱなし', 'あいだ', '間'],
     // The touch words a child writes lead to ふれる (C-08, C-09).
-    'SensorRead:TOUCHING': ['ふれる', 'ふれたら', 'ふれたとき', 'さわる', 'さわったら', 'あたる', '当たる', 'ぶつかる', 'かさなる', 'はし'],
-    'StopCommand:OWN_OTHERS': ['止める', 'とめる', '自分だけ', 'ほかの動き', 'ストップ'],
+    'SensorRead:TOUCHING': ['ふれる', 'ふれたら', 'ふれたとき', 'さわる', 'さわったら', 'あたる', '当たる', 'ぶつかる', 'かさなる', 'はし', 'タッチ', 'かべ'],
+    'StopCommand:OWN_OTHERS': ['止める', 'とめる', 'とまる', '止まる', 'やめる', '自分だけ', 'ほかの動き', 'ストップ'],
   });
   function blockPaletteSearchText(schema, project) {
     const words = [schema.label, schema.id, schema.kind, schema.palette,
@@ -29303,7 +29434,8 @@ function createAkariExtensionHost(options) {
     const operation = schema.id.includes(':') ? schema.id.slice(schema.id.indexOf(':') + 1) : null;
     for (const form of SENTENCE_FORMS) {
       if (form.kind !== schema.kind || (form.op && operation && form.op !== operation)) continue;
-      words.push(form.intent, ...(schema.kind==='MotionCommand'?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'),
+      // The move verbs and the verbs of ふやす・へらす are shared by blocks of other meanings: their own search words say them.
+      words.push(form.intent, ...(['MotionCommand', 'NumericUpdate'].includes(schema.kind)?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'),
         ...(form.acceptedReadings || []));
     }
     return words.filter(Boolean).join(' ').toLocaleLowerCase();
@@ -29475,7 +29607,11 @@ function createAkariExtensionHost(options) {
       geometryFrame = null,
       ghost = null,
       snapPreview = null,
-      bodyObserver = null;
+      bodyObserver = null,
+      // The height the workspace keeps while the places between blocks are open, and what kept its place when they
+      // opened for a chosen place or a moved block (keepInView).
+      planeFloor = 0,
+      openAnchor = null;
     const shapeObserver =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => scheduleGeometry()) : null;
     const E = (tag, className = '', text = null, attrs = {}) => {
@@ -30184,9 +30320,18 @@ function createAkariExtensionHost(options) {
       controls.hidden = !pending && !moving && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
-      // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07).
-      root.classList.toggle('blockui-choosing', !!destination?.body);
-      root.classList.toggle('blockui-moving-block', !!moving && schemaOf(index.get(moving.id)?.node)?.category === 'statement');
+      // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07); the
+      // chosen place, or the block being moved, stays where it is on the screen.
+      const choosing = !!destination?.body, movingBlock = !!moving && schemaOf(index.get(moving.id)?.node)?.category === 'statement',
+        opens = choosing || movingBlock, changes = opens !== root.matches('.blockui-choosing,.blockui-moving-block'),
+        anchor = !changes ? null : !opens ? openAnchor : movingBlock ? locationElement({ id: moving.id })
+          : [...world.querySelectorAll('[data-blockui-body]')].find(n => sameLocation(destination, locationFromElement(n)));
+      keepInView(anchor, () => {
+        root.classList.toggle('blockui-choosing', choosing);
+        root.classList.toggle('blockui-moving-block', movingBlock);
+      });
+      if (changes) openAnchor = opens ? anchor : null;
+      if (!opens && !drag?.started) planeFloor = 0;
       fieldError.textContent = pending?.shown && pending.error || '';
       if (pending?.input) {
         const described = (pending.input.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== fieldError.id);
@@ -30300,6 +30445,7 @@ function createAkariExtensionHost(options) {
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
       showImpliedDestination();
       placeNodeTools();
+      if (!id) for (const n of workspace.querySelectorAll('.blockui-focused')) n.classList.remove('blockui-focused');
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
@@ -30309,6 +30455,14 @@ function createAkariExtensionHost(options) {
         flat=selectedNode&&active?.matches?.('input,textarea')&&selectedNode.contains(active)?active.closest('.blockui-flat-value'):null,
         slot=selectedNode?.parentElement.closest('.blockui-input-slot')||(flat?.closest('.blockui-node')===selectedNode?flat:null);
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
+    }
+    // With nothing selected the next block from the list goes to the end of the body (E-08); the focus goes to the
+    // workspace, so Delete has no block to take.
+    function letGoOfSelection() {
+      if (!selected) return false;
+      selection('');
+      if (doc.activeElement?.closest?.('.blockui-world')) workspace.focus({ preventScroll: true });
+      return true;
     }
     // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
     // is in it), where they cover no other block: first the selected block's tools, under them the selected field's
@@ -30458,9 +30612,8 @@ function createAkariExtensionHost(options) {
     }
     // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
     function showImpliedDestination() {
-      const info = !destination && !moving && selectedStatement(),
-        implied = info && { parentId: info.parentId, body: info.body, index: info.index + 1 };
-      for (const n of workspace.querySelectorAll('.blockui-insertion'))
+      const implied = !destination && !moving && selectedStatement() && defaultDestination();
+      for (const n of workspace.querySelectorAll('.blockui-insertion,.blockui-hole-target'))
         n.classList.toggle('blockui-implied-destination', !!implied && sameLocation(implied, locationFromElement(n)));
     }
     // A place chosen with the keyboard (Enter on 「＋ ここに入れる」) opens 「ブロックを さがす」 to type in (E-16).
@@ -30490,9 +30643,11 @@ function createAkariExtensionHost(options) {
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
-    // body when nothing is selected (E-08).
+    // body when nothing is selected (E-08). A selected enclosure that holds only its hole (a loop just put in) takes the
+    // block into that hole.
     function defaultDestination() {
-      const info = selectedStatement();
+      const info = selectedStatement(), first = info && schemaOf(info.node)?.bodies?.[0]?.key, inner = first && info.node.bodies?.[first];
+      if (inner?.length === 1 && inner[0].schemaId === 'Hole:statement') return { parentId: info.node.id, body: first, index: 0 };
       if (info) return { parentId: info.parentId, body: info.body, index: info.index + 1 };
       return tree ? { parentId: tree.id, body: 'body', index: tree.bodies.body.length } : null;
     }
@@ -32293,31 +32448,35 @@ function createAkariExtensionHost(options) {
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
-          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place.
+          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place. はじめて has no value
+          // blocks to put there, so it shows neither 計算で決める nor 計算の答えを話す (E-12).
+          const entry=document.body.dataset.uiLevel==='entry';
           const numberSlot=(key,unit)=>{
             main.append(...unitValue(node,key,undefined,unit));
-            extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
+            if(!entry)extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
             main.append(slot('value'));
             const localContext=subjectContext(node),choices=hintCandidates(project(),localContext.targetId,{source:session()?.sourceText||'',...localContext}).filter(h=>h.id.startsWith('read:')&&h.binding?.kind!=='list'&&h.enabled);
             const data=E('select','blockui-speech-data',null,{'aria-label':'話す 文字か、へんすうの 中身を えらぶ'});
-            data.append(E('option','','文字を話す',{value:'literal'}),E('option','','計算の答えを話す',{value:'expression'}));
+            const current=node.inputs.value,
+              shown=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            data.append(E('option','','文字を話す',{value:'literal'}));
+            if(!entry||shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
             for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の いまの中身',{value:String(i)}));
-            const current=node.inputs.value;
-            data.value=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            data.value=shown;
             if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
             listen(data,'change',()=>{
               if(data.value==='expression'){chooseDestination({parentId:node.id,input:'value'});return;}
               const replacement=data.value==='literal'?createBlock('StringLiteral'):nodeForSearchHint(choices[Number(data.value)],project(),localContext);
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
-            });extraControls.append(data);
+            });if(data.options.length>1)extraControls.append(data);
             // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
             if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
             else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
-          main.append(extra);
+          if(extraControls.childElementCount)main.append(extra);
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
           const child = node.inputs.value, numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value'),
             control = fieldControl(child, numberField), input = control.querySelector('input');
@@ -32947,6 +33106,7 @@ function createAkariExtensionHost(options) {
         Math.max(
           workspace.clientHeight,
           1100,
+          planeFloor,
           Math.ceil(world.offsetHeight * zoom + workspace.clientHeight * 0.4),
         ) + 'px';
       zoomLabel.textContent = Math.round(zoom * 100) + '%';
@@ -32973,12 +33133,22 @@ function createAkariExtensionHost(options) {
       workspace.scrollTop = top;
       rememberViewState();
     }
-    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it (E-07).
+    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it, and
+    // never above 100% (E-07). What is measured is the body's own blocks from the top left of the world, not the places
+    // between them that span the workspace nor the room kept below the world.
     function fitBlocks() {
       const script = world.querySelector('.blockui-script');
       if (!script) return;
-      const across = (workspace.clientWidth - 80) / (script.offsetWidth + 56),
-        down = (workspace.clientHeight - 24) / (world.offsetHeight + 24);
+      const box = world.getBoundingClientRect();
+      let right = 0, bottom = 0;
+      for (const n of world.querySelectorAll(':scope > .blockui-event-hat, .blockui-script > .blockui-node-content > .blockui-node-main > details > summary, .blockui-statement .blockui-node-main, .blockui-insertion-end')) {
+        const r = n.getBoundingClientRect();
+        if (!r.width && !r.height) continue;
+        if (!n.classList.contains('blockui-insertion-end')) right = Math.max(right, (r.right - box.left) / zoom);
+        bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
+      }
+      const across = (workspace.clientWidth - 24) / (right + 24),
+        down = (workspace.clientHeight - 24) / (bottom + 24);
       setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
@@ -33020,6 +33190,23 @@ function createAkariExtensionHost(options) {
       try { workspace.setPointerCapture(pointerId); } catch (_) {}
       workspace.classList.add('blockui-panning');
     }
+    // Opening the places between blocks (E-07) moves every block under an opened place. What the child points at (the
+    // carried block, the chosen place, the block being moved) keeps its place on the screen: the workspace scrolls by
+    // what opened above it, so a press that moves a little and lets go on the spot changes nothing (E-04).
+    function keepInView(anchor, change) {
+      const before = anchor?.isConnected && anchor.getClientRects().length ? anchor.getBoundingClientRect() : null;
+      if (!before) { change(); return; }
+      workspace.style.overflowAnchor = 'none';
+      change();
+      const after = anchor.getBoundingClientRect(),
+        shift = after.top + after.height / 2 - (before.top + before.height / 2);
+      if (Math.abs(shift) >= 0.5) {
+        const need = Math.ceil(workspace.scrollTop + shift + workspace.clientHeight);
+        if (need > plane.offsetHeight) { planeFloor = need; plane.style.height = need + 'px'; }
+        workspace.scrollTop += shift;
+      }
+      workspace.style.overflowAnchor = '';
+    }
     const touchLike = (type) => type === 'touch' || type === 'pen',
       // A press that moves no more than this is a press (E-09); a mouse starts carrying sooner.
       slopOf = (type) => (touchLike(type) ? 12 : 5),
@@ -33031,6 +33218,15 @@ function createAkariExtensionHost(options) {
     // A field, a choice, a 「…」 or a button in a placed block keeps a press for itself (E-09).
     const CONTROL_IN_BLOCK = 'input,textarea,select,summary,a,button:not([data-blockui-drag])';
     const dropPendingPan = () => { clearTimeout(pendingPan?.holdTimer); pendingPan = null; };
+    // A number, a word or a choice typed into a block belongs to that block: carried from its field, the block that
+    // holds it goes (not the value alone, which no place between sentences could take).
+    const LITERAL_KINDS = new Set(['NumberLiteral', 'StringLiteral', 'BooleanLiteral']);
+    function carrierOf(handle) {
+      let carrier = handle;
+      while (carrier && LITERAL_KINDS.has(schemaOf(index.get(carrier.dataset.blockId)?.node)?.kind))
+        carrier = carrier.parentElement?.closest('[data-blockui-drag="node"]');
+      return carrier && !carrier.disabled && carrier.getAttribute('aria-disabled') !== 'true' ? carrier : handle;
+    }
     listen(workspace, 'pointerdown', (event) => {
       if (event.pointerType !== 'touch') return;
       pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -33054,7 +33250,7 @@ function createAkariExtensionHost(options) {
       const handle = event.target.closest('[data-blockui-drag="node"]');
       if (handle && event.target.closest(CONTROL_IN_BLOCK)) {
         if (!pressHandle(event)) return;
-        const start = pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop, handle };
+        const start = pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop, handle: carrierOf(handle) };
         start.holdTimer = setTimeout(() => {
           if (pendingPan !== start) return;
           pendingPan = null;
@@ -33103,16 +33299,23 @@ function createAkariExtensionHost(options) {
       )
         return;
       startPan(event.pointerId, event.clientX, event.clientY);
+      pan.blank = true;
       event.preventDefault();
     });
     listen(workspace, 'pointermove', (event) => {
       if (!pan || pan.id !== event.pointerId) return;
+      if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > slopOf(event.pointerType)) pan.moved = true;
       workspace.scrollLeft = pan.left + pan.x - event.clientX;
       workspace.scrollTop = pan.top + pan.y - event.clientY;
       event.preventDefault();
     });
+    // A press on the empty workspace that does not move lets go of the selected block, so the next block from the list
+    // goes to the end of the body (E-08).
     listen(workspace, 'pointerup', (event) => {
-      if (pan?.id === event.pointerId) endPan();
+      if (pan?.id !== event.pointerId) return;
+      const press = pan.blank && !pan.moved;
+      endPan();
+      if (press) letGoOfSelection();
     });
     listen(workspace, 'pointercancel', endPan);
     // A block that hands its finger over to the workspace loses the capture too; only the workspace's own loss ends the move.
@@ -33211,9 +33414,15 @@ function createAkariExtensionHost(options) {
     }
     // Inside the workspace a sentence goes to the nearest place: before a block from its upper half, after it from its
     // lower half, after an enclosure from below its bottom line (E-04). A value goes to a value place within 40 px.
-    // Right over a place of the other kind (a sentence over a value, a value over a line between sentences) that place
-    // is the answer: it cannot take the block, so the carried block turns grey and says why, and letting go there
-    // puts nothing in.
+    // Right over a place of the other kind (a sentence over an empty value hole, a value over a line between sentences)
+    // that place is the answer: it cannot take the block, so the carried block turns grey and says why, and letting go
+    // there puts nothing in. A sentence over a value already in a block (its number or its words) is over that block,
+    // so it goes before or after the block as over the block's other words.
+    function emptyValueHole(element) {
+      const at = locationFromElement(element), parent = at?.input ? index.get(at.parentId)?.node : null,
+        value = parent && (at.index === undefined ? parent.inputs[at.input] : parent.inputs[at.input]?.[at.index]);
+      return BLOCK_SCHEMA_BY_ID.get(value?.schemaId)?.kind === 'Hole';
+    }
     function dragCandidate(event) {
       const bounds = workspace.getBoundingClientRect();
       if (
@@ -33229,7 +33438,8 @@ function createAkariExtensionHost(options) {
         category = schema?.category,
         carried = (drag?.parts || []).filter(Boolean);
       const direct = doc.elementFromPoint(event.clientX, event.clientY)?.closest('[data-blockui-drop]');
-      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct))) return direct;
+      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct)) &&
+          (category !== 'statement' || direct.dataset.blockuiBody || emptyValueHole(direct))) return direct;
       let best = null,
         distance = Infinity;
       const candidates =
@@ -33299,9 +33509,14 @@ function createAkariExtensionHost(options) {
         try {
           state.element.releasePointerCapture(state.pointerId);
         } catch (_) {}
+      // The places close again around where the block goes in, or around the carried block when it stays where it was.
+      const own = state?.id && index.get(state.id), to = state?.valid && state.location,
+        beside = own && to && to.parentId === own.parentId && to.body === own.body && (to.index === own.index || to.index === own.index + 1),
+        anchor = state?.started && root.classList.contains('blockui-drag-statement') ? (to && !beside ? state.target : state.parts?.[0]) : null;
       for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid,.blockui-dragging,.blockui-lift'))
         n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid', 'blockui-dragging', 'blockui-lift');
-      root.classList.remove('blockui-drag-active', 'blockui-drag-statement');
+      keepInView(anchor, () => root.classList.remove('blockui-drag-active', 'blockui-drag-statement'));
+      if (!root.matches('.blockui-choosing,.blockui-moving-block')) planeFloor = 0;
       notifyPending();
       updateControls();
     }
@@ -33348,6 +33563,7 @@ function createAkariExtensionHost(options) {
 
       if (valid) reason = !location.body ? 'ここの 中身を 入れかえる' : wraps ? '下の ' + wraps + 'この ブロックを 中に 入れる' : 'ここにつなぐ';
       drag.location = location;
+      drag.target = element;
       drag.valid = valid;
       drag.wraps = wraps;
       if (element) element.classList.add(valid ? 'blockui-drop-preview' : 'blockui-drop-invalid');
@@ -33360,9 +33576,18 @@ function createAkariExtensionHost(options) {
         const r = element.getBoundingClientRect();
         snapPreview = E('div', 'blockui-snap-preview', reason);
         snapPreview.setAttribute('aria-hidden', 'true');
-        snapPreview.style.left = r.left + 8 + 'px';
-        snapPreview.style.top = (location.body ? r.top - 14 : r.bottom + 2) + 'px';
+        let left = r.left + 8, top = location.body ? r.top - 14 : r.bottom + 2;
+        snapPreview.style.left = left + 'px';
+        snapPreview.style.top = top + 'px';
         doc.body.append(snapPreview);
+        // The words stay readable beside the carried block: right of it, or above it where the window ends (E-03).
+        const g = ghost?.getBoundingClientRect(), s = snapPreview.getBoundingClientRect();
+        if (g?.width && s.left < g.right && s.right > g.left && s.top < g.bottom && s.bottom > g.top) {
+          if (g.right + 8 + s.width <= doc.documentElement.clientWidth - 4) left = g.right + 8;
+          else top = Math.max(4, g.top - s.height - 4);
+          snapPreview.style.left = left + 'px';
+          snapPreview.style.top = top + 'px';
+        }
       }
       const spoken = drag.deleteZone ? 'ここで はなすと けす' : reason || 'ここで はなすと 入れるのを やめるよ';
       if (drag.reason !== spoken) {
@@ -33380,6 +33605,10 @@ function createAkariExtensionHost(options) {
       const rect = workspace.getBoundingClientRect(),
         beforeTop = workspace.scrollTop,
         beforeLeft = workspace.scrollLeft;
+      // A block taken up close to an edge does not carry the workspace along at once: the edges scroll only after the
+      // pointer has gone 24 px from where it was pressed, so a press that moves a little never scrolls (E-04).
+      drag.edgeArmed ||= Math.hypot(drag.clientX - drag.startX, drag.clientY - drag.startY) > 24;
+      if (!drag.edgeArmed) { dragFrame = doc.defaultView.requestAnimationFrame(scrollDrag); return; }
       if (drag.clientX >= rect.left - 30 && drag.clientX <= rect.right + 30) {
         if (drag.clientY >= rect.top - 30 && drag.clientY < rect.top + 32)
           workspace.scrollTop -= distance;
@@ -33439,13 +33668,36 @@ function createAkariExtensionHost(options) {
       return !handle || handle.disabled || handle.getAttribute('aria-disabled') === 'true' || isLocked() || pinch ||
         event.button !== 0 || event.isPrimary === false ? null : handle;
     }
+    // A mouse pressed on a field, a choice, a 「…」 or a button of a placed block carries the block once it moves past the
+    // slop, as from the block's words (E-09); a press that does not move keeps the control's own click, and a field
+    // being typed in keeps the press for its caret and its selection.
+    let controlPress = null;
     listen(root, 'pointerdown', (event) => {
       pointerFocusTarget = event.target;
       pointerFocusPrevious = doc.activeElement;
       lastPointerType = event.pointerType || 'mouse';
-      const handle = pressHandle(event);
-      if (!handle || (handle.dataset.blockuiDrag === 'node' && event.target.closest(CONTROL_IN_BLOCK))) return;
+      controlPress = null;
+      const handle = pressHandle(event), control = event.target.closest(CONTROL_IN_BLOCK);
+      if (!handle) return;
+      if (handle.dataset.blockuiDrag === 'node' && control) {
+        if (!touchLike(event.pointerType) && control !== doc.activeElement && !control.closest('.blockui-editing-field'))
+          controlPress = { id: event.pointerId, x: event.clientX, y: event.clientY, handle: carrierOf(handle), control };
+        return;
+      }
       pressBlock(handle, event.pointerId, event.pointerType, event.clientX, event.clientY);
+    });
+    // A choice opens its list when the press ends without moving, so the press can carry the block first.
+    listen(root, 'mousedown', (event) => {
+      if (controlPress?.control.tagName === 'SELECT' && event.target.closest('select') === controlPress.control &&
+          typeof controlPress.control.showPicker === 'function') { event.preventDefault(); controlPress.picker = true; }
+    });
+    listen(root, 'pointerup', (event) => {
+      const press = controlPress;
+      if (press?.id !== event.pointerId) return;
+      controlPress = null;
+      if (!press.picker || !press.control.isConnected || press.control.disabled) return;
+      press.control.focus({ preventScroll: true });
+      try { press.control.showPicker(); } catch (_) {}
     });
     // A press that carries the block once it moves; a touch held still for a moment lifts the block first (E-09).
     function pressBlock(handle, pointerId, pointerType, x, y, { held = false } = {}) {
@@ -33486,6 +33738,17 @@ function createAkariExtensionHost(options) {
       return true;
     }
     listen(root, 'pointermove', (event) => {
+      if (controlPress?.id === event.pointerId && !drag) {
+        const press = controlPress;
+        if (!(event.buttons & 1)) controlPress = null;
+        else if (Math.hypot(event.clientX - press.x, event.clientY - press.y) >= slopOf('mouse')) {
+          controlPress = null;
+          // The control gives the press up to the block: no text stays selected in it.
+          if (doc.activeElement === press.control && press.control.matches('input,textarea')) press.control.blur();
+          doc.getSelection?.()?.removeAllRanges();
+          pressBlock(press.handle, press.id, 'mouse', press.x, press.y);
+        }
+      }
       if (!drag || drag.pointerId !== event.pointerId) return;
       if (
         isLocked() ||
@@ -33518,7 +33781,7 @@ function createAkariExtensionHost(options) {
         clearTimeout(drag.holdTimer);
         beginGhost(drag);
         if (BLOCK_SCHEMA_BY_ID.get(drag.schemaId)?.category === 'statement' || schemaOf(index.get(drag.id)?.node)?.category === 'statement')
-          root.classList.add('blockui-drag-statement');
+          keepInView(drag.id ? drag.parts?.[0] : null, () => root.classList.add('blockui-drag-statement'));
       }
       drag.clientX = event.clientX;
       drag.clientY = event.clientY;
@@ -33669,6 +33932,8 @@ function createAkariExtensionHost(options) {
           return;
         }
         if (pending) cancelField();
+        else if (!destination && !replacement && !moving && !drag && !session()?.blockDraft && letGoOfSelection())
+          announce('えらぶのを やめたよ。つぎに 入れる ブロックは、本文の さいごに 入るよ');
         else {
           destination = null; replacement = null; moving = null; cancelDrag();
           notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
@@ -34303,9 +34568,10 @@ function createAkariExtensionHost(options) {
       }
       for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
       // What はじめて keeps but does not show: blocks and rules it has not in this body, and every body of another event
-      // (keys, signals, ふれたとき …), which only the two buttons above could open.
+      // (keys, signals, ふれたとき …), which only the two buttons above could open. The holes of a block being put in
+      // (〔くり返すことを入れる〕) are not such blocks.
       const tree=mainEditor.session?.blockView;
-      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>
+      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>!String(node.schemaId).startsWith('Hole:')&&
         ['statement','rule'].includes(BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category)&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId)))||
         (project?.scripts||[]).some(s=>!['start','click'].includes(s.event)&&!isMeijinScript(s)&&String(s.source||'').trim());
       $('#entryOutside').hidden=!entry||!outside||!!tutorial;
@@ -35325,6 +35591,19 @@ function createAkariExtensionHost(options) {
         }
         b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
       }
+      if (!draft) {
+        // いつ動く？ opens the block view as well, so a code error makes it pale in the same way; a press says why under
+        // it (headingBlockedNote) instead of doing nothing.
+        const heading = $('#sourceHeadingBtn');
+        if (!session.syntaxAst || invalidCodePending) {
+          heading.setAttribute('aria-disabled', 'true');
+          heading.setAttribute('aria-describedby', headingBlockedNote().id);
+        } else {
+          heading.removeAttribute('aria-disabled');
+          heading.removeAttribute('aria-describedby');
+          headingBlockedNote().hidden = true;
+        }
+      }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
         const mark = activeLoc || keptFail;
@@ -35365,9 +35644,26 @@ function createAkariExtensionHost(options) {
       }
       return note;
     }
-    function showModeBlockedNote(binding) {
-      const note = modeBlockedNote(binding);
+    // The same note under いつ動く？ in the row above the body.
+    function headingBlockedNote() {
+      let note = document.getElementById('headingBlockedNote');
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'headingBlockedNote';
+        note.className = 'mode-blocked-note';
+        note.setAttribute('role', 'status');
+        note.hidden = true;
+        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+        $('#sourceHeadingBtn').after(note);
+      }
+      return note;
+    }
+    function showModeBlockedNote(binding) { showBlockedNote(modeBlockedNote(binding)); }
+    function showBlockedNote(note) {
       note.hidden = false;
+      // Under いつ動く？, kept inside the row at narrow widths.
+      if (note.id === 'headingBlockedNote')
+        note.style.left = Math.max(8, Math.min($('#sourceHeadingBtn').offsetLeft, note.parentElement.clientWidth - note.offsetWidth - 8)) + 'px';
       const hide = () => {
         note.hidden = true;
         document.removeEventListener('pointerdown', hide, true);
@@ -35540,7 +35836,7 @@ function createAkariExtensionHost(options) {
       binding.textarea.value = readSource(binding);
       clearEditorFailure(binding);
       renderEditorBinding(binding);
-      if (binding === mainEditor) refreshEditor();
+      if (binding === mainEditor) { refreshEditor(); renderEntrySurface(); }
       setStatus('入力を やめたよ');
     }
     function editorContentFingerprint(state) {
@@ -35800,7 +36096,8 @@ function createAkariExtensionHost(options) {
         const add = document.createElement('button');
         add.type = 'button';
         add.className = 'entry-add';
-        add.dataset.spritePreset = preset;
+        // An attribute of its own: [data-sprite-preset] names the toolbox's tools only.
+        add.dataset.entryPreset = preset;
         add.textContent = '＋ ' + label;
         add.addEventListener('click', () => addComponent('sprite', null, null, preset));
         entryAdd.append(add);
@@ -35922,21 +36219,27 @@ function createAkariExtensionHost(options) {
           if (menu.contains(document.activeElement) || document.activeElement === document.body) menu.querySelector('summary').focus({ preventScroll: true });
         }
       });
-      // An open menu stays inside the window at narrow widths: it shifts left (or right) by what would stick out.
+      // An open menu opens under the whole toolbar (its top follows --toolbar-h), so on a wrapped toolbar it covers none
+      // of the rows below the menu's own row. It stays inside the window at narrow widths: it shifts left (or right) by
+      // what would stick out, again whenever the toolbar changes size while it is open.
+      const placeMenu = (menu) => {
+        const panel = menu.querySelector(':scope > :not(summary)');
+        menu.style.setProperty('--menu-shift', '0px');
+        if (!menu.open || !panel) return;
+        const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
+        menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
+      };
       for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu'))
-        menu.addEventListener('toggle', () => {
-          const panel = menu.querySelector(':scope > :not(summary)');
-          menu.style.setProperty('--menu-shift', '0px');
-          if (!menu.open || !panel) return;
-          const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
-          menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
-        });
+        menu.addEventListener('toggle', () => placeMenu(menu));
       // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
         if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
         if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
-      const syncHeight = () => document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+      const syncHeight = () => {
+        document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) placeMenu(menu);
+      };
       if (typeof ResizeObserver === 'function') new ResizeObserver(syncHeight).observe(toolbar);
       syncHeight();
     }
@@ -39063,9 +39366,11 @@ function createAkariExtensionHost(options) {
         return;
       }
       // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in.
+      // A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone in its body.
       const hasSentence = nodes => (nodes || []).some(node => node.kind !== 'CommentLine');
       if (!(compiled.items || []).some(item => !item.definitionKind &&
-        (hasSentence(item.ast?.body) || (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
+        (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
+          (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
         setStatus('ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね');
         return;
       }
@@ -40210,7 +40515,11 @@ function createAkariExtensionHost(options) {
     function updateCallableHeader() {
       if (syncingDraft) return;
       if (!syncCallableDraft()) return;
-      if (draftEditor.session?.mode !== 'blocks' && !saveCodeBinding(draftEditor)) return;
+      // A code error still renders the draft's toggle, so ブロック turns pale and its press says why (as in the main editor).
+      if (draftEditor.session?.mode !== 'blocks' && !saveCodeBinding(draftEditor)) {
+        if (draftEditor.view) renderEditorBinding(draftEditor);
+        return;
+      }
       paintCallable();
       if (draftEditor.view) {
         renderEditorBinding(draftEditor);
@@ -41549,6 +41858,8 @@ function createAkariExtensionHost(options) {
           clearEditorFailure(binding);
           if (binding.session) binding.session.pendingEdit = binding.session.blockDraft
             ? binding.session.blockDraft.pending : null;
+          // はじめて's note on blocks it does not show follows the body as it is again.
+          if (binding === mainEditor) renderEntrySurface();
         },
       });
       for (const mode of ['code', 'blocks'])
@@ -41652,7 +41963,7 @@ function createAkariExtensionHost(options) {
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -41725,7 +42036,8 @@ function createAkariExtensionHost(options) {
     };
     $('#sourceOverviewBtn').onclick = () => { if (flushActiveEditor()) showSourceOverview(); };
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
-    $('#sourceHeadingBtn').onclick = () => {
+    $('#sourceHeadingBtn').onclick = (event) => {
+      if (event.currentTarget.getAttribute('aria-disabled') === 'true') { showBlockedNote(headingBlockedNote()); return; }
       if (modelLocked() || !switchEditorMode(mainEditor, 'blocks')) return;
       const selected=$('#blockEditor .blockui-selected'),scope=selected?.closest('.blockui-script');
       const field=(scope||$('#blockEditor')).querySelector('[data-blockui-structured-role="heading.event"]');
