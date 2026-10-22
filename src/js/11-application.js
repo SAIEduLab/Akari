@@ -2058,27 +2058,27 @@
           if (menu.contains(document.activeElement) || document.activeElement === document.body) menu.querySelector('summary').focus({ preventScroll: true });
         }
       });
-      // An open menu stays inside the window at narrow widths: it shifts left (or right) by what would stick out. When the
-      // toolbar wraps, it opens under the toolbar's last row, so it covers none of the buttons below the menu's own row.
+      // An open menu opens under the whole toolbar (its top follows --toolbar-h), so on a wrapped toolbar it covers none
+      // of the rows below the menu's own row. It stays inside the window at narrow widths: it shifts left (or right) by
+      // what would stick out, again whenever the toolbar changes size while it is open.
+      const placeMenu = (menu) => {
+        const panel = menu.querySelector(':scope > :not(summary)');
+        menu.style.setProperty('--menu-shift', '0px');
+        if (!menu.open || !panel) return;
+        const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
+        menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
+      };
       for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu'))
-        menu.addEventListener('toggle', () => {
-          const panel = menu.querySelector(':scope > :not(summary)');
-          menu.style.setProperty('--menu-shift', '0px');
-          menu.style.setProperty('--menu-drop', '0px');
-          if (!menu.open || !panel) return;
-          const own = menu.getBoundingClientRect(),
-            below = [...toolbar.children].filter(n => n !== menu && !n.matches('.mode-blocked-note'))
-              .map(n => n.getBoundingClientRect()).filter(r => r.height && r.top >= own.bottom - 1);
-          if (below.length) menu.style.setProperty('--menu-drop', Math.max(...below.map(r => r.bottom)) - own.bottom + 'px');
-          const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
-          menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
-        });
+        menu.addEventListener('toggle', () => placeMenu(menu));
       // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
         if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
         if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
-      const syncHeight = () => document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+      const syncHeight = () => {
+        document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) placeMenu(menu);
+      };
       if (typeof ResizeObserver === 'function') new ResizeObserver(syncHeight).observe(toolbar);
       syncHeight();
     }
