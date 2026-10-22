@@ -1885,6 +1885,14 @@
     // tools (actorTool), so the sentence itself has no control for it.
     function subjectFace(node, field) {
       const value = node.fields[field.key], owner = node.schemaId === 'ActorQualifiedRead';
+      // A subject carried over from a sentence before (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is not written in
+      // this one, but another part does it: the face shows it pale and in （ ） (E2E-R1-04). The body's own part is not shown.
+      if (!owner && value?.kind === 'named' && !schemaOf(node)?.bodies?.length && !subjectWritten(node, value.name) &&
+          value.name !== project()?.components.find(c => c.id === context().targetId)?.name) {
+        const carried = E('span', 'blockui-phrase-text blockui-subject-text blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id });
+        carried.style.opacity = '0.6';
+        return carried;
+      }
       if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
       const name = value?.kind === 'named' ? value.name : subjectName(node);
       return E('span', 'blockui-phrase-text blockui-subject-text', owner ? name : name + (value?.particle || 'は'), { 'data-block-id': node.id });
