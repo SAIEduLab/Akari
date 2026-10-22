@@ -4164,6 +4164,7 @@
       return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
     }
     function beginGhost(state) {
+      hideDropNote();
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
         : state.element.closest('.blockui-node');
@@ -4265,6 +4266,12 @@
       dragReason.textContent = text;
     }
     // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
+    // A note about the last drop goes as soon as the next carry starts or a drop goes in (E2-10).
+    function hideDropNote() {
+      clearTimeout(dropNoteTimer);
+      dropNote?.remove();
+      dropNote = null;
+    }
     function showDropNote(text, x, y) {
       announce(text);
       clearTimeout(dropNoteTimer);
@@ -4629,6 +4636,7 @@
           : !state.location ? '入れるのを やめたよ' : state.reason || 'ここには おけないよ', event.clientX, event.clientY);
         return;
       }
+      hideDropNote();
       if (state.schemaId) {
         destination = state.location;
         paletteAdd(state.candidate || BLOCK_SCHEMA_BY_ID.get(state.schemaId));
