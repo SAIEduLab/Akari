@@ -92,7 +92,8 @@ export function verifyCompositionMeaning(d,r){
     assert.deepEqual(r.trace.filter(x=>x.kind==='motion').map(x=>x.after.direction),[345,0,345,0]);
     // The repeat never waits, so its second turn waits for the next こま (observed at 17 ms).
     assert.deepEqual(r.trace.filter(x=>x.kind==='motion').map(x=>x.time),[0,0,17,17]);
-    assert.deepEqual(speech.map(x=>x.text),['250']);assert.equal(actor.direction,0);
+    // The last round turned without waiting too, so the sentence after the repeat says 250 on the next こま (34 ms).
+    assert.deepEqual(speech.map(x=>[x.text,x.time]),[['250',34]]);assert.equal(at(17).speech.length,0);assert.equal(actor.direction,0);
     assert.deepEqual(last.variables,[['点数',0]]);assert.equal(actor.x,100);assert.equal(actor.y,100);
   }
   if(d.id==='I11'){
