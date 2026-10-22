@@ -97,10 +97,10 @@ try{
 }catch(error){results.push({file:'data-validator-negative',status:'FAIL',error:error.stack});}
 try{
  const trig=[['正弦（30）','0.5','0.49999999999999994'],['余弦（60）','0.5','0.5000000000000001'],['正接（45）','1','0.9999999999999999'],['逆正弦（0.5）','30度','30.000000000000004度'],['逆余弦（0.5）','60度','60.00000000000001度']];
- const observed=[...trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})),...[1366,1024,390].map(width=>({monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width,monitorHeight:144})),{shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}];
+ const observed=[...trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})),...[1366,1024,390].map(width=>({monitor:'0.3',text:'0.3',raw:'0.30000000000000004',savedExact:true,width,monitorHeight:144})),{shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}];
  const control={schema:'akari-numeric-display-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:numericBrowserIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
  verifyNumericBrowser(control);
- for(const[id,mutate]of Object.entries({'display-missing-detail':r=>r.results[0].observed.detailExact=false,'display-rounded-raw':r=>r.results[0].observed.raw='0.5','display-changed-text':r=>r.results[5].observed.text='0.3','display-online-player':r=>r.results[9].observed.offline=false,'display-collapsed-monitor':r=>r.results[6].observed.monitorHeight=16})){
+ for(const[id,mutate]of Object.entries({'display-missing-detail':r=>r.results[0].observed.detailExact=false,'display-rounded-raw':r=>r.results[0].observed.raw='0.5','display-changed-text':r=>r.results[5].observed.text='0.30000000000000004','display-online-player':r=>r.results[9].observed.offline=false,'display-collapsed-monitor':r=>r.results[6].observed.monitorHeight=16})){
   const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyNumericBrowser(bad));negative.push({id,rejected:true});
  }
 }catch(error){results.push({file:'numeric-validator-negative',status:'FAIL',error:error.stack});}

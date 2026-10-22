@@ -62,7 +62,8 @@ export function verifyNumericBrowser(report){
  assert.deepEqual(report.results.slice(0,5).map(r=>r.observed),trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})));
  for(const [i,width]of [1366,1024,390].entries()){
   const {monitorHeight,...observed}=report.results[5+i].observed;assert.ok(Number.isFinite(monitorHeight)&&monitorHeight>=120);
-  assert.deepEqual(observed,{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width});
+  // 文字（ ） makes the same 12-digit text as the display (LANGUAGE.md 数を文字にするとき; final call 18); the もとの 数 stays exact.
+  assert.deepEqual(observed,{monitor:'0.3',text:'0.3',raw:'0.30000000000000004',savedExact:true,width});
  }
  assert.deepEqual(report.results.slice(8).map(r=>r.observed),[
   {shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}]);return count;
