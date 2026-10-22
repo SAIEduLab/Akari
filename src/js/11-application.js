@@ -2679,7 +2679,7 @@
       }
     }
     function validateSavedEditorFingerprint(value) {
-      const fail = () => { throw new AkariError('F503', '自動で のこした 作品の 書きかけの ようすが 正しくありません'); };
+      const fail = () => { throw new AkariError('F503', 'このパソコンに のこした 作品の 書きかけの ようすが 正しくありません'); };
       if (typeof value !== 'string' || value.length > LIMITS.fileBytes) return fail();
       let saved;
       try { saved = JSON.parse(value); } catch (_) { return fail(); }
@@ -2760,7 +2760,13 @@
         loseConfirm = (answer) => {
           loseConfirm = null;
           $('#loseConfirmModal').classList.remove('show');
-          if (!answer) origin?.focus?.({preventScroll:true});
+          // やめる gives the focus back to the button that asked, once the dialog has let go of the page (the modal
+          // manager clears #app.inert on its own turn); a button inside the closed 作品 menu gives it to the menu.
+          if (!answer) setTimeout(() => {
+            if (document.querySelector('.modal.show,.modal.open,dialog[open]')) return;
+            const shown = n => !!n?.isConnected && (n.checkVisibility ? n.checkVisibility({ visibilityProperty: true }) : n.getClientRects().length > 0);
+            (shown(origin) ? origin : origin?.closest?.('details')?.querySelector(':scope > summary'))?.focus?.({preventScroll:true});
+          }, 0);
           resolve(answer && currentOpenState().fingerprint === observed.fingerprint);
         };
       });
@@ -3444,17 +3450,19 @@
       duplicate.type = 'button';
       duplicate.className = 'prop-duplicate';
       duplicate.textContent = '見た目のコピー';
-      duplicate.title = '見た目と せっていが 同じ 部品を もう1つ 作ります（本文は もちません）';
+      // A sprite is a キャラクター, any other part a 部品 (F-23).
+      const kind = c.type === 'sprite' ? 'キャラクター' : '部品';
+      duplicate.title = `見た目と せっていが 同じ ${kind}を もう1つ 作ります（本文は もちません）`;
       duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
       duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'prop-delete';
-      del.textContent = '🗑 この部品を けす';
+      del.textContent = `🗑 この ${kind}を けす`;
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
       // What the copy does is said by its title, its description and the ヒント (見た目のコピー); no line of its own.
-      duplicate.setAttribute('aria-description', '見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。');
+      duplicate.setAttribute('aria-description', `見た目と せっていが 同じ ${kind}を もう1つ 作ります。本文は もちません。`);
       actions.append(title, duplicate, del);
       (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
       el.props.append(
@@ -4565,8 +4573,10 @@
         edit.onclick = () => openQuotedListRepair(r);
         root.append(help, edit);
       }
+      const failedId = r.actor?.baseId || r.targetId, failedTarget = targetById(failedId),
+        failedKind = !failedTarget || failedId === 'stage' ? '画面' : failedTarget.type === 'sprite' ? 'キャラクター' : '部品';
       renderMonitorSection(root, 'うまく いかなかったときの ようす', [
-        ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
+        [`動いていた ${failedKind}`, failedTarget?.name || '画面'],
         ['きっかけ', runtimeEventText(r.eventType, r.key)],
         ['動かしていた本文', r.source],
       ]);
@@ -4589,7 +4599,7 @@
         ...r.projectLists,
       ]);
       if (r.actor)
-        renderMonitorSection(root, 'うまく いかなかったときの この部品の ようす', [
+        renderMonitorSection(root, `うまく いかなかったときの この ${failedKind}の ようす`, [
           ['よこのばしょ', r.actor.x],
           ['たてのばしょ', r.actor.y],
           ['向き', r.actor.direction],
@@ -5766,7 +5776,7 @@
         updateDirty();
         clearTimeout(autosaveTimer);
         writeAutosave();
-        log(`${a.download} を ダウンロードしはじめました。自動で のこした 作品も そのままです`, 'ok');
+        log(`${a.download} を ダウンロードしはじめました。このパソコンに のこした 作品も そのままです`, 'ok');
         setStatus(unfinished?'書きかけの ある 作品を ファイルに ほぞんしたよ。動かす 前に、まだ できていない ところを たしかめてね':`「${project.name}」を ファイルに ほぞんしたよ`);
         return true;
       } catch (err) {
@@ -6134,13 +6144,16 @@
         if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint','lastSavedEditorFingerprint'])||
           rec.id!=='latest'||rec.version!==2||!Number.isFinite(rec.updatedAt)||
           !Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')
-          throw new AkariError('F503','自動で のこした 作品の 形が 正しくありません');
+          throw new AkariError('F503','このパソコンに のこした 作品の 形が 正しくありません');
         validateSavedEditorFingerprint(rec.lastSavedEditorFingerprint);
         const restored=await decodeWorkspaceHistory(rec.workspace);
         if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
         recoveryData={...rec,restored};
-        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()}に、とちゅうまでの 作品を 自動で のこしてあるよ。つづきから 作る？ けすと、もう もどせないよ。`;
+        // The work is named (F-02), and the autosave is called このパソコンに のこす (F-23).
+        const keptName=restored.frames?.[restored.cursor]?.project?.name;
+        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()}に、${keptName?'「'+keptName+'」を ':''}とちゅうまで このパソコンに のこしてあるよ。つづきから 作る？ けすと、もう もどせないよ。`;
         // The safe choice comes first and has the focus: つづきから 作る keeps the work, のこした 作品を けす cannot be undone.
+        setStatus('このパソコンに のこした 作品が あるよ');
         $('#recoveryModal').classList.add('show');
         $('#recoveryRestore').focus({preventScroll:true});
       } catch (err) {
@@ -6154,7 +6167,7 @@
           el.autosave.textContent =
             'このパソコンに のこした 作品を もどせるか、たしかめられなかったよ（のこした 作品は そのままだよ）';
           log(
-            `自動で のこした 作品を たしかめられませんでした。のこした 作品は けしていません。 ${err.code || ''} ${err.message}`,
+            `このパソコンに のこした 作品を たしかめられませんでした。のこした 作品は けしていません。 ${err.code || ''} ${err.message}`,
             'error',
           );
         }
@@ -7697,19 +7710,24 @@
         history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
         initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
         $('#recoveryModal').classList.remove('show');recoveryData=null;
-        log('自動で のこした作品と、もとにもどせる きろくを もどしました','ok');
+        log('このパソコンに のこした 作品と、もとにもどせる きろくを もどしました','ok');
         setStatus(`「${project.name}」の つづきから 作れるよ`);
+        // After the dialog has let go of the page (the modal manager clears #app.inert on its own turn).
+        setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
         // What was restored is what this computer keeps: the state says so at once (restoreSnap marked it as not kept).
         el.autosave.textContent = 'このパソコンに のこしてあるよ';
       } catch (err) {
-        log('自動で のこした作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんでください。', 'error');
-        setStatus('自動で のこした 作品を もどせなかったよ。ほぞんした ファイルが あれば「開く」で えらんでね');
+        log('このパソコンに のこした 作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんでください。', 'error');
+        setStatus('このパソコンに のこした 作品を もどせなかったよ。ほぞんした ファイルが あれば「開く」で えらんでね');
       }
     };
     $('#recoveryDiscard').onclick = () => {
       $('#recoveryModal').classList.remove('show');
       recoveryData = null;
       clearAutosave();
+      // The status line says what is true now (F-11), and the focus stays on the page's controls.
+      setStatus('このパソコンに のこした 作品を けしたよ');
+      setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
     };
 
     window.addEventListener('keydown', (e) => {
@@ -8005,7 +8023,8 @@
     loadEditor();
     setupModalAccessibility();
     checkRecovery();
-    setStatus(`からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね — ${productLabel(true)}`);
+    // The version is in 出力 (はじまりました); the status line says only what is true now.
+    setStatus(`からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
     app = {
       get editorState() {
         return {
