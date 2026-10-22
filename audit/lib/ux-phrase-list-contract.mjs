@@ -47,7 +47,7 @@ function replacement(o,source,fixed,document){
  assert.deepEqual(o.failure.project,o.before.project);
  assert.equal(o.opened.state,'DESIGN');assert.deepEqual(o.opened.project,o.before.project);
  assert.equal(o.selected.source,source);assert.deepEqual(o.selected.project,o.before.project);
- assert.equal(o.selected.choice,String(o.choose));assert.match(o.opened.text,/ここは文字です/);
+ assert.equal(o.selected.choice,String(o.choose));assert.match(o.opened.text,/ここは 文字だよ/);
  assert.match(o.opened.text,/だけを かえます/);assert.equal(o.opened.choice,'');assert.equal(o.opened.applyDisabled,true);
  assert.deepEqual(o.undo.project,o.before.project);assert.deepEqual(o.redo.project,o.after.project);
  assert.equal(o.undo.source,source);assert.equal(o.redo.source,fixed);
