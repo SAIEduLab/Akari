@@ -2646,8 +2646,9 @@
         throw sentenceDiagnostic('くらべる ことばは「より大きい」「より小さい」と 書きます',line,choice('「大きい」「小さい」と 書く',source),{kind:'IfStatement'});
       }
       // もし答えがりんごなら (FM2-02): a word compared with 答え, or with a variable that holds text, is written in 「 」.
-      // Read bare it is a name to make, and the program would never match.
-      {const cmp=/^(もし、?)?([^、。\u0001【】（）\s]+?)が([^、。\u0001「」【】（）\s0-9０-９．.－\-＋+]+?)(なら|ならば|だったら|でなければ|じゃなかったら|と同じ|とちがう|と違う|になる)/.exec(mask);
+      // Read bare it is a name to make, and the program would never match. Both sides are names (at most 32 characters),
+      // so the pattern looks no further: unbounded, a long line of が took seconds (language-boundaries, 45000 が).
+      {const cmp=/^(もし、?)?([^、。\u0001【】（）\s]{1,32}?)が([^、。\u0001「」【】（）\s0-9０-９．.－\-＋+]{1,32}?)(なら|ならば|だったら|でなければ|じゃなかったら|と同じ|とちがう|と違う|になる)/.exec(mask);
         const variable=cmp&&[...(symbols?.project?.projectData?.variables||[]),...(symbols?.project?.components||[]).flatMap(c=>c.localData?.variables||[])].find(v=>v.name===cmp[2]);
         const text=cmp&&(cmp[2]==='答え'||(variable&&typeof variable.initialValue==='string'&&!/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(variable.initialValue)));
         const word=cmp?.[3];
@@ -2694,8 +2695,9 @@
         const choices=[...choice('この 動きを 止める',p[0].text+'この動きを止める'),...choice('作品を 全部 止める','作品を全部止める')];
         if(choices.length)throw sentenceDiagnostic('何を 止めるかを 書きます。この 本文の 動きを 止めるときは「この動きを止める」、作品の 動きを ぜんぶ 止めるときは「作品を全部止める」と 書きます',line,choices,{kind:'StopCommand'});
       }
-      // 点数を1たす / 点数に1をたす / 点数から1ひく: a variable grows with ふやす and shrinks with へらす.
-      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。\u0001]+?)(?:を|に)(.+?)(?:を)?(たす|足す|ひく|引く)$/d,code,mask))&&unread()){
+      // 点数を1たす / 点数に1をたす / 点数から1ひく: a variable grows with ふやす and shrinks with へらす. Only a line that
+      // ends so is looked at, and the name is at most 32 characters: a long line of を took seconds (language-boundaries).
+      if(/(?:たす|足す|ひく|引く)$/.test(mask)&&(p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。\u0001]{1,32}?)(?:を|に)(.+?)(?:を)?(たす|足す|ひく|引く)$/d,code,mask))&&unread()){
         const up=/^(?:たす|足す)$/.test(p[3].text);
         nearIf(`へんすうの 数を ${up?'ふやす':'へらす'}ときは「〔文〕」と 書きます`,up?'「ふやす」と 書く':'「へらす」と 書く',`${p[0].text}${p[1].text}を${p[2].text}${up?'ふやす':'へらす'}`,'NumericUpdate');
       }
@@ -3034,7 +3036,7 @@
     if((p=surfaceCapture(/^(?:全部|ぜんぶ|全員|すべて)(?:が|は|で|も)?、?(.+(?:待つ|まつ))$/d,code,mask))&&reads(p[0].text))
       throw fixed('みんなで 待つときは、「みんなは1秒待つ」か「1秒待つ」と 書きます',p[0].text,'みんなで 待つ','WaitTime');
     // 「ベル」を鳴らし、終わるまで待つ (an old form): 鳴らす itself waits until the sound ends.
-    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+?)を(.*?)鳴らし(?:て)?、?(?:鳴り)?終わるまで待つ$/d,code,mask)))
+    if(/終わるまで待つ$/.test(mask)&&(p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+?)を(.*?)鳴らし(?:て)?、?(?:鳴り)?終わるまで待つ$/d,code,mask)))
       throw fixed('「鳴らす」は、音が 終わるまで 待ちます',`${p[0].text}${p[1].text}を${p[2].text}鳴らす`,'鳴らして 待つ','SoundCommand');
     // 10歩進みました: what to do is written as 〜する or 〜します.
     if(/ました$/.test(mask))throw sentenceDiagnostic('これから する ことは「進む」「進みます」のように 書きます',line,[{label:'「ます」に する',source:canonicalStatementSource(code.slice(0,-3)+'ます',symbols)}]);
@@ -3500,6 +3502,9 @@
     let code=compactOutsideString(line.code),working=line;
     // 〜に〜を入れる / 〜を〜に入れる with a bare (not 「」) target, as [target, value]; .variable when the target is a variable.
     const putInto=text=>{
+      // Only a sentence that ends with 入れる is looked at: the patterns go back over every に and を, which took
+      // seconds on a long line of 点数に (language-boundaries).
+      if(!/(?:入れる|いれる|入れます|いれます)$/.test(text))return null;
       const first=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる|入れます|いれます)$/d,text),valueFirst=!first&&surfaceCapture(/^(.+?)を(.+)に(?:入れる|いれる|入れます|いれます)$/d,text);
       const pair=first||(valueFirst?[valueFirst[1],valueFirst[0]]:null);
       if(!pair||pair[0].text.startsWith('「'))return null;
