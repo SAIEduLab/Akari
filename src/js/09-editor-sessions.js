@@ -306,13 +306,34 @@
     const newIndex = buildBlockIndex(tree);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
-      if (schema.category === 'expression')
-        return formatExpression(keyLiteralAt(newIndex, node.id) ? { ...ast, value: keySurface(ast.value) } : ast, PREC.ATOM, { symbols });
+      if (schema.category === 'expression') {
+        // A said value is written as its sentence writes it, with no （ ） around 持ち物の数 (F-34); a condition keeps them.
+        const at = newIndex.get(node.id), bare = newIndex.get(at?.parentId)?.node?.schemaId === 'Say' && at.input === 'value' && !isConditionValue(ast);
+        return formatExpression(keyLiteralAt(newIndex, node.id) ? { ...ast, value: keySurface(ast.value) } : ast, bare ? 0 : PREC.ATOM, { symbols });
+      }
       if (schema.category === 'target') return formatTarget(ast);
       if (schema.category === 'script') return structuralLines(formatScript(ast, { symbols })).join(newline);
       if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]}, { symbols })).join(newline);
       // Format a replacement in its destination scope, adding self only when needed.
       return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id), symbols})).join(newline);
+    };
+    // A sentence that reads as block-to-code writes it gets its words written again when a value in it changes, so the
+    // value takes its F-34 form and only the （ ） its place needs (かばんの数を言う。, もしかばんの数が0なら、). Its memo and
+    // the spaces before the memo stay as written; a sentence in the child's own words is left to the value-only change.
+    const rewrittenAsStandard = (before, after) => {
+      const location = surface(before), schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId),
+        range = schema.bodies.length ? location?.range : location?.extent;
+      if (!range || location.inline || location.inlineContainer) return null;
+      const first = text => splitComment(String(text || '').split(/\r\n?|\n/)[0]).code.trimEnd(), bare = text => text.trim().replace(/。$/, '');
+      let was, now;
+      try {
+        was = first(structuralLines(formatScript({kind:'Script', body:[blockDecode(before)]}, {inheritedActor:originalActors.get(before.id), symbols}))[0]);
+        now = first(standard(after)).trim();
+      } catch (_) { return null; }
+      const written = first(source.slice(range.start, range.end)), lead = written.match(/^\s*/)[0];
+      if (!written.trim() || bare(written) !== bare(was)) return null;
+      if (!written.endsWith('。')) now = now.replace(/。$/, '');
+      return now === written.trim() ? [] : [{ start: range.start, end: range.start + written.length, text: lead + now }];
     };
     const sameActorContext = (before, after) => {
       if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
@@ -451,6 +472,11 @@
         [before.inputs.arg, after.inputs.arg].some(n => n?.schemaId === 'StringLiteral' && isEdgeTarget(n.fields.value)))
         return fallback(before, after);
       const schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId), changes = [];
+      // A value changed in a sentence written as block-to-code writes it: the sentence's words are written again.
+      if (schema.category === 'statement' && same(before.bodies, after.bodies) && !same(before.inputs, after.inputs)) {
+        const whole = rewrittenAsStandard(before, after);
+        if (whole) return whole;
+      }
       for (const slot of schema.inputs) {
         if (slot.required === false) {
           const had = Object.hasOwn(before.inputs, slot.key), has = Object.hasOwn(after.inputs, slot.key);
@@ -467,7 +493,8 @@
         }
       }
       if(before.schemaId==='Say' && !same(before.inputs.value,after.inputs.value)) {
-        const value=blockDecode(after.inputs.value),needsNoun=value.kind==='VariableRead',
+        // 点数を言う (F-34) for a name the work knows; の値 is added only where a bare name would not read back.
+        const value=blockDecode(after.inputs.value),needsNoun=value.kind==='VariableRead'&&!(value.qualifier!=='exact'&&symbols?.allDataNames?.has?.(value.name)),
           changesQuote=before.inputs.value.schemaId==='StringLiteral'&&value.kind!=='StringLiteral';
         if(needsNoun||changesQuote){
           const range=surface(before.inputs.value)?.range,

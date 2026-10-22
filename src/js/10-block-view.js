@@ -133,6 +133,7 @@
       branchLines = new Map(),
       branchSourceLines = new Map();
     const phraseCache = new Map();
+    let faceSymbols = null;
     const openEditors = new Set();
     const openAnnotations = new Set(),
       collapsed = new Set(),
@@ -1436,14 +1437,30 @@
     }
     // A call that hands nothing over is written without 「をわたして、」 (【てじゅん】という手順を行う), so its block and its
     // face in the list read the same as its code (E-14).
+    // The work's names, read once per drawing of the blocks or the list (render and renderPalette start it again).
+    const workSymbols = () => {
+      const work = project();
+      if (!work) return null;
+      if (faceSymbols?.work !== work) faceSymbols = { work, symbols: buildSymbols(work) };
+      return faceSymbols.symbols;
+    };
+    // A list's length reads 持ち物の数, as 整える and block-to-code write it (F-34), where that reads back: the name is a
+    // list of the work and no data is called 持ち物の数. Otherwise it keeps 〜の長さ.
+    function listCountFace(node) {
+      const list = node?.inputs?.args?.[0], s = list?.schemaId === 'VariableRead' ? workSymbols() : null;
+      if (!s) return false;
+      const lists = [s.projectLists, ...[...(s.individualByTargetId?.values?.() || [])].map(d => d.lists)];
+      return lists.some(m => m?.has?.(list.fields.name)) && !s.allDataNames?.has?.(list.fields.name + 'の数');
+    }
     function shownPhrase(schema, node) {
       const parts = phrase(schema);
       // The character's colour reads 色を〔赤〕にする, as block-to-code writes it, unless the work has data named 色 (F-25).
       if (parts && schema.id === 'LooksCommand:SET_COLOR') {
-        const work = project();
-        if (!work || buildSymbols(work).allDataNames?.has?.('色')) return parts;
+        if (!project() || workSymbols()?.allDataNames?.has?.('色')) return parts;
         return parts.map((part) => (typeof part === 'string' ? part.replace(/^表示色を/, '色を') : part));
       }
+      if (parts && schema.id === 'BuiltinCall:LENGTH' && listCountFace(node))
+        return parts.map((part) => (typeof part === 'string' ? part.replace(/^の長さ$/, 'の数') : part));
       if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
       return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
     }
@@ -1499,6 +1516,12 @@
       }
       return root;
     }
+    // A speech without a time reads like its code (F-27, F-34): 「こんにちは」と言う for words, 点数を言う for a value, and
+    // （…）の値を言う for a condition.
+    function sayParticle(value) {
+      return value?.schemaId === 'StringLiteral' ? 'と'
+        : /^(?:CompareExpression|LogicalExpression):|^UnaryExpression:NOT$/.test(value?.schemaId || '') ? 'の値を' : 'を';
+    }
     function previewNode(schema, candidate) {
       const node =
           candidate || createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId + '-preview' }),
@@ -1529,7 +1552,7 @@
       else if (schema.kind === 'Say') {
         main.append(pill(scalar(node.inputs.value) ?? 'ことば'));
         if (node.inputs.seconds) main.append(doc.createTextNode(node.inputs.value?.schemaId === 'StringLiteral' ? 'と ' : 'を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
-        else main.append(doc.createTextNode(' と言う'));
+        else main.append(doc.createTextNode(' ' + sayParticle(node.inputs.value) + '言う'));
       }
       else if (schema.kind === 'VariableRead')
         main.append(pill(node.fields.name || 'へんすう'));
@@ -1595,6 +1618,7 @@
     function renderPalette() {
       if (options.readOnly) return;
       if (destroyed) return;
+      faceSymbols = null;
       modeSelect.value = paletteMode;
       syncLibraryToggle();
       const entry = document.body.dataset.uiLevel === 'entry';
@@ -3014,7 +3038,7 @@
             });if(data.options.length>1)extraControls.append(data);
             // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
             if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
-            else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
+            else {main.append(E('span','blockui-phrase-text',sayParticle(node.inputs.value)+'言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
           if(extraControls.childElementCount)main.append(extra);
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
@@ -3274,6 +3298,7 @@
       }
     }
     function renderView(force) {
+      faceSymbols = null;
       const s = session(),
         nextSignature = [
           s?.ownerKey,
