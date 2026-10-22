@@ -1095,26 +1095,41 @@
   }
   // A new block from the list comes with values that run and change something, as the 書ける ことば examples have them
   // (FCB-05): the other part (or the mouse) to face, a part to copy (the other part, else itself), ペンの太さ 3, 音の大きさ
-  // 50％, 1つ and 1段階. A value other than the 0 of a new block is kept. The block is changed in place.
+  // 50％, 1つ, 1段階 and 向き 45度 (0度 is where a new part already looks). A part's words go to a part of the work that
+  // has them: 「文字1」の文字を「こんにちは」にかえる, 「入力らん1」に「こんにちは」を入れる (F2-01). 〜のどれか picks from 1
+  // to 6, as a die does. A value other than the one of a new block is kept. The block is changed in place.
   const CREATION_NUMBERS = new Map([['PenCommand:SET_SIZE', 3], ['SoundCommand:SET_VOLUME', 50], ['LooksCommand:FORWARD_LAYERS', 1],
-    ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1]]);
+    ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1], ['MotionCommand:SET_DIRECTION', 45]]);
   function applyCreationDefaults(node, project, targetId) {
-    const first = node?.inputs?.args?.[0];
-    if (first?.schemaId !== 'NumberLiteral' || first.fields.value !== 0) return node;
-    const parts = project?.components || [], other = parts.find(c => c.id !== targetId)?.name,
+    const args = node?.inputs?.args, first = args?.[0], parts = project?.components || [];
+    const zero = value => value?.schemaId === 'NumberLiteral' && value.fields.value === 0,
+      text = (value, words) => Object.assign(value, { schemaId: 'StringLiteral', fields: { value: words } });
+    if (node?.schemaId === 'LooksCommand:SET_TARGET_TEXT' || node?.schemaId === 'LooksCommand:SET_INPUT') {
+      const input = node.schemaId === 'LooksCommand:SET_INPUT',
+        part = parts.find(c => input ? c.type === 'input' : ['label', 'button', 'box'].includes(c.type))?.name;
+      if (part && (zero(first) || (input && first?.schemaId === 'StringLiteral' && first.fields.value === '入力らん'))) text(first, part);
+      if (zero(args?.[1])) text(args[1], 'こんにちは');
+      return node;
+    }
+    if (node?.schemaId === 'BuiltinCall:乱数' && args?.length === 2 && args.every(zero)) {
+      args[0].fields.value = 1; args[1].fields.value = 6;
+      return node;
+    }
+    if (!zero(first)) return node;
+    const other = parts.find(c => c.id !== targetId)?.name,
       character = (parts.find(c => c.id !== targetId && c.type === 'sprite') || parts.find(c => c.id === targetId && c.type === 'sprite'))?.name;
     // Only a character (not a button or a label) has copies.
     const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? character : null;
-    if (name) Object.assign(first, { schemaId: 'StringLiteral', fields: { value: name } });
+    if (name) text(first, name);
     else if (CREATION_NUMBERS.has(node.schemaId)) first.fields.value = CREATION_NUMBERS.get(node.schemaId);
     return node;
   }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
     if (!schema) return { enabled: false, reason: 'この ブロックは 使えないよ', diagnostics: [] };
-    // Values on simple command previews remain visible choices. Enclosures and
-    // persistent rules start with visible holes, never an implicit true/0/no-op.
-    const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
+    // Values on simple command previews remain visible choices. Enclosures, persistent rules and 〜まで待つ start with
+    // visible holes, never an implicit true/0/no-op (LANGUAGE.md: a condition stays to be chosen; F2-05).
+    const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement','WaitUntil'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
     const creationContext = options.context || session.context || {},
       creationProject = options.project || session.project,
       component = creationProject?.components?.find(c => c.id === creationContext.targetId),
