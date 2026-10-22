@@ -1032,7 +1032,9 @@
       if (value && typeof value === 'object') {
         const out = {};
         for (const [key, v] of Object.entries(value))
-          if (
+          // 名人: topicEnded and mustName on a 自分 subject are read only by 作品チェック.
+          if (value.kind === 'self' && ['topicEnded', 'mustName'].includes(key)) continue;
+          else if (
             ![
               'source',
               'raw',
@@ -1096,11 +1098,14 @@
     if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
     const artwork = presentation === 'artwork';
     const payload = packExecutable(project, assetStore),
+      payloadJson = inlineJson(payload),
       title = escapeHtmlText(payload.project.name);
+    // The file is made only when its player would open it: the same check the player runs on the same JSON.
+    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson));
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
-    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${inlineJson(payload)},${inlineJson({artwork})});`;
+    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${payloadJson},${inlineJson({artwork})});`;
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',
