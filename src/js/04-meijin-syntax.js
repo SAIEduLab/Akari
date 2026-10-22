@@ -5,7 +5,7 @@
   // into the 名人 nodes (PartRef, value subjects, Parallel, ParallelEach, part sets), or as the common sentence
   // with the same meaning. A line that is no 名人 form is read by the common grammar unchanged.
   const MEIJIN_BINDER = 'この部品';
-  const MEIJIN_SET_WORDS = /^(みんな|それぞれ|順番に)、?/;
+  const MEIJIN_SET_WORDS = /^(みんな|それぞれ|順番に|じゅんばんに)、?/;
   const meijinEscape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   // The 名人 forms below read a name written in 【 】 as the same name: the mask shows those spans, and the name is
   // looked up without them.
@@ -68,7 +68,7 @@
   }
   // ねこがおされると、: an event, or waiting for it? Not one meaning in a 名人 script.
   const MEIJIN_WHEN_PRESSED = /^(?!もし)(?:.+?)(?:が(?:おされ|押され|クリックされ)ると|を(?:おす|押す|クリックする)と)、/;
-  const MEIJIN_WHEN_PRESSED_MESSAGE = '「〜がおされると、」では、できごとか、その時を 待つのかが 決まりません。できごとなら「ねこがおされたとき、」、待つなら「ねこが1回おされるまで待つ。」と 書きます';
+  const MEIJIN_WHEN_PRESSED_MESSAGE = '「〜がおされると、」では、おされる たびに するのか、その 時を 待つのかが 決まりません。おされる たびに するなら「ねこがおされたとき、」、待つなら「ねこが1回おされるまで待つ。」と 書きます';
   const MEIJIN_UNREADABLE = [
     [MEIJIN_WHEN_PRESSED, MEIJIN_WHEN_PRESSED_MESSAGE],
     // ふれる is the one touch verb; もし〜ふれたら and 〜ふれると have more than one meaning (C-08, C-09, C-11).
@@ -76,7 +76,7 @@
     [/^もし、?(.+?)が(.+?)に(?:ふれ|触れ)(?:たら|ると|れば)、/d, (m, code) => { const [a, b] = [1, 2].map(i => code.slice(...m.indices[i]));
       return `「もし〜にふれたら」は 書きません。いま ふれているかを しらべるなら「もし${a}が${b}にふれていれば、」、ふれるまで 待つなら「${a}が${b}にふれたら、」、ふれる たびに するなら「${a}が${b}にふれたとき、」と 書きます`; }],
     [/^(?!もし)(.+?)が(.+?)に(?:ふれ|触れ)(?:ると|れば)、/d, (m, code) => { const [a, b] = [1, 2].map(i => code.slice(...m.indices[i]));
-      return `「〜にふれると、」では、できごとか、ふれるまで 待つのかが 決まりません。できごとなら「${a}が${b}にふれたとき、」、待つなら「${a}が${b}にふれたら、」と 書きます`; }],
+      return `「〜にふれると、」では、ふれる たびに するのか、ふれるまで 待つのかが 決まりません。ふれる たびに するなら「${a}が${b}にふれたとき、」、待つなら「${a}が${b}にふれたら、」と 書きます`; }],
     [/(?<!に)いちばん近い(?![^、。]*?(?:の方を向く|までの(?:きょり|距離)))/, '「いちばん近い」は「〜の方を向く」と「〜までのきょり」で 使います。れい：ねこは、いちばん近い星の方を向く'],
     [/(?:のに|けれど|けれども|けど)、/, '「〜のに」「〜けれど」では、いつ 何を するかが 決まりません。「もし〜なら、」と「そうでなければ、」で 書きます'],
     [/(?:すこし|少し|ちょっと|しばらく|何度も|なんども|何回も|なんかいも|たくさん)/, m => `「${m[0]}」では、量や 時間が 決まりません。「10歩」「2秒」「3回」のように 数で 書きます`],
@@ -205,7 +205,7 @@
 
   // In-text procedures: 【ジャンプ】という手順を、次のように作る。 The body is read as the procedure; the sentence
   // only registers it. Each becomes a procedure of the work (an id in the 名人 script's own namespace).
-  const MEIJIN_DEFINITION = /^【(.+?)】という手順を、(?:(.+?)を受け取って、)?次のように作る$/d;
+  const MEIJIN_DEFINITION = /^【(.+?)】という(?:手順|てじゅん)を、(?:(.+?)を受け取って、)?次のように作る$/d;
   function meijinDefinitionArgs(text) {
     if (!text) return [];
     const strip = name => name.replace(/^【(.*)】$/, '$1');
@@ -220,8 +220,9 @@
     for (let i = 0; i < lines.length; i++) {
       const head = /^([^ \t　].*?)。?$/.exec(lines[i]), m = head && MEIJIN_DEFINITION.exec(compactOutsideString(head[1]));
       if (!m) continue;
+      // A full-width space at the start of a line is two small spaces (F-24), as in the rest of the text.
       const body = []; let j = i + 1;
-      while (j < lines.length && (!lines[j].trim() || /^ /.test(lines[j]))) body.push(lines[j++]);
+      while (j < lines.length && (!lines[j].trim() || /^[ \u3000]/.test(lines[j]))) body.push(lines[j++].replace(/^[ \u3000]+/, p => p.replace(/\u3000/g, '  ')));
       while (body.length && !body.at(-1).trim()) body.pop();
       const indent = Math.min(...body.filter(l => l.trim()).map(l => l.match(/^ */)[0].length), 64);
       out.push({ id: `meijin-${script.id}-${out.length + 1}`, ownerId: 'stage', name: m[1], args: meijinDefinitionArgs(m[2]),
@@ -289,9 +290,9 @@
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
       if (seconds.kind !== 'NumberLiteral')
-        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。かわる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
       if (!(seconds.value > 0))
-        throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。かわる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
       return { heading: { event: 'interval', actorRef: { kind: 'self' }, seconds: sentenceQuantity(seconds, '秒') }, body: p[1] };
     }
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)になったとき、(.*)$/d, code, mask))) {
@@ -334,7 +335,7 @@
     if ((p = capture('^(' + alt + ')のペンを(下ろす|おろす|上げる|あげる)$'))) return p[0].text + 'はペンを' + p[1].text;
     if ((p = capture('^(' + alt + ')のすがたを(かくす|隠す|見せる|みせる)$'))) return p[0].text + 'はすがたを' + p[1].text;
     // 【長さ】を5として、【向き】を90として、【かく】という手順を行う: the same as 【長さ】を5、【向き】を90として、….
-    if ((p = surfaceCapture(/^(.+?)として、(.+?として、?.*という手順を行う)$/d, code, mask))) return p[0].text + '、' + p[1].text;
+    if ((p = surfaceCapture(/^(.+?)として、(.+?として、?.*という(?:手順|てじゅん)を行う)$/d, code, mask))) return p[0].text + '、' + p[1].text;
     // 点数を、なかまの数にする / なかまを、ねこと犬と鳥にする: a comma after を; parts written together are a list. A data name in 【 】 is the same name.
     if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)を、?(.+?)に(する|かえる|変える)$/d, code, mask)) && dataNameKind(meijinBare(p[0].text), symbols, ctx)) {
       const names = meijinPartList(p[1].text, symbols, ctx);
@@ -423,7 +424,7 @@
     // one: the words after のうち、 with いちばん put in.
     const onePick = (of, words, one) => {
       if (!/いちばん/.test(words) && !/ほう$/.test(words)) throw new AkariError('P205', `「${words}」では、一つに 決まりません。一つを えらぶときは「${of}のうち、${one}」と 書きます`);
-      if (/ほう$/.test(words) && meijinPartList(of, symbols, ctx)?.length !== 2) throw new AkariError('P205', `「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「${of}のうち、${one.replace(/ほう$/, 'もの')}」と 書きます`);
+      if (/ほう$/.test(words) && meijinPartList(of, symbols, ctx)?.length !== 2) throw new AkariError('P205', `「ほう」は、二つの うちの 一つに 使います。三つ いじょうや リストのときは「${of}のうち、${one.replace(/ほう$/, 'もの')}」と 書きます`);
     };
     if ((p = /^(.+?)のうち、((.+?)に(?:いちばん)?近い(?:ほう|もの))$/.exec(phrase)) && isMeijinPart(p[3], symbols, ctx)) {
       onePick(p[1], p[2], p[2].replace(/^(.+?)に(?:いちばん)?近い/, '$1にいちばん近い'));
@@ -468,14 +469,17 @@
   // A line that is almost a 名人 form: the guidance gives the form (null when it is none of them, or reads as written).
   function meijinNearMiss(code, mask, symbols, scope, env, line, read, attempt) {
     const part = name => isMeijinPart(name, symbols, scope);
+    // The trial readings below only ask whether a line reads: inside them no guidance is looked for again (each
+    // guidance would read the whole line again, and the trials would grow with every level).
+    const probe = { ...env, scope: { ...scope, meijinProbe: true } };
     // The line reads neither as written nor through a 名人 rewrite (found once: each reading reads the whole line).
     let failed;
-    const fails = () => failed ??= !attempt(() => read(code)) && !attempt(() => meijinRewrite(code, symbols, scope));
+    const fails = () => failed ??= !attempt(() => read(code, scope.topicActor, { meijinProbe: true })) && !attempt(() => meijinRewrite(code, symbols, scope));
     let p;
     // ねこは2秒かけて…動くあいだ、犬は… / だんごは星にふれたとき、…: the subject before あいだ・とき is written with が.
     if ((p = surfaceCapture(/^(.+?)は、?(.+?)(あいだ|間|うちに|とき)、(.+)$/d, code, mask)) && (part(p[0].text) || meijinPartList(p[0].text, symbols, scope)) && fails()) {
       const fixed = `${p[0].text}が${p[1].text}${p[2].text}、${p[3].text}`;
-      if (p[2].text === 'とき' || attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, fixed), env)))
+      if (p[2].text === 'とき' || attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, fixed), probe)))
         return `「〜${p[2].text}」の 前の 主語は「が」で 書きます。れい：${fixed}`;
     }
     // ねこや犬は…: や names some of them (and others); parts are joined with と.
@@ -486,7 +490,7 @@
       const parts = meijinPartNames(symbols), variables = [...(symbols?.projectVars?.keys?.() || [])].filter(v => code.includes(v) && !parts.includes(v));
       for (const v of variables) {
         const trial = code.split(v).join(parts[0]);
-        if (fails() && attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, trial), env)))
+        if (fails() && attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, trial), probe)))
           return `「${v}」は へんすうです。この 書き方には 部品の 名前を 書きます（部品を 入れた へんすうは「${nameSource(v)}は前へ10歩進む」のように 主語に 使えます）`;
       }
     }
@@ -545,7 +549,7 @@
       : scope.topicActor?.kind === 'value' ? scope.topicActor.value : null;
     let p;
     // 【ジャンプ】という手順を、次のように作る。 The body is read as the procedure itself (meijinDefinitions).
-    if ((p = surfaceCapture(/^(\u0001+)という手順を、(?:(.+?)を受け取って、)?次のように作る$/d, code, mask)) && /^【.+】$/.test(p[0].text)) {
+    if ((p = surfaceCapture(/^(\u0001+)という(?:手順|てじゅん)を、(?:(.+?)を受け取って、)?次のように作る$/d, code, mask)) && /^【.+】$/.test(p[0].text)) {
       if (env.indent !== 0 || !env.top) throw sentenceDiagnostic('手順は、右へ ずらさない 行で 作ります（「もし」や「くり返す」の 中では 作れません）', line, [], { kind: 'ActionDefinition' });
       indented('ActionDefinition', '「〜という手順を、次のように作る」の 次の 行に、手順の 中身を 右へ ずらして 書きます');
       let end = env.index + 1;
@@ -681,7 +685,7 @@
         if (subject.lanes) {
           // ねこと犬と鳥は、順番に、…: parts written together start together; the check says 順番に does not order them.
           const lanes = meijinGroup(node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
-          if (order?.[1] === '順番に') MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
+          if (/^(?:順番|じゅんばん)に$/.test(order?.[1] || '')) MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
           return done([lanes]);
         }
         if (subject.value) {
@@ -700,7 +704,7 @@
         if (subject.list && !order)
           throw sentenceDiagnostic(`「${phrase}」は 部品の あつまりです。「${phrase}は、みんな…」「${phrase}は、順番に…」のように 書きます`, line, [], { kind: 'ParallelEach' });
         const list = subject.set || subject.list, lane = read(body, meijinValueActor(meijinBinderRead()), each);
-        if (order?.[1] === '順番に') return done([node('ForEach', { list, binder: MEIJIN_BINDER, body: lane, actorRef: { kind: 'self' } })]);
+        if (/^(?:順番|じゅんばん)に$/.test(order?.[1] || '')) return done([node('ForEach', { list, binder: MEIJIN_BINDER, body: lane, actorRef: { kind: 'self' } })]);
         return done([node('ParallelEach', { list, binder: MEIJIN_BINDER, body: lane })]);
       }
     }
@@ -753,7 +757,7 @@
     if ((p = surfaceCapture(/^(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && !isMeijinPart(p[0].text, symbols, scope))
       throw sentenceDiagnostic('「〜が言い終わるまで待つ」の 〜には、部品の 名前を 書きます', line, [], { kind: 'WaitUntil' });
     // 【長さ】を5として、…、ねこは【かく】という手順を行う: the subject is written first.
-    if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という手順を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+    if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という(?:手順|てじゅん)を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
       throw sentenceDiagnostic(`主語は 文の はじめに 書きます。れい：${p[1].text}は、${p[0].text}、${p[2].text}`, line, [], { kind: 'UserActionCall' });
     // ねこは、犬にいちばん近い星の方を向く: what it is near is chosen from a list.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)にいちばん近い(.+?)の方を向く$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
@@ -780,7 +784,7 @@
     for (const m of mask.matchAll(/[〇一二三四五六七八九十百千万]+(?:歩|秒|回|度|個|番目|点|つ)/g))
       if (!/^一つ$/.test(m[0]) && !/[\p{Script=Han}]/u.test(mask[m.index - 1] || ''))
         throw sentenceDiagnostic(`「${m[0]}」は 漢数字です。名人モードでも、数は「${meijinDigits(m[0])}」のように 数字で 書きます`, line, [], { kind: 'Sequence' });
-    {
+    if (!scope.meijinProbe) {
       const near = meijinNearMiss(code, mask, symbols, scope, env, line, read, attempt);
       if (near) throw sentenceDiagnostic(near, line, [], { kind: 'Sequence' });
     }
