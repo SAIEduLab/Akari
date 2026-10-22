@@ -408,9 +408,10 @@
       }
       for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
       // What はじめて keeps but does not show: blocks and rules it has not in this body, and every body of another event
-      // (keys, signals, ふれたとき …), which only the two buttons above could open.
+      // (keys, signals, ふれたとき …), which only the two buttons above could open. The holes of a block being put in
+      // (〔くり返すことを入れる〕) are not such blocks.
       const tree=mainEditor.session?.blockView;
-      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>
+      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>!String(node.schemaId).startsWith('Hole:')&&
         ['statement','rule'].includes(BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category)&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId)))||
         (project?.scripts||[]).some(s=>!['start','click'].includes(s.event)&&!isMeijinScript(s)&&String(s.source||'').trim());
       $('#entryOutside').hidden=!entry||!outside||!!tutorial;
@@ -1675,7 +1676,7 @@
       binding.textarea.value = readSource(binding);
       clearEditorFailure(binding);
       renderEditorBinding(binding);
-      if (binding === mainEditor) refreshEditor();
+      if (binding === mainEditor) { refreshEditor(); renderEntrySurface(); }
       setStatus('入力を やめたよ');
     }
     function editorContentFingerprint(state) {
@@ -7690,6 +7691,8 @@
           clearEditorFailure(binding);
           if (binding.session) binding.session.pendingEdit = binding.session.blockDraft
             ? binding.session.blockDraft.pending : null;
+          // はじめて's note on blocks it does not show follows the body as it is again.
+          if (binding === mainEditor) renderEntrySurface();
         },
       });
       for (const mode of ['code', 'blocks'])
