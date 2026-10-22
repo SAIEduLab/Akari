@@ -350,11 +350,16 @@
     // comes back (undo, open, a new work). The work file and autosave keep only the chosen level.
     let baseUiLevel='entry';
     const workIsMeijin=()=>(project?.scripts||[]).some(isMeijinScript);
+    // The workspace (workspaceIdentity) whose 名人 text an editor last showed: when that text goes away there, the view
+    // stays code (getEditorSession).
+    let meijinShownIn=null;
+    // The view a body list shows: the chosen view, and code in a work with a 名人 text.
+    const chosenEditorMode=(kind='script',fallback='code')=>workIsMeijin()?'code':editorModes.get(kind)||fallback;
     // The levels the picker offers depend on the view: blocks はじめて／かんたん／くわしく, code かんたん／くわしく／名人, and a
     // work with a 名人 text only 名人. A level that cannot be chosen is not in the list at all (not a disabled option).
     const UI_LEVEL_NAMES={entry:'はじめて',basic:'かんたん',advanced:'くわしく',meijin:'名人'};
     // The view the main editor shows (the list of all bodies uses the remembered view).
-    const shownEditorMode=()=>(!sourceOverviewOpen&&mainEditor.session?.mode)||editorModes.get('script')||'blocks';
+    const shownEditorMode=()=>(!sourceOverviewOpen&&mainEditor.session?.mode)||chosenEditorMode('script','blocks');
     function uiLevelChoices(view=shownEditorMode()){return workIsMeijin()?['meijin']:view==='blocks'?['entry','basic','advanced']:['basic','advanced','meijin'];}
     // shown: the view the editor has just been laid out in (syncEditorShell). Returns true when the shown level changed.
     function applyUiLevel(shown=null){
@@ -795,13 +800,17 @@
           session.pendingEdit = {...pending, sourceRevision: session.sourceRevision, contextRevision: editorContextRevision};
         } else session.pendingEdit = draft ? null : pending;
       }
-      session.mode = resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
       // A work with a 名人 text is code only, for every body and the 自分で作ったブロック editor; the view it opens in is
-      // decided by the content, whatever view a file or the autosave kept.
-      if (workIsMeijin()) {
-        session.mode = 'code';
-        editorModes.set(binding.kind, 'code');
+      // decided by the content, whatever view a file or the autosave kept. The chosen view (editorModes) is not changed
+      // by it, so the next work (新しく作る, お手本, 開く) opens as chosen. When the 名人 text goes away in the same work,
+      // the view stays code (it is never switched by a level).
+      if (workIsMeijin()) meijinShownIn = workspaceIdentity;
+      else if (meijinShownIn === workspaceIdentity) {
+        meijinShownIn = null;
+        editorModes.set('script', 'code');
+        editorModes.set('draft', 'code');
       }
+      session.mode = workIsMeijin() ? 'code' : resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
       editorSessions.set(cacheKey, session);
       binding.session = session;
       return session;
@@ -1370,7 +1379,7 @@
       const session = getEditorSession(binding),
         draft = binding.kind === 'draft',
         blocks = session.mode === 'blocks';
-      if (!draft) syncEditorShell(sourceOverviewOpen ? editorModes.get('script') || 'code' : session.mode);
+      if (!draft) syncEditorShell(sourceOverviewOpen ? chosenEditorMode() : session.mode);
       const textRoot = draft ? binding.textarea : el.editor.closest('.editor-shell');
       textRoot.hidden = blocks;
       $(draft ? '#callableBlocks' : '#blockEditor').hidden = !blocks;
@@ -1986,9 +1995,10 @@
           const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
           menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
         });
-      // A choice in はじめて's 作品 menu closes it.
+      // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
         if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
+        if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
       const syncHeight = () => document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
       if (typeof ResizeObserver === 'function') new ResizeObserver(syncHeight).observe(toolbar);
@@ -2287,7 +2297,17 @@
         const n = $('#' + id);
         if (n) n.disabled = locked;
       }
-      $('#saveBtn').disabled = appState === 'IMPORTING' || appState === 'PREPARING';
+      // The other toolbar controls stay where they are and cannot be pressed while the work runs (保存, いっしょに作る, and
+      // the ヒント and 作品 menus too).
+      $('#saveBtn').disabled = locked;
+      $('#tutorialStart').disabled = locked;
+      for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
+        const summary = menu.querySelector(':scope > summary');
+        if (locked) {
+          menu.open = false;
+          summary.setAttribute('aria-disabled', 'true');
+        } else summary.removeAttribute('aria-disabled');
+      }
       $('#uiLevel').disabled = appState === 'IMPORTING';
       // Do not change history ownership while an asynchronous import is still settling.
       // Runtime inspection keeps its existing target/event navigation.
@@ -2378,7 +2398,9 @@
     let restoringSnapshot=false;
     function restoreSnap(e,{restoreView=false}={}) {
       restoringSnapshot=true;
-      const view={uiLevel:baseUiLevel,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
+      // The view stays as shown; in a work with a 名人 text (shown in code) the chosen view stays.
+      const shown=binding=>workIsMeijin()?editorModes.get(binding.kind)||'code':binding.session?.mode||'code';
+      const view={uiLevel:baseUiLevel,sourceOverviewOpen,editorModes:{script:shown(mainEditor),draft:shown(draftEditor)}};
       // Going back to before the 名人 text was made also brings back how the body was shown then (はじめて shows blocks).
       if(workIsMeijin()&&!(e.project.scripts||[]).some(isMeijinScript)&&e.editorState)view.editorModes.script=e.editorState.editorModes.script;
       try {
@@ -2626,7 +2648,7 @@
     function showSourceOverview() {
       sourceOverviewOpen = true;
       sourceOverviewSignature = '';
-      syncEditorShell(editorModes.get('script') || 'code');
+      syncEditorShell(chosenEditorMode());
       $('.codewin').dataset.sourceOverview = 'true';
       $('#sourceOverview').hidden = false;
       $('#sourceOverview').scrollTop = 0;
@@ -2636,10 +2658,10 @@
     function renderSourceOverview() {
       if (!sourceOverviewOpen) return;
       for (const mode of ['code', 'blocks']) {
-        $('#editorMode' + mode).setAttribute('aria-pressed', String((editorModes.get('script') || 'code') === mode));
+        $('#editorMode' + mode).setAttribute('aria-pressed', String(chosenEditorMode() === mode));
         $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState)||(mode==='code'&&document.body.dataset.uiLevel==='entry');
       }
-      const signature = JSON.stringify([selectedId, editorContextRevision, editorModes.get('script'), modelLocked(), hasCallableDraft() ? callableDraftCore : null]);
+      const signature = JSON.stringify([selectedId, editorContextRevision, chosenEditorMode(), modelLocked(), hasCallableDraft() ? callableDraftCore : null]);
       if (sourceOverviewSignature === signature) return;
       sourceOverviewSignature = signature;
       sourceOverviewObserver?.disconnect();
@@ -2706,7 +2728,7 @@
           body.replaceChildren();
           if (!record.source.trim()) { body.append(make('p', '本文は からっぽです。')); return; }
           const session = createEditorSession(record.key, record.source, record.context, project, editorContextRevision);
-          if ((editorModes.get('script') || 'code') === 'blocks' && session.syntaxAst) {
+          if (chosenEditorMode() === 'blocks' && session.syntaxAst) {
             session.mode = 'blocks';
             const preview = make('div', null, 'source-blocks'); body.append(preview);
             sourceOverviewViews.push(createBlockEditorView({
@@ -4570,9 +4592,11 @@
     }
     // The strip under the stage on the run screen: whose body runs, after which event and on which line, and the sentence
     // itself in a box. At はじめて only the part and the sentence (its blocks have no line numbers, and it has two events).
+    // Each part keeps to one line there (a long one ends in …); its title holds the whole text.
     function paintRunStrip(text = '', sentence = '') {
-      $('#execLocation').textContent = 'いま 動いている 文：' + (text || '―');
-      $('#execSentence').textContent = sentence;
+      const location = 'いま 動いている 文：' + (text || '―');
+      if ($('#execLocation').textContent !== location) $('#execLocation').textContent = $('#execLocation').title = location;
+      if ($('#execSentence').textContent !== sentence) $('#execSentence').textContent = $('#execSentence').title = sentence;
       $('#execSentence').hidden = !sentence;
     }
     function runningSentence(source, loc) {
@@ -4656,20 +4680,59 @@
       if (flags & 2) renderMonitor();
       if (flags & 4) paintExecutionLocation();
       // A flow ended or the run state changed (flag 2): the run may have ended by itself. A pause (stepping, or a stop by
-      // an error) is not an end; the run ends there when it goes on and nothing is left.
-      if (flags & 2 && scheduler?.running && !scheduler.paused && scheduler.ended()) finishRun();
+      // an error) is not an end; the run ends there when it goes on and nothing is left. While nothing goes on but an
+      // input can start a body again, the status says which input. After the end a body that starts again (on a touch,
+      // say) brings 動いているよ back; after 作品を全部止める the scheduler takes no input.
+      if (flags & 2 && scheduler?.running && !scheduler.paused) {
+        if (runFinished) { if (!scheduler.idle()) resumeFinishedRun(); }
+        else if (scheduler.ended()) finishRun();
+        else if (scheduler.idle()) {
+          // No sentence runs now: the strip says so until a body starts again.
+          if (activeLoc) { activeLoc = null; paintRunStrip(); }
+          showRunHint(restartHint());
+        } else showRunHint('');
+      }
     }
-    // The run has ended (every body done, or 作品を全部止める). The run screen stays as it is, with its last picture, and
-    // shows only ■ 止める; the status says how to run again.
-    function finishRun() {
-      if (runFinished || !runtime || !['RUNNING', 'PAUSED'].includes(appState)) return;
+    // The run has ended (every body done, or 作品を全部止める). The run screen stays as it is, with its last picture (a
+    // ふきだし that would go away by itself stays too), and shows only ■ 止める; the status says what to do next.
+    function finishRun({ stoppedAll = false } = {}) {
+      if ((runFinished && !stoppedAll) || !runtime || !['RUNNING', 'PAUSED'].includes(appState)) return;
       runFinished = true;
+      runHint = '';
       appState = 'RUNNING';
       if (inspectorNodes.length) closeRuntimeInspector();
       activeLoc = null;
+      stageView.keepBubbles();
       paintRunStrip();
-      setStatus('おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね');
+      setStatus(stoppedAll ? '作品が 止まったよ。作る 画面に もどるときは「■ 止める」を おしてね'
+        : 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね');
       updateRunState();
+    }
+    function resumeFinishedRun() {
+      runFinished = false;
+      setStatus('動いているよ');
+      updateRunState();
+    }
+    // Nothing goes on, but an input can start a body again: the status names the first such body's input (the stage's
+    // bodies first, then the parts' in the order they were made). A body that starts by itself later (〜秒ごとに, そう
+    // なったとき) keeps 動いているよ.
+    const RUN_HINT_KEYS = { 空白: 'スペース', 決定: 'エンター', 取消: 'エスケープ' };
+    let runHint = '';
+    function restartHint() {
+      const items = compiled?.items || [], inputs = items.filter(item => ['click', 'keyDown', 'valueChanged'].includes(item.event));
+      if (!inputs.length || items.some(item => ['conditionTrue', 'interval'].includes(item.event))) return '';
+      const order = id => id === 'stage' ? -1 : project.components.findIndex(c => c.id === id),
+        item = inputs.reduce((first, next) => order(next.targetId) < order(first.targetId) ? next : first),
+        name = targetById(item.targetId)?.name || project.stage.name;
+      if (item.event === 'click') return `「${name}」を おすと 動くよ`;
+      if (item.event === 'valueChanged') return `「${name}」に 入れると 動くよ`;
+      const key = item.filter?.key;
+      return key ? `「${RUN_HINT_KEYS[key] || key}」キーを おすと 動くよ` : 'キーを おすと 動くよ';
+    }
+    function showRunHint(text) {
+      if (text === runHint) return;
+      runHint = text;
+      setStatus(text || '動いているよ');
     }
 
     function refreshEditor() {
@@ -4865,7 +4928,7 @@
         allStopped: () => {
           const token = generationToken;
           setTimeout(() => {
-            if (token === generationToken) finishRun();
+            if (token === generationToken) finishRun({ stoppedAll: true });
           }, 0);
         },
         renderMonitor: () => requestRuntimePaint(2),
@@ -4940,6 +5003,13 @@
         refuse('作品に 直す ところが あるよ。赤い ところを 見てね。');
         return;
       }
+      // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in.
+      const hasSentence = nodes => (nodes || []).some(node => node.kind !== 'CommentLine');
+      if (!(compiled.items || []).some(item => !item.definitionKind &&
+        (hasSentence(item.ast?.body) || (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
+        setStatus('ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね');
+        return;
+      }
       try {
         validateAssetReferences(project, assetStore);
       } catch (err) {
@@ -4963,6 +5033,7 @@
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
         runFinished = false;
+        runHint = '';
         setStatus('絵や音を じゅんびしています');
         updateRunState();
         // The run screen starts now; the focus goes to the stage, not to the page (▶ 動かす is not shown there).
@@ -5019,6 +5090,7 @@
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
       runFinished = false;
+      runHint = '';
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
       confirmTutorialOperation('stop');
       renderAll();
@@ -5333,8 +5405,9 @@
         if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
       }
       baseUiLevel=uiLevel;
-      // A work with a 名人 text opens in code, whatever view the file or the autosave kept; nothing is said about it.
-      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,workIsMeijin()?'code':mode);
+      // A work with a 名人 text opens in code, whatever view the file or the autosave kept; nothing is said about it. The
+      // kept view stays the chosen one (getEditorSession shows code).
+      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
       editorSessions.clear();invalidateEditors();hideSourceOverview();applyUiLevel();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
       for(const saved of state.pendingEditors){
@@ -5353,7 +5426,8 @@
             blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
         }
         const mode=workIsMeijin()?'code':saved.mode;
-        editorModes.set(binding.kind,mode);session.mode=mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
+        if(!workIsMeijin())editorModes.set(binding.kind,mode);
+        session.mode=mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
         if(mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力を もとに もどせません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの 本文を もどしました',{preservePending:true});
         if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}

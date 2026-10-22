@@ -3196,12 +3196,16 @@
         this.ui.closeQuestion?.();
         this.ui.state?.();
       }
-      // The run has ended by itself: no flow runs, waits or is queued, no continuous rule is kept, no question is open, and
-      // no body can start again (none waits for input, a 名人 condition or interval, or an extension).
+      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, and no question is open. A body
+      // may still start again (ended).
+      idle() {
+        return !(!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
+          this.activeQuestion || this.extensionEvents?.length || extensions.active);
+      }
+      // The run has ended by itself: it is idle, and no body can start again (none waits for input, a 名人 condition or
+      // interval, or an extension).
       ended() {
-        if (!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
-          this.activeQuestion || this.extensionEvents?.length || extensions.active) return false;
-        return !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
+        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
       }
       pause() {
         if (!this.running) return;

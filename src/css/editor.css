@@ -5882,6 +5882,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 }
 @media (min-width: 701px) and (max-width: 1300px) {
   body[data-editor-mode] .menutool { --tb-pad: 10px; --tb-gap: 4px; --tb-name: 150px; --tb-modes: 140px; }
+  /* ブロック keeps clear of its pill's edge in every font (Noto Sans JP draws it 46 px wide). */
+  body[data-editor-mode] .menutool > .editor-modes button { padding-inline: 6px; }
 }
 @media (min-width: 701px) and (max-width: 1100px) {
   body[data-editor-mode] .menutool { --tb-name: 100px; --tb-modes: 152px; --tb-level: 96px; }
@@ -5939,12 +5941,23 @@ body.runtime .menutool > :is(.ui-level-label, .editor-modes, .mode-blocked-note)
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
 
 /* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
-   the sentence itself in a box. */
+   the sentence itself in a box. Its height never depends on the sentence, so the stage keeps its size from sentence
+   to sentence: each part keeps to one line (a long one ends in …; the whole text is its title and what a screen
+   reader reads), and the box keeps its place while no sentence is shown. The place and the sentence share one line;
+   in a narrow strip they have a line each (under 760 px, or 420 px at はじめて, which shows the part's name only).
+   The row count follows the strip's width only. */
 .run-strip { display: none; }
-body.runtime .run-strip { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 1.5; color: var(--dark, #283e50); }
-.run-strip > .exec-location { max-width: 100%; color: var(--muted, #536273); overflow-wrap: anywhere; }
-.exec-sentence { max-width: 100%; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
-.exec-sentence[hidden] { display: none; }
+body.runtime .run-strip { container: run-strip / inline-size; display: flex; flex: none; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 21px; color: var(--dark, #283e50); }
+.run-strip > .exec-location { flex: 0 1 auto; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exec-sentence { flex: 1 1 0; box-sizing: border-box; min-width: 0; height: 29px; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; line-height: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exec-sentence[hidden] { display: block; visibility: hidden; }
+body[data-ui-level="entry"] .run-strip > .exec-location { max-width: 45%; }
+@container run-strip (max-width: 759px) {
+  body:not([data-ui-level="entry"]) .run-strip > :is(.exec-location, .exec-sentence) { flex: 1 0 100%; max-width: none; }
+}
+@container run-strip (max-width: 420px) {
+  body[data-ui-level] .run-strip > :is(.exec-location, .exec-sentence) { flex: 1 0 100%; max-width: none; }
+}
 
 /* The toolbar (with the name Akari) stays at the top of the page when the page scrolls; it paints above the page and
    below dialogs. Scrolling to a place keeps that place below the toolbar (its height follows its rows). */
@@ -5956,6 +5969,8 @@ body { overflow: visible !important; }
    the other buttons keep their places. A long ヒント scrolls inside. */
 .menutool > details.toolbar-menu { position: relative; flex: 0 0 auto; }
 .menutool > details.toolbar-menu > summary { box-sizing: border-box; min-height: 36px; padding: 5px 12px; border: 1px solid #bda47a66; border-radius: 10px; background: #fffaf0d9; line-height: 24px; cursor: pointer; white-space: nowrap; }
+/* While the work runs a menu stays in its place, pale like the other toolbar buttons, and does not open. */
+.menutool > details.toolbar-menu > summary[aria-disabled="true"] { opacity: 0.5; cursor: default; }
 .menutool > #basicActionGuide > .child-help-panel,
 .menutool > #entryProjectMenu > .entry-project-actions { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
 .menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
@@ -5989,8 +6004,9 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row
 body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
 
 
-/* はじめて while running: the stage takes the large column; the 使うブロック list is put away and the built blocks stay. */
-body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(420px, 56vw, 820px); }
+/* はじめて while running: the stage takes the large column; the 使うブロック list is put away and the built blocks stay.
+   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
 

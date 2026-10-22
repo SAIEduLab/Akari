@@ -499,9 +499,13 @@
     function clear() {
       clearInput();
       clearPen();
+      keepBubbles();
+      form.querySelectorAll('.sprite-bubble').forEach((b) => b.remove());
+    }
+    // The run has ended and its last picture stays: a ふきだし shown without a time stays instead of going away.
+    function keepBubbles() {
       for (const t of timers) clearTimeout(t);
       timers.clear();
-      form.querySelectorAll('.sprite-bubble').forEach((b) => b.remove());
     }
     function point(e) {
       const r = runtime(),
@@ -583,6 +587,7 @@
       positionBubbles,
       showBubble,
       clearSpeech,
+      keepBubbles,
       limitInputValue,
       penLine,
       clearPen,
@@ -651,11 +656,16 @@
     // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける. Finished (every body done, or 作品を全部止める): ■
     // 止める only, and the last picture stays.
     function state() {
+      // After every body ended, a body that starts again (on a touch, say) goes on running; after 作品を全部止める the
+      // scheduler takes no input.
+      if (phase === 'FINISHED' && scheduler?.running && !scheduler.paused && !scheduler.idle()) phase = 'RUNNING';
       // A scheduler that stopped by itself (作品を全部止める) ends the run; ■ 止める (dispose) lets go of it first.
       if (phase === 'RUNNING' || phase === 'PAUSED') {
         phase = !scheduler ? 'STOPPED' : !scheduler.running ? 'FINISHED'
           : scheduler.paused ? 'PAUSED' : scheduler.ended() ? 'FINISHED' : 'RUNNING';
       }
+      // The last picture stays: a ふきだし shown without a time stays too.
+      if (phase === 'FINISHED') view?.keepBubbles();
       const runScreen = ['PREPARING', 'RUNNING', 'PAUSED', 'FINISHED'].includes(phase);
       if (start) {
         start.hidden = runScreen;
@@ -685,6 +695,7 @@
       if (paintFrame !== null) cancelAnimationFrame(paintFrame);
       paintFrame = null;
       view?.render();
+      if (phase === 'FINISHED' && scheduler?.running && !scheduler.idle()) state();
     }
     function requestPaint() {
       if (paintFrame === null) paintFrame = requestAnimationFrame(flush);
