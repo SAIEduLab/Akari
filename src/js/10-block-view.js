@@ -308,6 +308,7 @@
       // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
+    commitButton.style.pointerEvents = cancelButton.style.pointerEvents = 'auto';
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
@@ -950,6 +951,9 @@
       const view = doc.documentElement, room = workspace.getBoundingClientRect(),
         w = controls.offsetWidth || 300, h = controls.offsetHeight || 40,
         field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      // Lying over the blocks under a field, only 決める and やめる take a press: a press on the words (a mistake shown)
+      // reaches the field under them, so another field starts its input and the old number goes back (LANGUAGE.md 242).
+      controls.style.pointerEvents = field?.width ? 'none' : '';
       let spot;
       if (field?.width) {
         const under = field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4);
