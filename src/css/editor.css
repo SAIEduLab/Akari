@@ -6342,7 +6342,8 @@ body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true
 }
 #stageThumbnail[hidden] { display: none; }
 #stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
-body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+/* The thumbnail stands for the small stage of wide mode in the block view only: the code view shows the whole stage. */
+body:not([data-workbench-wide="true"]) #stageThumbnail, body:not([data-editor-mode="blocks"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
 /* The small stage takes the right end of the workspace: the navigation strip ends left of it and the blocks wrap
    before it, so it covers no button and no block (E-21). */
 @media (min-width: 761px) {

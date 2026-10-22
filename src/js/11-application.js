@@ -2300,7 +2300,8 @@
     // 画面も見る brings the columns back and gives the focus to 作業台を広く, which made them go (AX-05).
     $('#stageThumbnail').onclick = () => {
       const toggle = $('#blockEditor [data-blockui-action="workspace-expand"]');
-      toggle?.click(); toggle?.focus({ preventScroll: true });
+      toggle?.click();
+      if (toggle?.getClientRects().length) toggle.focus({ preventScroll: true }); else el.form.focus({ preventScroll: true });
     };
     // In wide mode the thumbnail stands for the small stage behind it: the stage and its handles are no Tab stops then.
     // The run screen and the code view do not use wide mode.
