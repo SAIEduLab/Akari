@@ -5778,6 +5778,14 @@
       button.disabled = true;
       $('#exportControls').disabled = $('#exportArtwork').disabled = true;
       setStatus('うごく作品を ファイルに しているよ');
+      // The file is made after the next paint, so that sentence shows while it is made: a work with many pictures takes
+      // seconds, and the page cannot paint meanwhile. A timer stands in where no frame comes (a hidden page).
+      let started = false;
+      const make = () => { if (!started) { started = true; writePlayerFile(presentation, button); } };
+      requestAnimationFrame(() => setTimeout(make, 0));
+      setTimeout(make, 200);
+    }
+    function writePlayerFile(presentation, button) {
       let url = null;
       try {
         const html = generateStandaloneHtml(project, assetStore, { presentation }),
