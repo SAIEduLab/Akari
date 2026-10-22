@@ -4352,16 +4352,16 @@
       }
       // Whose body a flow is and its きっかけ, by the words the child sees: the part (the part a copy was made from), the
       // screen, or the 名人の本文, and the heading as the body selector names it (「星」に ふれたとき); never an internal id.
-      ownerName(task) {
+      ownerName(task, item = null) {
         const id = task.targetId;
+        if (item?.meijin || id === 'meijin') return '名人の本文';
         if (id === 'stage') return this.project.stage?.name || '画面';
-        if (id === 'meijin') return '名人の本文';
         const c = this.project.components.find(x => x.id === id) || this.project.components.find(x => x.id === this.runtime.actor(id)?.baseId);
         return c?.name ?? '動き';
       }
       flowName(task) {
-        const item = task.scriptId ? this.compiled.items?.find(x => x.key === 'script:' + task.scriptId) : null;
-        return `${this.ownerName(task)} / ${task.eventType === 'continuous' ? 'つづけて動くルール' : eventText(task.eventType, item?.filter) || task.eventType}`;
+        const item = task.scriptId ? this.compiled.items?.find(x => x.scriptId === task.scriptId || x.key === 'script:' + task.scriptId) : null;
+        return `${this.ownerName(task, item)} / ${task.eventType === 'continuous' ? 'つづけて動くルール' : eventText(task.eventType, item?.filter) || task.eventType}`;
       }
       taskError(task, err) {
         task.error =
