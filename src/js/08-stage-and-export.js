@@ -1161,6 +1161,8 @@
       '\n' +
       AKARI_PLAYER_CSS +
       (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
+      // On a touch screen the player's buttons are 40 px tall, as the editor's are.
+      '\n@media(pointer:coarse){.player-controls button,.question-controls button{min-height:40px}}' +
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
