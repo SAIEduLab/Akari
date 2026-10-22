@@ -1747,6 +1747,12 @@
         && (unitChoice || !ADVANCED_ONLY_SCHEMA_IDS.has(s.id)));
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [...PALETTE_GROUP_LABELS];
+      // The list is drawn again (after Escape, もとにもどす …): a focused item or なかま keeps the focus (Y2-06).
+      const active = doc.activeElement,
+        focusedChip = categorySelect.contains(active) ? active.dataset.blockuiCategory : null,
+        focusedItem = paletteList.contains(active) ? active.closest('[data-blockui-schema]') : null,
+        itemKey = b => b.dataset.blockuiSchema + '|' + (b.dataset.searchBinding || '') + '|' + (b.dataset.lessonBlock || ''),
+        focusedKey = focusedItem ? itemKey(focusedItem) : null;
       const categoryScroll = categorySelect.scrollTop;
       categorySelect.replaceChildren();
       for (const [g, label] of groups) {
@@ -1905,6 +1911,8 @@
         );
       if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
+      if (focusedChip !== null) categorySelect.querySelector(`[data-blockui-category="${focusedChip}"]`)?.focus({ preventScroll: true });
+      else if (focusedKey) ([...paletteList.querySelectorAll('[data-blockui-schema]')].find(b => itemKey(b) === focusedKey) || search).focus({ preventScroll: true });
       scheduleGeometry();
       options.onPresentation?.();
     }
