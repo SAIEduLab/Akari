@@ -1093,6 +1093,20 @@
       backdrop: next(project?.stage?.backdrops, project?.stage?.backdropId),
     };
   }
+  // A new block from the list comes with values that run and change something, as the 書ける ことば examples have them
+  // (FCB-05): the other part (or the mouse) to face, a part to copy (the other part, else itself), ペンの太さ 3, 音の大きさ
+  // 50％, 1つ and 1段階. A value other than the 0 of a new block is kept. The block is changed in place.
+  const CREATION_NUMBERS = new Map([['PenCommand:SET_SIZE', 3], ['SoundCommand:SET_VOLUME', 50], ['LooksCommand:FORWARD_LAYERS', 1],
+    ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1]]);
+  function applyCreationDefaults(node, project, targetId) {
+    const first = node?.inputs?.args?.[0];
+    if (first?.schemaId !== 'NumberLiteral' || first.fields.value !== 0) return node;
+    const owner = project?.components?.find(c => c.id === targetId), other = project?.components?.find(c => c.id !== targetId)?.name;
+    const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? other || owner?.name : null;
+    if (name) Object.assign(first, { schemaId: 'StringLiteral', fields: { value: name } });
+    else if (CREATION_NUMBERS.has(node.schemaId)) first.fields.value = CREATION_NUMBERS.get(node.schemaId);
+    return node;
+  }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
     if (!schema) return { enabled: false, reason: 'この ブロックは 使えないよ', diagnostics: [] };
@@ -1103,7 +1117,8 @@
       creationProject = options.project || session.project,
       component = creationProject?.components?.find(c => c.id === creationContext.targetId),
       { designPosition, partTarget, costume, backdrop } = blockCreationDefaults(creationProject, creationContext.targetId);
-    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop });
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode))
+      : applyCreationDefaults(createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop }), creationProject, creationContext.targetId);
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))

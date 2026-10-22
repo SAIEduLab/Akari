@@ -1280,6 +1280,14 @@
       availabilityCache.set(key, result);
       return result;
     }
+    // A new continuous rule moves 1秒に200歩, as the example 「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける
+    // does; what it waits for is chosen, never filled in (LANGUAGE.md: a condition stays to be chosen).
+    function newRule() {
+      const rule = createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true });
+      for (const [key, value] of [['seconds', 1], ['distance', 200]])
+        if (rule.inputs[key]?.schemaId === 'Hole:expression') Object.assign(rule.inputs[key], { schemaId: 'NumberLiteral', fields: { value } });
+      return rule;
+    }
     // A continuous rule found by search goes into the rules of the body's heading, as with 「＋ つづけて動くルール」.
     function ruleAvailability() {
       const slot = tree && BLOCK_SCHEMA_BY_ID.get(tree.schemaId)?.inputs.find(s => s.key === 'rules');
@@ -1293,7 +1301,7 @@
         const a = ruleAvailability();
         if (!a.enabled) { announce(a.reason, true); return; }
         const result = operate({ type: 'variadic-insert', parentId: tree.id, input: 'rules', index: (tree.inputs.rules || []).length,
-          node: createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true }) });
+          node: newRule() });
         if (result.ok) announce('つづけて動くルールを 入れたよ。きまりと 速さを 決めてね');
         return;
       }
@@ -1308,7 +1316,7 @@
         announce(a.reason, true);
         return;
       }
-      const node = a.node || createBlock(schema.id, { ...context(), idPrefix: viewId });
+      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), idPrefix: viewId }), project(), context().targetId);
       const wraps = wrapCount(schema, node, location);
       const op = location.body
         ? { type: wraps ? 'wrap' : 'insert', ...location, node }
@@ -1524,7 +1532,7 @@
     }
     function previewNode(schema, candidate) {
       const node =
-          candidate || createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId + '-preview' }),
+          candidate || applyCreationDefaults(createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId + '-preview' }), project(), context().targetId),
         box = E('span', 'blockui-preview', null, { 'data-shape-kind': blockShapeKind(schema) }),
         main = E('span', 'blockui-preview-main');
       attachShape(box, blockShapeKind(schema));
@@ -1683,6 +1691,14 @@
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
       const speech=searched.find(s=>s.id==='Say');
       if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'言うことと 秒数を 決めて 話す'});}
+      // はじめて: the loop comes with its number of times (F-03); what it repeats goes into its hole, from the next block
+      // put in or the blocks below it (E-03).
+      const loopAt = entry ? searched.findIndex(s => s.id === 'RepeatCount' && !s.candidateNode) : -1;
+      if (loopAt >= 0) {
+        const loop = createBlock('RepeatCount', { idPrefix: viewId + '-loop', draft: true, allowHoles: true }), count = createBlock('NumberLiteral', { idPrefix: viewId + '-count' });
+        count.fields.value = 3; loop.inputs.count = count;
+        searched.splice(loopAt, 1, { ...searched[loopAt], candidateNode: loop, candidateKey: 'entry-repeat' });
+      }
       let candidates = searched.filter(
         (s) =>
           (entry || query || !category || (category === 'basic'
@@ -2991,7 +3007,7 @@
             list.append(row);
           }
           const add = button('＋ つづけて動くルール', 'rule-add', () => operate({ type: 'variadic-insert', parentId: node.id, input: 'rules', index: rules.length,
-            node: createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true }) }));
+            node: newRule() }));
           add.disabled = isLocked() || !!options.readOnly || rules.length >= ruleSlot.maxItems;
           list.append(add); main.append(list);
         }
