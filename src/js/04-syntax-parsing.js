@@ -1722,6 +1722,10 @@
       if (!MOVE_VERBS.here.includes(verb)) throw new AkariError('P205', 'いまの ばしょから 動くときは「動く」と 書きます。れい：' + MOVE_EXAMPLE_HERE);
     }
     const read = readMoveLegs(legs, legsStart, quantity, fixed ? MOVE_EXAMPLE_FIXED : undefined);
+    // ゆっくり among the legs is a time to take; three legs or more write one axis twice (R2-B-10).
+    const legsMask = surfaceMask(legs);
+    if (!read && /ゆっくり/.test(legsMask)) throw new AkariError('P205', 'ゆっくり 動くときは「1秒かけて、」のように かける 時間を 文の はじめに 書きます。れい：1秒かけて、' + (fixed ? MOVE_EXAMPLE_FIXED : MOVE_EXAMPLE_HERE));
+    if (!read && (legsMask.match(/(?:右|左|上|下)(?:へ|に)/g) || []).length > 2) throw new AkariError('P205', '「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：' + (fixed ? MOVE_EXAMPLE_FIXED : MOVE_EXAMPLE_HERE));
     if (!read) throw new AkariError('P205', fixed
       ? '「右へ100歩、上へ50歩」のように、向きと 歩数を 書きます。れい：' + MOVE_EXAMPLE_FIXED
       : '「右へ10歩」のように、向きと 歩数を 書きます。れい：' + MOVE_EXAMPLE_HERE);
@@ -1846,8 +1850,11 @@
         const source = `${movingSubject(who)}いまのばしょから、${word}へ${amount}歩動く`;
         return { message: `ばしょを ふやす・へらすときは「${source}」のように 書きます`, source, label: 'いまのばしょから 動く' };
       }
-      const value = /^[0-9０-９]+$/.test(amount) ? amount : null;
-      const example = who.replace(/、$/, '') + (horizontal ? `画面の左下のはしから、右へ${value || 100}歩、上へ（${of}たてのばしょ）歩のばしょへ行く` : `画面の左下のはしから、右へ（${of}よこのばしょ）歩、上へ${value || 50}歩のばしょへ行く`);
+      // The value written is the step count of its direction (LANGUAGE.md: 書いた数を書いた向きに入れ): a number as it is,
+      // anything else in （ ）, as the formatter then writes it (右へ【点数】歩, 右へ（マウスのよこのばしょ）歩).
+      const value = /^[0-9０-９]+$/.test(amount) ? amount : amount ? (/^（.*）$/.test(amount) ? amount : `（${amount}）`) : null;
+      const written = who.replace(/、$/, '') + (horizontal ? `画面の左下のはしから、右へ${value || 100}歩、上へ（${of}たてのばしょ）歩のばしょへ行く` : `画面の左下のはしから、右へ（${of}よこのばしょ）歩、上へ${value || 50}歩のばしょへ行く`);
+      const example = canonicalStatementSource(written, undefined);
       return { message: `ばしょを 決めるときは「${example}」のように 書きます` };
     }
     // ねこを右へ10歩動かす: the part moved is the subject.
@@ -1885,6 +1892,10 @@
     }
     if (legs) {
       const head = `${movingSubject(proposalSubject)}${time ? time + '、' : ''}いまのばしょから、`;
+      // 右へ左へ20歩 / 右へ20歩左へ: two directions in one leg say no single move, so the example is the general one,
+      // never the child's directions copied into a sentence that does not read (final call 12).
+      const ONE_EACH = '画面の 向きへ 動くときは、「いまのばしょから、」を 書いて、「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：';
+      if (legs.some(([, amount]) => /(?:右|左|上|下)(?:へ|に)/.test(surfaceMask(amount)))) return { message: ONE_EACH + MOVE_EXAMPLE_HERE };
       // 右へ10歩、左へ5歩: one leg on each axis. Two numbers on one axis are written as the one leg they add up to.
       const sign = { 右: 1, 上: 1, 左: -1, 下: -1 }, axis = word => ['右', '左'].includes(word) ? 'x' : 'y';
       if (legs.length === 2 && axis(legs[0][0]) === axis(legs[1][0])) {
@@ -2545,6 +2556,38 @@
         const source=code.replace(/より(おおきい|ちいさい)/g,(all,word)=>word==='おおきい'?'より大きい':'より小さい');
         throw sentenceDiagnostic('くらべる ことばは「より大きい」「より小さい」と 書きます',line,choice('「大きい」「小さい」と 書く',source),{kind:'IfStatement'});
       }
+      // FM2-11: more near forms. Each is said only when the line reads with its fix, so a sentence that only looks like
+      // one keeps its own message.
+      const nearIf=(message,label,source,kind)=>{const fix=choice(label,source);if(fix.length)throw sentenceDiagnostic(message.replace('〔文〕',fix[0].source),line,fix,{kind});};
+      // 「星」のところまで行く / 「星」の方へ行く / 「星」まで行く / マウスの所へ行く: a part's place is 〜のところへ行く.
+      if(!ctx.meijin&&(p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?(?:[^、。]+?秒(?:間)?かけて、?)?)(.+?)(?:のところまで|の(?:方|ほう)(?:へ|に)|まで|の所(?:へ|に))(?:行く|いく)$/d,code,mask))&&!/^(?:画面|いま|今)/.test(surfaceMask(p[1].text))&&unread())
+        nearIf('キャラクターや 部品、マウスの ところへ 行くときは「〔文〕」と 書きます','「ところへ行く」と 書く',`${p[0].text}${p[1].text}のところへ行く`,'MotionCommand');
+      // ひだりへ10歩 / まえへ10歩: a direction is written in kanji (右・左・上・下・前・後ろ).
+      {const KANA_DIRECTIONS={みぎ:'右',ひだり:'左',うえ:'上',した:'下',まえ:'前',うしろ:'後ろ'},kana=/(^|[、はが]|から)(みぎ|ひだり|うえ|した|まえ|うしろ)(?=(?:へ|に)[^、。]*(?:歩|度))/g;
+        if(new RegExp(kana.source).test(mask)&&!knownWords(symbols,ctx).some(name=>Object.keys(KANA_DIRECTIONS).some(word=>name.startsWith(word)))&&unread()){
+          let source='',at=0;for(const m of mask.matchAll(kana)){const from=m.index+m[1].length;source+=code.slice(at,from)+KANA_DIRECTIONS[m[2]];at=from+m[2].length;}source+=code.slice(at);
+          const word=KANA_DIRECTIONS[new RegExp(kana.source).exec(mask)[2]];
+          nearIf(`向きは「${word}へ」のように 漢字で 書きます。れい：〔文〕`,'漢字で 書く',source,'MotionCommand');}}
+      // 「やった」としゃべる: speaking is 言う (話す with a time).
+      if((p=surfaceCapture(/^(.*?と)((?:[0-9０-９.．]+秒(?:間)?)?)(?:しゃべる|喋る)$/d,code,mask))&&unread())
+        nearIf('話す ときは「〔文〕」と 書きます',p[1].text?'「話す」と 書く':'「言う」と 書く',p[1].text?`${p[0].text}${p[1].text}話す`:`${p[0].text}言う`,'Say');
+      // 止める alone: what stops is written (this flow, or the whole work).
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:止める|とめる|ストップする)$/d,code,mask))&&unread()){
+        const choices=[...choice('この 動きを 止める',p[0].text+'この動きを止める'),...choice('作品を 全部 止める','作品を全部止める')];
+        if(choices.length)throw sentenceDiagnostic('何を 止めるかを 書きます。この 本文の 動きを 止めるときは「この動きを止める」、作品の 動きを ぜんぶ 止めるときは「作品を全部止める」と 書きます',line,choices,{kind:'StopCommand'});
+      }
+      // 点数を1たす / 点数に1をたす / 点数から1ひく: a variable grows with ふやす and shrinks with へらす.
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。\u0001]+?)(?:を|に)(.+?)(?:を)?(たす|足す|ひく|引く)$/d,code,mask))&&unread()){
+        const up=/^(?:たす|足す)$/.test(p[3].text);
+        nearIf(`へんすうの 数を ${up?'ふやす':'へらす'}ときは「〔文〕」と 書きます`,up?'「ふやす」と 書く':'「へらす」と 書く',`${p[0].text}${p[1].text}を${p[2].text}${up?'ふやす':'へらす'}`,'NumericUpdate');
+      }
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。\u0001]+?)から(.+?)(?:を)?(ひく|引く)$/d,code,mask))&&unread())
+        nearIf('へんすうの 数を へらすときは「〔文〕」と 書きます','「へらす」と 書く',`${p[0].text}${p[1].text}を${p[2].text}へらす`,'NumericUpdate');
+      // もし点数が10より大きい、 (なら left out) / もし「星」にふれていれば「いたい」と言う (、 left out).
+      if((p=surfaceCapture(/^(もし、?.+?(?:より大きい|より小さい|以上|以下|と同じ|とちがう|と違う))、?$/d,code,mask))&&unread())
+        nearIf('「もし」の きまりの おわりには「なら、」を 書きます。れい：〔文〕','「なら、」を 書く',p[0].text+'なら、','IfStatement');
+      if((p=surfaceCapture(/^(もし、?[^、。]+?(?:れば|なら))(?!ば)([^、].*)$/d,code,mask))&&unread())
+        nearIf('「もし…れば」「もし…なら」の あとには「、」を 書きます。れい：〔文〕','「、」を 書く',`${p[0].text}、${p[1].text}`,'IfStatement');
     }
     // ── Child wordings that are not read (final call 12). Each names the sentence that is written instead; a fix is
     // offered when the whole line reads with it.
@@ -2646,17 +2689,20 @@
         const word=axis(w1)==='x'?(net<0?'左':'右'):(net<0?'下':'上'),source=`${head}${word}へ${Math.abs(net)}歩動く`;
         throw sentenceDiagnostic(`「右へ」「左へ」と「上へ」「下へ」は 1つずつ 書きます。ここでは「${canonicalStatementSource(source,symbols)}」と 同じです`,line,reads(source)?[{label:'1つに まとめる',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});}
     }
-    // 横位置・よこの位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ.
-    if(/(?:横|縦|よこ|たて)の?位置/.test(mask)){
-      const source=code.replace(/(横|縦|よこ|たて)の?位置/g,(all,axis)=>/^(?:横|よこ)/.test(axis)?'よこのばしょ':'たてのばしょ');
-      throw sentenceDiagnostic(`「位置」は 読みません。「${/(?:横|よこ)の?位置/.test(mask)?'よこのばしょ':'たてのばしょ'}」と 書きます`,line,reads(source)?[{label:'「ばしょ」と 書く',source:canonicalStatementSource(source,symbols)}]:[]);
-    }
-    // 位置 / マウスの位置 as a value: the place has two numbers, よこのばしょ and たてのばしょ.
-    // The words in 「 」 are hidden; the text in （ ） is looked at.
+    // 横位置・よこの位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ, also inside （ ） (F2-01: the words
+    // in 「 」 are hidden, the text in （ ） is looked at).
     const words=code.replace(/「[^」]*」/g,m=>'\u0001'.repeat(m.length));
-    if((p=/(?:^|[（、をがはにと])((?:[^、。（）\u0001をがはにと]+?の)?)位置(?=[）をがはの]|$|と|より|に)/.exec(words))&&!knownWords(symbols,ctx).some(name=>name.includes('位置'))){
-      const of=p[1];
-      throw sentenceDiagnostic(`「位置」は 読みません。「${of}よこのばしょ」か「${of}たてのばしょ」と 書きます`,line,[],{kind:'Sequence'});
+    if(/(?:横|縦|よこ|たて)の?位置/.test(words)&&!knownWords(symbols,ctx).some(name=>name.includes('位置'))){
+      let source='',at=0;
+      for(const m of words.matchAll(/(横|縦|よこ|たて)の?位置/g)){source+=code.slice(at,m.index)+(/^(?:横|よこ)/.test(m[1])?'よこのばしょ':'たてのばしょ');at=m.index+m[0].length;}
+      source+=code.slice(at);
+      throw sentenceDiagnostic(`「位置」は 読みません。「${/^(?:横|よこ)/.test(/(横|縦|よこ|たて)の?位置/.exec(words)[1])?'よこのばしょ':'たてのばしょ'}」と 書きます`,line,reads(source)?[{label:'「ばしょ」と 書く',source:canonicalStatementSource(source,symbols)}]:[]);
+    }
+    // 位置 / マウスの位置 / 「星」の位置 as a value: the place has two numbers, よこのばしょ and たてのばしょ.
+    if((p=/(?:^|[（、をがはにと])((?:(?:\u0001+|[^、。（）\u0001をがはにと]+?)の)?)位置(?=[）をがはの]|$|と|より|に)/.exec(words))&&!knownWords(symbols,ctx).some(name=>name.includes('位置'))){
+      const at=p.index+p[0].length-p[1].length-2,of=code.slice(at,at+p[1].length),end=at+p[1].length+2;
+      const choices=['よこ','たて'].map(axis=>({label:`「${axis}のばしょ」と 書く`,source:code.slice(0,at)+of+axis+'のばしょ'+code.slice(end)})).filter(c=>reads(c.source)).map(c=>({...c,source:canonicalStatementSource(c.source,symbols)}));
+      throw sentenceDiagnostic(`「位置」は 読みません。「${of}よこのばしょ」か「${of}たてのばしょ」と 書きます`,line,choices,{kind:'Sequence'});
     }
     // ねこはおされたとき、 / もしねこは…なら、: inside 〜とき and もし the subject takes が.
     {const inner=actorNamePatterns(symbols).inner.exec(code);
@@ -2957,6 +3003,14 @@
       return sentenceDiagnostic(`「${p[1]}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`,line,[],{kind:'Script'});
     if(p&&parts.some(c=>c.name===p[1])&&heads(nameSource(p[1])+p[2])){const source=nameSource(p[1])+p[2];
       return sentenceDiagnostic(`おされる キャラクターや 部品の 名前は、「 」で かこまずに 書きます。れい：${nameSource(p[1])}がおされたとき、`,line,[{label:'「 」を とる',source}],{kind:'Script'});}
+    // さくひんをうごかしたとき / 作品を動かすと: the start is 作品を動かしたとき、 (FM2-11).
+    p=/^(?:作品|さくひん)を(?:うごか|動か)(?:した(?:とき|ら)|すと|すとき|したら)、?(.*)$/.exec(code);
+    if(p&&heads('作品を動かしたとき、'+p[1]))
+      return sentenceDiagnostic('「▶ 動かす」を おした ときに 始めるときは、「作品を動かしたとき、」と 書きます',line,[{label:'「作品を動かしたとき、」に する',source:'作品を動かしたとき、'+p[1]}],{kind:'Script'});
+    // 「スタート」を受けとったとき: a signal is received with 「スタート」という合図を受けたとき、.
+    p=/^(「[^「」]+」)(?:を|の合図を)(?:受けとった|受け取った|うけとった|受けた|うけた|もらった)(?:とき|ら)、?(.*)$/.exec(code);
+    if(p&&heads(p[1]+'という合図を受けたとき、'+p[2]))
+      return sentenceDiagnostic(`合図を 受けた ときに 始めるときは、「${p[1]}という合図を受けたとき、」と 書きます`,line,[{label:'「〜という合図を受けたとき、」に する',source:p[1]+'という合図を受けたとき、'+p[2]}],{kind:'Script'});
     p=/^(?:クリックした(?:とき|ら)|クリックする(?:と|たびに)|クリックすると)、?(.*)$/.exec(code);
     if(p&&heads('おされたとき、'+p[1]))
       return sentenceDiagnostic('この 部品が おされた ときに 始めるときは、「おされたとき、」と 書きます',line,[{label:'「おされたとき、」に する',source:'おされたとき、'+p[1]}],{kind:'Script'});
@@ -2975,7 +3029,13 @@
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError){sentenceReadError(error,line);if(!error.line){error.line=line.lineNo;error.column=error.column||1;}}throw error;}};
     let first=nextCode(0),heading=null,headingActorRange=null,headingTargetRange=null,headingWritten=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>{let read=null,failure=null;try{read=readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx);}catch(error){if(!(error instanceof AkariError)||error.proposals?.length)throw error;failure=error;}if(read)return read;const slip=headingSlip(lines[first],symbols,ctx);if(slip)throw slip;if(failure)throw failure;return null;});if(found){heading=found.heading;const line=lines[first];headingWritten=writtenSentence(line);if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.target)headingTargetRange=sourceRange(line.mapped?.positions||[],found.target.start,found.target.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、」などの 次の 行は、行の はじめを 右へ ずらして 書きます',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>{let read=null,failure=null;try{read=readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx);}catch(error){if(!(error instanceof AkariError)||error.proposals?.length)throw error;failure=error;}if(read)return read;const slip=headingSlip(lines[first],symbols,ctx);if(slip)throw slip;if(failure)throw failure;return null;});
+      // 動かすがおされたとき / スタートボタンがおされたとき: the ▶ button is no part (FM2-14); its heading is 作品を動かしたとき、.
+      const pressed=found?.heading?.event==='click'&&found.heading.actorRef?.kind==='named'?found.heading.actorRef.name:null;
+      if(pressed&&/^(?:▶\s*)?(?:動かす|うごかす|スタート|はじめる)(?:ボタン)?$/.test(pressed)&&symbols?.project&&!symbols.project.components.some(c=>c.name===pressed)&&!namesStage(symbols.project,pressed)){
+        const source='作品を動かしたとき、'+(found.body?.text||'');
+        throw sentenceDiagnostic('「▶ 動かす」を おした ときに 始めるときは、「作品を動かしたとき、」と 書きます',lines[first],[{label:'「作品を動かしたとき、」に する',source}],{kind:'Script'});}
+      if(found){heading=found.heading;const line=lines[first];headingWritten=writtenSentence(line);if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.target)headingTargetRange=sourceRange(line.mapped?.positions||[],found.target.start,found.target.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、」などの 次の 行は、行の はじめを 右へ ずらして 書きます',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','「もし」や「くり返す」の 中に、ブロックが 重なりすぎています。いくつかの 動きに 分けてください',lines[start]?.lineNo||1,1);
