@@ -42,7 +42,8 @@
       // The name is the one the child wrote before が (もし点数が…), else the work's own data.
       const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
         own = /^[ 　\t]*(?:もし)?([^\s　、。「」（）【】]+?)が/.exec(line)?.[1];
-      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【' + (own || names.value?.replace(/^【|】$/g, '') || '点数') + '】が10より大きい';
+      const name = own || names.value?.replace(/^【|】$/g, '');
+      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。' + (name ? 'れい：【' + name + '】が10より大きい' : '');
     }
     if (/言う ことは「「文字」と言う」/.test(message))
       return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。' + (names.value ? 'へんすうの 中身を 話すときは「' + names.value + 'を言う」のように 書きます。' : '');
