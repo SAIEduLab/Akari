@@ -1895,11 +1895,13 @@
           }
         }
         // 「ド」を鳴らす in a work with a sound ド and data named ド (final call 29): the sentence plays the sound; the data is
-        // never used there (I132). With no sound ド the check stops instead (S301), so I131 is gone.
+        // never used there (I132). With no sound ド the check stops instead (S301), so I131 is gone. Every name written as
+        // a sound's name is told of, not only ドレミ (LANGUAGE.md 音と待機): 「ベル」を鳴らす with a variable ベル plays the
+        // sound ベル. A bare data name (曲を鳴らす) is read as that data, so it is not a sound's name and gets no notice.
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
           const arg = n.args?.[0], name = arg?.kind === 'StringLiteral' ? arg.value : null;
           const owner = project.components.find(c => c.id === item.targetId)?.localData;
-          const data = name === null || !Object.hasOwn(SOLFEGE_HZ, name) ? null
+          const data = name === null ? null
             : [project.projectData, owner].filter(Boolean).some(d => d.variables.some(v => v.name === name)) ? 'variable'
             : [project.projectData, owner].filter(Boolean).some(d => d.lists.some(l => l.name === name)) ? 'list' : null;
           if (data && project.sounds.some(s => s.name === name))
