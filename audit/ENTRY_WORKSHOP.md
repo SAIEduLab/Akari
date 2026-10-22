@@ -4,7 +4,7 @@
 
 | 要件ID | 根拠・期待値 | 実装箇所 | 試験ID・起動先 | 証拠 |
 |---|---|---|---|---|
-| ENTRY-SETTINGS | 初回のみブロック表示の「はじめて」。保存済みの「かんたん」「くわしく」を保つ。「はじめて」はブロック表示だけで、「コード」「ブロック」の切りかえを出さない | normalizeEntryUiLevel、uiLevelハンドラー | entry-workshop-core / ENTRY-SETTINGS、entry-workshop-browser / ENTRY-MODE-PRESERVATION | entry-unit.json、entry-browser.json |
+| ENTRY-SETTINGS | 初回のみブロック表示の「はじめて」。保存済みの「かんたん」「くわしく」を保つ。「はじめて」はブロックモードだけで、見せ方の切りかえボタン（「ブロックモード ⇄」）を押してもコードモードにせず、ボタンの下に「コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね」と出す | normalizeEntryUiLevel、uiLevelハンドラー | entry-workshop-core / ENTRY-SETTINGS、entry-workshop-browser / ENTRY-MODE-PRESERVATION | entry-unit.json、entry-browser.json |
 | ENTRY-SURFACE | 左ブロック・中央編集・右作品と部品。常設操作、内部スクロール | 入門CSS、renderEntrySurface、syncEditorShell | ENTRY-FIRST-VIEW | 1280×720、1366×768、1920×1080の画像と領域境界 |
 | ENTRY-CATALOG | 入門集合と通常基本を別に検証。既存本文を削除しない | ENTRY_BLOCK_SCHEMA_IDS、BASIC_BLOCK_SCHEMA_IDS、renderPalette | ENTRY-CATALOG、ENTRY-MODE-PRESERVATION、既存search-bindings | スキーマ列、本文・履歴比較 |
 | EDITOR-APPEND | 明示挿入点が優先、未指定は最上位末尾。選択を挿入点扱いしない | 既存defaultDestination、paletteAdd、prepareBlockEdit、追加後focus | EDITOR-APPEND-POSITION、既存ux-insertion-context-browser | 追加・Undo/Redo、明示点・入れ子・原文の比較 |
