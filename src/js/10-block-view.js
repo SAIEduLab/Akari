@@ -331,6 +331,10 @@
       // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
+    // Only 決める and やめる take a press: the words around them (a mistake shown right under the field may lie over the
+    // next block) let it through to what is under them, so pressing another field starts it (E2-02).
+    controls.style.pointerEvents = 'none';
+    for (const b of [commitButton, cancelButton]) b.style.pointerEvents = 'auto';
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
