@@ -1514,7 +1514,8 @@
       }
       if (parts && schema.id === 'BuiltinCall:LENGTH' && listCountFace(node))
         return parts.map((part) => (typeof part === 'string' ? part.replace(/^の長さ$/, 'の数') : part));
-      if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
+      // 答えを もとめる too: （【ごうけい】で求めた答え） (F2-02).
+      if (!parts || !['UserActionCall', 'UserFunctionCall'].includes(schema.kind) || node?.inputs?.args?.length) return parts;
       return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
     }
     function paletteLabel(schema) {
@@ -1638,9 +1639,12 @@
                   : [value];
               for (const [i, child] of children.entries()) {
                 if (i) main.append(doc.createTextNode(slot.separator || '、'));
-                // A key shows by the keyboard's name, as in the workspace (F-34).
+                // A key shows by the keyboard's name, as in the workspace (F-34); the part to go to is in 「 」, as the
+                // placed block's choice and the code write it, and the mouse is マウス (R2-B-11).
                 const text =
-                  (schema.id === 'SensorRead:KEY_DOWN' && child?.schemaId === 'StringLiteral' ? keySurface(child.fields.value) : scalar(child)) ??
+                  (schema.id === 'SensorRead:KEY_DOWN' && child?.schemaId === 'StringLiteral' ? keySurface(child.fields.value)
+                    : schema.id === 'MotionCommand:GOTO_PART' && child?.schemaId === 'StringLiteral' && child.fields.value !== 'マウス' ? '「' + child.fields.value + '」'
+                    : scalar(child)) ??
                   (slot.type === 'target'
                     ? child?.fields?.name || 'へんすう'
                     : slot.labels?.[part.index ?? i] || slot.label);
@@ -2812,7 +2816,8 @@
     }
     function valueTools(location, label, child) {
       const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の中身の しゅるい', 'data-blockui-value-type': 'true' });
-      for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','計算']])
+      // A calculation goes in with 「計算を入れる」 next to it, the one control for it (F2-17).
+      for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前']])
         types.append(E('option', '', text, { value }));
       types.disabled = isLocked();
       listen(types, 'change', () => {
@@ -2894,7 +2899,8 @@
       if (actor) main.append(fieldControl(node, actor));
       // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く,
       // 前へ進む or a 〜のところへ行く of a work made at another level); a time already written can always be taken off.
-      const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
+      // 後ろへ reads 動く, so its time is 時間をかけて動く (R2-B-11).
+      const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: node.fields.direction === 'backward' ? '時間をかけて動く' : '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
       if (node.inputs.seconds) {
         quantity('seconds', '秒'); main.append(text('かけて、'));
         extraControls.append(button('時間を外す', 'motion-untimed', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'seconds' })));
@@ -3035,7 +3041,7 @@
       head.append(E('strong', 'blockui-node-title', schema.label), nodeTools(node, info));
       if(schema.category==='script'){
         const heading=node.fields.heading,actor=heading?.actorRef?.kind==='named'?heading.actorRef.name:project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name;
-        head.querySelector('strong').textContent=`${actor}・${eventText(heading?.event||context().event||'start',heading?heading.filter:context().filter)}`;
+        head.querySelector('strong').textContent=`${actor}・${headingTitle(heading?.event||context().event||'start',heading?heading.filter:context().filter)}`;
       }
       box.append(head);
       box.classList.toggle('blockui-selected', selected === node.id);
@@ -3130,7 +3136,8 @@
             const current=node.inputs.value,
               shown=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
             data.append(E('option','','文字を話す',{value:'literal'}));
-            if(!entry||shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
+            // A calculation is put in with 「計算を入れる」 (F2-17): this choice only names one that is there.
+            if(shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
             for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の いまの中身',{value:String(i)}));
             data.value=shown;
             if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
@@ -3206,15 +3213,16 @@
           renderMotionBlock(node, schema, main);
         else if (schema.draftOnly) {
           box.classList.add('blockui-draft-hole');
-          const info = index.get(node.id), label = node.fields.label || schema.label;
-          main.append(E('span', 'blockui-hole-label', '〔' + label + 'を えらぶ〕'));
+          const info = index.get(node.id), label = node.fields.label || schema.label,
+            holeLabel = () => E('span', 'blockui-hole-label', '〔' + label + 'を えらぶ〕');
+          // The hole is one control with one wording: 〔くり返すことを えらぶ〕 (F2-18).
+          const holeButton = (action, aria) => { const b = button('', action, () => chooseDestination(listLocation(info)), { 'aria-label': aria }); b.append(holeLabel()); return b; };
           if (schema.category === 'statement' && info?.body)
-            main.append(button('することを えらぶ', 'hole-select-statement',
-              () => chooseDestination(listLocation(info)), { 'aria-label': label + 'に ブロックを入れる' }));
+            main.append(holeButton('hole-select-statement', label + 'に ブロックを入れる'));
           else if (schema.category === 'expression' && info?.input)
-            main.append(button('中身を えらぶ', 'hole-select-expression',
-              () => chooseDestination(listLocation(info)), { 'aria-label': label + 'の中身を えらぶ' }));
+            main.append(holeButton('hole-select-expression', label + 'の中身を えらぶ'));
           else if (schema.category === 'target' && info?.input) {
+            main.append(holeLabel());
             const picker = E('select', '', null, { 'aria-label': label + 'を えらぶ', 'data-blockui-hole-target': node.id });
             picker.append(E('option', '', 'かえるものを えらぶ', { value: '' }));
             for (const name of namesFor(node, { type: 'name' })) picker.append(E('option', '', name, { value: name }));
@@ -3226,7 +3234,7 @@
             });
             main.append(picker);
             if(options.onData)main.append(button('＋ へんすう・リストを作る','create-data',()=>options.onData()));
-          }
+          } else main.append(holeLabel());
         } else {
           // Existing phrase/alias presentation is retained. Optional new roles
           // are explicit controls without being hidden by cached legacy text.
@@ -3683,6 +3691,13 @@
       svg.append(path);
       box.prepend(svg);
     }
+    // A key or a signal body names its key or signal, as a touch body names what it touches (F2-04): 「右」キーを おしたとき,
+    // 「開始」という 合図を 受けたとき (the code writes 「開始」という合図を受けたとき、).
+    function headingTitle(event, filter) {
+      if (event === 'keyDown' && typeof filter?.key === 'string') return '「' + keySurface(filter.key) + '」キーを おしたとき';
+      if (event === 'message' && typeof filter?.message === 'string') return '「' + filter.message + '」という 合図を 受けたとき';
+      return eventText(event, filter);
+    }
     function eventHat() {
       const ctx = context(),
         p = project(),
@@ -3700,7 +3715,7 @@
           'strong',
           '',
           kind === 'script'
-            ? eventText(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
+            ? headingTitle(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
             : kind === 'function'
               ? 'この ブロックで 答えを 出すとき'
               : 'この ブロックを 使ったとき',
