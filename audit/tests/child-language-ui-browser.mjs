@@ -393,10 +393,13 @@ const cases = {
         for(const term of reading){assert.equal(term.rects,1,'term keeps a natural whole');assert.equal(term.whiteSpace,'nowrap');}
         await summary.press('Enter'); assert.deepEqual(await state(p),before);
         // ■ 止める shows on the run screen only, in ▶'s place: it is measured there, at the same sizes and in both views.
-        const runAt=await p.locator('#runBtn').boundingBox();
+        const runAt=await p.locator('#runBtn').boundingBox(),scrollBefore=await p.evaluate(()=>({x:scrollX,y:scrollY}));
         await click(p,'#runBtn'); await p.waitForFunction(()=>document.body.classList.contains('runtime')&&!!document.querySelector('#stopBtn').getClientRects().length);
         const stop=p.locator('#stopBtn'),stopAt=await stop.boundingBox(),runScreen={runAt,stopAt,stopBtn:await reachable(stop),stopHit:await stop.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e===hit||e.contains(hit);}),runShown:await p.locator('#runBtn').isVisible()};
         await pressStop(stop); await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'); assert.deepEqual(await state(p),before,'running and stopping keep the work');
+        // At 390x844 the run screen scrolls the page and ■ leaves it there (動かすもの then sits under the bar); the scroll
+        // left by the run is recorded, and the page goes back to where the child was, so the edit screen is observed as before.
+        runScreen.scrollLeftByRun=await p.evaluate(b=>scrollY-b.y,scrollBefore);await p.evaluate(b=>scrollTo(b.x,b.y),scrollBefore);
         observations.push({viewport,mode,controls,runScreen,help,reading,tailReach});
       }
       await shot(p,'child-words-'+viewport.width);

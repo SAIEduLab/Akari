@@ -188,7 +188,10 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   for(const key of ['hasTouch','actualTouchscreenTap','editingPreserved'])assert.equal(touch[key],true);
   assert.deepEqual(touch.viewport,{width:390,height:844}); bounds(touch.touchTarget,touch.viewport,24);readable(touch.help,8);
   panelReach(touch.tailReach,'native-touch',true);
-  assert.ok(Array.isArray(report.artifacts)&&report.artifacts.length>=9,'visual artifacts include paint and both ends of the touch explanation');
+  // Every screenshot the run takes, by name: paint, both ends of the touch explanation and one per responsive viewport.
+  assert.ok(Array.isArray(report.artifacts),'visual artifacts are listed');
+  assert.deepEqual(report.artifacts.map(a=>String(a.path).split('/').pop()),['child-data-examples','child-procedure-examples','child-paint-transparent','child-materials',
+    ...[1180,1188,1024,768,390].map(w=>'child-words-'+w),'child-touch-help-top','child-touch-help-tail'].map(n=>n+'.png'),'visual artifacts include paint, every responsive viewport and both ends of the touch explanation');
   assert.equal(new Set(report.artifacts.map(a=>a.path)).size,report.artifacts.length,'each visual artifact has its own file');
   for(const artifact of report.artifacts){assert.ok(typeof artifact.path==='string'&&artifact.path.endsWith('.png'));assert.match(artifact.sha256,/^[a-f0-9]{64}$/);}
   if(environment==='linux')assert.ok(!report.limitations.some(s=>s.includes('Linuxでは未実施')),'Linux result cannot claim unexecuted Linux');

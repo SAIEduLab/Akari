@@ -89,8 +89,9 @@ export function verifyChildLanguage(r,inputs,provenance,file,inventory){
     'child-block-words-open':editor,'child-paint-transparent':['paintShape','paintUndo','paintRedo','paintCancel','paintCommit'],
     'child-materials':['imageObjectAdd','paintAdd','soundQuickAdd'],
     'child-words-1180':editor,'child-words-1188':editor,'child-words-390':editor,
-    'child-touch-help-top':['saveActionHelp','exportActionHelp','dataActionHelp'],
-    'child-touch-help-tail':['bodyActionHelp','dataActionHelp'],
+    // The I5 help panel ends with the three size helps (画面・部品・作業台の 大きさ); 本文 now shows in its first screen.
+    'child-touch-help-top':['saveActionHelp','exportActionHelp','dataActionHelp','bodyActionHelp'],
+    'child-touch-help-tail':['stageSizeHelp','resizeHelp','workspaceSizeHelp'],
   };
   for(const [name,ids]of Object.entries(regions)){
     const frames=r.uiInventoryFrames.filter(f=>f.name===name);assert.equal(frames.length,1,'fixed observed UI region '+name);
