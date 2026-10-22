@@ -2746,7 +2746,7 @@ body[data-editor-mode] .editor-modes button {
   font-weight: 700;
   color: var(--muted);
 }
-body[data-editor-mode] .editor-modes button[aria-pressed="true"] {
+body[data-editor-mode] .editor-modes > :is(#editorModecode, #editorModeblocks, #callableModecode, #callableModeblocks) {
   background: #fff;
   color: var(--dark);
   box-shadow: 0 2px 8px #41302019;
@@ -5518,7 +5518,8 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 #runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }
 #runtimeInspector::backdrop { background:#24344966; }
 .runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
-#runtimeInspectorModes { margin-left:auto; }
+#runtimeInspectorModes { position:relative; margin-left:auto; }
+#runtimeInspectorModes > .mode-blocked-note { position:absolute; top:calc(100% + 6px); right:0; z-index:2; width:max-content; max-width:min(20rem, 90vw); box-shadow:0 6px 16px #18364b30; }
 #runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
 #runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; grid-column:1; grid-row:1; }
 #runtimeInspectorBody > .monitor-window { grid-column:2; grid-row:1; }
@@ -5846,9 +5847,9 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
 }
 
-/* ── Toolbar: コード/ブロック, the level and the work name are pinned to the top-right corner, left to right, so
-   they stay in the same place in every view, width and font. The level's place does not move when the toggle is not
-   shown (はじめて, a 名人 work); its free space joins the left. Only the action buttons on the left wrap. ── */
+/* ── Toolbar: the view toggle (ブロックモード ⇄ / コードモード ⇄), the level and the work name are pinned to the
+   top-right corner, left to right, so they stay in the same place in every view, level, width and font. Only the action
+   buttons on the left wrap. ── */
 @media (min-width: 701px) {
   body[data-editor-mode] .menutool {
     --tb-pad: 18px;
@@ -5857,9 +5858,6 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     --tb-modes: 176px;
     --tb-level: 100px;
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + var(--tb-level) + 3 * var(--tb-gap));
-  }
-  body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
-    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
   /* The run screen shows neither the level nor the toggle (they change nothing there), but keeps their room, so the
      buttons wrap as on the edit screen and ■ 止める comes where ▶ 動かす was. */
@@ -5956,8 +5954,11 @@ body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { displ
 body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
 body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
-:is(#editorModeblocks, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
-/* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
+/* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */
+.editor-modes > button[hidden] { display: none !important; }
+:is(#editorModecode, #editorModeblocks, #callableModecode, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
+/* Why the toggle does not switch (はじめて, a 名人 work, a mistake in the code): shown under it after a press of the pale
+   toggle. */
 .mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
 .mode-blocked-note[hidden] { display: none !important; }
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }

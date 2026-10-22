@@ -376,10 +376,8 @@
       if([...select.options].map(o=>o.value).join()!==choices.join())
         select.replaceChildren(...choices.map(level=>{const option=document.createElement('option');option.value=level;option.textContent=UI_LEVEL_NAMES[level];return option;}));
       select.value=value;
-      // The コード／ブロック toggle is not shown where it can do nothing: at はじめて (blocks only) and in a 名人 work (code only),
-      // which also holds for the 自分で作ったブロック editor.
-      $('#editorModecode').parentElement.hidden=meijin||baseUiLevel==='entry';
-      $('#callableModecode').parentElement.hidden=meijin;
+      // The コード／ブロック toggle is shown at every level: where it cannot switch (はじめて, a 名人 work) a press says why.
+      if(mainEditor.session)paintBindingModeToggle(mainEditor);
       return before!==undefined&&before!==document.body.dataset.uiLevel;
     }
     // The chosen level in the form the work's editor state keeps (はじめて is kept as かんたん).
@@ -1414,23 +1412,7 @@
         : $('.code-assist .hint-panel');
       hint.hidden = blocks;
       const invalidCodePending = session.pendingEdit?.kind === 'code' && !session.blockDraft;
-      for (const mode of ['code', 'blocks']) {
-        const b = $(draft ? `#callableMode${mode}` : `#editorMode${mode}`);
-        b.setAttribute('aria-pressed', String(session.mode === mode));
-        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
-        // A code error keeps ブロック where it is, in a pale colour; a press says why under the toggle (modeBlockedNote)
-        // instead of switching. It is not hidden, so the toggle does not flicker while the child types.
-        const refused = mode === 'blocks' && (!session.syntaxAst || invalidCodePending);
-        if (refused) {
-          b.setAttribute('aria-disabled', 'true');
-          b.setAttribute('aria-describedby', modeBlockedNote(binding).id);
-        } else {
-          b.removeAttribute('aria-disabled');
-          b.removeAttribute('aria-describedby');
-          modeBlockedNote(binding).hidden = true;
-        }
-        b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
-      }
+      paintBindingModeToggle(binding);
       if (!draft) {
         // いつ動く？ opens the block view as well, so a code error makes it pale in the same way; a press says why under
         // it (headingBlockedNote) instead of doing nothing.
@@ -1467,8 +1449,55 @@
         try { localStorage.setItem(STORAGE_KEYS.editorMode, mode); } catch (_) {}
       }
     }
-    // The note under a コード／ブロック toggle that says why ブロック does not open: it shows on a press of the pale ブロック
-    // and goes away at the next press or key anywhere.
+    // The コード／ブロック toggle (final call 22) is one button that shows the view on the screen with ⇄: 「ブロックモード ⇄」
+    // or 「コードモード ⇄」. A press switches to the other view, and the label follows. Of the group's two buttons only the
+    // one that switches away from the view shown is there (…Modecode in blocks, …Modeblocks in code); its name says the
+    // view. Where a press cannot switch (はじめて, a work with a 名人 text, a mistake in the code) the button is pale, and
+    // a press keeps the view and says why under it (modeBlockedNote).
+    const VIEW_NAMES = { blocks: 'ブロックモード', code: 'コードモード' };
+    const MODE_REFUSALS = {
+      entry: 'コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね',
+      meijin: '名人は、コードモードで だけ 使えるよ',
+      error: 'コードの 赤い ところを 直すと、ブロックに もどれるよ',
+    };
+    function modeRefusal(binding, shown, codeError = false) {
+      if (binding === mainEditor && shown === 'blocks' && document.body.dataset.uiLevel === 'entry') return 'entry';
+      if (workIsMeijin()) return 'meijin';
+      return shown === 'code' && codeError ? 'error' : null;
+    }
+    // The toggle of an editor as it is now: the list of all bodies shows the chosen view; a code error keeps the toggle
+    // where it is, in a pale colour, so it does not flicker while the child types.
+    function paintBindingModeToggle(binding) {
+      const session = binding.session;
+      if (!session) return;
+      if (binding === mainEditor && sourceOverviewOpen) { const shown = chosenEditorMode(); paintModeToggle(binding, shown, modeRefusal(binding, shown)); return; }
+      const codeError = !session.syntaxAst || (session.pendingEdit?.kind === 'code' && !session.blockDraft);
+      paintModeToggle(binding, session.mode, modeRefusal(binding, session.mode, codeError));
+    }
+    function paintModeToggle(binding, shown, refusal) {
+      const prefix = binding.kind === 'draft' ? 'callable' : 'editor', note = modeBlockedNote(binding);
+      for (const mode of ['code', 'blocks']) {
+        const b = $(`#${prefix}Mode${mode}`), here = mode !== shown, label = VIEW_NAMES[shown] + ' ⇄';
+        b.hidden = !here;
+        if (!here) continue;
+        if (b.textContent !== label) b.textContent = label;
+        b.setAttribute('aria-label', VIEW_NAMES[shown]);
+        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        if (refusal) {
+          if (note.textContent !== MODE_REFUSALS[refusal]) note.textContent = MODE_REFUSALS[refusal];
+          b.setAttribute('aria-disabled', 'true');
+          b.setAttribute('aria-describedby', note.id);
+          b.removeAttribute('title');
+        } else {
+          b.removeAttribute('aria-disabled');
+          b.removeAttribute('aria-describedby');
+          b.title = `おすと、${VIEW_NAMES[mode]}に かわるよ`;
+          note.hidden = true;
+        }
+      }
+    }
+    // The note under a コード／ブロック toggle that says why it does not switch: it shows on a press of the pale toggle and
+    // goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
     function modeBlockedNote(binding) {
       const id = binding.kind === 'draft' ? 'callableModeBlockedNote' : 'modeBlockedNote';
       let note = document.getElementById(id);
@@ -1478,9 +1507,12 @@
         note.className = 'mode-blocked-note';
         note.setAttribute('role', 'status');
         note.hidden = true;
-        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
         if (binding.kind === 'draft') $('#callableModecode').parentElement.after(note);
         else $('.menutool').append(note);
+      }
+      if (binding.kind !== 'draft') {
+        const host = $('#editorModecode').closest('#runtimeInspectorModes') || $('.menutool');
+        if (note.parentElement !== host) host.append(note);
       }
       return note;
     }
@@ -1513,13 +1545,13 @@
       document.addEventListener('keydown', hide, true);
     }
     function switchEditorMode(binding, mode) {
-      // A work with a 名人 text is code only, for every body (the toggle is not shown there).
+      // A work with a 名人 text is code only, for every body; はじめて is blocks only (the toggle says so, paintModeToggle).
       if (mode === 'blocks' && workIsMeijin()) {
-        setStatus('名人の 本文が ある 作品は、コードで 書くよ。');
+        setStatus(MODE_REFUSALS.meijin);
         return false;
       }
       if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
-        setStatus('コードを 見るときは、「かんたん」か「くわしく」を えらんでね。');
+        setStatus(MODE_REFUSALS.entry);
         return false;
       }
       const draftSession = binding.session;
@@ -2803,10 +2835,7 @@
     }
     function renderSourceOverview() {
       if (!sourceOverviewOpen) return;
-      for (const mode of ['code', 'blocks']) {
-        $('#editorMode' + mode).setAttribute('aria-pressed', String(chosenEditorMode() === mode));
-        $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState)||(mode==='code'&&document.body.dataset.uiLevel==='entry');
-      }
+      paintBindingModeToggle(mainEditor);
       const signature = JSON.stringify([selectedId, editorContextRevision, chosenEditorMode(), modelLocked(), hasCallableDraft() ? callableDraftCore : null]);
       if (sourceOverviewSignature === signature) return;
       sourceOverviewSignature = signature;
