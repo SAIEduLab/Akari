@@ -54152,6 +54152,684 @@
       }
     },
     {
+      "id": "MC-716",
+      "item": "MI-329",
+      "kind": "check",
+      "title": "「ねこと犬と鳥は、順番に、「やあ」と1秒話す。」は止まらず、一人ずつにするときはリストに入れて書くと知らせる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品チェックは、名人の本文の次の文に、実行・保存・書き出しを止めない知らせを出します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語をならべた文の「順番に」（`ねこと犬と鳥は、順番に、「やあ」と1秒話す。`）。主語をならべた文は同時に始めるので、「順番に」は一人ずつにはなりません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "知らせは「一人ずつ じゅんばんに するときは、「なかまを、ねこと犬と鳥にする。」と リストに 入れて、「なかまは、順番に、…」と 書きます。」です。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "知らせは、表の「書いたもの」の文の行に出します。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこと犬と鳥は、順番に、「やあ」と1秒話す。\nねこは「おわり」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": false,
+        "notices": [
+          {
+            "line": 1,
+            "contains": "一人ずつ じゅんばんに するときは、「なかまを、ねこと犬と鳥にする。」と リストに 入れて"
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-717",
+      "item": "MI-329",
+      "kind": "run",
+      "title": "「ねこと犬と鳥は、順番に、「やあ」と1秒話す。」は三つが同時に（並べた順に）話し始め、1秒たってから次の文へ進む",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語をならべた文の「順番に」（`ねこと犬と鳥は、順番に、「やあ」と1秒話す。`）。主語をならべた文は同時に始めるので、「順番に」は一人ずつにはなりません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "同じ時刻に始めた動作は、書いた順に行います（主語を並べた文は並べた順、「次のことを同時に始める」は行の順、「みんな」「それぞれ」は集まりの順）。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語を並べた文、「〜あいだ」「〜うちに」「〜ながら」「次のことを同時に始める」は、どれも書いた動作を同時に始めます。全部が終わってから、次の文へ進みます"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこと犬と鳥は、順番に、「やあ」と1秒話す。\nねこは「おわり」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 1500
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "やあ",
+            "atMs": 0
+          },
+          {
+            "part": "犬",
+            "text": "やあ",
+            "atMs": 0
+          },
+          {
+            "part": "鳥",
+            "text": "やあ",
+            "atMs": 0
+          },
+          {
+            "part": "ねこ",
+            "text": "おわり",
+            "atMs": 1000
+          }
+        ],
+        "tolerance": {
+          "ms": 5
+        }
+      }
+    },
+    {
+      "id": "MC-718",
+      "item": "MI-329",
+      "kind": "check",
+      "title": "リスト【海のない県】の中身を書いた「候補から【海のない県】を全部消す。」は止まらず、中身を一つずつ消す書き方を知らせる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品チェックは、名人の本文の次の文に、実行・保存・書き出しを止めない知らせを出します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "リストの中身を書いた「〜から…を全部消す」（`候補から【海のない県】を全部消す。` で【海のない県】がリストのとき）。リストの中にリストは入らないので、何も消えません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "知らせは「リストの 中身を 一つずつ 消すときは、「【海のない県】の中身を先頭から一つずつ見て、次のことを行う。」の 中に「候補から【県】を全部消す。」と 書きます。」です。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": [],
+          "候補": [
+            "北海道",
+            "奈良"
+          ],
+          "海のない県": [
+            "奈良"
+          ]
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "候補から【海のない県】を全部消す。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": false,
+        "notices": [
+          {
+            "line": 1,
+            "contains": "リストの 中身を 一つずつ 消すときは、「【海のない県】の中身を先頭から一つずつ見て、次のことを行う。」の 中に"
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-719",
+      "item": "MI-329",
+      "kind": "run",
+      "title": "「候補から【海のない県】を全部消す。」は、リストの中にリストは入らないので何も消さない",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "リストの中身を書いた「〜から…を全部消す」（`候補から【海のない県】を全部消す。` で【海のない県】がリストのとき）。リストの中にリストは入らないので、何も消えません。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": [],
+          "候補": [
+            "北海道",
+            "奈良"
+          ],
+          "海のない県": [
+            "奈良"
+          ]
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "候補から【海のない県】を全部消す。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "final": {
+          "lists": {
+            "候補": [
+              "北海道",
+              "奈良"
+            ]
+          },
+          "runtimeErrors": "none"
+        }
+      }
+    },
+    {
+      "id": "MC-720",
+      "item": "MI-329",
+      "kind": "check",
+      "title": "「「つぎの日の朝」になったとき、」は止まらず、何がそうなるかを書くよう知らせる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品チェックは、名人の本文の次の文に、実行・保存・書き出しを止めない知らせを出します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜になったとき、」の前に条件でないもの（`「つぎの日の朝」になったとき、`）を書いた見出し。何がそうなるかがないので、作品を動かしたときにR411で止まります。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "知らせは「何が そう なるかを 書きます。れい：場面が「つぎの日の朝」になったとき、」です。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "「つぎの日の朝」になったとき、ねこは「おはよう」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": false,
+        "notices": [
+          {
+            "line": 1,
+            "contains": "何が そう なるかを 書きます。れい：場面が「つぎの日の朝」になったとき、"
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-721",
+      "item": "MI-329",
+      "kind": "run",
+      "title": "「「つぎの日の朝」になったとき、」の作品を動かすと、R411 で止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜になったとき、」の前に条件でないもの（`「つぎの日の朝」になったとき、`）を書いた見出し。何がそうなるかがないので、作品を動かしたときにR411で止まります。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "「つぎの日の朝」になったとき、ねこは「おはよう」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "speech": [],
+        "final": {
+          "runtimeErrors": [
+            "R411"
+          ]
+        }
+      }
+    },
+    {
       "id": "MC-750",
       "item": "MI-186",
       "kind": "run",
