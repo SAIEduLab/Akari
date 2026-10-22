@@ -1011,7 +1011,7 @@
     const sentence = text => /[。？！]$/.test(text) ? text : text + '。';
     function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null, { listItem = false } = {}) {
       // A full-width colon after the place (F-26: no ASCII colon in child text).
-      const reason = childDiagnosticText(diagnostic, source),
+      const reason = childDiagnosticText(diagnostic, source, project),
         helpText = (location ? location + '：' : '') + (listItem ? sentence(reason) : reason),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
@@ -1087,7 +1087,7 @@
       // The status line speaks in Akari's voice (F-18): in code it points at the line and the explanation by the code,
       // which keeps the rule's own wording; a block view's message is said as it is.
       const firstDiagnostic = error?.diagnostics?.[0] || error, issueLine = firstDiagnostic?.line || error?.line;
-      editorFailureStatus = binding.session?.mode === 'blocks' ? childDiagnosticText(firstDiagnostic, binding.textarea?.value)
+      editorFailureStatus = binding.session?.mode === 'blocks' ? childDiagnosticText(firstDiagnostic, binding.textarea?.value, project)
         : issueLine ? `書き方に 直す ところが あるよ。コードの ${issueLine}行目を 見てね`
         : '書き方に 直す ところが あるよ。コードの 下の せつめいを 見てね';
       setStatus(editorFailureStatus);
@@ -4694,7 +4694,7 @@
       lead.textContent = entry ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。'
         : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。';
       reason.className = 'failure-reason'; place.className = 'failure-place'; why.className = 'failure-why';
-      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r, diagnosticSource(r));
+      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r, diagnosticSource(r), project);
       reason.append(place, why);
       const latest = r.id === scheduler.errorRecords.at(-1)?.id, sentence = diagnosticSentence(r),
         framed = latest && !!document.querySelector('#blockEditor .blockui-current');
@@ -8176,7 +8176,7 @@
         p = draft ? 'callable' : 'editor';
       binding.view = createBlockEditorView({
         // A notice's rewrite by the block (I120, p2 Q5 (d)) is the same as the one under the code and in 作品チェック.
-        onNoticeFix: (note, proposal) => applyNoteProposal(note, proposal),
+        onNoteProposal: (note, proposal) => applyNoteProposal(note, proposal),
         onExpand:
           binding.kind === 'script'
             ? () => {
