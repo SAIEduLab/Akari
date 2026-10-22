@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.5.0 名人モード</title>
+<title>あかり 1.5.0 名人</title>
 <style>
 :root{
   color-scheme:light;
@@ -244,21 +244,17 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header>
   <div class="header-inner">
-    <div class="kicker">AKARI 1.5.0 MEIJIN MODE</div>
-    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../MANUAL.html#meijin">名人モードの あらまし</a><a href="./code-mode-advanced.html">コードモード 上級</a><a href="../Akari_1_5_0.html">あかりを使う</a></div>
-<h1>名人モード</h1><section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
-  <h2>名人の 本文は、どの 部品にも 入らない</h2>
-  <p>名人の 本文は、キャラクターや 文字などの 部品にも、画面にも 入らない 本文だよ。「動かすもの」で「名人の本文」を えらぶと 開くよ。</p>
-  <p>文の はじめに「ねこは」「なかまは」のように だれが するかを 書いて、いくつもの 部品を 一つの 本文で 動かすよ。ふだんの 国語の 文に 近い 書き方が できるよ。</p>
-</section>
-    <p class="lead">名人モードは、コードで 書く 人の ための モードだよ。部品を 値として あつかい、いくつもの 動きを 同時に 始め、国語として 自然な 文で 作品を 書けるよ。そのかわり、ブロックには もどせないよ。</p>
+    <div class="kicker">あかり 1.5.0 · 名人</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../MANUAL.html#meijin">名人の あらまし</a><a href="./code-mode-advanced.html">コードモード 上級</a><a href="../Akari_1_5_0.html">あかりを使う</a></div>
+<h1>名人</h1>
+    <p class="lead">名人では、どの キャラクターにも 入らない 本文に、「ねこと だんごは、…」のように、いくつもの キャラクターの 動きを ふだんの 文で まとめて 書けるよ。コードモードで だけ 使えるよ。</p>
   </div>
 </header>
 
 <div class="layout">
   <nav aria-label="目次">
     <strong>目次</strong>
-    <a href="#what">名人モードって なに？</a>
+    <a href="#what">名人って なに？</a>
     <a href="#start">はじめ方と、もどせない こと</a>
     <a href="#rules">名人の 本文の きまり</a>
     <a href="#values">部品を <ruby>値<rt>あたい</rt></ruby>として 使う</a>
@@ -268,13 +264,18 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     <a href="#events">名人の きっかけ</a>
     <a href="#natural">国語として 自然な 書き方</a>
     <a href="#commands">名人の 命令</a>
-    <a href="#ng">名人モードでも 読めない 書き方</a>
+    <a href="#ng">名人でも 読めない 書き方</a>
     <a href="#trouble">こまったとき</a>
   </nav>
 
   <main id="main-content" tabindex="-1">
+    <section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
+      <h2>名人の 本文は、どの 部品にも 入らない</h2>
+      <p>名人の 本文は、キャラクターや 文字などの 部品にも、画面にも 入らない 本文だよ。「動かすもの」で「名人の本文」を えらぶと 開くよ。</p>
+      <p>文の はじめに「ねこは」「なかまは」のように だれが するかを 書いて、いくつもの 部品を 一つの 本文で 動かすよ。ふだんの 国語の 文に 近い 書き方が できるよ。名人の 本文は、ブロックには もどせないよ。</p>
+    </section>
     <section id="what">
-      <h2>名人モードって なに？</h2>
+      <h2>名人って なに？</h2>
       <p>ふだんの 本文は、一つの 部品の 本文だよ。「自分は」が その 部品で、ブロックと コードを 切りかえて 同じ 本文を なおせるよ。</p>
       <p>名人の 本文は、作品 ぜんたいを 動かす 人の 本文だよ。だれが するかを 文ごとに 書き、つぎのような ことが できるよ。</p>
       <div class="cards">
@@ -290,7 +291,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <h2>はじめ方と、もどせない こと</h2>
       <ol class="task-list">
         <li><strong>コードに する</strong>ブロックで「かんたん」か「くわしく」を えらんでから、「コード」を おすよ。名人に したい 本文を、本文らんで 開こう。本文が ない ときや 空の ときは、空の 名人の 本文が できるよ。</li>
-        <li><strong>コードで「名人」を えらぶ</strong>レベルを えらぶ ところで「名人」を えらぶと、「名人モードで 書くと、この本文は たくどんから はなれて、「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。」と たずねられるよ。「OK」で 名人の 本文に なるよ。「キャンセル」なら 何も かわらず、レベルも もとの ままだよ。</li>
+        <li><strong>コードで「名人」を えらぶ</strong>レベルを えらぶ ところで「名人」を えらぶと、「名人で 書くと、この本文は たくどんから はなれて、「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。」「名人で 書きますか？」と たずねられるよ。「OK」で 名人の 本文に なるよ。「キャンセル」なら 何も かわらず、レベルも もとの ままだよ。</li>
         <li><strong>書きはじめる</strong>部品の 本文を 名人に したときは、さいしょに「作品を動かしたとき、たくどんは、」のような 見出しが つくよ。だれの 動きだったかを 名人の 本文に のこすためだよ。見出しの 書き方が かわる ことも あるよ（「「スペース」キーをおしたとき、」は「「スペース」キーをおすたびに、たくどんは、」に、「「星」にふれたとき、」は「たくどんが「星」にふれたとき、たくどんは、」に なるよ）。本文が 空の ときは、見出しは つかないよ。</li>
       </ol>
       <div class="callout danger"><strong>もどせない よ：</strong>名人の 本文を ふつうの 本文に もどす ことは できないよ。まちがえて 名人に したときは、「↶ もとにもどす」で もどせるよ。</div>
@@ -458,7 +459,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     </section>
 
     <section id="ng">
-      <h2>名人モードでも 読めない 書き方</h2>
+      <h2>名人でも 読めない 書き方</h2>
       <p>つぎの 書き方は、プログラムの 意味が 一つに 決まらないので 止まるよ。作品チェックが 書き方を 教えてくれるよ。</p>
       <div class="table-scroll"><table>
         <thead><tr><th>書き方</th><th>なぜ 止まる？</th><th>こう 書こう</th></tr></thead>
@@ -484,13 +485,13 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <details><summary>「だれが するかを 書きます」と 出る</summary><p>動く・話す・音の 文の はじめに「ねこは」のような 主語を 書こう。前の 文の 主語を 引きつぐ ことも できるよ。</p></details>
       <details><summary>「〜秒ごとに」に へんすうを 使いたい</summary><p>「ずっとくり返す。」の 中に「間隔秒待つ。」と「点数を1ふやす。」を 書こう。へんすうが かわれば 間かくも かわるよ。</p></details>
       <details><summary>動きの 文が 読めない</summary><p>名人の 本文でも、動きの 文は ふつうの 本文と 同じだよ。「ねこは右へ10歩動く」ではなく「ねこは、いまのばしょから、右へ10歩動く。」と 書こう。</p></details>
-      <details><summary>きまりを くわしく 知りたい</summary><p>LANGUAGE.md の「名人モード」の 章に、名人の 本文の きまりが ぜんぶ 書いて あるよ。</p></details>
-      <div class="chapter-links"><a href="../MANUAL.html#meijin">← マニュアルの 名人モード</a><a href="./code-mode-advanced.html">コードモード 上級</a></div>
+      <details><summary>きまりを くわしく 知りたい</summary><p>LANGUAGE.md の「名人」の 章に、名人の 本文の きまりが ぜんぶ 書いて あるよ。</p></details>
+      <div class="chapter-links"><a href="../MANUAL.html#meijin">← マニュアルの 名人</a><a href="./code-mode-advanced.html">コードモード 上級</a></div>
     </section>
   </main>
 </div>
 <footer>
-  <p>あかり 1.5.0 の マニュアルです。名人モードの くわしい きまりは <a href="../LANGUAGE.md">LANGUAGE.md</a> の「名人モード」の 章を 見てね。</p>
+  <p>あかり 1.5.0 の マニュアルだよ。名人の くわしい きまりは <a href="../LANGUAGE.md">LANGUAGE.md</a> の「名人」の 章を 見てね。</p>
 </footer>
 </body>
 </html>
