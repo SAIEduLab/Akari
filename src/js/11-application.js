@@ -1943,6 +1943,25 @@
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));
+      // In the block view すべての本文・画面の本文・いつ動く？ and もとにもどす・やり直す (くわしく: and はじめに もどす) share one
+      // row. When the two groups do not fit side by side, もとにもどす… take the row under it (data-source-row-wrap), so
+      // no button lies under another and every label keeps one line (はばが 足りないときは 折り返します).
+      const sourceNav = code.querySelector(':scope > .source-nav'), debugbar = code.querySelector(':scope > .debugbar');
+      const groupWidth = (box) => {
+        const shown = [...box.children].filter((c) => c.getClientRects().length && getComputedStyle(c).position !== 'absolute');
+        if (!shown.length) return 0;
+        const s = getComputedStyle(box), px = (v) => parseFloat(v) || 0;
+        return shown.reduce((sum, c) => sum + c.getBoundingClientRect().width, 0) + (shown.length - 1) * px(s.columnGap)
+          + px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth) + px(s.marginLeft) + px(s.marginRight);
+      };
+      const placeSourceRow = () => {
+        const s = getComputedStyle(code), room = code.clientWidth - (parseFloat(s.paddingLeft) || 0) - (parseFloat(s.paddingRight) || 0) - (parseFloat(s.columnGap) || 0);
+        const wrap = String(document.body.dataset.editorMode === 'blocks' && groupWidth(sourceNav) + groupWidth(debugbar) > room + 0.5);
+        if (code.dataset.sourceRowWrap !== wrap) code.dataset.sourceRowWrap = wrap;
+      };
+      // A button shown or put away (a level, the list of all bodies) changes what the groups need, as a new width does.
+      const sourceRowObserver = new ResizeObserver(placeSourceRow);
+      for (const box of [code, sourceNav, debugbar, ...sourceNav.children, ...debugbar.children]) sourceRowObserver.observe(box);
       const undoButton = $('#undoBtn'), undoHome = document.createElement('span'),
         callableTitle = $('#procModal > .dialog > .win-title');
       undoButton.before(undoHome);

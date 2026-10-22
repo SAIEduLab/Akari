@@ -6035,9 +6035,13 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; align-items: flex-start; }
-/* When the row wraps at a narrow width, もとにもどす・やり直す keep their one-line labels. */
-body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > :is(#undoBtn, #redoBtn) { flex: none; white-space: nowrap; }
+/* When the row wraps at a narrow width, もとにもどす・やり直す (and はじめに もどす) keep their one-line labels. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > button { flex: none; white-space: nowrap; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
+/* The two groups do not fit side by side (placeSourceRow in installEditorShell): もとにもどす… take the row under
+   すべての本文…, so neither lies under the other. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-row-wrap="true"] > .source-nav { grid-column: 1 / -1; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-row-wrap="true"] > .debugbar { grid-row: 6; grid-column: 1 / -1; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending { grid-row: 7; }
