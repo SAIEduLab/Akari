@@ -4545,7 +4545,9 @@
       for (const n of root.querySelectorAll('.blockui-slot-active'))
         n.classList.remove('blockui-slot-active');
       node?.classList.add('blockui-focused');
-      if (node) {
+      // The 本文 itself, passed on the way from a block to the list with the keyboard, keeps the selected block, so the
+      // next block from the list still goes right after it (E-08, AX-10).
+      if (node && !(target === node && schemaOf(index.get(node.dataset.blockId)?.node)?.category === 'script')) {
         const id = node.dataset.blockId,
           wrapper = target.closest('[data-blockui-body-wrapper]'),
           body = wrapper?.dataset.blockOwner === id
