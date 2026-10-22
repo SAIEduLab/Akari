@@ -478,8 +478,19 @@
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         placeActions(menu, menu.querySelector('.blockui-action-items'));
       placeControls();
-      placeNodeTools();
+      placeNodeToolsSoon();
     });
+    // While the workspace scrolls, the selected block's tools are placed at most once a frame, and only while that block
+    // is in view (PERF-06): placing them reads the box of every block.
+    let toolsFrame = null;
+    function placeNodeToolsSoon() {
+      if (toolsFrame !== null) return;
+      toolsFrame = doc.defaultView.requestAnimationFrame(() => {
+        toolsFrame = null;
+        const box = workspace.querySelector('.blockui-node.blockui-selected')?.getBoundingClientRect(), room = workspace.getBoundingClientRect();
+        if (box && box.bottom > room.top && box.top < room.bottom) placeNodeTools();
+      });
+    }
     listen(doc.defaultView, 'resize', () => {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
       placeControls();
@@ -4607,6 +4618,7 @@
       shapeObserver?.disconnect();
       bodyObserver?.disconnect();
       if (geometryFrame !== null) doc.defaultView.cancelAnimationFrame(geometryFrame);
+      if (toolsFrame !== null) doc.defaultView.cancelAnimationFrame(toolsFrame);
       abort.abort();
       destroyed = true;
       root.replaceChildren();
