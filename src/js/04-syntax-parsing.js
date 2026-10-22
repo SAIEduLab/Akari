@@ -2383,6 +2383,9 @@
     // at the stage edge, and a touch test names a part that must exist, so without such a part the child means 画面のはし.
     const bounceForm=/^(?:[^、。]+?は、?)?画面の(?:はし|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/;
     const bareEdgeBounce=!bounceForm.test(mask)&&/^(.*?は、?)?(?:もし、?)?(?:はし|端)に(?:ふれ|触れ).*(?:はね返る|跳ね返る)$/.exec(mask);
+    // 画面のはしで はね返る: the bounce is one sentence, 画面のはしにふれていれば、はね返る.
+    const edgeBounce=/^(.*?は、?)?(?:画面の)?(?:はし|端)で、?(?:はね返る|跳ね返る|はねかえる)$/.exec(mask);
+    if(edgeBounce)throw sentenceDiagnostic('画面の はしで はね返るときは、「画面のはしにふれていれば、はね返る」と 書きます',line,[{label:'画面の はしで はね返る',source:code.slice(0,edgeBounce[1]?.length||0)+'画面のはしにふれていれば、はね返る'}],{kind:'MotionCommand'});
     if(bareEdgeBounce)throw sentenceDiagnostic('画面の はしで はね返るときは、「画面のはしにふれていれば、はね返る」と 書きます',line,[{label:'画面の はしで はね返る',source:code.slice(0,bareEdgeBounce[1]?.length||0)+'画面のはしにふれていれば、はね返る'}],{kind:'MotionCommand'});
     const bareEdgeTouch=/(^|もし|、|が|は)(はし|端)に(?:ふれ|触れ)/.exec(mask);
     if(bareEdgeTouch&&(bareEdgeTouch[2]==='端'||!symbols?.project?.components?.some(c=>c.name==='はし'))){
