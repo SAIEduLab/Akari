@@ -2056,6 +2056,13 @@
         throw error;
       }
     }
+    // An example names a list of the child's own work (the work's first list, then the part's own), never one the work
+    // does not have; with none, the example has no name.
+    function exampleListName(ctx) {
+      const r = ctx?.runtime;
+      for (const lists of [r?.projectLists, r?.actor?.(ctx.runtimeId)?.lists]) if (lists?.size) return lists.keys().next().value;
+      return null;
+    }
     function evalBuiltin(ast, ctx, budget) {
       const name = ast.name,
         args = ast.args.map((x) => evalExpression(x, ctx, budget)),
@@ -2087,7 +2094,8 @@
         const a = args[0];
         if (Array.isArray(a)) return a.length;
         if (typeof a === 'string') return Array.from(a).length;
-        throw new AkariError('R411', '数えられるのは、リストに 入っている ものの 数か、文字の 数です。れい：かばんの数');
+        const list = exampleListName(ctx);
+        throw new AkariError('R411', '数えられるのは、リストに 入っている ものの 数か、文字の 数です。れい：' + (list ? list + 'の数' : '「あいう」の長さ'));
       }
       if (name === 'STRING_LENGTH') {
         return Array.from(stringv(args[0])).length;
@@ -2192,9 +2200,11 @@
           if (args.length < 2) throw new AkariError('R411', '「つなぐ」には つなぐ ものを 少なくとも 2つ 入れます。れい：つなぐ（「あ」、「い」）');
           {
             const s = args
-              .map((x) => {
-                if (Array.isArray(x))
-                  throw new AkariError('R411', 'リストは そのまま 文字に つなげません。「かばんの1番目」のように、中身を 1つずつ つなぎます');
+              .map((x, i) => {
+                if (Array.isArray(x)) {
+                  const list = ast.args[i]?.kind === 'VariableRead' ? ast.args[i].name : exampleListName(ctx);
+                  throw new AkariError('R411', 'リストは そのまま 文字に つなげません。' + (list ? `「${list}の1番目」のように、` : '') + '中身を 1つずつ つなぎます');
+                }
                 return valueText(x, true);
               })
               .join('');
@@ -3837,8 +3847,10 @@
           }
           case 'Say': {
             const v = evalExpression(n.value, ctx);
-            if (Array.isArray(v))
-              throw new AkariError('R411', `リストは そのまま 言えません。中身を 言うときは「${n.value?.kind === 'VariableRead' ? n.value.name : 'かばん'}の1番目を言う」のように 書きます`);
+            if (Array.isArray(v)) {
+              const list = n.value?.kind === 'VariableRead' ? n.value.name : exampleListName(ctx);
+              throw new AkariError('R411', list ? `リストは そのまま 言えません。中身を 言うときは「${list}の1番目を言う」のように 書きます` : 'リストは そのまま 言えません。中身を 1つずつ 言います');
+            }
             const sec = n.seconds === undefined ? null : numberInUnit(evalExpression(n.seconds, ctx), '秒');
             if (sec !== null && sec < 0) throw valueError('R412', '話す 時間は 0より 小さく できません', n.seconds);
             const deadline = sec === null ? null : ensureFinite(this.runtime.now() + sec * 1000);
