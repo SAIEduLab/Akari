@@ -1418,7 +1418,7 @@
     tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',ownWords:true,
       message:'さかなが 言う ことばを 入れて、Enter キーを おしてね。れい：つかまった！',emptyMessage:'ことばを 入れてね'}),
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
-    tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな 遊びを 足そう？ ここで「ほぞんしておわる」を おしても いいよ。'})]);
+    tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな 遊びを 足そう？ ここで「ほぞんして おわる」を おしても いいよ。'})]);
   const TUTORIAL_COURSES=Object.freeze([
     {id:'motion',label:'動きをつけよう',description:'泳ぎ方を かえて 遊ぼう。',children:[
       {id:'swim',label:'あちこちへ泳ぐ',description:'行く ばしょと 速さを かえよう。'},
@@ -1472,7 +1472,7 @@
       integer:leaf!=='swim',message:question+' 光る 数を '+min+'から'+max+'の 中で、いまと ちがう 数に して、Enter キーを おしてね。'}),
       ...tutorialTry(tag+'-remix',clicks),tutorialDefine({id:tag+'-undo',action:'undo',ref,value,
         message:'「もとにもどす」を 1回 おしてね。自分で かえた 数が、もとに もどるよ。'}),
-      tutorialDefine({id:tag+'-next',action:'choice',choice:'course',message:'できた！ ほかの 遊びも 足す？「ほぞんしておわる」を おして、自分で 遊んでも いいよ。'}));
+      tutorialDefine({id:tag+'-next',action:'choice',choice:'course',message:'できた！ ほかの 遊びも 足す？「ほぞんして おわる」を おして、自分で 遊んでも いいよ。'}));
     return steps;
   }
   // A free step takes the child's own number (in its range, not the one shown) and an ownWords step the child's own
