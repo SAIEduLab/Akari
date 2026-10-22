@@ -3327,11 +3327,16 @@
           this.activeQuestion || this.extensionEvents?.length || this.extensionCompletions?.length);
       }
       // The run has ended by itself: it is idle, and no body can start again (none waits for input, a 名人 condition or
-      // interval, or an extension event while the extensions run). An extension that is only registered keeps nothing going.
+      // interval, or a registered extension event while the extensions run). An extension that is only registered, and
+      // an unregistered 「拡張:…」 name (an ordinary signal of the work), keep nothing going.
       ended() {
-        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) ||
-          (extensions.active && item.event === 'message' &&
-            String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '').startsWith('拡張:')));
+        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) || this.waitsForExtension(item));
+      }
+      // A body for an event that a running extension registered: the event comes from outside the work, as a key does
+      // (the editor's status names its 合図).
+      waitsForExtension(item) {
+        const name = String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '');
+        return extensions.active && item.event === 'message' && name.startsWith('拡張:') && !!extensions.describe(name.slice(3), 'events');
       }
       pause() {
         if (!this.running) return;
