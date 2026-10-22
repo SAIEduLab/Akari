@@ -625,12 +625,16 @@
       if (sampleUsed) for (const snd of project.sounds) audioIds.add(snd.assetId);
       return { imageIds, audioIds, needsAudio, sampleUsed };
     }
+    // The grids of what is seen of pictures (AssetRuntimeCache.makeMask) outlive a run: the editor and the player make a
+    // new asset cache at every ▶, and a grid depends only on the picture's bytes. The last 256 pictures are kept.
+    const MASKS_BY_BYTES = new Map();
     class AssetRuntimeCache {
       constructor(assetStore, services = {}) {
         this.assetStore = assetStore;
         this.imageByAssetId = new Map();
         this.maskByAssetId = new Map();
-        this.maskByBytes = new Map();
+        // A part's picture whose grid is not made yet (getMask makes it).
+        this.pendingMasks = new Map();
         this.audioBufferByAssetId = new Map();
         this.objectUrls = new Map();
         this.activeAudioHandles = new Map();
@@ -725,6 +729,10 @@
       async prepare(project, requirements, generationToken, { deferAudioStart = false } = {}) {
         for (const cancel of [...this.pendingOperations]) cancel();
         this.generationToken = generationToken;
+        // Only a part's picture is touched by its outline; a picture used only as a backdrop needs no grid.
+        const costumeIds = new Set();
+        for (const c of project.components)
+          if (c.type === 'sprite') for (const co of c.costumes || []) if (co.kind === 'image') costumeIds.add(co.assetId);
         for (const id of requirements.imageIds) {
           if (generationToken !== this.generationToken)
             throw new AkariError(
@@ -761,7 +769,7 @@
                 '絵の 大きさが、きろくされた 大きさと 合いません',
               );
             this.imageByAssetId.set(id, img);
-            this.maskByAssetId.set(id, this.makeMask(a, img));
+            if (costumeIds.has(id)) this.pendingMasks.set(id, a);
           } catch (error) {
             URL.revokeObjectURL(url);
             if (this.objectUrls.get(id) === url) this.objectUrls.delete(id);
@@ -815,14 +823,14 @@
       getImage(id) {
         return this.imageByAssetId.get(id) || null;
       }
-      // 絵の見えているところ (final call 17): a picture is read once, when it is loaded, into a grid of at most 64×64
-      // cells; a cell is seen when a pixel of the picture in it is not fully transparent. The grid is made from the
-      // picture's own pixels (the browser does not scale them), so it is the same on every machine, and it is kept for
-      // the same bytes across runs. Without a canvas, or for a picture that cannot be read, there is none: the part then
-      // touches with its box.
+      // 絵の見えているところ (final call 17): a part's loaded picture is read, the first time a touch looks at it
+      // (getMask), into a grid of at most 64×64 cells; a cell is seen when a pixel of the picture in it is not fully transparent. The grid is made from the
+      // picture's own pixels (the browser does not scale them), so it is the same on every machine. It is made once for
+      // the same bytes (checked against their sha256 when the work was read) and kept across runs (MASKS_BY_BYTES).
+      // Without a canvas, or for a picture that cannot be read, there is none: the part then touches with its box.
       makeMask(asset, img) {
-        const key = asset.sha256 || asset.id;
-        if (this.maskByBytes.has(key)) return this.maskByBytes.get(key);
+        const key = asset.sha256 ? `${asset.sha256}:${asset.byteLength}:${img.naturalWidth}x${img.naturalHeight}` : null;
+        if (key && MASKS_BY_BYTES.has(key)) return MASKS_BY_BYTES.get(key);
         let mask = null;
         try {
           const iw = img.naturalWidth, ih = img.naturalHeight,
@@ -853,10 +861,22 @@
         } catch (_) {
           mask = null;
         }
-        this.maskByBytes.set(key, mask);
+        // A picture that could not be read this time is read again at the next ▶.
+        if (key && mask) {
+          if (MASKS_BY_BYTES.size >= 256) MASKS_BY_BYTES.delete(MASKS_BY_BYTES.keys().next().value);
+          MASKS_BY_BYTES.set(key, mask);
+        }
         return mask;
       }
+      // A grid is made the first time a touch looks at the picture, not at ▶: a work with many large pictures starts as
+      // soon as they are decoded, and one that never asks about touch reads no pixels at all.
       getMask(id) {
+        const asset = this.pendingMasks.get(id);
+        if (asset) {
+          this.pendingMasks.delete(id);
+          const img = this.imageByAssetId.get(id);
+          if (img) this.maskByAssetId.set(id, this.makeMask(asset, img));
+        }
         return this.maskByAssetId.get(id) || null;
       }
       getAudioBuffer(id) {
@@ -1005,6 +1025,7 @@
         for (const u of this.objectUrls.values()) URL.revokeObjectURL(u);
         this.objectUrls.clear();
         this.imageByAssetId.clear();
+        this.pendingMasks.clear();
         this.audioBufferByAssetId.clear();
         const ac = this.audioContext;
         this.audioContext = null;
