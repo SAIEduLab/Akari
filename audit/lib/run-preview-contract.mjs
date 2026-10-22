@@ -59,6 +59,13 @@ export function verifyRunPreviewReport(report){
   assert.deepEqual(screens?.map(r=>r.mode+'/'+r.level),['blocks/entry','code/meijin']);
   for(const r of screens){verifyRunScreen(r.preview,r.mode,r.level);assert.equal(r.sourcePreserved,true);}
   assert.deepEqual(screens[0].picker,['entry','basic','advanced'],'blocks offer はじめて／かんたん／くわしく');assert.deepEqual(screens[1].picker,['meijin'],'a 名人 work keeps 名人');
+  // D1-01: many parts at はじめて (the maze) keep the stage big while it runs (D-19, F-14).
+  const many=observed.entryManyParts;assert.deepEqual(many?.map(r=>r.height),[768,650]);
+  for(const r of many){const o=r.preview;assert.ok(r.parts>=40,'a work with many parts');assert.equal(o.level,'entry');assert.equal(o.state,'RUNNING');
+    assert.equal(o.palette.visible,false,'the block list is put away');assert.ok(o.scene.width>o.workspace.width,'the stage takes the larger column');inside(o.scene,o.viewport);
+    assert.ok(r.stage.height>=Math.min(380,o.viewport.height*0.45),'the screen stays big with many parts: '+Math.round(r.stage.height)+' of '+o.viewport.height);
+    assert.ok(r.stage.width>=o.scene.width*0.5,'the screen fills its column');
+    const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.hit,true);for(const c of o.controls.slice(1))assert.equal(c.rect.visible,false);}
 }
 // 「本文を見て たしかめる」 of a 名人 work: the body in code, no コード／ブロック switch, and a press on the hidden ブロック changes nothing.
 export async function observeMeijinInspector(page){

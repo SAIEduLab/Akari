@@ -85,7 +85,17 @@ try{
      await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);}
     await pressStop(p.locator('#stopBtn'));preview.stopped=await observeRunPreview(p);verifyRunScreen(preview,mode,level);
     return{mode,level,picker,speakers:shown.bubbles.length,preview,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
-   }));return{initial,rows,runScreens};
+   }));
+   // D1-01: a work with many parts (the maze sample, 45 parts) at はじめて still shows the screen big while it runs (D-19,
+   // F-14), at 1366x768 and at 1366x650; the parts list does not take the stage's room.
+   const entryManyParts=[];for(const height of [768,650])entryManyParts.push(await pageFor({newContext:options=>browser.newContext({...options,viewport:{width:1366,height}})},product,async p=>{hooks(p);
+    await p.locator('#uiLevel').selectOption('basic');await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();
+    await p.locator('#samplePicker [data-sample-id="maze"]').click();await p.waitForFunction(()=>Akari.app.project.components.length>=40);
+    await p.locator('#editorModeblocks').click();await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry');
+    await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await frame(p);
+    const preview=await observeRunPreview(p),stage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON()),parts=await p.evaluate(()=>Akari.app.project.components.length);
+    await shot(p,'preview-entry-maze-'+height+'.png');await pressStop(p.locator('#stopBtn'));return{height,parts,stage,preview};}));
+   return{initial,rows,runScreens,entryManyParts};
   });
   await run('DISPLAY-PERSISTENCE',async()=>{
    const rows=[];for(const show of [false,true])rows.push(await pageFor(browser,product,async p=>{
