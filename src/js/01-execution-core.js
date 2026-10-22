@@ -129,7 +129,20 @@
       return !(error instanceof AkariError) && /^E70[1-8]$/.test(error?.code)
         ? new AkariError(error.code, error.message) : error;
     }
+    // What a handler is given (EXTENSIONS.md, API contract 1): the run's signal, the calling sentence's owner
+    // (runtimeId: a part, or "stage") and runtime.actor(runtimeId), a read-only view of a part. Each call makes a new
+    // frozen view of where the part is now, in the 座標と向き frame, so a long command reads the part again; the
+    // runtime itself is never handed out, so an extension cannot change a part except through the work's sentences.
+    function extensionPartView(runtime, runtimeId) {
+      const a = runtimeId === 'stage' ? null : runtime?.actor(runtimeId);
+      return a ? Object.freeze({ runtimeId: a.runtimeId, baseId: a.baseId, isClone: a.isClone, x: a.x, y: a.y, direction: a.direction }) : null;
+    }
+    function extensionContext(context) {
+      const runtime = context?.runtime, view = Object.freeze({ actor: runtimeId => extensionPartView(runtime, runtimeId) });
+      return context?.signal ? { signal: context.signal, runtimeId: context.runtimeId, runtime: view } : { runtimeId: context?.runtimeId, runtime: view };
+    }
     function invokeExtension(kind, name, args, context) {
+      context = extensionContext(context);
       try { return kind === 'calculation' ? extensions.invokeCalculation(name, args, context) : extensions.invokeCommand(name, args, context); }
       catch (error) { throw extensionError(error); }
     }
