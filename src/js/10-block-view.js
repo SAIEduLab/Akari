@@ -126,6 +126,8 @@
       rendering = false,
       destroyed = false,
       signature = '',
+      // The body's text the view was last drawn for (owner, text and context revisions).
+      textKey = '',
       tree = null,
       index = new Map(),
       selected = '',
@@ -2492,8 +2494,9 @@
         event.stopPropagation();
         selection(node.id);
       });
+      // The toggle comes a moment after the press: a menu drawn anew in between (and kept open) is not closed by the old one.
       listen(menu, 'toggle', () => {
-        if (!menu.open) return;
+        if (!menu.open || !menu.isConnected) return;
         for (const other of root.querySelectorAll('.blockui-actions[open]'))
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
@@ -2602,6 +2605,7 @@
             () => {
               if (!flush().ok) return;
               collapsed.has(node.id) ? collapsed.delete(node.id) : collapsed.add(node.id);
+              menu.open = false;
               render({ force: true });
             },
             { 'aria-expanded': !collapsed.has(node.id), 'data-block-id': node.id },
@@ -2616,6 +2620,7 @@
             'annotations',
             () => {
               openAnnotations.add(node.id);
+              menu.open = false;
               render({ force: true });
               const details = [...workspace.querySelectorAll('.blockui-annotations')].find(
                 (n) => n.parentElement?.parentElement?.dataset.blockId === node.id,
@@ -3557,6 +3562,15 @@
         notifyPending();
       }
       if (nextSignature !== signature) moving = null;
+      // The selected block's 「ほかのそうさ」 stays open when the view is drawn again for the same text: the work check's
+      // notices arrive a moment after a change (P11 (d)), and a drawing put off while a field had the keys comes when the
+      // press on 「ほかのそうさ」 takes them; neither may close it under the child's press. Its own たたむ and メモ close it.
+      const nextTextKey = [s?.ownerKey, s?.sourceRevision, s?.contextRevision].join('|'),
+        keptMenu = textKey === nextTextKey
+          ? workspace.querySelector('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions[open]')?.closest('.blockui-node')?.dataset.blockId : null,
+        // The control of that menu that has the keys (「ほかのそうさ」 itself or one of its items) gets them back.
+        menuKey = keptMenu && doc.activeElement?.closest?.('.blockui-actions[open]') ? doc.activeElement.dataset?.blockuiAction : null;
+      textKey = nextTextKey;
       const ownerChanged = s?.ownerKey !== displaySession?.ownerKey,
         scroll = ownerChanged
           ? { top: s?.scrollState?.blockTop || 0, left: s?.scrollState?.blockLeft || 0 }
@@ -3670,6 +3684,9 @@
       updateGeometry();
       observeMore();
       selection(selected, s?.blockSelectionLocation || null);
+      const keptOpen = keptMenu && keptMenu === selected
+        ? [...workspace.querySelectorAll('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions')].find(m => m.closest('.blockui-node')?.dataset.blockId === keptMenu) : null;
+      if (keptOpen) keptOpen.open = true;
       lightEmptyValue();
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
@@ -3693,6 +3710,7 @@
         );
         n?.focus({ preventScroll: true });
       }
+      if (keptOpen && menuKey) keptOpen.querySelector('[data-blockui-action="' + menuKey + '"]')?.focus({ preventScroll: true });
       // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
       if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
