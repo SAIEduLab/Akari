@@ -376,19 +376,20 @@
       if([...select.options].map(o=>o.value).join()!==choices.join())
         select.replaceChildren(...choices.map(level=>{const option=document.createElement('option');option.value=level;option.textContent=UI_LEVEL_NAMES[level];return option;}));
       select.value=value;
-      // The コード／ブロック toggle is not shown where it can do nothing: at はじめて (blocks only) and in a 名人 work (code only),
-      // which also holds for the 自分で作ったブロック editor.
-      $('#editorModecode').parentElement.hidden=meijin||baseUiLevel==='entry';
-      $('#callableModecode').parentElement.hidden=meijin;
+      // The コード／ブロック toggle is shown at every level: where it cannot switch (はじめて, a 名人 work) a press says why.
+      if(mainEditor.session)paintBindingModeToggle(mainEditor);
       return before!==undefined&&before!==document.body.dataset.uiLevel;
     }
     // The chosen level in the form the work's editor state keeps (はじめて is kept as かんたん).
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      for(const node of [$('#undoBtn'),$('#redoBtn')]){
+      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and ⏸ いったん止める・▶ つづける (final call
+      // 21) under the stage, as on a video.
+      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#pauseBtn'),$('#continueBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
-        if(entry){
+        if(entry&&['pauseBtn','continueBtn'].includes(node.id)){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
+        else if(entry){
           // Keep もとにもどす before やり直す whichever control was moved last.
           const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
           if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
@@ -518,7 +519,7 @@
       const step=tutorialStep(tutorial);if(!step||step.action!=='choice'||modelLocked()||!flushActiveEditor())return;
       let extra;
       if(key==='finish')extra=[tutorialDefine({id:'save-work',action:'save',message:'「保存」を おして、作った 作品を ファイルに ほぞんしよう。'}),
-        tutorialDefine({id:'verify-save',action:'verify-save',message:'「ほぞんした作品をたしかめる」を おして、いま ほぞんした ファイルを えらぼう。'})];
+        tutorialDefine({id:'verify-save',action:'verify-save',message:'「ほぞんした 作品を たしかめる」を おして、いま ほぞんした ファイルを えらぼう。'})];
       else if(step.choice==='course'){
         const course=TUTORIAL_COURSES.find(c=>c.id===key);if(!course||tutorial.courses.includes(key))return;
         tutorial.courses.push(key);extra=tutorialCourseSteps(key,tutorialBody().length,key);
@@ -966,12 +967,34 @@
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
       return { key, item, script, definition };
     }
-    function diagnosticLocation(diagnostic) {
+    // Where a message points: the body (its owner and きっかけ) and the line. The block view has no line numbers (はじめて
+    // shows blocks only), so there the place is the sentence itself, as its block reads.
+    function diagnosticLocation(diagnostic, { blocks = shownEditorMode() === 'blocks' } = {}) {
       const { key, item, script, definition } = diagnosticOwner(diagnostic);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
         : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
-      return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
+      if (!diagnostic?.line) return owner;
+      if (!blocks) return owner + ' / ' + diagnostic.line + '行目';
+      const sentence = diagnosticSentence(diagnostic);
+      return owner + (sentence ? ' / 「' + sentence + '」' : '');
+    }
+    // Where the child finds the first mistake when ▶ 動かす is refused (F-07, F-08): the block view marks it with ⚠ and an
+    // orange frame, the code view marks its line number in red. A mistake in a body that is not shown names that body.
+    function fixPointer(diagnostic) {
+      const { script, definition } = diagnosticOwner(diagnostic);
+      if (definition) return `「自分で作ったブロック」の「${definition.name}」を 見てね。`;
+      const mark = shownEditorMode() === 'blocks' ? '⚠ が ついた ところを 見てね。'
+        : diagnostic?.line ? `コードの ${diagnostic.line}行目を 見てね。` : 'コードの 赤い ところを 見てね。';
+      if (!script || (!sourceOverviewOpen && scriptBySourceKey(project, bindingOwner(mainEditor)) === script)) return mark;
+      const name = isMeijinScript(script) ? '名人の本文' : targetById(script.targetId)?.name || '画面',
+        event = isMeijinScript(script) ? '' : eventText(script.event, script.filter);
+      return `「${name}」の ${event ? event + 'の ' : ''}本文を えらんで、${mark}`;
+    }
+    // The sentence on a message's line, without its last 。 or 、.
+    function diagnosticSentence(diagnostic) {
+      const source = diagnosticSource(diagnostic) ?? diagnostic?.source ?? '';
+      return String(source).split(/\r\n?|\n/)[(diagnostic?.line || 0) - 1]?.trim().replace(/[。、]$/, '') || '';
     }
     // The text the diagnostic's line numbers count in: the indentation message reads its line (F-24).
     function diagnosticSource(diagnostic) {
@@ -979,7 +1002,8 @@
       return definition?.source ?? script?.source ?? null;
     }
     function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null) {
-      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic, source),
+      // A full-width colon after the place (F-26: no ASCII colon in child text).
+      const helpText = (location ? location + '：' : '') + childDiagnosticText(diagnostic, source),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
         previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
@@ -1015,9 +1039,7 @@
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
           button.type = 'button'; button.dataset.intentChoice = '';
-          button.textContent = (proposal.label || proposal.source)
-            .replace('台詞として画面に言う', 'そのままの文字を話す')
-            .replace('データの値を言う（名前の定義を確認）', '覚えたデータを話す（作った名前をたしかめる）');
+          button.textContent = proposal.label || proposal.source;
           button.title = proposal.description || proposal.source;
           button.onclick = () => {
             if (modelLocked() || binding.textarea.value !== original) return;
@@ -1040,12 +1062,17 @@
           choices.append(button);
         }
         const cancel = document.createElement('button');
-        cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = '書いた文のまま考える';
+        cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = 'この あんないを とじる';
         cancel.onclick = () => { choices.remove(); binding.textarea.focus(); };
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error, binding.textarea?.value);
+      // The status line speaks in Akari's voice (F-18): in code it points at the line and the explanation by the code,
+      // which keeps the rule's own wording; a block view's message is said as it is.
+      const firstDiagnostic = error?.diagnostics?.[0] || error, issueLine = firstDiagnostic?.line || error?.line;
+      editorFailureStatus = binding.session?.mode === 'blocks' ? childDiagnosticText(firstDiagnostic, binding.textarea?.value)
+        : issueLine ? `書き方に 直す ところが あるよ。コードの ${issueLine}行目を 見てね`
+        : '書き方に 直す ところが あるよ。コードの 上の せつめいを 見てね';
       setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
@@ -1158,22 +1185,23 @@
         if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
         invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
         clearTimeout(historyTimer); pushHistoryNow();
-        setStatus('いまの 動きは のこして、えらんだ 本文に 動きを 入れたよ'); return true;
+        setStatus('いまの 本文は のこして、えらんだ ところに 本文を 入れたよ'); return true;
       } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
     }
     function showSourceImport(binding, source, plan) {
       const root = $('#sourceImport'); root.replaceChildren(); root.hidden = false;
-      const heading = document.createElement('strong'); heading.textContent = 'どこに動きを入れるかたしかめる'; root.append(heading);
+      // The panel speaks of 本文 (F-23), in the plain voice of a confirmation (F-18), spaced by phrase (F-19).
+      const heading = document.createElement('strong'); heading.textContent = '本文を 入れる ところを たしかめる'; root.append(heading);
       for (const entry of plan.entries) {
-        const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
+        const actor = targetById(entry.metadata.targetId)?.name || 'この 本文', event = entry.metadata.event,
           label = actor + '・' + eventText(event, entry.metadata.filter);
         const row = document.createElement('p');
-        row.textContent = entry.candidates.length ? label + 'には今の動きがあります' : label + 'に新しい動きを入れます'; root.append(row);
+        row.textContent = entry.candidates.length ? label + 'には いまの 本文が あるよ' : label + 'に 新しい 本文を 入れるよ'; root.append(row);
         {
           const details = document.createElement('details'), summary = document.createElement('summary');
-          summary.textContent = entry.candidates.length ? (entry.equal ? '今の動きは そのまま のこします' : '今の動きと取りこむ動きをくらべる') : '新しく入れる動きを見る'; details.append(summary);
+          summary.textContent = entry.candidates.length ? (entry.equal ? 'いまの 本文は そのまま のこすよ' : 'いまの 本文と 取りこむ 本文を くらべる') : '新しく 入れる 本文を 見る'; details.append(summary);
           if(plan.canEditCurrent && !plan.safe)details.open = true;
-          for (const text of [...entry.candidates.map(x => '今の動き：\n' + x.text), '取りこむ動き：\n' + entry.text]) {
+          for (const text of [...entry.candidates.map(x => 'いまの 本文：\n' + x.text), '取りこむ 本文：\n' + entry.text]) {
             const pre = document.createElement('pre'); pre.textContent = text; pre.style.whiteSpace = 'pre-wrap'; pre.style.maxHeight = '140px'; pre.style.overflow = 'auto'; details.append(pre);
           }
           root.append(details);
@@ -1181,19 +1209,19 @@
       }
       if (!plan.safe) {
         const notice = document.createElement('p'); notice.textContent = !plan.canSplit
-          ? '動きの まとまりを べつべつに 分けられません。前の「始めると、」などを 使う 文が あります。書きかけの 文章は のこっています。「取りこみを やめる」で 今の 動きへ もどれます。'
-          : '同じきっかけの動きが 今の動きと ちがうか、2つ いじょう あります。入れても 今の動きは のこります。くらべてから ボタンを えらんでください。'; root.append(notice);
+          ? '本文を べつべつに 分けられないよ。前の「始めると、」などを 使う 文が あるよ。書きかけの 文章は のこっているよ。「取りこみを やめる」で いまの 本文に もどれるよ。'
+          : '同じ きっかけの 本文が いまの 本文と ちがうか、2つ いじょう あるよ。入れても いまの 本文は のこるよ。くらべてから ボタンを えらんでね。'; root.append(notice);
       }
       const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
-      confirm.textContent = plan.hasExisting ? '今の動きを のこして 入れる' : '書いた文の動きを入れる'; confirm.disabled = !plan.safe;
+      confirm.textContent = plan.hasExisting ? 'いまの 本文を のこして 入れる' : '書いた 文を 本文に 入れる'; confirm.disabled = !plan.safe;
       confirm.onclick = () => confirmSourceImport(binding, source); root.append(confirm);
       if (plan.hasExisting && !plan.safe && plan.canSplit) {
         const separate = document.createElement('button'); separate.type = 'button'; separate.id = 'sourceImportSeparate';
-        separate.textContent = '今の 動きを のこして、ほかの 動きとして 入れる'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
+        separate.textContent = 'いまの 本文を のこして、べつの 本文として 入れる'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
       }
       if(plan.canEditCurrent && !plan.safe){
         const edit = document.createElement('button'); edit.type = 'button'; edit.id = 'sourceImportEditCurrent';
-        edit.textContent = 'この本文を 取りこむ動きに かえる'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
+        edit.textContent = 'この 本文を 取りこむ 本文に かえる'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
       }
       const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取りこみを やめる';
       cancel.onclick = () => cancelEditorPending(binding); root.append(cancel);
@@ -1218,7 +1246,7 @@
             plan = sourceImportPlan(binding, source);
           if (plan || (fromInput && parsed.ast?.heading && !bindingContext(binding).meijin)) {
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
-              value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : 'きっかけの ある 文は まだ 書きかけです。コードと ブロックを 切りかえるか、動かすと 決まります' };
+              value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
             scheduleAutosave(); updateDirty(); return false;
           }
@@ -1254,9 +1282,10 @@
         if (binding.session?.blockDraft){
           if (preserveView) return false;
           const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
-          const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'ブロックや 数・文字';
+          const label=hole?.node.fields.label||'ブロックや 数・文字';
+          // The focus goes to the empty place; the message says what to put there (FCB-03, I5V-14).
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `${name}・${eventText(context.event, context.filter)||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
+          return showEditorFailure(binding, `あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
         }
         return true;
       }
@@ -1306,7 +1335,7 @@
         if (!tutorialOperationAllowed(binding, operation)) {
           const step=tutorialStep(tutorial),role=step?.ref?tutorialField(mainEditor.session?.blockView,step):null;
           if(binding===mainEditor&&step?.free&&operation.type==='field'&&operation.id===role?.node?.id&&operation.key===role.key)
-            throw new Error('光る数は'+step.min+'から'+step.max+'の中でえらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつふえる数にしよう。':''));
+            throw new Error('光る 数は '+step.min+'から'+step.max+'の 中で えらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつ ふえる 数に しよう。':''));
           throw new Error('今は、あんないの ブロックだけを 使おう。');
         }
         if (modelLocked()) throw new Error('動いている あいだと 取りこみ中は なおせません');
@@ -1414,23 +1443,7 @@
         : $('.code-assist .hint-panel');
       hint.hidden = blocks;
       const invalidCodePending = session.pendingEdit?.kind === 'code' && !session.blockDraft;
-      for (const mode of ['code', 'blocks']) {
-        const b = $(draft ? `#callableMode${mode}` : `#editorMode${mode}`);
-        b.setAttribute('aria-pressed', String(session.mode === mode));
-        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
-        // A code error keeps ブロック where it is, in a pale colour; a press says why under the toggle (modeBlockedNote)
-        // instead of switching. It is not hidden, so the toggle does not flicker while the child types.
-        const refused = mode === 'blocks' && (!session.syntaxAst || invalidCodePending);
-        if (refused) {
-          b.setAttribute('aria-disabled', 'true');
-          b.setAttribute('aria-describedby', modeBlockedNote(binding).id);
-        } else {
-          b.removeAttribute('aria-disabled');
-          b.removeAttribute('aria-describedby');
-          modeBlockedNote(binding).hidden = true;
-        }
-        b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
-      }
+      paintBindingModeToggle(binding);
       if (!draft) {
         // いつ動く？ opens the block view as well, so a code error makes it pale in the same way; a press says why under
         // it (headingBlockedNote) instead of doing nothing.
@@ -1467,8 +1480,55 @@
         try { localStorage.setItem(STORAGE_KEYS.editorMode, mode); } catch (_) {}
       }
     }
-    // The note under a コード／ブロック toggle that says why ブロック does not open: it shows on a press of the pale ブロック
-    // and goes away at the next press or key anywhere.
+    // The コード／ブロック toggle (final call 22) is one button that shows the view on the screen with ⇄: 「ブロックモード ⇄」
+    // or 「コードモード ⇄」. A press switches to the other view, and the label follows. Of the group's two buttons only the
+    // one that switches away from the view shown is there (…Modecode in blocks, …Modeblocks in code); its name says the
+    // view. The toggle is never pale or hidden: where a press cannot switch (はじめて, a work with a 名人 text, a mistake in
+    // the code) it keeps the view and says why under it (modeBlockedNote).
+    const VIEW_NAMES = { blocks: 'ブロックモード', code: 'コードモード' };
+    const MODE_REFUSALS = {
+      entry: 'コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね',
+      meijin: '名人は、コードモードで だけ 使えるよ',
+      error: 'コードの 赤い ところを 直すと、ブロックに もどれるよ',
+    };
+    function modeRefusal(binding, shown, codeError = false) {
+      if (binding === mainEditor && shown === 'blocks' && document.body.dataset.uiLevel === 'entry') return 'entry';
+      if (workIsMeijin()) return 'meijin';
+      return shown === 'code' && codeError ? 'error' : null;
+    }
+    // The toggle of an editor as it is now: the list of all bodies shows the chosen view; a code error keeps the toggle
+    // where it is, in a pale colour, so it does not flicker while the child types.
+    function paintBindingModeToggle(binding) {
+      const session = binding.session;
+      if (!session) return;
+      if (binding === mainEditor && sourceOverviewOpen) { const shown = chosenEditorMode(); paintModeToggle(binding, shown, modeRefusal(binding, shown)); return; }
+      const codeError = !session.syntaxAst || (session.pendingEdit?.kind === 'code' && !session.blockDraft);
+      paintModeToggle(binding, session.mode, modeRefusal(binding, session.mode, codeError));
+    }
+    function paintModeToggle(binding, shown, refusal) {
+      const prefix = binding.kind === 'draft' ? 'callable' : 'editor', note = modeBlockedNote(binding);
+      for (const mode of ['code', 'blocks']) {
+        const b = $(`#${prefix}Mode${mode}`), here = mode !== shown, label = VIEW_NAMES[shown] + ' ⇄';
+        b.hidden = !here;
+        if (!here) continue;
+        if (b.textContent !== label) b.textContent = label;
+        b.setAttribute('aria-label', VIEW_NAMES[shown]);
+        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        if (refusal) {
+          if (note.textContent !== MODE_REFUSALS[refusal]) note.textContent = MODE_REFUSALS[refusal];
+          b.dataset.refused = refusal;
+          b.setAttribute('aria-describedby', note.id);
+          b.removeAttribute('title');
+        } else {
+          delete b.dataset.refused;
+          b.removeAttribute('aria-describedby');
+          b.title = `おすと、${VIEW_NAMES[mode]}に かわるよ`;
+          note.hidden = true;
+        }
+      }
+    }
+    // The note under a コード／ブロック toggle that says why it does not switch: it shows on a press of the pale toggle and
+    // goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
     function modeBlockedNote(binding) {
       const id = binding.kind === 'draft' ? 'callableModeBlockedNote' : 'modeBlockedNote';
       let note = document.getElementById(id);
@@ -1478,9 +1538,12 @@
         note.className = 'mode-blocked-note';
         note.setAttribute('role', 'status');
         note.hidden = true;
-        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
         if (binding.kind === 'draft') $('#callableModecode').parentElement.after(note);
         else $('.menutool').append(note);
+      }
+      if (binding.kind !== 'draft') {
+        const host = $('#editorModecode').closest('#runtimeInspectorModes') || $('.menutool');
+        if (note.parentElement !== host) host.append(note);
       }
       return note;
     }
@@ -1513,13 +1576,13 @@
       document.addEventListener('keydown', hide, true);
     }
     function switchEditorMode(binding, mode) {
-      // A work with a 名人 text is code only, for every body (the toggle is not shown there).
+      // A work with a 名人 text is code only, for every body; はじめて is blocks only (the toggle says so, paintModeToggle).
       if (mode === 'blocks' && workIsMeijin()) {
-        setStatus('名人の 本文が ある 作品は、コードで 書くよ。');
+        setStatus(MODE_REFUSALS.meijin);
         return false;
       }
       if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
-        setStatus('コードを 見るときは、「かんたん」か「くわしく」を えらんでね。');
+        setStatus(MODE_REFUSALS.entry);
         return false;
       }
       const draftSession = binding.session;
@@ -1659,6 +1722,7 @@
       return true;
     }
     function cancelEditorPending(binding) {
+      const importing = binding === mainEditor && !$('#sourceImport').hidden;
       if (binding === mainEditor) hideSourceImport();
       const draft = binding.session?.blockDraft;
       if (draft) {
@@ -1677,7 +1741,7 @@
       clearEditorFailure(binding);
       renderEditorBinding(binding);
       if (binding === mainEditor) { refreshEditor(); renderEntrySurface(); }
-      setStatus('入力を やめたよ');
+      setStatus(importing ? '取りこみを やめたよ' : '入力を やめたよ');
     }
     function editorContentFingerprint(state) {
       return stableJson([state.callableDraft,state.pendingEditors.map(d=>({kind:d.kind,ownerKey:d.kind==='draft'?'draft':d.ownerKey,source:d.source,
@@ -1910,6 +1974,16 @@
       // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
       $('#sampleBtn').after($('#basicActionGuide'));
+      // A help paragraph with ruby would be read with its readings (「保存 ほぞん」) as a description: the controls get its
+      // text without them (AX-09).
+      for (const control of $$('[aria-describedby]')) {
+        const help = document.getElementById(control.getAttribute('aria-describedby'));
+        if (!help?.closest('#basicActionGuide') || !help.querySelector('rt')) continue;
+        const copy = help.cloneNode(true);
+        copy.querySelectorAll('rt').forEach((rt) => rt.remove());
+        control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
+        control.removeAttribute('aria-describedby');
+      }
       installToolbarMenus(toolbar);
       toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
@@ -2052,6 +2126,12 @@
         for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]'))
           if (!menu.contains(event.target)) menu.open = false;
       }, true);
+      // The keyboard's way out: when the focus moves on past an open menu, the menu closes (the focus is not moved), so it
+      // never covers the control the child tabs to.
+      document.addEventListener('focusin', (event) => {
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]'))
+          if (!menu.contains(event.target)) menu.open = false;
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape' || event.isComposing) return;
         for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) {
@@ -2112,11 +2192,13 @@
         if (block && code.compareDocumentPosition(side) & Node.DOCUMENT_POSITION_PRECEDING) main.insertBefore(code, side);
         else if (!block && code !== main.lastElementChild) main.append(code);
       }
-      $('#designerHeading').textContent = block ? '画面' : '画面づくり';
-      $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
+      // One name for each window in both views (F-23): 「作品」 names the work.
+      $('#designerHeading').textContent = '画面';
+      $('.objects-window > .win-title').textContent = 'キャラクター・部品';
       const actions = $('.prop-actions');
       if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
       $('#formatBtn').hidden = block || currentIsMeijin();
+      syncWideInert();
       syncPropertyScrollPadding();
       // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
       if (applyUiLevel(mode)) renderHints();
@@ -2195,6 +2277,12 @@
       const button = $('#stageEnlarge');
       if (on === document.body.classList.contains('stage-enlarged')) return;
       document.body.classList.toggle('stage-enlarged', on);
+      // The enlarged stage is modal: everything around #designerWindow (toolbar, other windows, status line) is inert
+      // until it closes, so Tab stays on the stage and a hidden control cannot be pressed (AX-02).
+      for (const node of document.querySelectorAll('[data-enlarged-inert]')) { node.inert = false; delete node.dataset.enlargedInert; }
+      if (on) for (let node = $('#designerWindow'); node && node.id !== 'app'; node = node.parentElement)
+        for (const sibling of node.parentElement?.children || [])
+          if (sibling !== node && !sibling.inert) { sibling.inert = true; sibling.dataset.enlargedInert = ''; }
       button.textContent = on ? 'もどる' : '大きく見る';
       button.setAttribute('aria-pressed', String(on));
       if (on) { enlargedFrom = stageZoom; setStageZoom(1); }
@@ -2209,7 +2297,18 @@
       setStageEnlarged(false);
     }, true);
     // With the workspace made wide, the stage stays small at the bottom right; pressing it brings the columns back.
-    $('#stageThumbnail').onclick = () => $('#blockEditor [data-blockui-action="workspace-expand"]')?.click();
+    // 画面も見る brings the columns back and gives the focus to 作業台を広く, which made them go (AX-05).
+    $('#stageThumbnail').onclick = () => {
+      const toggle = $('#blockEditor [data-blockui-action="workspace-expand"]');
+      toggle?.click(); toggle?.focus({ preventScroll: true });
+    };
+    // In wide mode the thumbnail stands for the small stage behind it: the stage and its handles are no Tab stops then.
+    // The run screen and the code view do not use wide mode.
+    function syncWideInert() {
+      const wrap = $('#designerWindow > .designer-wrap');
+      if (wrap) wrap.inert = document.body.dataset.workbenchWide === 'true' && document.body.dataset.editorMode === 'blocks' &&
+        !document.body.classList.contains('runtime') && !document.body.classList.contains('stage-enlarged');
+    }
     $('#stageZoomOut').onclick = () => setStageZoom(visibleStageScale - 0.1);
     $('#stageZoomIn').onclick = () => setStageZoom(visibleStageScale + 0.1);
     $('#stageZoomReset').onclick = () => setStageZoom(1);
@@ -2240,6 +2339,8 @@
       statusSerial++;
       if (el.status.textContent === m) return;
       el.status.textContent = m;
+      // A screen reader hears what the line says (a refusal, おわったよ, …), but not the place shown while a part is dragged.
+      if (!/^よこのばしょ /.test(m || '')) $('#statusLive').textContent = m;
       if (m && document.body.dataset.uiLevel === 'entry' && typeof el.status.animate === 'function') {
         statusFlash?.cancel();
         statusFlash = el.status.animate([{ backgroundColor: '#ffe9a8' }, { backgroundColor: 'transparent' }], { duration: 1600, easing: 'ease-out' });
@@ -2330,6 +2431,9 @@
     function openRuntimeInspector() {
       if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
       stageView.clearInput();
+      // The dialog opens on the body of the sentence 「いま 動いている 文：」 names, not on the body chosen before the run.
+      flushRuntimePaint();
+      paintExecutionLocation({ follow: true });
       // The dialog shows the running bodies with the コード／ブロック toggle and the strip of the running sentence; the level is
       // chosen on the edit screen only.
       for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#runStrip'), $('#runtimeInspectorStrip')]]) {
@@ -2418,8 +2522,8 @@
         const n = $('#' + id);
         if (n) n.disabled = locked;
       }
-      // The other toolbar controls stay where they are and cannot be pressed while the work runs (保存, いっしょに作る, and
-      // the ヒント and 作品 menus too).
+      // The other toolbar controls cannot be pressed while the work runs (保存, いっしょに作る, and the ヒント and 作品 menus
+      // too); the run screen does not show them, but keeps their room (final call 21).
       $('#saveBtn').disabled = locked;
       $('#tutorialStart').disabled = locked;
       for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
@@ -2445,6 +2549,10 @@
       // screen (DESIGN, IMPORTING) shows ▶ 動かす only, the run screen ■ 止める only, in the same place.
       document.body.classList.toggle('runtime', ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState));
       document.body.classList.toggle('run-finished', runFinished);
+      syncWideInert();
+      // はじめて's run screen shows the blocks to read only: they are not Tab stops between the stage and ■ 止める (AX-11).
+      const world = $('#blockEditor .blockui-world');
+      if (world) world.inert = document.body.dataset.uiLevel === 'entry' && ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
       if (locked && appState !== 'IMPORTING') closeEditingModals();
       if (mainEditor.view) renderEditorBinding(mainEditor);
       updateDirty();
@@ -2617,7 +2725,7 @@
       }
     }
     function validateSavedEditorFingerprint(value) {
-      const fail = () => { throw new AkariError('F503', '自動で のこした 作品の 書きかけの ようすが 正しくありません'); };
+      const fail = () => { throw new AkariError('F503', 'このパソコンに のこした 作品の 書きかけの ようすが 正しくありません'); };
       if (typeof value !== 'string' || value.length > LIMITS.fileBytes) return fail();
       let saved;
       try { saved = JSON.parse(value); } catch (_) { return fail(); }
@@ -2698,7 +2806,13 @@
         loseConfirm = (answer) => {
           loseConfirm = null;
           $('#loseConfirmModal').classList.remove('show');
-          if (!answer) origin?.focus?.({preventScroll:true});
+          // やめる gives the focus back to the button that asked, once the dialog has let go of the page (the modal
+          // manager clears #app.inert on its own turn); a button inside the closed 作品 menu gives it to the menu.
+          if (!answer) setTimeout(() => {
+            if (document.querySelector('.modal.show,.modal.open,dialog[open]')) return;
+            const shown = n => !!n?.isConnected && (n.checkVisibility ? n.checkVisibility({ visibilityProperty: true }) : n.getClientRects().length > 0);
+            (shown(origin) ? origin : origin?.closest?.('details')?.querySelector(':scope > summary'))?.focus?.({preventScroll:true});
+          }, 0);
           resolve(answer && currentOpenState().fingerprint === observed.fingerprint);
         };
       });
@@ -2760,7 +2874,8 @@
         choices.forEach((row, index) => {
           const option = document.createElement('option');
           option.value = index === 0 ? ev : scriptSourceKey(row);
-          const filter = row?.filter, value = ev === 'touchStart' ? '' : filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
+          // A key is named as on the keyboard (「スペース」), as the heading writes it.
+          const filter = row?.filter, value = ev === 'touchStart' ? '' : (filter?.key ? keySurface(filter.key) : '') || filter?.message || (typeof filter === 'string' ? filter : '');
           // A touch body is named with what it touches (「星」に ふれたとき); bodies with the same partner are numbered among
           // themselves. A part with no touch body has the one entry ふれたとき.
           const same = ev === 'touchStart' ? rows.filter(x => x.filter?.target === filter?.target) : rows;
@@ -2774,7 +2889,7 @@
         first = project.scripts.find((x) => x.targetId === selectedId && x.event === currentEvent);
       el.event.value = sourceOverviewOpen ? 'all' : row && row !== first ? scriptSourceKey(row) : currentEvent;
       $('#scriptAdd').disabled = modelLocked() || project.scripts.length >= LIMITS.scripts;
-      $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
+      $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じ きっかけの 本文を ふやす';
       $('#meijinDelete').hidden = !currentIsMeijin();
       $('#meijinDelete').disabled = modelLocked();
       $('#sourceHeadingBtn').hidden ||= workIsMeijin();
@@ -2802,10 +2917,7 @@
     }
     function renderSourceOverview() {
       if (!sourceOverviewOpen) return;
-      for (const mode of ['code', 'blocks']) {
-        $('#editorMode' + mode).setAttribute('aria-pressed', String(chosenEditorMode() === mode));
-        $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState)||(mode==='code'&&document.body.dataset.uiLevel==='entry');
-      }
+      paintBindingModeToggle(mainEditor);
       const signature = JSON.stringify([selectedId, editorContextRevision, chosenEditorMode(), modelLocked(), hasCallableDraft() ? callableDraftCore : null]);
       if (sourceOverviewSignature === signature) return;
       sourceOverviewSignature = signature;
@@ -2933,10 +3045,14 @@
       hideSourceOverview();
       const evs = eventsFor(id);
       if (!evs.includes(currentEvent)) currentEvent = evs[0];
+      // はじめて opens the start and click bodies only (F-05): a body of another event (ふれたとき, keys …) is kept, and
+      // the note under the event buttons says so.
+      const entry = document.body.dataset.uiLevel === 'entry', shownAtLevel = x => !entry || ['start', 'click'].includes(x.event);
+      if (entry && !['start', 'click'].includes(currentEvent)) currentEvent = 'start';
       if (!sameObject) {
         selectedScriptId = null;
         const matching = project.scripts.find((x) => x.targetId === id && x.event === currentEvent && x.source.trim()),
-          first = matching || project.scripts.find((x) => x.targetId === id && x.source.trim());
+          first = matching || project.scripts.find((x) => x.targetId === id && x.source.trim() && shownAtLevel(x));
         if (first) { currentEvent = first.event; selectedScriptId = first.id || null; }
       }
       renderTree();
@@ -3048,10 +3164,10 @@
       const help = $('#designHelp'), mode = c ? designResizeMode(c) : null,
         zoom = $('#stageZoomReset').textContent.trim();
       help.textContent = (!mode ? '' : mode === 'scale'
-        ? '青い 丸を おしたまま 動かすと、形を かえずに 大きく・小さく できるよ。'
-        : '青い 丸を おしたまま 動かすと、大きさが かわるよ。' + (matchMedia('(pointer: coarse)').matches
-          ? '「たて・よこを そろえる」を おしてから 動かすと、形は そのままだよ。'
-          : 'Shiftキーを おしながら 角の 丸を 動かすと、形は そのままだよ。'))
+        ? '青い 丸を おしたまま ひっぱると、形を かえずに 大きく・小さく できるよ。'
+        : '青い 丸を おしたまま ひっぱると、大きさが かわるよ。' + (matchMedia('(pointer: coarse)').matches
+          ? '「たて・よこを そろえる」を おしてから ひっぱると、形は そのままだよ。'
+          : 'Shiftキーを おしながら 角の 丸を ひっぱると、形は そのままだよ。'))
         + (zoom && zoom !== '100%' ? '上の「' + zoom + '」を おすと、画面を 100%で 見られるよ。' : '');
       help.hidden = !help.textContent;
     }
@@ -3091,8 +3207,8 @@
         handle.dataset.resizeDirection = direction;
         handle.title =
           mode === 'scale'
-            ? 'おしたまま 動かすと、形を かえずに 大きく・小さく できます'
-            : 'おしたまま 動かして たて・よこを かえる（Shiftを おしながら 角を 動かすと 形は そのまま）';
+            ? 'おしたまま ひっぱると、形を かえずに 大きく・小さく できます'
+            : 'おしたまま ひっぱって たて・よこを かえる（Shiftを おしながら 角を ひっぱると 形は そのまま）';
         handle.setAttribute(
           'aria-label',
           `${c.name}: ${labels[direction]}の 大きさを かえる`,
@@ -3204,6 +3320,16 @@
       if ($('#assetModal').classList.contains('show')) renderAppearance();
     }
     let propHelpSerial = 0;
+    // A rename that the work refuses (prepareResourceRename), said in the status line's voice.
+    const PROPERTY_REFUSALS = Object.freeze({
+      '同じ 名前が あります': 'ほかの キャラクターや 部品と ちがう 名前に してね',
+      '同じ ところに 同じ 名前が あります。ちがう 名前に してください': 'ほかの キャラクターや 部品や 画面と ちがう 名前に してね',
+      '書きかけを 先に 決めてから、名前を かえてください': '書きかけを 先に 決めてから、名前を かえてね',
+      '名前を 使っているか しらべられない 本文が あります。先に 本文を 書きおえてから、名前を かえてください':
+        '名前を 使っているか しらべられない 本文が あるよ。先に 本文を 書きおえてから、名前を かえてね',
+      '同じ 名前が、いくつかの ものを さしています。どれの ことか、はっきり 書いてから 名前を かえてください':
+        '同じ 名前が、いくつかの ものを さしているよ。どれの ことか、はっきり 書いてから 名前を かえてね',
+    });
     function propRow(name, value, onchange, type = 'text', options = {}) {
       const r = document.createElement('div');
       r.className = 'prop-row';
@@ -3225,7 +3351,7 @@
         const before = cloneDesignProject(project);
         try {
           if (type === 'number' && (inp.value.trim() === '' || !finite(Number(inp.value))))
-            throw new Error('数を 入れてください');
+            throw new Error('数を 入れてね');
           onchange(type === 'checkbox' ? inp.checked : inp.value);
           validateDesignProject(project);
           markDirty();
@@ -3235,6 +3361,9 @@
         } catch (err) {
           log(`${err.code || ''} ${err.message}`, 'error');
           rollbackDesign(before);
+          // The field goes back to what it was; the status line says why and what to write, in its own voice (F-11: no
+          // silent no-op; F-18). Another check of the work (with a code) is said in the teacher log only.
+          setStatus(err.code ? PROPERTY_REFUSALS[err.message] || `「${name}」は その 中身に できなかったよ。もとに もどしたよ` : err.message);
         }
       });
       v.appendChild(inp);
@@ -3293,7 +3422,7 @@
         return b.right < 0 || b.left > project.stage.width || b.top < 0 || b.bottom > project.stage.height;
       });
       if (outside.length)
-        setStatus(`${outside.map((c) => `「${c.name}」`).join('')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+        setStatus(`${outside.map((c) => `「${c.name}」`).join('と ')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
       else setStatus(`画面の はば ${project.stage.width}　高さ ${project.stage.height}`);
     }
     // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
@@ -3322,7 +3451,7 @@
             'きほん',
             propRow('\u540d\u524d', project.stage.name, (v) => {
               if (!v.trim())
-                throw new Error('名前を からっぽには できません。名前を 書いてください');
+                throw new Error('画面の 名前を 書いてね');
               project = prepareResourceRename(project,'component:stage',v.trim(),{drafts:resourceDraftRecords()});
               invalidateEditors();
             }),
@@ -3334,7 +3463,7 @@
               project.stage.width,
               (v) => {
                 const n = Number(v);
-                if (!finite(n) || n < 200 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。200から1200までの 数を 入れてください');
+                if (!finite(n) || n < 200 || n > 1200) throw new Error('画面の はばは 200から1200までの 数に してね');
                 project.stage.width = n;
               },
               'number',
@@ -3346,15 +3475,16 @@
               (v) => {
                 const n = Number(v);
                 if (!finite(n) || n < 150 || n > 800)
-                  throw new Error('高さが 大きすぎるか 小さすぎます。150から800までの 数を 入れてください');
+                  throw new Error('画面の 高さは 150から800までの 数に してね');
                 project.stage.height = n;
               },
               'number',
               { after: noteOutsideParts },
             ),
           ),
+          // State words, not sentences of the language (F-22: 「すがたを見せる」 is a sentence).
           propSection('ふきだし',
-            propRow('名前を見せる',project.stage.showSpeechNames!==false,
+            propRow('名前の ひょうじ',project.stage.showSpeechNames!==false,
               v=>(project.stage.showSpeechNames=v),'checkbox')),
         );
         syncPropertyScrollPadding();
@@ -3371,17 +3501,19 @@
       duplicate.type = 'button';
       duplicate.className = 'prop-duplicate';
       duplicate.textContent = '見た目のコピー';
-      duplicate.title = '見た目と せっていが 同じ 部品を もう1つ 作ります（本文は もちません）';
+      // A sprite is a キャラクター, any other part a 部品 (F-23).
+      const kind = c.type === 'sprite' ? 'キャラクター' : '部品';
+      duplicate.title = `見た目と せっていが 同じ ${kind}を もう1つ 作ります（本文は もちません）`;
       duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
       duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'prop-delete';
-      del.textContent = '🗑 この部品を けす';
+      del.textContent = `🗑 この ${kind}を けす`;
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
       // What the copy does is said by its title, its description and the ヒント (見た目のコピー); no line of its own.
-      duplicate.setAttribute('aria-description', '見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。');
+      duplicate.setAttribute('aria-description', `見た目と せっていが 同じ ${kind}を もう1つ 作ります。本文は もちません。`);
       actions.append(title, duplicate, del);
       (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
       el.props.append(
@@ -3389,14 +3521,13 @@
           'きほん',
           propRow('\u540d\u524d', c.name, (v) => {
             v = v.trim();
-            if (!v || project.components.some((x) => x !== c && x.name === v))
-              throw new Error(
-                '部品の名前は 空にできません。ほかの部品と 同じ名前にも できません。',
-              );
+            if (!v) throw new Error('名前を 書いてね');
+            if (project.components.some((x) => x !== c && x.name === v))
+              throw new Error('ほかの キャラクターや 部品と ちがう 名前に してね');
             project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
             invalidateEditors();
           }),
-          propRow('見せる', c.visible, (v) => (c.visible = v), 'checkbox'),
+          propRow('見えている', c.visible, (v) => (c.visible = v), 'checkbox'),
           propRow(
             'しゅるい',
             {
@@ -3431,7 +3562,7 @@
             c.w,
             (v) => {
               const n = Number(v);
-              if (n < 8 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。8から1200までの 数を 入れてください');
+              if (n < 8 || n > 1200) throw new Error('はばは 8から1200までの 数に してね');
               c.w = n;
             },
             'number',
@@ -3442,7 +3573,7 @@
             c.h,
             (v) => {
               const n = Number(v);
-              if (n < 8 || n > 1200) throw new Error('高さが 大きすぎるか 小さすぎます。8から1200までの 数を 入れてください');
+              if (n < 8 || n > 1200) throw new Error('高さは 8から1200までの 数に してね');
               c.h = n;
             },
             'number',
@@ -3466,7 +3597,7 @@
             c.scalePercent,
             (v) => {
               const n = Number(v);
-              if (n < 1 || n > 1000) throw new Error('大きさが 大きすぎるか 小さすぎます。1から1000までの 数を 入れてください');
+              if (n < 1 || n > 1000) throw new Error('大きさは 1から1000までの 数に してね');
               c.scalePercent = n;
             },
             'number',
@@ -4369,7 +4500,7 @@
       project.components.push(base);
       markDirty();
       selectObject(id);
-      if (auto) setStatus(`「${name}」を ふやしたよ。いま 動かすものは「${name}」だよ`);
+      if (auto) setStatus(`「${name}」を おいたよ。いま 動かすものは「${name}」だよ`);
     }
 
     let activeFailureId = null,
@@ -4442,13 +4573,17 @@
       activeFailureId = id ?? records.at(-1).id;
       const select = $('#failureSelect');
       select.textContent = '';
+      const entry = document.body.dataset.uiLevel === 'entry';
       for (const r of [...records].reverse()) {
         const option = document.createElement('option');
         option.value = String(r.id);
-        option.textContent = '#' + r.id + ' ' + diagnosticLocation(r);
+        // はじめて shows no numbers: the place is the part, the きっかけ and the sentence.
+        option.textContent = (entry ? '' : '#' + r.id + ' ') + diagnosticLocation(r);
         select.appendChild(option);
       }
       select.value = String(activeFailureId);
+      // The stop's place is marked on the body before the help says so (the paint waits for the next frame otherwise).
+      flushRuntimePaint();
       renderFailureDetails();
       $('#failureModal').classList.add('show');
     }
@@ -4457,12 +4592,25 @@
         root = $('#failureBody');
       root.textContent = '';
       if (!r) return;
-      const help = document.createElement('div'); help.className = 'diagnostic-help';
-      // The help names only the controls of this level: はじめて has no 「本文を見て たしかめる」 and no line numbers; the
-      // place to fix keeps its orange frame after ■ 止める (keptFail).
-      help.textContent = document.body.dataset.uiLevel === 'entry'
-        ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。\n' + childDiagnosticText(r) + '\n「とじる」を おしてから「■ 止める」を おして、オレンジの わくの ところを なおしてね。'
-        : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられるよ。書きなおすときは「■ 止める」を おしてから なおしてね。';
+      const entry = document.body.dataset.uiLevel === 'entry';
+      // Akari speaks to the child in one voice (〜よ／〜ね); the reason is the language's rule, set apart in a box with its
+      // place, as 作品チェック shows it (F-18: one register per surface). The help names only the controls of this level:
+      // はじめて has no 「本文を見て たしかめる」 and no line numbers. There the place to fix keeps its orange frame after
+      // ■ 止める (keptFail), and the help promises the frame only when the body shows it; otherwise it names the sentence.
+      const help = document.createElement('div'); help.className = 'diagnostic-help failure-help';
+      const lead = document.createElement('p'), reason = document.createElement('div'), place = document.createElement('div'),
+        why = document.createElement('div'), next = document.createElement('p');
+      lead.textContent = entry ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。'
+        : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。';
+      reason.className = 'failure-reason'; place.className = 'failure-place'; why.className = 'failure-why';
+      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r);
+      reason.append(place, why);
+      const latest = r.id === scheduler.errorRecords.at(-1)?.id, sentence = diagnosticSentence(r),
+        framed = latest && !!document.querySelector('#blockEditor .blockui-current');
+      next.textContent = !entry ? '「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられるよ。書きなおすときは「■ 止める」を おしてから なおしてね。'
+        : framed ? '「とじる」を おしてから「■ 止める」を おして、オレンジの わくの ところを なおしてね。'
+        : '「とじる」を おしてから「■ 止める」を おして、' + (sentence ? '「' + sentence + '」の ブロックを なおしてね。' : 'この ブロックを なおしてね。');
+      help.append(lead, reason, next);
       root.append(help);
       const details = appendDiagnosticDetails(root, r, `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`);
       details.querySelector('pre').className = 'failure-summary';
@@ -4476,13 +4624,18 @@
         edit.onclick = () => openQuotedListRepair(r);
         root.append(help, edit);
       }
+      const failedId = r.actor?.baseId || r.targetId, failedTarget = targetById(failedId),
+        failedKind = !failedTarget || failedId === 'stage' ? '画面' : failedTarget.type === 'sprite' ? 'キャラクター' : '部品';
       renderMonitorSection(root, 'うまく いかなかったときの ようす', [
-        ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
+        [`動いていた ${failedKind}`, failedTarget?.name || '画面'],
         ['きっかけ', runtimeEventText(r.eventType, r.key)],
         ['動かしていた本文', r.source],
       ]);
-      const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
-      identifiers.querySelector('summary').textContent = 'くわしく見る（動きの番号）';
+      // The scheduler's numbers are くわしく facts (F-28).
+      if (document.body.dataset.uiLevel === 'advanced') {
+        const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
+        identifiers.querySelector('summary').textContent = 'くわしく見る（動きの番号）';
+      }
       for (const f of r.frames)
         renderMonitorSection(
           root,
@@ -4500,7 +4653,7 @@
         ...r.projectLists,
       ]);
       if (r.actor)
-        renderMonitorSection(root, 'うまく いかなかったときの この部品の ようす', [
+        renderMonitorSection(root, `うまく いかなかったときの この ${failedKind}の ようす`, [
           ['よこのばしょ', r.actor.x],
           ['たてのばしょ', r.actor.y],
           ['向き', r.actor.direction],
@@ -4679,10 +4832,10 @@
       // はじめて and かんたん show what a child can see: how many bodies run now and what the chosen one does, in
       // Akari's own words. くわしく adds the scheduler's counts.
       section('いまの 動き', [
-        ['いま 動いている 本文', `${live.length}つ`],
+        ['いま 動いている 本文', live.length ? `${live.length}こ` : 'ないよ'],
         ...(focus ? [
           ['ようす', taskStateText(focus)],
-          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
+          ['きっかけ', `${meijinTextLabel(focus.scriptId ? runningScript('script:' + focus.scriptId) : null)||targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
         ] : []),
       ]);
       if (document.body.dataset.uiLevel === 'advanced')
@@ -4808,7 +4961,15 @@
         end = loc.endLine === loc.line && loc.endColumn >= loc.column ? loc.endColumn : chars.length;
       return chars.slice(start, end).join('').trim().replace(/[。、]$/, '');
     }
-    function paintExecutionLocation() {
+    // The body a running item comes from (a 名人 text's flows run as items of its own).
+    function runningScript(scriptKey) {
+      return scriptBySourceKey(project, compiled?.items?.find((item) => item.key === scriptKey)?.documentKey || scriptKey);
+    }
+    function meijinTextLabel(script) {
+      return script && isMeijinScript(script) ? `名人の本文 ${meijinScripts().indexOf(script) + 1}` : null;
+    }
+    // follow: the editor shows the body of the sentence that runs (while paused, and when 本文を見て たしかめる opens).
+    function paintExecutionLocation({ follow = !!scheduler?.paused } = {}) {
       if (!activeLoc) return;
       const loc = activeLoc,
         parts = loc.key.split(':'),
@@ -4822,13 +4983,14 @@
             : parts[0] === 'function'
               ? project.functions.find((x) => x.id === parts[1])
               : null;
+      // A 名人 text belongs to no part: its sentences are named by the text (名人の本文 1), not by their subject.
       const owner = def
           ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
-          : targetById(loc.targetId)?.name || loc.targetId,
+          : meijinTextLabel(script) || targetById(loc.targetId)?.name || loc.targetId,
         label = document.body.dataset.uiLevel === 'entry' ? owner
           : def ? `${owner} / ${loc.line}行目` : `${owner} / ${runtimeEventText(loc.event, scriptKey)} / ${loc.line}行目`;
       paintRunStrip(label, runningSentence(def?.source ?? script?.source, loc));
-      if (scheduler?.paused) {
+      if (follow) {
         hideSourceOverview();
         // Runtime document units have their own IDs; editor selection belongs
         // to the complete source body that can be saved and restored.
@@ -4854,7 +5016,7 @@
       if (mainEditor.session.mode === 'blocks' && mainEditor.session.ownerKey === loc.key)
         mainEditor.view.highlight(loc);
       updateGutter();
-      if (scheduler?.paused) {
+      if (follow) {
         const top = wrappedCodeLines().lines[loc.line - 1]?.top || 0;
         if (top < el.editor.scrollTop || top > el.editor.scrollTop + el.editor.clientHeight - 22)
           el.editor.scrollTop = Math.max(0, top - Math.floor(el.editor.clientHeight / 3));
@@ -4926,7 +5088,8 @@
       const order = id => id === 'stage' ? -1 : project.components.findIndex(c => c.id === id),
         item = inputs.reduce((first, next) => order(next.targetId) < order(first.targetId) ? next : first),
         name = targetById(item.targetId)?.name || project.stage.name;
-      if (item.event === 'click') return `「${name}」を おすと 動くよ`;
+      // The stage is 画面 here, as on はじめて's 「画面が おされたとき」 (F-23).
+      if (item.event === 'click') return item.targetId === 'stage' ? '画面を おすと 動くよ' : `「${name}」を おすと 動くよ`;
       if (item.event === 'valueChanged') return `「${name}」に 入れると 動くよ`;
       const key = item.filter?.key;
       return key ? `「${RUN_HINT_KEYS[key] || key}」キーを おすと 動くよ` : 'キーを おすと 動くよ';
@@ -4986,7 +5149,8 @@
         const b = document.createElement('button');
         b.className = 'hint-button';
         b.textContent =
-          (h.mode === 'expression' ? '計算 · ' : '') +
+          // A value is named by its group in the block list (しらべる, 計算, …): 計算 is only for calculations (F-26).
+          (h.mode === 'expression' ? (h.category || '計算') + ' · ' : '') +
           h.text +
           (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
@@ -5062,7 +5226,7 @@
           // The other bodies' errors stay as they are; the 名人 text adds none.
           const reads = text => { const trial = cloneDesignProject(without); trial.scripts.push({ id: 'meijin-start-trial', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: text }); return errorsOf(trial) <= before; };
           const meijin = [headed, source].find(text => text && reads(text));
-          if (!meijin) { setStatus('書き方の まちがいを 直してから、名人モードに してね。'); return; }
+          if (!meijin) { setStatus('書き方の まちがいを 直してから、「名人」を えらんでね。'); return; }
           source = meijin;
         } else {
         const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
@@ -5081,7 +5245,8 @@
         }
         }
       }
-      if (!confirm(`名人モードで 書くと、この 本文は ${owner?.name ? owner.name + 'から はなれて、' : ''}「動かすもの」の「名人の本文」に うつるよ。ブロックには もどせないよ。\n名人モードで 書く？`)) return;
+      // The owner-approved wording (final call 23).
+      if (!confirm(`名人で 書くと、この本文は ${owner?.name ? owner.name + 'から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人で 書きますか？`)) return;
       try {
         const next = cloneDesignProject(project), id = script?.id || ensureUniqueId('script');
         const row = { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source, ...(script?.document ? { document: cloneDesignProject(script.document) } : {}) };
@@ -5094,12 +5259,12 @@
         project = next; selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = id;
         hideSourceOverview(); invalidateEditors(); markDirty(); renderTree(); renderProperties(); loadEditor(); renderComponents();
         clearTimeout(historyTimer); pushHistoryNow();
-        setStatus('名人モードに したよ。この 本文は コードで 書いてね');
+        setStatus('「名人の本文」に うつしたよ。この 本文は コードモードで 書いてね');
       } catch (error) { showEditorFailure(mainEditor, error); }
     }
     function formatCurrent() {
       if (modelLocked() || !flushEditor(mainEditor)) return;
-      if (currentIsMeijin()) { setStatus('名人モードの 本文は、書いたとおりに のこすよ'); return; }
+      if (currentIsMeijin()) { setStatus('名人の本文は、書いたとおりに のこすよ'); return; }
       try {
         const s = getEditorSession(mainEditor);
         if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えてください');
@@ -5159,9 +5324,10 @@
           requestRuntimePaint(7);
           const stack = task.errorCallStack?.length
             ? `
-使った じゅんばん: ${task.errorCallStack.join(' → ')}`
+使った じゅんばん：${task.errorCallStack.join(' → ')}`
             : '';
-          log(`${err.code} 動きが うまく いかなかったよ: ${err.message}${stack}`, 'error');
+          // 出力 is the teacher's surface: one polite voice per line (F-18).
+          log(`${err.code} 動きが うまく いきませんでした：${err.message}${stack}`, 'error');
           setStatus('動きが とちゅうで 止まったよ');
           renderMonitor();
           showFailureDetails(task.failureRecordId);
@@ -5202,22 +5368,25 @@
       if (compiled.errors.length) {
         showDiagnosis();
         log('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直してください', 'error');
-        refuse('作品に 直す ところが あるよ。⚠ が ついた ところを 見てね。');
+        refuse('作品に 直す ところが あるよ。' + fixPointer(compiled.errors[0]));
         return;
       }
-      // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in.
-      // A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone in its body.
+      // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in, with
+      // the controls of the view on the screen. A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone
+      // in its body.
       const hasSentence = nodes => (nodes || []).some(node => node.kind !== 'CommentLine');
       if (!(compiled.items || []).some(item => !item.definitionKind &&
         (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
           (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
-        setStatus('ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね');
+        setStatus(shownEditorMode() === 'blocks' ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
+          : '本文が まだ ないよ。コードに 文を 書いてね');
         return;
       }
       try {
         validateAssetReferences(project, assetStore);
       } catch (err) {
         log(`${err.code || ''} 絵や音の チェック: ${err.message}`, 'error');
+        refuse(document.body.dataset.uiLevel === 'entry' ? 'この 作品の 絵や音が たりないよ。' : '絵や音が たりないよ。「絵や音を まとめる」で たしかめてね。');
         return;
       }
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
@@ -5261,7 +5430,8 @@
             confirmTutorialOperation('run');
             scheduler.start();
             renderAll();
-            log(`動かしはじめました（たね=${seed}）`, 'ok');
+            // The seed is a くわしく fact (F-28).
+            log(document.body.dataset.uiLevel === 'advanced' ? `動かしはじめました（たね=${seed}）` : '動かしはじめました', 'ok');
             setStatus('動いているよ');
             el.form.focus({ preventScroll: true });
           } catch (err) {
@@ -5515,7 +5685,7 @@
         for (const d of c.notes) {
           const p = document.createElement('div');
           p.className = 'diagnosis-note';
-          p.textContent = diagnosticLocation(d) + ': ' + d.message;
+          p.textContent = diagnosticLocation(d) + '：' + d.message;
           // A notice that names its fix offers it, as a code proposal does (the fix changes the body it is in).
           for (const proposal of d.proposals || []) {
             if (typeof proposal.source !== 'string') continue;
@@ -5673,7 +5843,7 @@
         updateDirty();
         clearTimeout(autosaveTimer);
         writeAutosave();
-        log(`${a.download} を ダウンロードしはじめました。自動で のこした 作品も そのままです`, 'ok');
+        log(`${a.download} を ダウンロードしはじめました。このパソコンに のこした 作品も そのままです`, 'ok');
         setStatus(unfinished?'書きかけの ある 作品を ファイルに ほぞんしたよ。動かす 前に、まだ できていない ところを たしかめてね':`「${project.name}」を ファイルに ほぞんしたよ`);
         return true;
       } catch (err) {
@@ -5744,7 +5914,7 @@
           diagnostics.length ? 'error' : 'ok',
         );
         // Opening always gives an answer on the screen: the work's name, and how many places need fixing.
-        setStatus(`「${project.name}」を 開いたよ` + (diagnostics.length ? `。なおす ところが ${diagnostics.length}か所 あるよ` : ''));
+        setStatus(`「${project.name}」を 開いたよ` + (diagnostics.length ? `。直す ところが ${diagnostics.length}か所 あるよ` : ''));
       } catch (err) {
         if (previous) {
           history = previous.history;
@@ -6041,13 +6211,16 @@
         if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint','lastSavedEditorFingerprint'])||
           rec.id!=='latest'||rec.version!==2||!Number.isFinite(rec.updatedAt)||
           !Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')
-          throw new AkariError('F503','自動で のこした 作品の 形が 正しくありません');
+          throw new AkariError('F503','このパソコンに のこした 作品の 形が 正しくありません');
         validateSavedEditorFingerprint(rec.lastSavedEditorFingerprint);
         const restored=await decodeWorkspaceHistory(rec.workspace);
         if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
         recoveryData={...rec,restored};
-        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()}に、とちゅうまでの 作品を 自動で のこしてあるよ。つづきから 作る？ けすと、もう もどせないよ。`;
+        // The work is named (F-02), and the autosave is called このパソコンに のこす (F-23).
+        const keptName=restored.frames?.[restored.cursor]?.project?.name;
+        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()}に、${keptName?'「'+keptName+'」を ':''}とちゅうまで このパソコンに のこしてあるよ。つづきから 作る？ けすと、もう もどせないよ。`;
         // The safe choice comes first and has the focus: つづきから 作る keeps the work, のこした 作品を けす cannot be undone.
+        setStatus('このパソコンに のこした 作品が あるよ');
         $('#recoveryModal').classList.add('show');
         $('#recoveryRestore').focus({preventScroll:true});
       } catch (err) {
@@ -6061,7 +6234,7 @@
           el.autosave.textContent =
             'このパソコンに のこした 作品を もどせるか、たしかめられなかったよ（のこした 作品は そのままだよ）';
           log(
-            `自動で のこした 作品を たしかめられませんでした。のこした 作品は けしていません。 ${err.code || ''} ${err.message}`,
+            `このパソコンに のこした 作品を たしかめられませんでした。のこした 作品は けしていません。 ${err.code || ''} ${err.message}`,
             'error',
           );
         }
@@ -7373,7 +7546,7 @@
     $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('とちゅうの 作品は のこっているよ。じゆうに つづけられるよ。');};
     $('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(tutorial,'verify-save')){$('#tutorialSavedFile').value='';$('#tutorialSavedFile').click();}};
     $('#tutorialSavedFile').onchange=event=>{const file=event.target.files?.[0];event.target.value='';verifyTutorialSave(file);};
-    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial){tutorialNotice={step:tutorialStep(tutorial)?.id,text:'ファイルを えらぶのを やめたよ。もう一度 えらぶか、「いっしょに作るのをやめる」を おしてね。'};tutorialRefresh();}});
+    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial){tutorialNotice={step:tutorialStep(tutorial)?.id,text:'ファイルを えらぶのを やめたよ。もう一度 えらぶか、「いっしょに 作るのを やめる」を おしてね。'};tutorialRefresh();}});
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#exportControls').onclick = () => downloadProject('controls');
@@ -7604,19 +7777,24 @@
         history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
         initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
         $('#recoveryModal').classList.remove('show');recoveryData=null;
-        log('自動で のこした作品と、もとにもどせる きろくを もどしました','ok');
+        log('このパソコンに のこした 作品と、もとにもどせる きろくを もどしました','ok');
         setStatus(`「${project.name}」の つづきから 作れるよ`);
+        // After the dialog has let go of the page (the modal manager clears #app.inert on its own turn).
+        setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
         // What was restored is what this computer keeps: the state says so at once (restoreSnap marked it as not kept).
         el.autosave.textContent = 'このパソコンに のこしてあるよ';
       } catch (err) {
-        log('自動で のこした作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんでください。', 'error');
-        setStatus('自動で のこした 作品を もどせなかったよ。ほぞんした ファイルが あれば「開く」で えらんでね');
+        log('このパソコンに のこした 作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんでください。', 'error');
+        setStatus('このパソコンに のこした 作品を もどせなかったよ。ほぞんした ファイルが あれば「開く」で えらんでね');
       }
     };
     $('#recoveryDiscard').onclick = () => {
       $('#recoveryModal').classList.remove('show');
       recoveryData = null;
       clearAutosave();
+      // The status line says what is true now (F-11), and the focus stays on the page's controls.
+      setStatus('このパソコンに のこした 作品を けしたよ');
+      setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
     };
 
     window.addEventListener('keydown', (e) => {
@@ -7661,6 +7839,7 @@
                 const expanded = document.body.dataset.workbenchWide !== 'true';
                 document.body.dataset.workbenchWide = String(expanded);
                 $('#stageThumbnail').hidden = !expanded;
+                syncWideInert();
                 requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
                 return expanded;
               }
@@ -7704,7 +7883,7 @@
       });
       for (const mode of ['code', 'blocks'])
         $(`#${p}Mode${mode}`).onclick = (event) => {
-          if (event.currentTarget.getAttribute('aria-disabled') === 'true') showModeBlockedNote(binding);
+          if (event.currentTarget.dataset.refused) showModeBlockedNote(binding);
           else switchEditorMode(binding, mode);
         };
       $(`#${p}Cancel`).dataset.blockuiAction = 'cancel';
@@ -7803,7 +7982,8 @@
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"]')
+          // ▶ 動かす closes the input itself and says why it does not run (startRun).
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn')
         )
           return;
         if (!flushActiveEditor()) {
@@ -7885,7 +8065,7 @@
       for (let parent=field.parentElement;parent;parent=parent.parentElement)
         if (parent.tagName==='DETAILS') parent.open=true;
       field.scrollIntoView({block:'center'}); field.focus({preventScroll:true});
-      setStatus('「いつ動く？」で きっかけを えらんでね。「この動きの きっかけを かえる」で 決まるよ。「かえるのを やめる」で もとに もどれるよ');
+      setStatus('「いつ動く？」で きっかけを えらんでね。「この 本文の きっかけを かえる」で 決まるよ。「かえるのを やめる」で もとに もどれるよ');
     };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
@@ -7911,7 +8091,8 @@
     loadEditor();
     setupModalAccessibility();
     checkRecovery();
-    setStatus(`からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね — ${productLabel(true)}`);
+    // The version is in 出力 (はじまりました); the status line says only what is true now.
+    setStatus(`からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
     app = {
       get editorState() {
         return {

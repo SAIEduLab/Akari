@@ -2706,7 +2706,8 @@ body[data-editor-mode] button:disabled {
   border-color: var(--line);
 }
 body[data-editor-mode] button:focus-visible,
-body[data-editor-mode] summary:focus-visible {
+body[data-editor-mode] summary:focus-visible,
+body[data-editor-mode] :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea:not(#codeEditor):not(#callableCode)):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -2746,7 +2747,7 @@ body[data-editor-mode] .editor-modes button {
   font-weight: 700;
   color: var(--muted);
 }
-body[data-editor-mode] .editor-modes button[aria-pressed="true"] {
+body[data-editor-mode] .editor-modes > :is(#editorModecode, #editorModeblocks, #callableModecode, #callableModeblocks) {
   background: #fff;
   color: var(--dark);
   box-shadow: 0 2px 8px #41302019;
@@ -5518,7 +5519,8 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 #runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }
 #runtimeInspector::backdrop { background:#24344966; }
 .runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
-#runtimeInspectorModes { margin-left:auto; }
+#runtimeInspectorModes { position:relative; margin-left:auto; }
+#runtimeInspectorModes > .mode-blocked-note { position:absolute; top:calc(100% + 6px); right:0; z-index:2; width:max-content; max-width:min(20rem, 90vw); box-shadow:0 6px 16px #18364b30; }
 #runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
 #runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; grid-column:1; grid-row:1; }
 #runtimeInspectorBody > .monitor-window { grid-column:2; grid-row:1; }
@@ -5846,9 +5848,9 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
 }
 
-/* ── Toolbar: コード/ブロック, the level and the work name are pinned to the top-right corner, left to right, so
-   they stay in the same place in every view, width and font. The level's place does not move when the toggle is not
-   shown (はじめて, a 名人 work); its free space joins the left. Only the action buttons on the left wrap. ── */
+/* ── Toolbar: the view toggle (ブロックモード ⇄ / コードモード ⇄), the level and the work name are pinned to the
+   top-right corner, left to right, so they stay in the same place in every view, level, width and font. Only the action
+   buttons on the left wrap. ── */
 @media (min-width: 701px) {
   body[data-editor-mode] .menutool {
     --tb-pad: 18px;
@@ -5857,9 +5859,6 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     --tb-modes: 176px;
     --tb-level: 100px;
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + var(--tb-level) + 3 * var(--tb-gap));
-  }
-  body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
-    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
   /* The run screen shows neither the level nor the toggle (they change nothing there), but keeps their room, so the
      buttons wrap as on the edit screen and ■ 止める comes where ▶ 動かす was. */
@@ -5942,9 +5941,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 
 /* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
    The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
-   error, finished) shows ■ 止める only, in ▶'s place. The other toolbar buttons stay where they are, disabled while the
-   work runs. ⏸, ▶ つづける, 1つずつ 動かす and 本文を見て たしかめる are run-screen controls (かんたん・くわしく), not shown
-   once the run has ended. */
+   error, finished) shows ■ 止める only, in ▶'s place. ⏸ and ▶ つづける are run-screen controls at every level, 1つずつ
+   動かす and 本文を見て たしかめる at かんたん・くわしく; none of them is shown once the run has ended. */
 body:not(.runtime) #stopBtn,
 body.runtime #runBtn { display: none !important; }
 body:not(.runtime) .debugbar :is(#pauseBtn, #continueBtn, #stepBtn) { display: none !important; }
@@ -5952,12 +5950,25 @@ body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspe
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
 body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
-/* The level and the toggle are not shown on the run screen; their room stays, so no toolbar button moves. */
-body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
+/* The run screen's toolbar (final call 21) shows ■ 止める in ▶ 動かす's place and the work's name as plain text. The
+   buttons that cannot be used while the work runs (新しく作る, お手本を開く, ヒント, 開く, 保存, うごく作品を ファイルにする,
+   and はじめて's 作品 menu that holds three of them), the level and the view toggle are not shown, but their room stays,
+   so no toolbar button moves at any width. The other buttons (はじめて's もとにもどす・やり直す, いっしょに作る) stay,
+   locked. */
+body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, .ui-level-label, .editor-modes) { visibility: hidden !important; }
+body.runtime .menutool > #projectName { border-color: transparent; background: transparent; box-shadow: none; color: var(--dark, #283e50); -webkit-text-fill-color: currentColor; opacity: 1; cursor: default; pointer-events: none; }
+/* はじめて's ⏸ いったん止める and ▶ つづける sit under the stage while the work runs (1つずつ 動かす and 本文を見て たしかめる
+   are for かんたん and up). */
+#entryRunControls { display: none; }
+body[data-ui-level="entry"].runtime:not(.run-finished) #entryRunControls { display: flex; flex: none; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 2px 10px 8px; }
+#entryRunControls > button { min-height: 36px; padding: 0 14px; font-weight: 700; }
 body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
-:is(#editorModeblocks, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
-/* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
+/* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */
+.editor-modes > button[hidden] { display: none !important; }
+#sourceHeadingBtn[aria-disabled="true"] { opacity: 0.5; }
+/* Why the toggle does not switch (はじめて, a 名人 work, a mistake in the code): shown under it after a press. The toggle
+   itself keeps its look. */
 .mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
 .mode-blocked-note[hidden] { display: none !important; }
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
@@ -6000,6 +6011,10 @@ body { overflow: visible !important; }
 .menutool > #entryProjectMenu > .entry-project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
 .menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
 .menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
+/* はじめて's 作品 opens a menu: it ends with ▾ instead of the ▶ that ▶ 動かす beside it also shows. */
+.menutool > #entryProjectMenu > summary { list-style: none; }
+.menutool > #entryProjectMenu > summary::-webkit-details-marker { display: none; }
+.menutool > #entryProjectMenu > summary::after { content: " ▾" / ""; }
 body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
 
 /* Block view: the heading 本文 sits at the left of the 動かすもの row, and すべての本文・画面の本文・いつ動く？ share one row with
@@ -6018,7 +6033,9 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > .code-head { grid-row: 
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row: 2; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
-body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; align-items: flex-start; }
+/* When the row wraps at a narrow width, もとにもどす・やり直す keep their one-line labels. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > :is(#undoBtn, #redoBtn) { flex: none; white-space: nowrap; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
@@ -6037,6 +6054,17 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-colu
 body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
+/* On a narrow screen there is no room for a second column: はじめて's run screen is one column, the stage (with the
+   strip that shows the running sentence) and then the part list, as at かんたん; the blocks come back after ■ 止める.
+   The body window stays for いっしょに作る's guide. */
+@media (max-width: 650px) {
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > #designerWindow { grid-column: 1; grid-row: 1; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { grid-column: 1; grid-row: 2; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin { grid-column: 1; grid-row: 3; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin > :not(#tutorialGuide) { display: none !important; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin:not(:has(> #tutorialGuide:not([hidden]))) { display: none !important; }
+}
 
 /* Touch screens: the toolbar's controls are at least 40 px high (no wider). */
 @media (pointer: coarse) {
@@ -6080,7 +6108,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 }
 .blockui-world .blockui-insertion:not(.blockui-insertion-end)::before { top: 2px; height: 4px; left: 12px; }
 .blockui-world .blockui-insertion:not(.blockui-insertion-end):hover::before,
-.blockui-world .blockui-insertion.blockui-implied-destination::before { background: #8aa5b8; }
+.blockui-world .blockui-insertion.blockui-implied-destination::before { background: #6c8ca5; }
 .blockui-world .blockui-insertion.blockui-insertion-end { height: 28px; min-height: 28px; line-height: 26px; }
 :is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion:not(.blockui-insertion-end) {
   height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #47677f !important;
@@ -6176,6 +6204,10 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending[data-notice="block-draft"],
 body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="block-draft"]) #editorCancel { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
+/* One cancel control per state (F-23): while the block view's floating 決める・とちゅうで やめる is open, the editor's
+   入力を やめる is not shown next to it. */
+body[data-editor-mode="blocks"]:has(#blockEditor:not([hidden]) > .blockui-view-controls:not([hidden])) #editorCancel,
+#procModal:has(#callableBlocks:not([hidden]) > .blockui-view-controls:not([hidden])) #callableCancel { display: none !important; }
 .blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
 .blockui-view-controls > .blockui-field-error:empty { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-message.blockui-message-near-field {
@@ -6245,13 +6277,16 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   .blockui-world .blockui-field input { height: 40px; }
   .blockui-world .blockui-insertion.blockui-insertion-end,
   :is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion { height: 40px !important; min-height: 40px !important; line-height: 38px; }
+  /* The place after the selected block lies above that block's face (lifted to z-index 60 while selected), so all 40 px
+     of it can be pressed (AX-03). A block whose field is being edited keeps its popovers on top. */
+  .blockui-world .blockui-node:not(:has(.blockui-slot-active)) + .blockui-insertion.blockui-implied-destination { position: relative; z-index: 61; }
   .blockui-world .blockui-insertion.blockui-implied-destination::after {
     content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 40px; z-index: 6;
   }
   :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories { gap: 4px; }
   :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button { min-height: 36px; padding: 2px 8px; }
   :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::after {
-    content: ""; position: absolute; top: -2px; bottom: -2px; left: min(0px, calc(50% - 20px)); right: min(0px, calc(50% - 20px));
+    content: ""; position: absolute; top: -3px; bottom: -3px; left: min(0px, calc(50% - 20px)); right: min(0px, calc(50% - 20px));
   }
   :is(#blockEditor, #callableBlocks) .blockui-palette :is(.blockui-palette-tools .blockui-button, .blockui-palette-options > summary, input, select, .blockui-check),
   :is(#blockEditor, #callableBlocks) .blockui-palette-list > .blockui-button { min-height: 40px !important; }
@@ -6259,6 +6294,9 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   .stage-zoom-controls button { min-height: 40px !important; min-width: 40px; }
   body[data-editor-mode] .side :is(button, select, summary, .tree-item) { min-height: 40px !important; min-width: 40px; }
   body[data-editor-mode] .side input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 40px !important; }
+  /* The rows above the body and はじめて's event buttons are pressed by a finger too (AX-07). */
+  body[data-editor-mode] .codewin > :is(.code-head, .source-nav, #entryEvents) :is(button, select) { min-height: 40px !important; }
+  body[data-editor-mode] .menutool > button { min-width: 40px; }
 }
 
 /* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
@@ -6355,9 +6393,15 @@ body[data-ui-level="entry"] .status #statusText { color: #1d3448; font-weight: 7
 
 /* Child text is written with spaces between phrases; a line breaks only at a space or a punctuation mark (F-19). */
 :is(.status, #statusText, .modal p, .project-choice-dialog p, .project-choice-dialog h2, #tutorialText, #entryOutside,
-  .export-choice, .sample-card-copy, .diagnosis-issue, .diagnosis-note, #failureBody > .diagnostic-help) {
+  .export-choice, .sample-card-copy, .diagnosis-issue, .diagnosis-note, #failureBody > .diagnostic-help,
+  .child-help, .child-help-panel, .blockui-empty, .blockui-local-help, .editor-pending, .monitor-empty) {
   word-break: keep-all; overflow-wrap: anywhere;
 }
+/* The run-failure dialog: Akari's lines around the reason, which sits in a box with its place, as in 作品チェック. */
+#failureBody > .failure-help { white-space: normal; }
+.failure-help > p { margin: 0; }
+.failure-reason { margin: 8px 0; padding: 8px 10px; border: 1px solid #efd0d0; border-radius: 9px; background: #fff5f5; white-space: pre-wrap; }
+.failure-place { color: var(--muted, #536273); font-size: 0.92em; }
 
 /* はじめて adds a character with three buttons in キャラクター・部品 (F-13). */
 #entryAddRow { display: none; }
