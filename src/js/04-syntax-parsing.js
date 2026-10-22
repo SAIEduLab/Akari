@@ -2314,11 +2314,14 @@
   }
   // 点数が10になったら (no もし): three meanings, each in the child's words (LANGUAGE.md 読めない書き方): now, once by
   // waiting, or each time (名人's 〜になったとき).
+  // The condition of 点数が10になったら (点数が10と同じ), or null when it does not read.
+  function becomesCondition(written,symbols,ctx){
+    try{return parseCondition(/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(written))?written:written+'と同じ',symbols,ctx,'plain');}
+    catch(error){if(!(error instanceof AkariError))throw error;return null;}
+  }
   function becomesMessage(written,symbols,ctx){
-    let now='もし〜なら、',wait='〜になるまで待つ。';
-    try{const raw=/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(written))?written:written+'と同じ',condition=parseCondition(raw,symbols,ctx,'plain');
-      now='もし'+formatCondition(condition,'if')+'、';wait=formatCondition(condition,'until')+'待つ。';}
-    catch(error){if(!(error instanceof AkariError))throw error;}
+    const condition=becomesCondition(written,symbols,ctx);
+    const now=condition?'もし'+formatCondition(condition,'if')+'、':'もし〜なら、',wait=condition?formatCondition(condition,'until')+'待つ。':'〜になるまで待つ。';
     return `「${written}になったら、」は、いくつかの 意味に とれます。いま しらべるなら「${now}」、そうなるまで 待つなら「${wait}」、そうなる たびに するなら 名人モードで「${written}になったとき、」と 書きます`;
   }
   function sentenceDiagnostic(message,line,choices=[],draftRole=null) {
@@ -2643,8 +2646,11 @@
       }
     }
     // 点数が10になったら、 (no もし): waiting or checking is not decided; 10歩進んだら、1秒待つ: an order is 「〜して、」.
-    if(!/^もし/.test(mask)&&(p=surfaceCapture(/^(.+?)になったら、?$/d,code,mask)))
-      throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,[],{kind:'IfStatement',missing:['mode']});
+    // The body is written below, so only the もし line is proposed (a wait cannot hold the body).
+    if(!/^もし/.test(mask)&&(p=surfaceCapture(/^(.+?)になったら、?$/d,code,mask))){
+      const condition=becomesCondition(p[0].text,symbols,ctx);
+      throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,condition?[{label:'いま そうなっていたら する',source:'もし'+formatCondition(condition,'if')+'、'}]:[],{kind:'IfStatement',missing:['mode']});
+    }
     {const after=/^(?!もし)([^、。]+?)(んだら|ったら|いたら|いだら|したら|えたら|けたら|めたら|れたら|せたら|ねたら|てたら)、(.+)$/.exec(mask);
       if(after){const head=code.slice(0,after[1].length),rest=code.slice(after[1].length+after[2].length+1),te=head+after[2].replace(/たら$/,'て').replace(/だら$/,'で')+'、'+rest;
         if(reads(te))throw fixed(ctx.meijin?'「〜したら、」は 読みません。じゅんに するときは「〜して、」で つなぎます。そう なるのを 待つときは「〜になったら、」と 書きます':'「〜たら」は「もし」の 文で 使います。じゅんに するときは「〜して、」で つなぎます',te,'「〜して、」で つなぐ','Sequence');}}
@@ -2705,10 +2711,11 @@
     if((p=surfaceCapture(/^(.+?)になったら、(.+)$/d,code,mask))){
       let raw=p[0].text;
       if(!/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
-      const condition=parseCondition(raw,symbols,ctx,'plain'),negative=exprNode('UnaryExpression',{op:'NOT',value:condition}),body=p[1].text,indent=' '.repeat(line.indent||0);
+      const condition=parseCondition(raw,symbols,ctx,'plain'),body=p[1].text,indent=' '.repeat(line.indent||0);
+      // The wait is the one the message names (点数が10になるまで待つ): when it is so already, it does not wait.
       throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,[
         {label:'いま そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
-        {label:'そうなるのを 待ってから する',source:`${formatCondition(negative,'until')}待つ。\n${indent}${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
+        {label:'そうなるのを 待ってから する',source:`${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
       ],{kind:'Condition',missing:['stateOrTransition']});
     }
     if((p=surfaceCapture(/^(それ|これ|あれ|その子)を(.+(?:動かす|うごかす))$/d,code,mask))){
