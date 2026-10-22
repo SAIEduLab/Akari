@@ -5986,7 +5986,8 @@ body.runtime .menutool > .mode-blocked-note { display: none !important; }
 body.runtime .run-strip { container: run-strip / inline-size; display: flex; flex: none; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 21px; color: var(--dark, #283e50); }
 .run-strip > .exec-location { flex: 0 1 auto; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .exec-sentence { flex: 1 1 0; box-sizing: border-box; min-width: 0; height: 29px; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; line-height: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exec-sentence[hidden] { display: block; visibility: hidden; }
+/* The empty box keeps its place: this wins over the page-wide [hidden] { display: none !important }. */
+.run-strip > .exec-sentence[hidden] { display: block !important; visibility: hidden; }
 body[data-ui-level="entry"] .run-strip > .exec-location { max-width: 45%; }
 @container run-strip (max-width: 759px) {
   body:not([data-ui-level="entry"]) .run-strip > :is(.exec-location, .exec-sentence) { flex: 1 0 100%; max-width: none; }
