@@ -29,7 +29,7 @@ const TOOLBOX_PRESET='.tool.sprite-preset';
 // body, and one that also has 星. Positions are centres from the bottom-left corner of the 640×400 screen.
 const PARTS=[['w-neko','ねこ'],['w-dango','だんご'],['w-takudon','たくどん'],['w-inu','犬']];
 // The 名人 body keeps running for a while, so the run screen's 「本文を見て たしかめる」 can be pressed (MC-587).
-const MEIJIN_SOURCE='ねこはいまのばしょから、右へ10歩動く。\n3秒待つ。';
+const MEIJIN_SOURCE='ねこは、いまのばしょから、右へ10歩動く。\n3秒待つ。';
 function work(meijinSource=null,extra=[]){
   const p=A.makeEmptyProject(),base=p.components.find(c=>c.type==='sprite');
   p.components=[...PARTS,...extra].map(([id,name],i)=>({...structuredClone(base),id,name,x:80+120*i,y:150,w:60,h:60,costumes:[{id:id+'-face',name:'顔',kind:'text',value:'●'}],costumeId:id+'-face'}));
@@ -158,7 +158,7 @@ const checks={
     t=await s.tree();await (await reveal(root.locator(`[data-blockui-action="body-insert"][data-parent-id="${t.b.body[0].id}"][data-insert-index="1"]`).first())).click();await s.page.waitForTimeout(150);await add('Say');
     t=await s.tree();await s.who(t.b.body[0].b.body[1].id,'だんご');
     await s.code();const lines=(await s.text()).split('\n');
-    return {expect:{heading:lines[0]==='たくどんは、3回くり返す。',moveWithoutSubject:lines[1]==='  いまのばしょから、右へ10歩動く。',otherSubject:/^ {2}だんごは.+と言う。$/.test(lines[2]||'')},info:{lines,hole}};},
+    return {expect:{heading:lines[0]==='たくどんは、3回くり返す。',moveWithoutSubject:lines[1]==='  いまのばしょから、右へ10歩動く。',otherSubject:lines[2]==='  だんごは「こんにちは」と言う。'},info:{lines,hole}};},
   'CC-151':async s=>{const pen=()=>s.page.evaluate(()=>{const c=document.querySelector('#penCanvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;return n;});
     await s.select('w-neko');await s.code();await s.write('ペンを下ろす。\nいまのばしょから、右へ100歩動く。');await s.select('stage');await s.code();await s.write('2秒待つ。\n作品の線とスタンプを全部消す。');
     const check=await s.check();await s.run();await s.page.waitForTimeout(1000);const early=await pen();await s.page.waitForTimeout(2300);const late=await pen();
@@ -226,7 +226,9 @@ const checks={
     const timedOps=async ids=>{const out={};for(const n of ids){const node=extra(n.id);await clickNode(node);out[n.s]=await node.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="motion-timed"]').count();}return out;};
     await s.select('w-neko');await s.category('motion');const entry=await s.palette();for(const id of motion)await s.place(id);const entryTimed=await timedOps((await s.tree()).b.body);
     await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await s.category('motion');const basicMotion=await s.palette();await s.category('basic');const basicCommon=await s.palette();
-    const events=await p.evaluate(()=>[...document.querySelectorAll('#eventSelect option')].map(o=>o.value));await s.category('motion');await s.place('MotionCommand:GOTO_PART');
+    const when=p.locator('#blockEditor details.blockui-heading-editor > summary').first();await when.click();await p.waitForTimeout(200);
+    const events=await p.locator('#blockEditor [data-blockui-structured-role="heading.event"]').first().evaluate(e=>[...e.options].filter(o=>!o.hidden&&!o.disabled).map(o=>o.value));
+    await p.locator('#blockEditor [data-blockui-action="heading-cancel"]').first().click();await p.waitForTimeout(200);await s.category('motion');await s.place('MotionCommand:GOTO_PART');
     const basicTimed=await timedOps((await s.tree()).b.body);
     await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(250);await s.category('');const all=await s.palette();
     const disabled=await p.locator('#blockEditor .blockui-palette [data-blockui-schema][aria-disabled="true"]').evaluateAll(es=>es.filter(e=>e.getClientRects().length).map(e=>e.dataset.blockuiSchema));
