@@ -2454,7 +2454,7 @@
       // Moving a block is 「もっていく」: 「動かす」 is only for the characters and ▶ 動かす (E-05, §4).
       const move = button('ほかへ もっていく', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
-          '同じものをもう1つ作る',
+          '同じものを もう1つ 作る',
           'duplicate',
           () => {
             if (info.body)
@@ -2519,7 +2519,7 @@
       if (info.body) {
         commands.append(
           button(
-            schema.bodies.length ? 'このまとまりと中のブロックをけす' : 'このブロックをけす',
+            schema.bodies.length ? 'この まとまりと 中の ブロックを けす' : 'この ブロックを けす',
             'remove',
             () => removeBlock(node, info),
             { 'data-block-id': node.id },
