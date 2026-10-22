@@ -74,7 +74,7 @@ async function main(){
   });
   await run('debug-function-owner',async p=>{
    await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableNewFunction'))).click();await fill(p,'失敗値','#callableName');await fill(p,'1÷0を返す。','#callableCode');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();await fill(p,'失敗値（）を言う。');const before=(await state(p)).project;await (await reveal(p.locator('#runBtn'))).click();await p.locator('#failureModal.show').waitFor();
-   const help=await p.locator('#failureBody .diagnostic-help').textContent();assert.match(help,/「とじる」の あと、「本文を見て たしかめる」/);assert.match(help,/書きなおすときは「止める」/);
+   const help=await p.locator('#failureBody .diagnostic-help').textContent();assert.match(help,/「とじる」の あと、「本文を見て たしかめる」/);assert.match(help,/書きなおすときは「■ 止める」/);
    await (await reveal(p.locator('#failureClose'))).click();assert.match((await state(p)).main.owner,/^function:/);assert.equal((await state(p)).state,'PAUSED');assert.equal(await p.locator('#codeEditor').isVisible(),false);
    await p.locator('#runtimeInspectBtn').click();await p.locator('#runtimeInspector[open]').waitFor();assert.equal(await p.locator('#codeEditor').inputValue(),'1÷0を返す。');await mode(p,'blocks');assert.equal((await state(p)).project,before);assert.ok(await root(p).locator('.blockui-current').count());await mode(p,'code');assert.equal((await state(p)).project,before);await p.locator('#runtimeInspectorStop').click();assert.equal((await state(p)).main.source,'失敗値（）を言う。');assert.equal(await p.evaluate(()=>document.activeElement.id),'codeEditor');
    return{functionDebugOwner:true,noScriptOverwrite:true,recoveryGuidanceMatchesVisibleActions:true,stopReturnsToEditableSource:true};
