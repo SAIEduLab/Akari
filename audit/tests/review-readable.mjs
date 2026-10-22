@@ -243,7 +243,7 @@ async function fullTextEditorReview(browser) {
 
 async function longTextReview(browser){
   const long='長い文字列'.repeat(39),observations=[];
-  for(const viewport of viewports) for(const level of levels) for(const targetZoom of [1,.55]){
+  for(const viewport of viewports) for(const level of levels) for(const targetZoom of [1,.5]){
     const {page,context}=await openPage(browser,viewport,level);
     try{
       await page.locator('#editorModeblocks').click();
@@ -256,7 +256,7 @@ async function longTextReview(browser){
       const zoomReset=page.locator('#blockEditor [data-blockui-action="zoom-reset"]');
       await zoomReset.click();
       const zoomOut=page.locator('#blockEditor [data-blockui-action="zoom-out"]');
-      if(targetZoom<1) for(let i=0;i<9;i++) await zoomOut.click();
+      if(targetZoom<1) for(let i=0;i<2;i++) await zoomOut.click();
       await page.waitForFunction(expected=>Math.abs(parseFloat(getComputedStyle(document.querySelector('#blockEditor .blockui-world')).getPropertyValue('--blockui-scale'))-expected)<.001,targetZoom);
       const before=await page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,stageZoom:document.querySelector('#stageZoomReset')?.textContent||'',world:document.querySelector('.blockui-world')?.style.transform||'',blockZoom:document.querySelector('#blockEditor [data-blockui-action="zoom-reset"]')?.textContent||'',history:Akari.app.editorState.history.length}));
       await input.evaluate(el=>el.scrollIntoView({block:'center',inline:'center'}));

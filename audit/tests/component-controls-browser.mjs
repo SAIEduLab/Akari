@@ -193,9 +193,12 @@ await withBrowser(chrome,async browser=>{
       // column comes into view, the page above it).
       while(!visible(await measure(p,'#dataBtn'))&&swipes<16){const r=await p.locator('.side').evaluate(e=>{const b=e.getBoundingClientRect(),top=Math.max(0,b.top),bottom=Math.min(innerHeight,b.bottom);
         return bottom-top>=80?{x:b.x,width:b.width,top,height:bottom-top}:{x:0,width:innerWidth,top:0,height:innerHeight};});
-        const x=r.x+r.width*.7,y=r.top+r.height*.78;
+        // Off the stage and the block workspace, which take a finger for themselves (a tap on the stage chooses the stage,
+        // a drag moves a part or the workspace): in the column if it has such a place, else anywhere on the page.
+        const {x,y}=await p.evaluate(({left,width,top,height})=>{for(const [l,w,t,h] of [[left,width,top,height],[0,innerWidth,0,innerHeight]])for(const fx of [.7,.95,.05])for(let f=.78;f>.3;f-=.04){const x=l+w*fx,y=t+h*f,e=document.elementFromPoint(x,y);if(e&&!e.closest('#designerWindow,.blockui-workspace'))return{x,y};}return{x:left+width*.7,y:top+height*.78};},{left:r.x,width:r.width,top:r.top,height:r.height});
+        const distance=Math.min(r.height*.55,y-8);
         await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});
-        for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-r.height*.55*step/8,id:1}]});await frame(p);}
+        for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-distance*step/8,id:1}]});await frame(p);}
         await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await frame(p);swipes++;
       }
       const target=await measure(p,'#dataBtn');verifyComponentControlReach(target);

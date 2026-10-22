@@ -44,7 +44,8 @@ async function positive(p,id){
  if(op.kind==='choice'){await activate(p,p.locator(op.key==='finish'?'#tutorialFinish':'#tutorialChoices [data-tutorial-choice="'+op.key+'"]'));return null;}
  if(op.kind==='insert'){
   const parent=await p.evaluate(ref=>{let n=Akari.app.editorState.main.blockView;for(const k of ref)n=n[k];return n.id;},op.parent);
-  const insertion=p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first();
+  // The place is a 「＋ ここに入れる」, or the hole of an empty enclosure, its only place (E-03).
+  const insertion=p.locator('#blockEditor :is([data-blockui-action="body-insert"],.blockui-hole-target)[data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first();
   const candidate=p.locator('#blockEditor [data-lesson-block="'+op.key+'"]');
   assert.ok(await p.locator('#blockEditor [data-blockui-action="palette-add"]').count()>1,'lesson preserves a visible choice of blocks');
   assert.equal(await candidate.getAttribute('data-tutorial-blocked'),'true','insertion must be chosen before the block');

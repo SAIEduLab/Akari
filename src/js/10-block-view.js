@@ -103,6 +103,10 @@
       currentLocation = null,
       suppressClickUntil = 0,
       pointerFocusTarget = null,
+      // The element focused when the pointer went down: a field entered from elsewhere selects its whole value (E-01).
+      pointerFocusPrevious = null,
+      // How the last press was made (mouse, touch or pen): a touch drop does not open the screen keyboard (E-03).
+      lastPointerType = 'mouse',
       highlightedId = null,
       lineNodes = new Map(),
       displaySession = null,
@@ -111,7 +115,6 @@
       previousSearch = '',
       category = document.body.dataset.uiLevel !== 'advanced' ? 'basic' : '',
       showOutside = false,
-      page = 0,
       paletteMode = 'all',
       categoryExplicit = false,
       availabilityCache = new Map(),
@@ -128,9 +131,8 @@
       bodyPages = new Map(),
       bodyExtraPages = new Map(),
       inputPages = new Map();
-    const PAGE = 12,
-      // Bound both the opening batch and a revealed later batch with role controls.
-      BODY_PAGE = 40,
+    // Bound both the opening batch and a revealed later batch with role controls.
+    const BODY_PAGE = 40,
       INPUT_PAGE = 20;
     let zoom = 1,
       pan = null,
@@ -203,6 +205,8 @@
       messageBox.textContent = message || '';
       messageBox.classList.toggle('blockui-error', error);
       messageBox.setAttribute('role', error ? 'alert' : 'status');
+      // The mistake of the field being edited is read here and seen under the field.
+      messageBox.classList.toggle('blockui-message-near-field', !!message && !!pending && message === pending.error);
     };
     const notifyPending = () =>
       onPending(
@@ -222,7 +226,7 @@
           : replacement
             ? { ownerKey: session()?.ownerKey, reason: 'もとの ばしょに 入れる ブロックを えらんでください' }
             : drag?.started
-              ? { ownerKey: session()?.ownerKey, reason: 'ブロックを動かしている とちゅうです' }
+              ? { ownerKey: session()?.ownerKey, reason: 'ブロックを 運んでいる とちゅうです' }
               : null,
       );
     const localIndex = (rootNode) => {
@@ -266,8 +270,10 @@
       destinationLabel = E('div', 'blockui-destination', '本文の いちばん下に入れる'),
       cancelButton = button('とちゅうで やめる', 'cancel', () => cancel()),
       commitButton = button('決める', 'commit', () => flush({explicit:true})),
-      messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' });
-    controls.append(destinationLabel, commitButton, cancelButton);
+      messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' }),
+      // An input's mistake is shown right under the field, in the floating 決める・とちゅうで やめる (E-12).
+      fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
+    controls.append(fieldError, destinationLabel, commitButton, cancelButton);
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
@@ -287,10 +293,11 @@
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
       'aria-label': '大きさを100%に もどす',
     });
-    const minus = button('\u2212', 'zoom-out', () => setZoom(zoom - 0.05), {
+    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
+    const minus = button('\u2212', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
         'aria-label': '\u5c0f\u3055\u304f\u898b\u308b',
       }),
-      plus = button('\uff0b', 'zoom-in', () => setZoom(zoom + 0.05), {
+      plus = button('\uff0b', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
         'aria-label': '\u5927\u304d\u304f\u898b\u308b',
       });
     const home = button('\u306f\u3058\u3081\u3078', 'workspace-home', () => {
@@ -370,20 +377,10 @@
       outsideLabel = E('label', 'blockui-check');
     outside.checked = showOutside;
     outsideLabel.append(outside, doc.createTextNode('使えないブロックも見せる'));
+    // One list that scrolls, with no pages (E-17).
     const paletteList = E('div', 'blockui-palette-list'),
-      palettePages = E('div', 'blockui-paging'),
-      previous = button('前', 'palette-prev', () => {
-        page = Math.max(0, page - 1);
-        renderPalette();
-      }),
-      next = button('次', 'palette-next', () => {
-        page++;
-        renderPalette();
-      }),
-      pageLabel = E('span'),
       paletteOptions = E('details', 'blockui-palette-options');
     paletteOptions.append(E('summary', '', 'ブロックの しゅるい'), outsideLabel);
-    palettePages.append(previous, pageLabel, next);
     paletteOptions.append(modeSelect);
     const searchLabel=E('label','blockui-search-label','ブロックを さがす');
     searchLabel.append(search);
@@ -392,7 +389,6 @@
     paletteControls.append(searchScope);
     const restoreSearch = button('', 'restore-search', () => {
       searchText = search.value = previousSearch;
-      page = 0;
       renderPalette();
     });
     paletteControls.append(restoreSearch);
@@ -419,7 +415,7 @@
     paletteToggle.setAttribute('aria-controls', paletteControls.id);
     const paletteTools = E('div', 'blockui-palette-tools');
     paletteTools.append(paletteToggle, paletteControls);
-    palette.append(paletteTools, categorySelect, paletteList, palettePages);
+    palette.append(paletteTools, categorySelect, paletteList);
     layout.append(palette, workspaceShell);
     root.append(layout);
     const promptArea = E('div', 'blockui-replacement');
@@ -435,6 +431,8 @@
         };
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         placeActions(menu, menu.querySelector('.blockui-action-items'));
+      placeControls();
+      placeNodeTools();
     });
     listen(doc.defaultView, 'resize', () => {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
@@ -455,19 +453,34 @@
     }
     listen(search, 'input', () => {
       searchText = search.value;
-      page = 0;
+      paletteList.scrollTop = 0;
       renderPalette();
+    });
+    // Enter puts the first block that can go in the chosen place there and returns to it; ↓ goes to the list (E-16).
+    // The Enter that ends a kana-kanji conversion is not this Enter.
+    listen(search, 'keydown', (event) => {
+      if (event.isComposing || event.keyCode === 229) return;
+      const first = [...paletteList.querySelectorAll('.blockui-palette-item > button')]
+        .find(b => !b.disabled && b.getAttribute('aria-disabled') !== 'true');
+      if (event.key === 'Enter' && first) { event.preventDefault(); event.stopPropagation(); first.click(); }
+      else if (event.key === 'ArrowDown' && first) { event.preventDefault(); event.stopPropagation(); first.focus(); }
+    });
+    // ↑ and ↓ move along the list; ↑ on the first block goes back to the search field.
+    listen(paletteList, 'keydown', (event) => {
+      if (!['ArrowDown', 'ArrowUp'].includes(event.key) || !event.target.matches('.blockui-palette-item > button')) return;
+      const items = [...paletteList.querySelectorAll('.blockui-palette-item > button')], at = items.indexOf(event.target);
+      event.preventDefault(); event.stopPropagation();
+      if (event.key === 'ArrowDown') items[Math.min(items.length - 1, at + 1)]?.focus();
+      else if (at <= 0) search.focus(); else items[at - 1].focus();
     });
     listen(modeSelect, 'change', () => {
       paletteMode = modeSelect.value;
       category = '';
       categoryExplicit = false;
-      page = 0;
       renderPalette();
     });
     listen(outside, 'change', () => {
       showOutside = outside.checked;
-      page = 0;
       renderPalette();
     });
     function normalizedResult(result) {
@@ -576,6 +589,7 @@
           }
         }
         const previous = pending?.input === input ? pending : null;
+        if (!previous) announce('');
         pending = {
           input,
           id: node.id,
@@ -590,6 +604,9 @@
           read,
           error: '',
           invalid: false,
+          // A mistake shown under the field stays while the field keeps the value it was shown for.
+          shown: previous?.shown && previous.shownValue === input.value,
+          shownValue: previous?.shownValue,
         };
         try {
           read();
@@ -648,38 +665,34 @@
         const reason='いつ動くかを えらんだら「この動きの きっかけを かえる」を おしてください';
         announce(reason,true);return {ok:false,pending:true,reason};
       }
-      if (p.composing || p.input.dataset.composing === 'true') {
-        p.error = '日本語の へんかんを おわらせてから、もう一度 やってください';
+      // A mistake found when the input is to be decided is shown right under the field (E-12).
+      const refused = (message) => {
+        p.error = message;
+        p.shown = true;
+        p.shownValue = p.input.value;
         notifyPending();
         announce(p.error, true);
+        updateControls();
         return { ok: false, pending: true, reason: p.error };
-      }
-      if (session()?.ownerKey !== p.ownerKey) {
-        p.error = '入れている とちゅうで、なおしていた ところが かわりました。「決める」を おすか、とちゅうで やめてください';
-        announce(p.error, true);
-        return { ok: false, pending: true, reason: p.error };
-      }
+      };
+      if (p.composing || p.input.dataset.composing === 'true')
+        return refused('日本語の へんかんを おわらせてから、もう一度 やってください');
+      if (session()?.ownerKey !== p.ownerKey)
+        return refused('入れている とちゅうで、なおしていた ところが かわりました。「決める」を おすか、とちゅうで やめてください');
       if (
         session()?.sourceRevision !== p.sourceRevision ||
         session()?.contextRevision !== p.contextRevision
       ) {
-        p.error =
-          '入れている とちゅうで、本文や まわりが かわりました。とちゅうで やめて、もう一度 あいている ところを えらんでください';
-        announce(p.error, true);
-        notifyPending();
-        return { ok: false, pending: true, reason: p.error };
+        return refused('入れている とちゅうで、本文や まわりが かわりました。とちゅうで やめて、もう一度 あいている ところを えらんでください');
       }
       let value;
       try {
         value = p.read();
       } catch (error) {
-        p.error = error.message;
         p.invalid = true;
         p.input.setAttribute('aria-invalid', 'true');
-        announce(p.error, true);
-        notifyPending();
         if (focus) p.input.focus();
-        return { ok: false, pending: true, reason: p.error };
+        return refused(error.message);
       }
       if (Object.is(value, p.original)) {
         pending = null;
@@ -706,11 +719,9 @@
         op = { type: 'comment-lines', id: p.id, lines: value.replace(/\r\n?/g, '\n').split('\n') };
       const result = operate(op, { fromPending: true });
       if (!result.ok) {
-        p.error = errorText(result.error || result.reason);
         p.input.setAttribute('aria-invalid', 'true');
-        notifyPending();
         if (focus) p.input.focus();
-        return { ...result, pending: true, reason: p.error };
+        return { ...result, ...refused(errorText(result.error || result.reason)) };
       }
       pending = null;
       notifyPending();
@@ -789,15 +800,43 @@
       controls.hidden = !pending && !moving && !drag && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
+      // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07).
+      root.classList.toggle('blockui-choosing', !!destination?.body);
+      root.classList.toggle('blockui-moving-block', !!moving && schemaOf(index.get(moving.id)?.node)?.category === 'statement');
+      fieldError.textContent = pending?.shown && pending.error || '';
+      if (pending?.input) {
+        const described = (pending.input.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== fieldError.id);
+        if (pending.shown && pending.error) described.push(fieldError.id);
+        if (described.length) pending.input.setAttribute('aria-describedby', described.join(' '));
+        else pending.input.removeAttribute('aria-describedby');
+      }
+      placeControls();
       destinationLabel.textContent = replacement
         ? 'もとの ばしょに 入れる ブロックを えらんでください'
         : moving
-          ? 'どこへ 動かすか えらんでください'
+          ? 'どこへ もっていくか えらんでください'
           : destination?.input
             ? destinationDescription()
             : destination?.body
               ? destinationDescription()
               : draft ? 'あいている ところを えらんで、ブロックを 入れてください' : '入れたら「決める」を おしてください';
+    }
+    // The floating controls go right under the field being edited, or over the top left of the workspace while a place
+    // is chosen or a block is moved: they never take a row of their own, so nothing moves (E-12).
+    function placeControls() {
+      if (controls.hidden) return;
+      const box = root.getBoundingClientRect(), shell = workspaceShell.getBoundingClientRect();
+      if (!box.width) return;
+      const field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      let left = shell.left - box.left + 8, top = shell.top - box.top + 6;
+      if (field && field.width) {
+        left = field.left - box.left;
+        top = field.bottom - box.top + 4;
+      }
+      const width = controls.offsetWidth || 300;
+      left = Math.max(4, Math.min(left, box.width - width - 4));
+      controls.style.setProperty('--blockui-controls-left', Math.round(left) + 'px');
+      controls.style.setProperty('--blockui-controls-top', Math.round(top) + 'px');
     }
     function listLocation(info) {
       return info?.body
@@ -820,13 +859,87 @@
       }
       for (const n of workspace.querySelectorAll('.blockui-node'))
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
+      showImpliedDestination();
+      placeNodeTools();
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
       const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),slot=selectedNode?.parentElement.closest('.blockui-input-slot');
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
     }
-    function chooseDestination(location) {
+    // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
+    // is in it), where they cover no other block: first the selected block's tools, under them the selected field's
+    // tools, under those the tools of a selected value. With no room on the right a block's tools go right above it
+    // and a field's tools under the field.
+    function placeNodeTools() {
+      const room = workspace.getBoundingClientRect(),
+        box = workspace.querySelector('.blockui-node.blockui-selected'), head = box?.querySelector(':scope > .blockui-node-head'),
+        slot = workspace.querySelector('.blockui-input-slot.blockui-slot-active'), slotHead = slot?.querySelector(':scope > .blockui-slot-head');
+      const ownerOf = (el) => el?.closest('.blockui-statement') || el?.closest('.blockui-node');
+      const lineOf = (owner) => owner?.querySelector(':scope > .blockui-node-content > .blockui-node-main') || owner;
+      // Moves an absolutely placed element so that its top left is at (x, y) on the screen; the world may be zoomed.
+      const moveTo = (el, x, y) => {
+        const cs = doc.defaultView.getComputedStyle(el), r = el.getBoundingClientRect();
+        el.style.left = (parseFloat(cs.left) || 0) + (x - r.left) / zoom + 'px';
+        el.style.top = (parseFloat(cs.top) || 0) + (y - r.top) / zoom + 'px';
+      };
+      const fits = (owner, el) => owner.getBoundingClientRect().right + 8 + el.getBoundingClientRect().width <= room.right - 8;
+      // The other blocks (not the selected one, what is in it or what holds it) and the places to put a block in (「＋ ここに
+      // 入れる」 and the lines between blocks) must stay free to press.
+      const blockers = box ? [...world.querySelectorAll('.blockui-statement, .blockui-event-hat, .blockui-insertion')].filter(n => !box.contains(n) && !n.contains(box)) : [];
+      const clear = (r, places = true) => r.right <= room.right - 4 && blockers.every(n => {
+        if (!places && n.classList.contains('blockui-insertion')) return true;
+        const b = n.getBoundingClientRect();
+        return !b.width || b.right <= r.left || b.left >= r.right || b.bottom <= r.top + 1 || b.top >= r.bottom - 1;
+      });
+      for (const el of [head, slotHead]) if (el) { el.style.left = el.style.top = el.style.transform = el.style.maxWidth = ''; }
+      box?.classList.remove('blockui-tools-above');
+      let below = null;
+      if (head?.getClientRects().length) {
+        const owner = box.classList.contains('blockui-statement') ? box : ownerOf(box.parentElement);
+        if (box.classList.contains('blockui-statement') && owner === box) {
+          // One row when it fits; else the row wraps into the room left on the right; else right above the block.
+          let r = head.getBoundingClientRect();
+          const room2 = room.right - 8 - (box.getBoundingClientRect().right + 8);
+          if (r.right > room.right - 4 && room2 >= 120) { head.style.maxWidth = room2 / zoom + 'px'; r = head.getBoundingClientRect(); }
+          if (clear(r)) below = { owner: box, top: r.bottom + 4 };
+          else {
+            const beside = r, besideWidth = head.style.maxWidth;
+            head.style.maxWidth = ''; box.classList.add('blockui-tools-above');
+            // Right above the block, unless that is out of the workspace (a block at its top edge): then beside it, over
+            // a place to put a block in rather than over another block.
+            if (head.getBoundingClientRect().top < room.top + 2 && clear(beside, false)) {
+              box.classList.remove('blockui-tools-above'); head.style.maxWidth = besideWidth;
+              below = { owner: box, top: beside.bottom + 4 };
+            }
+          }
+        }
+      }
+      if (slotHead?.getClientRects().length) {
+        const owner = ownerOf(slot);
+        if (owner && fits(owner, slotHead)) {
+          moveTo(slotHead, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
+          below = { owner, top: slotHead.getBoundingClientRect().bottom + 4 };
+        } else {
+          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width;
+          moveTo(slotHead, Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w)), sr.bottom + 4);
+        }
+      }
+      if (head?.getClientRects().length && box.classList.contains('blockui-expression')) {
+        const owner = ownerOf(box.parentElement);
+        if (owner && fits(owner, head)) moveTo(head, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
+        else box.classList.add('blockui-tools-above');
+      }
+    }
+    // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
+    function showImpliedDestination() {
+      const info = !destination && !moving && selectedStatement(),
+        implied = info && { parentId: info.parentId, body: info.body, index: info.index + 1 };
+      for (const n of workspace.querySelectorAll('.blockui-insertion'))
+        n.classList.toggle('blockui-implied-destination', !!implied && sameLocation(implied, locationFromElement(n)));
+    }
+    // A place chosen with the keyboard (Enter on 「＋ ここに入れる」) opens 「ブロックを さがす」 to type in (E-16).
+    function chooseDestination(location, { keyboard = false } = {}) {
       if (isLocked()) return;
       const ready = flush();
       if (!ready.ok) return;
@@ -846,10 +959,56 @@
         );
       announce(destinationDescription() + (modeChanged ? ' 見せるブロックを「すべてのブロック」に かえました。なかまと さがす言葉は そのままです。' : ''));
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
-      else search.focus({ preventScroll: true });
+      else {
+        if (keyboard && paletteControls.hidden) paletteToggle.click();
+        search.focus({ preventScroll: true });
+      }
     }
+    // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
+    // body when nothing is selected (E-08).
     function defaultDestination() {
+      const info = selectedStatement();
+      if (info) return { parentId: info.parentId, body: info.body, index: info.index + 1 };
       return tree ? { parentId: tree.id, body: 'body', index: tree.bodies.body.length } : null;
+    }
+    function selectedStatement() {
+      const info = selected && index.get(selected);
+      return info?.body && info.parentId && schemaOf(info.node)?.category === 'statement' && !schemaOf(info.node)?.draftOnly ? info : null;
+    }
+    // An enclosure put where blocks follow takes them into its first body (E-03): a new one, or a moved one whose first
+    // body holds no block yet. The count is of the blocks that would go in.
+    function wrapCount(schema, node, location, movingId = null) {
+      if (!location?.body || !schema?.bodies?.length || schema.category !== 'statement') return 0;
+      const inner = node?.bodies?.[schema.bodies[0].key];
+      if (inner && inner.some(n => n.schemaId !== 'Hole:statement')) return 0;
+      const siblings = index.get(location.parentId)?.node.bodies[location.body] || [];
+      if (siblings.length === 1 && siblings[0].schemaId === 'Hole:statement') return 0;
+      return siblings.slice(location.index).filter(n => n.id !== movingId).length;
+    }
+    // After an enclosure goes in, its empty count (or other empty value) takes the typing at once with a mouse or the
+    // keyboard; after a touch it only lights up, so the screen keyboard does not open by itself (E-03).
+    let attention = null;
+    function emptyValueOf(id) {
+      const box = locationElement({ id }), main = box?.querySelector(':scope > .blockui-node-content > .blockui-node-main');
+      return main && [...main.querySelectorAll('input[data-expression-hole="true"], [data-blockui-action="hole-select-expression"]')]
+        .find(n => n.closest('.blockui-node') === box || n.closest('.blockui-node')?.parentElement?.closest('.blockui-node') === box);
+    }
+    // The light stays through the renders that follow the drop, for two seconds.
+    function lightEmptyValue() {
+      if (!attention || Date.now() > attention.until) { attention = null; return; }
+      const empty = emptyValueOf(attention.id), field = empty && (empty.closest('.blockui-field, .blockui-input-slot') || empty);
+      if (field && !field.classList.contains('blockui-attention')) field.classList.add('blockui-attention');
+    }
+    function attendEmptyValue(id) {
+      doc.defaultView.requestAnimationFrame(() => {
+        const empty = emptyValueOf(id);
+        if (!empty) return;
+        if (lastPointerType === 'touch' || lastPointerType === 'pen') {
+          attention = { id, until: Date.now() + 2000 };
+          lightEmptyValue();
+          empty.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        } else { empty.focus({ preventScroll: true }); empty.select?.(); }
+      });
     }
     function sameLocation(a, b) {
       return (
@@ -919,7 +1078,7 @@
       }
       if (schema.category === 'expression' && !location?.input) {
         announce(
-          'あいている ところへ おしたまま 動かしてね。あいている ところの「計算を入れる」からも 入れられます',
+          'あいている ところへ おしたまま 運んでね。あいている ところの「計算を入れる」からも 入れられます',
         );
         return;
       }
@@ -929,8 +1088,9 @@
         return;
       }
       const node = a.node || createBlock(schema.id, { ...context(), idPrefix: viewId });
+      const wraps = wrapCount(schema, node, location);
       const op = location.body
-        ? { type: 'insert', ...location, node }
+        ? { type: wraps ? 'wrap' : 'insert', ...location, node }
         : { type: 'expression', ...location, node };
       const result = operate(op);
       if (result.ok) {
@@ -945,11 +1105,24 @@
         }
         destination = null;
         for (const chosen of workspace.querySelectorAll('.blockui-chosen-destination')) chosen.classList.remove('blockui-chosen-destination');
-        page = 0;
         renderPalette();
         updateControls();
-        focus({ id: session()?.blockSelection });
+        const placedId = location.body ? placedAt(location, node.schemaId, true) : session()?.blockSelection;
+        focus({ id: placedId });
+        if (schema.bodies?.length) attendEmptyValue(placedId);
       }
+    }
+    // The block just put in (at its place, or in the hole it replaced) or moved (the one selected; a block moved down in
+    // its own body is one place higher).
+    function placedAt(location, schemaId, inserted = false) {
+      const siblings = location?.body ? index.get(location.parentId)?.node.bodies[location.body] : null,
+        selectedId = session()?.blockSelection;
+      if (!siblings) return selectedId;
+      if (inserted && siblings[Math.min(location.index, siblings.length - 1)]?.schemaId === schemaId) return siblings[Math.min(location.index, siblings.length - 1)].id;
+      if (siblings.some(n => n.id === selectedId && n.schemaId === schemaId)) return selectedId;
+      for (const at of [location.index, location.index - 1, siblings.length - 1])
+        if (siblings[at]?.schemaId === schemaId) return siblings[at].id;
+      return selectedId;
     }
     function phrase(schema) {
       if (phraseCache.has(schema.id)) return phraseCache.get(schema.id);
@@ -1091,11 +1264,23 @@
         main.append(doc.createTextNode('\u203b \u30e1\u30e2'));
       else if (schema.kind === 'Say') {
         main.append(pill(scalar(node.inputs.value) ?? 'ことば'));
-        if (node.inputs.seconds) main.append(doc.createTextNode('を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
+        if (node.inputs.seconds) main.append(doc.createTextNode(node.inputs.value?.schemaId === 'StringLiteral' ? 'と ' : 'を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
         else main.append(doc.createTextNode(' と言う'));
       }
       else if (schema.kind === 'VariableRead')
         main.append(pill(node.fields.name || 'へんすう'));
+      // The direction a placed block lets the child choose shows as a value here too, so the list and the workspace
+      // read the same (E-14): いまのばしょから、［右］へ［10］歩動く, ［前］へ［10］歩進む.
+      else if ((schema.id === 'MotionCommand:MOVE_BY' && !(node.inputs.x && node.inputs.y)) || schema.id === 'MotionCommand:MOVE') {
+        if (node.inputs.seconds) main.append(pill(scalar(node.inputs.seconds) ?? '1'), doc.createTextNode('秒かけて、'));
+        if (schema.id === 'MotionCommand:MOVE') {
+          const back = node.fields.direction === 'backward';
+          main.append(pill(back ? '後ろ' : '前'), doc.createTextNode('へ'), pill(scalar(node.inputs.args?.[0]) ?? '10'), doc.createTextNode(back ? '歩動く' : '歩進む'));
+        } else {
+          const key = node.inputs.x ? 'x' : 'y', word = { right: '右', left: '左', up: '上', down: '下' }[node.fields[key + 'Dir']];
+          main.append(doc.createTextNode('いまのばしょから、'), pill(word), doc.createTextNode('へ'), pill(scalar(node.inputs[key]) ?? '10'), doc.createTextNode('歩動く'));
+        }
+      }
       else {
         const parts = phrase(schema);
         if (parts)
@@ -1148,8 +1333,10 @@
       modeSelect.value = paletteMode;
       const entry = document.body.dataset.uiLevel === 'entry';
       const query = entry ? '' : searchText.trim().toLocaleLowerCase();
+      // A quantity whose unit is chosen (たんいを つけた 数) is a くわしく block: only there are units chosen (E-02).
+      const unitChoice = document.body.dataset.uiLevel === 'advanced';
       const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category)
-        && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id)));
+        && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id)) && (unitChoice || s.id !== 'QuantityLiteral'));
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [
         ['basic', 'よく使う'],
@@ -1178,7 +1365,6 @@
           () => {
             category = g;
             categoryExplicit = true;
-            page = 0;
             paletteList.scrollTop = 0;
             renderPalette();
           },
@@ -1191,7 +1377,8 @@
         categorySelect.append(chip);
       }
       categorySelect.scrollTop = categoryScroll;
-      searchScope.textContent=query&&categoryExplicit&&category?`${groups.find(([g])=>g===category)?.[1]||category}の中を さがしています`:'すべての なかまから さがせます';
+      // A search looks through every category, whichever is chosen (E-13); the results keep their category colours.
+      searchScope.textContent=query?'すべての なかまから さがしています':'すべての なかまから さがせます';
       restoreSearch.hidden = !previousSearch || !!query;
       restoreSearch.textContent = `前の「${previousSearch}」を もう一度 さがす`;
       const location = destination || defaultDestination(),
@@ -1203,11 +1390,12 @@
       if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'言うことと 秒数を 決めて 話す'});}
       let candidates = searched.filter(
         (s) =>
-          (entry || (query && !categoryExplicit) || !category || (category === 'basic'
+          (entry || query || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
           (entry || paletteMode === 'all' || s.category === paletteMode) &&
-          (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech'),
+          (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech') &&
+          (unitChoice || s.id !== 'QuantityLiteral'),
       );
       if (!showOutside && !entry)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
@@ -1222,12 +1410,9 @@
         if(at<0)candidates.push(candidate);else candidates.splice(at,1,candidate);
       }
       // Keep the normal palette visible: a lesson guides a choice, never makes it.
-      const guided=!!options.tutorialActive?.();
-      const pages = Math.max(1, Math.ceil(candidates.length / PAGE));
-      page = Math.min(page, pages - 1);
       const scroll = paletteList.scrollTop;
       paletteList.replaceChildren();
-      for (const schema of (guided ? candidates : candidates.slice(page * PAGE, (page + 1) * PAGE))) {
+      for (const schema of candidates) {
         const a = paletteAvailability(schema, location),
           item = E('div', 'blockui-palette-item', null, {
             'data-palette-tone': blockPaletteGroup(schema),
@@ -1287,11 +1472,7 @@
               : 'この ばしょで 使える ブロックが ありません。なかまを かえるか、「ブロックの しゅるい」で 使えない理由を見られます。',
           ),
         );
-      previous.disabled = page === 0;
-      if(!options.tutorialActive?.()&&category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
-      next.disabled = page >= pages - 1;
-      pageLabel.textContent = page + 1 + ' / ' + pages;
-      palettePages.hidden = guided || pages === 1;
+      if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
       scheduleGeometry();
       options.onPresentation?.();
@@ -1344,7 +1525,32 @@
     function joinAccessibleName(owner, part) {
       return owner === part ? owner : owner + ' ' + part;
     }
-    function fieldControl(node, field, annotation = false) {
+    // A block reads like its code (E-14): the subject shows only where the code writes one (だんごは), as plain text;
+    // the body's owner and みんな of a wait are not written. Who acts is chosen with 「だれが」 among the selected block's
+    // tools (actorTool), so the sentence itself has no control for it.
+    function subjectFace(node, field) {
+      const value = node.fields[field.key], owner = node.schemaId === 'ActorQualifiedRead';
+      if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
+      const name = value?.kind === 'named' ? value.name : subjectName(node);
+      return E('span', 'blockui-phrase-text blockui-subject-text', owner ? name : name + (value?.particle || 'は'), { 'data-block-id': node.id });
+    }
+    // A subject carried over from the sentence before (たくどんは…。2回くり返す。) is not written in this one.
+    function subjectWritten(node, name) {
+      const at = session()?.nodeMap?.get?.(node.id), range = at?.surface?.range || at?.surface?.extent, source = session()?.sourceText;
+      if (!range || typeof source !== 'string') return true;
+      const text = source.slice(range.start, range.end).replace(/^[\s　]+/, '');
+      return ['は', 'が'].some(mark => text.startsWith(name + mark) || text.includes('、' + name + mark));
+    }
+    function actorTool(node) {
+      const field = schemaOf(node)?.fields.find(f => f.type === 'actor-ref' && f.key === 'actorRef');
+      if (!field || options.readOnly) return null;
+      const owner = node.schemaId === 'ActorQualifiedRead', details = editDisclosure(node, 'actorRef', owner ? 'だれの' : 'だれが', 'blockui-who');
+      details.querySelector('summary').setAttribute('aria-label', (owner ? 'だれのかを えらぶ: ' : 'だれが するかを えらぶ: ') + subjectName(node));
+      details.append(fieldControl(node, field, false, true));
+      return details;
+    }
+    function fieldControl(node, field, annotation = false, tool = false) {
+      if (field.type === 'actor-ref' && !tool && !options.readOnly) return subjectFace(node, field);
       const value = annotation ? node.annotations[field.key] : node.fields[field.key],
         wrap = E(['actor-ref', 'heading', 'argument-names'].includes(field.type) ? 'div' : 'label', 'blockui-field', null, { 'data-field-type': field.type }),
         title = E('span', 'blockui-field-label', field.label),
@@ -1485,15 +1691,7 @@
               flushToTarget(event.relatedTarget);
           });
         }
-        if (field.type === 'actor-ref') {
-          const subject = value?.kind === 'all' || (!value && field.everyone) ? 'みんな' : subjectName(node);
-          // A part's state (たくどん の よこのばしょ) takes の from the phrase, so its part name has no は.
-          const owner = node.schemaId === 'ActorQualifiedRead';
-          const details = editDisclosure(node, 'actorRef', owner ? subject : subject + (value?.particle || 'は'), 'blockui-subject');
-          details.querySelector('summary').setAttribute('aria-label', (owner ? 'だれのかを かえる: ' : 'だれが動くかを かえる: ') + subject);
-          details.append(group);
-          wrap.append(details);
-        } else wrap.append(group);
+        wrap.append(group);
         return wrap;
       }
       if (field.type === 'unit' || field.type === 'direction') {
@@ -1633,14 +1831,16 @@
       }
       n.classList.toggle('blockui-chosen-destination', sameLocation(destination, location));
     }
-    function insertion(parentId, body, pos) {
+    // Between two blocks the place is a thin line; the last place of a body keeps 「＋ ここに入れる」 (E-07).
+    function insertion(parentId, body, pos, end = false) {
       const b = button(
         '＋ ここに入れる',
         'body-insert',
-        () => chooseDestination({ parentId, body, index: pos }),
+        (event) => chooseDestination({ parentId, body, index: pos }, { keyboard: event.detail === 0 }),
         { 'aria-label': (pos + 1) + '番目の ばしょに ブロックを入れる' },
       );
       b.classList.add('blockui-insertion');
+      if (end) b.classList.add('blockui-insertion-end');
       b.disabled = isLocked();
       markDrop(b, { parentId, body, index: pos });
       return b;
@@ -1651,8 +1851,11 @@
       selection(node.id);
       moving = { id: node.id, type };
       destination = null;
-      announce(type === 'copy' ? 'コピーする ばしょを えらんでください' : 'どこへ 動かすか えらんでください');
+      announce(type === 'copy' ? 'コピーする ところを えらんでください'
+        : type === 'run' ? 'この ブロックから 下の ' + runIds(node.id).length + 'この ブロックを もっていく ところを えらぶか、そのまま 運んでください'
+          : 'どこへ もっていくか えらんでください');
       updateControls();
+      showImpliedDestination();
 
       // The menu is now hidden; Escape must remain inside this editor.
       focus({ id: node.id });
@@ -1666,20 +1869,22 @@
       }
       const kind = schemaOf(info.node).category;
       if ((kind === 'statement') !== !!location.body) {
-        announce('つなぐブロックは 本文へ、はめるブロックは あいている ところへ 動かします', true);
+        announce('つなぐブロックは 本文へ、はめるブロックは あいている ところへ もっていきます', true);
         return;
       }
-      const parent = index.get(location.parentId);
+      const parent = index.get(location.parentId), carried = source.type === 'run' ? runIds(source.id) : [source.id];
       if (
         source.type !== 'copy' &&
-        (location.parentId === source.id || parent?.ancestors.includes(source.id))
+        carried.some(id => location.parentId === id || parent?.ancestors.includes(id))
       ) {
-        announce('自分の中には 動かせません', true);
+        announce('自分の中には もっていけません', true);
         return;
       }
       if (kind === 'statement') {
+        // An empty enclosure moved above blocks takes them in, as a new one does (E-03).
+        const wraps = source.type === 'move' && wrapCount(schemaOf(info.node), info.node, location, source.id);
         const result = operate({
-          type: source.type === 'copy' ? 'duplicate' : 'move',
+          type: source.type === 'copy' ? 'duplicate' : source.type === 'run' ? 'move-run' : wraps ? 'wrap' : 'move',
           id: source.id,
           ...location,
         });
@@ -1687,6 +1892,7 @@
           moving = null;
           destination = null;
           render({ force: true });
+          if (wraps) attendEmptyValue(placedAt(location, info.node.schemaId));
         }
         return;
       }
@@ -1718,7 +1924,7 @@
         note = E(
           'p',
           '',
-          'もとの ばしょを 空っぽには できません。えらんだブロックを はじめの中身で おいてから、動かす先へ つなぎます。',
+          'もとの ばしょを 空っぽには できません。えらんだブロックを はじめの中身で おいてから、もっていく先へ つなぎます。',
         ),
         select = E('select', '', null, {
           'aria-label': 'もとの ばしょに 入れる ブロック',
@@ -1727,7 +1933,7 @@
       for (const s of BLOCK_SCHEMAS.filter((x) => x.category === 'expression'))
         select.append(E('option', '', s.palette + ' / ' + s.label, { value: s.id }));
       select.value = 'NumberLiteral';
-      const accept = button('このブロックを おいて動かす', 'confirm-expression-move', () => {
+      const accept = button('このブロックを おいて もっていく', 'confirm-expression-move', () => {
         const action = replacement;
         replacement = null;
         onPending(null);
@@ -1749,7 +1955,7 @@
         note,
         select,
         accept,
-        button('動かすのを やめる', 'cancel-expression-move', () => cancel()),
+        button('もっていくのを やめる', 'cancel-expression-move', () => cancel()),
       );
       select.focus();
     }
@@ -1777,18 +1983,16 @@
         dy = Math.max(bounds.top + 8 - rect.top, Math.min(0, bounds.bottom - 8 - rect.bottom));
       commands.style.transform = 'translate(' + dx / zoom + 'px,' + dy / zoom + 'px)';
     }
+    // A selected field's tools are placed with the block's tools (placeNodeTools).
     function placeSlotHead(slot){
-      const head=slot?.querySelector(':scope > .blockui-slot-head');if(!head||!slot.isConnected)return;
-      head.style.transform='';const bounds=workspace.getBoundingClientRect(),r=head.getBoundingClientRect();
-      const dx=Math.max(bounds.left+8-r.left,Math.min(0,bounds.right-8-r.right)),dy=Math.max(bounds.top+8-r.top,Math.min(0,bounds.bottom-8-r.bottom));
-      head.style.transform=`translate(${dx/zoom}px,${dy/zoom}px)`;
+      if(slot?.isConnected)placeNodeTools();
     }
     function nodeTools(node, info) {
       const schema = schemaOf(node),
         tools = E('div', 'blockui-node-tools');
       if (schema.category === 'target' || schema.category === 'script') return tools;
       const dragHandle = button('⠿', 'drag-handle', () => selection(node.id), {
-        'aria-label': schema.label + 'を おしたまま 動かす',
+        'aria-label': schema.label + 'を おしたまま 運ぶ',
         'data-blockui-drag': 'node',
         'data-block-id': node.id,
       });
@@ -1813,7 +2017,8 @@
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
       });
-      const move = button(document.body.dataset.uiLevel==='entry'?'うごかす':'動かす', 'move', () => moveStart(node), { 'data-block-id': node.id }),
+      // Moving a block is 「もっていく」: 「動かす」 is only for the characters and ▶ 動かす (E-05, §4).
+      const move = button('ほかへ もっていく', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
           '同じものをもう1つ作る',
           'duplicate',
@@ -1830,11 +2035,18 @@
           },
           { 'data-block-id': node.id },
         );
-      commands.append(move, duplicate);
+      commands.append(move);
+      if (info.body) {
+        const siblings = index.get(info.parentId)?.node.bodies[info.body] || [];
+        // Several blocks go together only when asked (E-06): this block and the ones below it in the same body.
+        if (info.index < siblings.length - 1)
+          commands.append(button('ここから下を まとめて もっていく', 'move-run', () => moveStart(node, 'run'), { 'data-block-id': node.id }));
+      }
+      commands.append(duplicate);
       if (info.body) {
         const siblings = index.get(info.parentId)?.node.bodies[info.body] || [];
         const up = button(
-            'うえへ',
+            '↑ まえへ',
             'move-up',
             () =>
               operate({
@@ -1844,10 +2056,10 @@
                 body: info.body,
                 index: info.index - 1,
               }),
-            { 'aria-label': schema.label + 'をうえへ', 'data-block-id': node.id },
+            { 'aria-label': schema.label + 'を まえへ', 'data-block-id': node.id },
           ),
           down = button(
-            'したへ',
+            '↓ あとへ',
             'move-down',
             () =>
               operate({
@@ -1857,25 +2069,25 @@
                 body: info.body,
                 index: info.index + 2,
               }),
-            { 'aria-label': schema.label + 'をしたへ', 'data-block-id': node.id },
+            { 'aria-label': schema.label + 'を あとへ', 'data-block-id': node.id },
           );
         up.disabled = info.index === 0;
         down.disabled = info.index === siblings.length - 1;
         tools.insertBefore(up, menu);
         tools.insertBefore(down, menu);
+        // One press to delete the selected block (E-05); undo brings it back.
+        if (!schema.draftOnly)
+          tools.insertBefore(button('けす', 'remove-quick', () => removeBlock(node, info), {
+            'aria-label': schema.label + (schema.bodies.length ? 'と 中の ブロックを けす' : 'を けす'), 'data-block-id': node.id }), menu);
+      }
+      const who = actorTool(node);
+      if (who) tools.insertBefore(who, menu);
+      if (info.body) {
         commands.append(
           button(
             schema.bodies.length ? 'このまとまりと中のブロックをけす' : 'このブロックをけす',
             'remove',
-            () => {
-              const result = operate({ type: 'remove', id: node.id });
-              if (!result.ok && index.get(info.parentId)?.node.schemaId !== 'Script')
-                announce(
-                  errorText(result.error || result.reason) +
-                    '。「何もしないへ」で 入れかえるか、まとまりごと けせます',
-                  true,
-                );
-            },
+            () => removeBlock(node, info),
             { 'data-block-id': node.id },
           ),
         );
@@ -1893,7 +2105,8 @@
               { 'data-block-id': node.id, 'aria-label': schema.label + 'を 何もしないに 入れかえる' },
             ),
           );
-      } else if (info.input) {
+      } else if (info.input && document.body.dataset.uiLevel !== 'entry') {
+        // はじめて has no 計算を入れる in its values (E-12).
         commands.append(
           button('計算を入れる', 'replace-expression', () => chooseDestination(listLocation(info)), {
             'data-block-id': node.id,
@@ -1935,6 +2148,17 @@
         if (b.dataset.blockuiAction !== 'collapse' && isLocked()) b.disabled = true;
       return tools;
     }
+    // The blocks 「ここから下を まとめて もっていく」 carries: the block and the ones after it in its body.
+    function runIds(id) {
+      const info = index.get(id), siblings = info?.body ? index.get(info.parentId)?.node.bodies[info.body] || [] : [];
+      return info?.body ? siblings.slice(info.index).map(n => n.id) : [id];
+    }
+    function removeBlock(node, info = index.get(node.id)) {
+      const result = operate({ type: 'remove', id: node.id });
+      if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
+        announce(errorText(result.error || result.reason) + '。「何もしないへ」で 入れかえるか、まとまりごと けせます', true);
+      return result;
+    }
     function statementBody(parent, slot) {
       const enabled = !slot.when || parent.fields[slot.when];
       if (!enabled) return null;
@@ -1970,6 +2194,20 @@
         render({ force: true });
       };
       let end = 0;
+      // An empty enclosure shows only its hole (〔くり返すことを えらぶ〕) as the place to put a block in (E-03).
+      if (children.length === 1 && children[0].schemaId === 'Hole:statement') {
+        const hole = renderNode(children[0]);
+        markDrop(hole, { parentId: parent.id, body: slot.key, index: 0 });
+        hole.classList.add('blockui-hole-target');
+        // The whole hole is the place: pressing it chooses the place, as 「＋ ここに入れる」 does.
+        if (!options.readOnly)
+          listen(hole, 'click', (event) => {
+            if (event.target.closest('button,input,select,textarea,summary') || Date.now() < suppressClickUntil) return;
+            chooseDestination({ parentId: parent.id, body: slot.key, index: 0 }, { keyboard: event.detail === 0 });
+          });
+        box.append(hole);
+        return box;
+      }
       for (const [begin, limit] of ranges) {
         if (begin > end) {
           const gap = E('div', 'blockui-body-gap'),
@@ -1987,7 +2225,7 @@
           box.append(insertion(parent.id, slot.key, i));
           box.append(renderNode(children[i]));
         }
-        box.append(insertion(parent.id, slot.key, limit));
+        box.append(insertion(parent.id, slot.key, limit, limit === children.length));
         end = limit;
       }
       if (end < children.length) {
@@ -2015,32 +2253,7 @@
       if (slot.type === 'expression') markDrop(box, location);
       const head = E('div', 'blockui-slot-head');
       head.append(E('span', 'blockui-slot-label', label));
-      if (slot.type === 'expression' && !options.readOnly) {
-        const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の中身の しゅるい', 'data-blockui-value-type': 'true' });
-        for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','計算']])
-          types.append(E('option', '', text, { value }));
-        types.disabled = isLocked();
-        listen(types, 'change', () => {
-          const kind = types.value; if (!kind) return;
-          const local = pending && (pending.id === child.id || index.get(pending.id)?.ancestors.includes(child.id));
-          if (pending?.composing) { announce('日本語の へんかんを おわらせてから えらんでください', true); types.value=''; return; }
-          const text = local ? pending.input.value : child.schemaId === 'StringLiteral' ? child.fields.value : '';
-          if (local) cancelField();
-          if (kind === 'expression') { chooseDestination(location); return; }
-          const next = createBlock(kind);
-          if (kind === 'StringLiteral') next.fields.value = text;
-          const result = operate({ type:'expression', ...location, node:next });
-          if (result.ok) {
-            const current = index.get(parent.id)?.node.inputs[slot.key], value = i === undefined ? current : current?.[i];
-            if (value) focus({ id:value.id });
-          }
-        });
-        const b = button('計算を入れる', 'slot-select', () => chooseDestination(location), {
-          'aria-label': label + 'に計算を入れる',
-        });
-        b.disabled = isLocked();
-        head.append(types, b);
-      }
+      if (slot.type === 'expression' && valueToolsShown()) head.append(...valueTools(location, label, child));
       if (slot.multiple && slot.variadic) {
         const n = parent.inputs[slot.key].length;
         const up = button(
@@ -2081,7 +2294,9 @@
         remove.disabled = isLocked() || n <= slot.minItems;
         head.append(up, down, remove);
       }
-      box.append(renderNode(child), head);
+      // A field's tools show when it has some; a name alone is its accessible name (E-12: no noise for beginners).
+      box.append(renderNode(child));
+      if (head.childElementCount > 1) box.append(head);
       if (!options.readOnly && parent.schemaId === 'ListRead' && slot.key === 'list' && child.schemaId === 'StringLiteral') {
         const recovery = E('div', 'blockui-list-repair'), select = E('select', '', null, { 'aria-label':'文字の代わりに使うリストを えらぶ' });
         select.append(E('option', '', 'リストを えらぶ', { value:'' }));
@@ -2156,24 +2371,123 @@
       }
       return wrap;
     }
-    function renderMotionBlock(node, schema, main) {
-      const value = schema.discriminator.value, extra = editDisclosure(node, 'extra', 'なおす', 'blockui-extra'), extraControls = E('div', 'blockui-extra-controls');
-      extra.querySelector('summary').setAttribute('aria-label', schema.label + 'を なおす');
+    // The 「…」 after a sentence opens what changes it beyond its values (E-14): time, a second direction, 計算 …
+    function extraDisclosure(node, label) {
+      const extra = editDisclosure(node, 'extra', '…', 'blockui-extra'), extraControls = E('div', 'blockui-extra-controls');
+      extra.querySelector('summary').setAttribute('aria-label', label);
       extra.append(extraControls);
+      return { extra, extraControls };
+    }
+    // E-02: a value whose unit the sentence fixes (回る → 度, 進む・動く → 歩, 待つ・〜秒かけて → 秒, 大きさ → ％ …) shows the
+    // unit as text, with no unit to choose: a number is its own field (1 秒), a range has the unit on both ends (1 秒から
+    // 3 秒の どれか, as the code writes it) and no unit after it. A quantity written with another unit shows the unit
+    // written, next to a button that puts the fixed one (「度に なおす」); ⚠ たしかめる explains it.
+    function roleUnit(node, key, index) {
+      const schema = schemaOf(node), form = SENTENCE_FORMS.find(item => item.kind === schema?.kind && (!item.op || item.op === schema.discriminator?.value));
+      const path = key + (index === undefined || index === null ? '' : '.' + index);
+      return form?.roleSlots?.find(role => role.path === path)?.unit || null;
+    }
+    function flatNumber(literal, location) {
+      const label = slotLabel(location), wrap = E('span', 'blockui-input-slot blockui-flat-value', null, { 'data-block-id': literal.id, 'aria-label': label });
+      if (!options.readOnly) markDrop(wrap, location);
+      wrap.append(fieldControl(literal, BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value')));
+      if (valueToolsShown()) {
+        const head = E('div', 'blockui-slot-head');
+        head.append(E('span', 'blockui-slot-label', label), ...valueTools(location, label, literal));
+        wrap.append(head);
+      }
+      return wrap;
+    }
+    function slotLabel(location) {
+      const parent = index.get(location.parentId)?.node, slot = schemaOf(parent)?.inputs.find(s => s.key === location.input);
+      if (parent?.schemaId === 'QuantityLiteral') return slotLabel(listLocation(index.get(parent.id)) || {}) || '数';
+      return slot ? slot.labels?.[location.index] || slot.label + (location.index === undefined ? '' : ' ' + (location.index + 1)) : '';
+    }
+    // ちがう ものに かえる and 計算を入れる (E-12): not at はじめて; at かんたん in the 「…」 after the sentence; at くわしく
+    // with the selected field.
+    function valueToolsShown() {
+      return !options.readOnly && document.body.dataset.uiLevel === 'advanced';
+    }
+    function valueTools(location, label, child) {
+      const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の中身の しゅるい', 'data-blockui-value-type': 'true' });
+      for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','計算']])
+        types.append(E('option', '', text, { value }));
+      types.disabled = isLocked();
+      listen(types, 'change', () => {
+        const kind = types.value; if (!kind) return;
+        const local = pending && (pending.id === child.id || index.get(pending.id)?.ancestors.includes(child.id));
+        if (pending?.composing) { announce('日本語の へんかんを おわらせてから えらんでください', true); types.value=''; return; }
+        const text = local ? pending.input.value : child.schemaId === 'StringLiteral' ? child.fields.value : '';
+        if (local) cancelField();
+        if (kind === 'expression') { chooseDestination(location); return; }
+        const next = createBlock(kind);
+        if (kind === 'StringLiteral') next.fields.value = text;
+        const result = operate({ type:'expression', ...location, node:next });
+        if (result.ok) {
+          const current = index.get(location.parentId)?.node.inputs[location.input], value = location.index === undefined ? current : current?.[location.index];
+          if (value) focus({ id:value.id });
+        }
+      });
+      const b = button('計算を入れる', 'slot-select', () => chooseDestination(location), {
+        'aria-label': label + 'に計算を入れる',
+      });
+      b.disabled = isLocked();
+      return [types, b];
+    }
+    // かんたん: a sentence's 「…」 holds 「ちがう ものに かえる」 and 「計算を入れる」 for each value in it (E-12).
+    function addValueToolsToExtra(node, box, main) {
+      if (options.readOnly || document.body.dataset.uiLevel !== 'basic' || schemaOf(node)?.category !== 'statement') return;
+      // The sentence's own parts (its bodies are not in main): its values and those of the calculations in it.
+      const places = [...main.querySelectorAll('.blockui-input-slot[data-blockui-drop]')].filter(n => !n.closest('.blockui-extra'));
+      if (!places.length) return;
+      let extra = main.querySelector(':scope > .blockui-extra');
+      if (!extra) { extra = extraDisclosure(node, schemaOf(node).label + 'の 中身を かえる').extra; main.append(extra); }
+      const controls = extra.querySelector(':scope > .blockui-extra-controls');
+      for (const place of places) {
+        const location = locationFromElement(place), parent = index.get(location.parentId)?.node,
+          current = parent?.inputs[location.input], child = location.index === undefined ? current : current?.[location.index];
+        if (!child) continue;
+        const row = E('div', 'blockui-value-row'), label = place.getAttribute('aria-label') || slotLabel(location);
+        row.append(E('span', 'blockui-slot-label', label), ...valueTools(location, label, child));
+        controls.append(row);
+      }
+    }
+    // 「度に なおす」: a quantity with another unit takes the fixed one; 右に（15秒）度回る, a quantity in a quantity, becomes
+    // 右に15度回る (the inner unit goes).
+    function unitRepair(quantity, unit, nested) {
+      if (options.readOnly) return doc.createDocumentFragment();
+      const repair = button(unit + 'に なおす', 'unit-repair', () => nested
+          ? operate({ type: 'replace', id: nested.id, node: copy(nested.inputs.value) })
+          : operate({ type: 'field', id: quantity.id, key: 'unit', value: unit }),
+        { 'aria-label': 'たんいを ' + unit + 'に なおす', 'data-block-id': (nested || quantity).id });
+      repair.disabled = isLocked();
+      return repair;
+    }
+    function unitValue(node, key, index, unit) {
+      const slot = schemaOf(node).inputs.find(s => s.key === key),
+        child = index === undefined ? node.inputs[key] : node.inputs[key]?.[index],
+        quantity = child?.schemaId === 'QuantityLiteral' ? child : null,
+        nested = quantity?.fields.unit === unit && quantity.inputs.value?.schemaId === 'QuantityLiteral' ? quantity.inputs.value : null,
+        shown = nested || quantity,
+        inner = shown ? shown.inputs.value
+          : child?.schemaId === 'UnitlessRead' && child.inputs.value?.schemaId === 'NumberLiteral' ? child.inputs.value : child,
+        written = shown?.fields.unit || unit,
+        text = s => E('span', 'blockui-phrase-text blockui-unit-text', s), parts = [];
+      // The place of the value is the sentence's own (a calculation put there takes the place of the number and its unit).
+      const at = { parentId: node.id, input: key, ...(index === undefined ? {} : { index }) };
+      if (inner?.schemaId === 'NumberLiteral' || inner?.schemaId === 'Hole:expression') parts.push(flatNumber(inner, at), text(written));
+      else if (inner?.schemaId === 'BuiltinCall:乱数' && inner.inputs.args?.length === 2) {
+        const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
+        parts.push(renderInput(inner, args, 0), text(written + 'から'), renderInput(inner, args, 1), text(written + 'のどれか'));
+      } else if (shown) parts.push(renderInput(shown, BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').inputs.find(s => s.key === 'value')), text(written));
+      else parts.push(renderInput(node, slot, index), text(written));
+      if (shown && written !== unit) parts.push(unitRepair(quantity, unit, nested));
+      return parts;
+    }
+    function renderMotionBlock(node, schema, main) {
+      const value = schema.discriminator.value, { extra, extraControls } = extraDisclosure(node, schema.label + 'を なおす');
       const text = s => E('span', 'blockui-phrase-text', s), fieldOf = key => schema.fields.find(f => f.key === key);
-      const numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value');
-      // A number is its own box with the unit after it; a range shows the unit on both ends (1 秒から 3 秒の どれか, as
-      // the code writes it); anything else keeps its slot.
-      const quantity = (key, unit, index) => {
-        const slot = schema.inputs.find(s => s.key === key), child = index === undefined ? node.inputs[key] : node.inputs[key]?.[index];
-        const wrapper = child?.schemaId === 'QuantityLiteral' && child.fields.unit === unit ? child : null, inner = wrapper ? wrapper.inputs.value : child;
-        if (inner?.schemaId === 'NumberLiteral') main.append(fieldControl(inner, numberField), text(unit));
-        else if (inner?.schemaId === 'BuiltinCall:乱数' && inner.inputs.args?.length === 2) {
-          const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
-          main.append(renderInput(inner, args, 0), text(unit + 'から'), renderInput(inner, args, 1), text(unit + 'のどれか'));
-        } else if (wrapper) main.append(renderInput(wrapper, BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').inputs.find(s => s.key === 'value')), text(unit));
-        else main.append(renderInput(node, slot, index), text(unit));
-      };
+      const quantity = (key, unit, index) => main.append(...unitValue(node, key, index, unit));
       const actor = fieldOf('actorRef');
       if (actor) main.append(fieldControl(node, actor));
       // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く
@@ -2267,38 +2581,23 @@
       const parts = phrase(schema);
       if (parts) {
         const displayParts = [...parts];
-        const form = SENTENCE_FORMS.find(item =>
-          item.kind === schema.kind && (!item.op || item.op === schema.discriminator?.value));
+        // A value whose unit the sentence fixes shows that unit itself (unitValue, E-02), so the phrase does not repeat
+        // it: 50 ％ にする, 50 ％から 150 ％の どれか.
+        const unitOf = part => part && typeof part === 'object' && part.slot ? roleUnit(node, part.slot.key, part.index) : null;
         for (let i = 0; i < displayParts.length; i++) {
-          const part = displayParts[i];
-          if (!part || typeof part !== 'object' || !part.slot) continue;
-          const path = part.slot.key + (part.index === undefined ? '' : '.' + part.index);
-          const unit = form?.roleSlots.find(role => role.path === path)?.unit;
-          const values = node.inputs?.[part.slot.key];
-          const value = Array.isArray(values) ? values[part.index] : values;
-          const following = displayParts[i + 1];
-          if (unit && value?.schemaId === 'QuantityLiteral' && value.fields?.unit === unit &&
-              typeof following === 'string' && following.startsWith(unit))
-            displayParts[i + 1] = following.slice(unit.length);
+          const unit = unitOf(displayParts[i]), following = displayParts[i + 1];
+          if (unit && typeof following === 'string' && following.startsWith(unit)) displayParts[i + 1] = following.slice(unit.length);
         }
-        // 50％から150％のどれか: a range in a slot with a fixed unit shows the unit on both ends, as the code writes it.
-        const unitRange = part => {
-          const path = part.slot.key + (part.index === undefined ? '' : '.' + part.index), unit = form?.roleSlots.find(role => role.path === path)?.unit;
-          const values = node.inputs?.[part.slot.key], value = Array.isArray(values) ? values[part.index] : values;
-          const inner = value?.schemaId === 'QuantityLiteral' && value.fields?.unit === unit ? value.inputs.value : null;
-          if (!unit || inner?.schemaId !== 'BuiltinCall:乱数' || inner.inputs.args?.length !== 2) return null;
-          const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
-          return [renderInput(inner, args, 0), E('span', 'blockui-phrase-text', unit + 'から'), renderInput(inner, args, 1), E('span', 'blockui-phrase-text', unit + 'のどれか')];
-        };
         for (const part of displayParts)
           main.append(...(
             typeof part === 'string'
-              ? [E('span', 'blockui-phrase-text', part)]
+              ? (part ? [E('span', 'blockui-phrase-text', part)] : [])
               : part.lineBreak
                 ? [E('span', 'blockui-phrase-break')]
               : part.field
                 ? [fieldControl(node, part.field)]
-                : unitRange(part) || [renderInput(node, part.slot, part.index)]
+                : unitOf(part) ? unitValue(node, part.slot.key, part.index, unitOf(part))
+                  : [renderInput(node, part.slot, part.index)]
           ));
         return;
       }
@@ -2342,7 +2641,11 @@
           // released pointer. Keep the field the user actually entered selected.
           if(focused&&focused!==box&&box.contains(focused)&&active.matches('input,textarea'))
             selection(focused.dataset.blockId);
-          else selection(node.id);
+          else {
+            selection(node.id);
+            // A press on a block's words gives the block the focus, so Delete and Backspace act on it (E-05).
+            if (!event.target.closest('input,textarea,select,button,summary,label,a,[contenteditable]')) box.focus({ preventScroll: true });
+          }
         }
       });
       const line = session()?.nodeMap?.get?.(node.id)?.sourceSpan?.startLine;
@@ -2406,21 +2709,11 @@
           if(schema.kind==='CompareExpression')main.append(slot('left'),E('span','blockui-phrase-text','が'),slot('right'),operator);
           else main.append(slot('left'),operator,slot('right'));
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
-          const extra=editDisclosure(node,'extra','なおす','blockui-extra'),extraControls=E('div','blockui-extra-controls');
-          extra.querySelector('summary').setAttribute('aria-label',schema.label+'の数・計算・時間を なおす');
-          extra.append(extraControls);
+          const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
+          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place.
           const numberSlot=(key,unit)=>{
-            const child=node.inputs[key],literal=(child?.schemaId==='QuantityLiteral'&&child.fields.unit===unit)||child?.schemaId==='UnitlessRead'?child.inputs.value:child;
-            if(literal?.schemaId==='NumberLiteral'||literal?.schemaId==='Hole:expression'){
-              main.append(fieldControl(literal,BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f=>f.key==='value')));
-              main.append(E('span','blockui-phrase-text',unit));
-              if(child?.schemaId==='QuantityLiteral')extraControls.append(fieldControl(child,BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').fields.find(f=>f.key==='unit')));
-            }else if(literal?.schemaId==='BuiltinCall:乱数'&&literal.inputs.args?.length===2){
-              // 1 秒から 3 秒の どれか: a range takes the unit on both ends, as the code writes it.
-              const args=BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s=>s.key==='args');
-              main.append(renderInput(literal,args,0),E('span','blockui-phrase-text',unit+'から'),renderInput(literal,args,1),E('span','blockui-phrase-text',unit+'のどれか'));
-            }else {main.append(slot(key));if(child?.schemaId!=='QuantityLiteral')main.append(E('span','blockui-phrase-text',unit));}
+            main.append(...unitValue(node,key,undefined,unit));
             extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
@@ -2438,7 +2731,8 @@
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
             });extraControls.append(data);
-            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text','を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
+            // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
+            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
             else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
           main.append(extra);
@@ -2447,7 +2741,27 @@
             control = fieldControl(child, numberField), input = control.querySelector('input');
           if (input) { input.value = '－' + decimalSource(child.fields.value); input.dataset.signedParentId = node.id; input.dataset.signedEdit = 'true'; }
           main.append(control);
-        } else if (schema.kind === 'QuantityLiteral') main.append(slot('value'), field('unit'));
+        } else if (schema.kind === 'QuantityLiteral') {
+          // A quantity in a slot with no fixed unit (へんすうに 入れる数, くらべる数 …): the unit is chosen only at くわしく,
+          // where 単位なし takes it off (E-02); the other levels show it as text.
+          const inner = node.inputs.value;
+          main.append(inner?.schemaId === 'NumberLiteral' || inner?.schemaId === 'Hole:expression'
+            ? flatNumber(inner, { parentId: node.id, input: 'value' }) : slot('value'));
+          if (document.body.dataset.uiLevel === 'advanced' && !options.readOnly) {
+            const unit = E('select', 'blockui-unit-choice', null, { 'aria-label': 'たんい', 'data-block-id': node.id, 'data-blockui-field': 'unit' });
+            for (const [v, label] of [...['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz'].map(u => [u, u]), ['', '単位なし']])
+              unit.append(E('option', '', label, { value: v }));
+            unit.value = node.fields.unit; unit.disabled = isLocked();
+            listen(unit, 'change', () => {
+              const result = unit.value ? operate({ type: 'field', id: node.id, key: 'unit', value: unit.value })
+                : operate({ type: 'replace', id: node.id, node: copy(node.inputs.value) });
+              if (!result.ok) unit.value = node.fields.unit;
+            });
+            const wrap = E('label', 'blockui-field', null, { 'data-field-type': 'unit' });
+            wrap.append(E('span', 'blockui-field-label', 'たんい'), unit);
+            main.append(wrap);
+          } else main.append(E('span', 'blockui-phrase-text blockui-unit-text', node.fields.unit));
+        }
         else if (schema.kind === 'UnitlessRead') main.append(slot('value'), E('span', '', 'の数だけ'));
         else if (schema.kind === 'ActorQualifiedRead') main.append(field('actorRef'), E('span', '', 'の'), slot('value'));
         else if (schema.kind === 'CloneCommand' && ['CREATE_SELF','CREATE_TARGET'].includes(schema.discriminator?.value)) {
@@ -2459,9 +2773,12 @@
         }
         else if (schema.kind === 'ContinuousRule') {
           main.style.flexWrap = 'wrap'; main.style.whiteSpace = 'normal';
-          main.append(field('actorRef'), E('span', '', 'は、'), slot('condition'), E('span', '', 'にあてはまる間、'),
-            field('direction'), E('span', '', 'へ、'), slot('seconds'), E('span', '', '秒に'), slot('distance'), E('span', '', '歩の速さで 動きつづける'));
-          for (const input of main.querySelectorAll(':scope > .blockui-input-slot')) {
+          // The same words as its code (E-14): 「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける.
+          if (node.fields.actorRef?.kind === 'named') main.append(field('actorRef'), E('span', 'blockui-phrase-text', '、'));
+          main.append(slot('condition'), E('span', 'blockui-phrase-text', 'あいだ、'), field('direction'), E('span', 'blockui-phrase-text', 'へ'),
+            ...unitValue(node, 'seconds', undefined, '秒'), E('span', 'blockui-phrase-text', 'に'),
+            ...unitValue(node, 'distance', undefined, '歩'), E('span', 'blockui-phrase-text', 'の速さで動き続ける'));
+          for (const input of main.querySelectorAll(':scope > .blockui-input-slot:not(.blockui-flat-value)')) {
             input.style.flexShrink = '0'; input.style.flexDirection = 'column';
             const head = input.querySelector(':scope > .blockui-slot-head');
             if (head) { head.style.position = 'static'; head.style.minWidth = '0'; }
@@ -2509,9 +2826,18 @@
             const actor = schema.fields.find(f => f.key === 'actorRef');
             if (actor) main.append(fieldControl(node, actor));
             renderPhrase(node, schema, main);
-            for (const f of schema.fields.filter(f => ['argument-names', 'reference'].includes(f.type))) main.append(fieldControl(node, f));
+            for (const f of schema.fields.filter(f => f.type === 'reference')) main.append(fieldControl(node, f));
+            // How the values are handed over (書いた じゅんに / 名前を つけて) is not a word of the sentence: it is in the
+            // 「…」 after it, so the placed block reads like its palette face and its code (E-14).
+            const handOver = schema.fields.find(f => f.type === 'argument-names');
+            if (handOver) {
+              let extra = main.querySelector(':scope > .blockui-extra');
+              if (!extra) { extra = extraDisclosure(node, schema.label + 'の わたし方を かえる').extra; main.append(extra); }
+              extra.querySelector(':scope > .blockui-extra-controls').append(fieldControl(node, handOver));
+            }
           } else renderPhrase(node, schema, main);
         }
+        addValueToolsToExtra(node, box, main);
         if (['statement', 'expression'].includes(schema.category)) {
           main.dataset.blockuiDrag = 'node';
           main.dataset.blockId = node.id;
@@ -2796,6 +3122,7 @@
       updateGeometry();
       observeMore();
       selection(selected, s?.blockSelectionLocation || null);
+      lightEmptyValue();
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
       rememberViewState();
@@ -3038,8 +3365,9 @@
           Math.ceil(world.offsetHeight * zoom + workspace.clientHeight * 0.4),
         ) + 'px';
       zoomLabel.textContent = Math.round(zoom * 100) + '%';
-      minus.disabled = zoom <= 0.2;
+      minus.disabled = zoom <= 0.5;
       plus.disabled = zoom >= 2;
+      placeNodeTools();
     }
     function scheduleGeometry() {
       if (destroyed || geometryFrame !== null) return;
@@ -3060,15 +3388,13 @@
       workspace.scrollTop = top;
       rememberViewState();
     }
+    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it (E-07).
     function fitBlocks() {
       const script = world.querySelector('.blockui-script');
       if (!script) return;
-      setZoom(
-        Math.min(
-          1,
-          Math.max(0.75,(workspace.clientWidth - 80) / (script.offsetWidth + 56)),
-        ),
-      );
+      const across = (workspace.clientWidth - 80) / (script.offsetWidth + 56),
+        down = (workspace.clientHeight - 24) / (world.offsetHeight + 24);
+      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
@@ -3104,23 +3430,73 @@
         } catch (_) {}
       rememberViewState();
     }
+    function startPan(pointerId, x, y, left = workspace.scrollLeft, top = workspace.scrollTop) {
+      pan = { id: pointerId, x, y, left, top };
+      try { workspace.setPointerCapture(pointerId); } catch (_) {}
+      workspace.classList.add('blockui-panning');
+    }
+    const touchLike = (type) => type === 'touch' || type === 'pen',
+      // A press that moves no more than this is a press (E-09); a mouse starts carrying sooner.
+      slopOf = (type) => (touchLike(type) ? 12 : 5),
+      HOLD_MS = 300;
+    // Two fingers spread or pinch the workspace around the point between them, from 50% to 200% (E-10). Whatever one
+    // finger had started (carrying, moving the workspace) stops.
+    const pinchPointers = new Map();
+    let pinch = null, pendingPan = null;
+    listen(workspace, 'pointerdown', (event) => {
+      if (event.pointerType !== 'touch') return;
+      pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pinchPointers.size === 2) {
+        if (drag) cancelDrag();
+        endPan();
+        pendingPan = null;
+        const [a, b] = [...pinchPointers.values()];
+        pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y) || 1, zoom };
+        for (const id of pinchPointers.keys()) try { workspace.setPointerCapture(id); } catch (_) {}
+        suppressClickUntil = Date.now() + 400;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      // A finger that starts on 「＋ ここに入れる」 or a button and goes up or down moves the workspace (E-09).
+      if (!drag && !pan && event.target.closest('.blockui-insertion,button,summary') && !event.target.closest('[data-blockui-drag]'))
+        pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop };
+    }, { capture: true });
+    listen(workspace, 'pointermove', (event) => {
+      if (pinch && pinchPointers.has(event.pointerId)) {
+        pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pinchPointers.size < 2) return;
+        const [a, b] = [...pinchPointers.values()], r = workspace.getBoundingClientRect();
+        setZoom(pinch.zoom * Math.hypot(a.x - b.x, a.y - b.y) / pinch.distance, { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top });
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (pendingPan?.id === event.pointerId && !pan && Math.hypot(event.clientX - pendingPan.x, event.clientY - pendingPan.y) > slopOf('touch')) {
+        const start = pendingPan;
+        pendingPan = null;
+        startPan(start.id, start.x, start.y, start.left, start.top);
+        suppressClickUntil = Date.now() + 400;
+      }
+    }, { capture: true });
+    for (const type of ['pointerup', 'pointercancel'])
+      listen(workspace, type, (event) => {
+        pinchPointers.delete(event.pointerId);
+        if (pinchPointers.size < 2 && pinch) { pinch = null; rememberViewState(); }
+        if (pendingPan?.id === event.pointerId) pendingPan = null;
+      }, { capture: true });
+    // Pressing anywhere that is not a block, a place, a field or a button and moving moves the workspace (E-11),
+    // also right of a short block and around the blocks of an enclosure.
     listen(workspace, 'pointerdown', (event) => {
       if (
+        pinch ||
         event.button !== 0 ||
         event.isPrimary === false ||
         drag ||
-        event.target.closest('.blockui-node,.blockui-event-hat,button,input,select,textarea,summary,a')
+        event.target.closest('[data-blockui-drag],.blockui-insertion,.blockui-input-slot,.blockui-field,.blockui-node-head,button,input,select,textarea,summary,a,label,details[open]')
       )
         return;
-      pan = {
-        id: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        left: workspace.scrollLeft,
-        top: workspace.scrollTop,
-      };
-      workspace.setPointerCapture(event.pointerId);
-      workspace.classList.add('blockui-panning');
+      startPan(event.pointerId, event.clientX, event.clientY);
       event.preventDefault();
     });
     listen(workspace, 'pointermove', (event) => {
@@ -3133,8 +3509,9 @@
       if (pan?.id === event.pointerId) endPan();
     });
     listen(workspace, 'pointercancel', endPan);
-    listen(workspace, 'lostpointercapture', () => {
-      if (pan) endPan();
+    // A block that hands its finger over to the workspace loses the capture too; only the workspace's own loss ends the move.
+    listen(workspace, 'lostpointercapture', (event) => {
+      if (pan && event.target === workspace && event.pointerId === pan.id) endPan();
     });
     listen(
       workspace,
@@ -3175,6 +3552,10 @@
     shapeObserver?.observe(world);
     shapeObserver?.observe(workspace);
     shapeObserver?.observe(palette);
+    // The carried blocks: the block itself, or with 「ここから下を まとめて もっていく」 it and the blocks after it (E-06).
+    function carriedIds(state) {
+      return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
+    }
     function beginGhost(state) {
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
@@ -3182,7 +3563,8 @@
       if (!source) return;
       const rect = source.getBoundingClientRect(),
         scale = state.schemaId ? 1 : zoom,
-        clone = source.cloneNode(true);
+        holder = E('div', 'blockui-world blockui-ghost-world'),
+        parts = state.run ? carriedIds(state).map(id => locationElement({ id })).filter(Boolean) : [source];
       ghost = E('div', 'blockui-editor blockui-drag-ghost');
       ghost.setAttribute('aria-hidden', 'true');
       ghost.inert = true;
@@ -3190,27 +3572,45 @@
         source.dataset.paletteTone ||
         state.element.closest('[data-palette-tone]')?.dataset.paletteTone ||
         'data';
-      clone.classList.remove('blockui-selected', 'blockui-current', 'blockui-dragging');
-      clone.style.width = source.offsetWidth + 'px';
-      clone.style.maxWidth = 'none';
-      for (const n of clone.querySelectorAll('[id]')) n.removeAttribute('id');
-      for (const n of clone.querySelectorAll('.blockui-actions[open]')) n.open = false;
-      const holder = E('div', 'blockui-world blockui-ghost-world');
-      holder.append(clone);
+      for (const part of parts) {
+        const clone = part.cloneNode(true);
+        clone.classList.remove('blockui-selected', 'blockui-current', 'blockui-dragging', 'blockui-lift');
+        clone.style.width = part.offsetWidth + 'px';
+        clone.style.maxWidth = 'none';
+        for (const n of clone.querySelectorAll('[id]')) n.removeAttribute('id');
+        for (const n of clone.querySelectorAll('.blockui-actions[open],details[open]')) n.open = false;
+        // The ghost shows what the block says, also the values typed into it (a select keeps 度, not 歩).
+        const from = part.querySelectorAll('select,input,textarea'), to = clone.querySelectorAll('select,input,textarea');
+        from.forEach((n, i) => { if (to[i]) to[i].value = n.value; });
+        holder.append(clone);
+        part.classList.add('blockui-dragging');
+      }
       ghost.append(holder);
-      ghost.style.width = source.offsetWidth + 'px';
+      ghost.style.width = Math.max(...parts.map(part => part.offsetWidth)) + 'px';
       ghost.style.transform = `scale(${scale})`;
       doc.body.append(ghost);
       state.grabX = Math.min(rect.width, Math.max(0, state.startX - rect.left));
       state.grabY = Math.min(rect.height, Math.max(0, state.startY - rect.top));
       state.visual = source;
-      source.classList.add('blockui-dragging');
+      state.parts = parts;
     }
     function moveGhost(point) {
       if (!ghost || !drag) return;
       ghost.style.left = point.clientX - drag.grabX + 'px';
       ghost.style.top = point.clientY - drag.grabY + 'px';
+      if (dragReason) {
+        dragReason.style.left = Math.max(4, point.clientX - 20) + 'px';
+        dragReason.style.top = Math.max(4, point.clientY - drag.grabY - 32) + 'px';
+      }
     }
+    // An empty value place (an unfilled hole): a sentence carried right over it cannot go in (E-04).
+    function holeAt(element) {
+      const location = locationFromElement(element), parent = location && index.get(location.parentId)?.node,
+        value = parent && (location.index === undefined ? parent.inputs?.[location.input] : parent.inputs?.[location.input]?.[location.index]);
+      return value?.schemaId === 'Hole:expression';
+    }
+    // Inside the workspace a sentence goes to the nearest place: before a block from its upper half, after it from its
+    // lower half, after an enclosure from below its bottom line (E-04). A value goes to a value place within 40 px.
     function dragCandidate(event) {
       const bounds = workspace.getBoundingClientRect();
       if (
@@ -3223,40 +3623,74 @@
       const schema = drag?.schemaId
           ? BLOCK_SCHEMA_BY_ID.get(drag.schemaId)
           : schemaOf(index.get(drag?.id)?.node),
-        category = schema?.category;
+        category = schema?.category,
+        carried = (drag?.parts || []).filter(Boolean);
       const direct = doc.elementFromPoint(event.clientX, event.clientY)?.closest('[data-blockui-drop]');
-      if (
-        direct &&
-        world.contains(direct) &&
-        (category === 'statement') === !!direct.dataset.blockuiBody
-      )
-        return direct;
+      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct))) {
+        if ((category === 'statement') === !!direct.dataset.blockuiBody) return direct;
+        if (category === 'statement' && holeAt(direct)) return direct;
+      }
       let best = null,
         distance = Infinity;
       const candidates =
         category === 'statement'
-          ? world.querySelectorAll('.blockui-insertion')
+          ? world.querySelectorAll('.blockui-insertion,.blockui-hole-target')
           : world.querySelectorAll('.blockui-input-slot[data-blockui-drop]');
       for (const element of candidates) {
+        if (carried.some(part => part.contains(element))) continue;
         const r = element.getBoundingClientRect();
-        if (r.bottom < bounds.top || r.top > bounds.bottom) continue;
+        if (!r.width || r.bottom < bounds.top || r.top > bounds.bottom) continue;
         const dx = Math.max(r.left - event.clientX, 0, event.clientX - r.right),
           dy = Math.max(r.top - event.clientY, 0, event.clientY - r.bottom),
-          d = Math.hypot(dx, dy);
-        if (d < 28 && d < distance) {
+          d = category === 'statement' ? dy + 0.35 * dx : Math.hypot(dx, dy);
+        if ((category === 'statement' || d < 40) && d < distance) {
           best = element;
           distance = d;
         }
       }
       return best;
     }
-    function cancelDrag() {
+    let dragReason = null, dropNote = null, dropNoteTimer = null;
+    function showDragReason(text) {
+      if (!text) { dragReason?.remove(); dragReason = null; return; }
+      if (!dragReason) { dragReason = E('div', 'blockui-drag-reason', null, { 'aria-hidden': 'true' }); doc.body.append(dragReason); }
+      dragReason.textContent = text;
+    }
+    // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
+    function showDropNote(text, x, y) {
+      announce(text);
+      clearTimeout(dropNoteTimer);
+      dropNote?.remove();
+      dropNote = E('div', 'blockui-drop-note', text, { 'aria-hidden': 'true' });
+      doc.body.append(dropNote);
+      const w = dropNote.offsetWidth, h = dropNote.offsetHeight, view = doc.documentElement;
+      dropNote.style.left = Math.max(8, Math.min(x + 12, view.clientWidth - w - 8)) + 'px';
+      dropNote.style.top = Math.max(8, Math.min(y - h - 14, view.clientHeight - h - 8)) + 'px';
+      const note = dropNote;
+      dropNoteTimer = setTimeout(() => { note.classList.add('blockui-fading'); setTimeout(() => note.remove(), 320); if (dropNote === note) dropNote = null; }, 2200);
+    }
+    // A cancelled drop: the carried block goes back where it came from.
+    function returnGhost(state) {
+      const flying = ghost, target = (state.schemaId ? state.visual : state.parts?.[0] || state.visual)?.getBoundingClientRect();
+      ghost = null;
+      if (!flying) return;
+      if (!target?.width) { flying.remove(); return; }
+      flying.classList.add('blockui-returning');
+      flying.style.left = target.left + 'px';
+      flying.style.top = target.top + 'px';
+      setTimeout(() => flying.remove(), 260);
+    }
+    function cancelDrag({ animate = false } = {}) {
       const state = drag;
       drag = null;
+      clearTimeout(state?.holdTimer);
+      if (animate && state) returnGhost(state);
       ghost?.remove();
       ghost = null;
       snapPreview?.remove();
       snapPreview = null;
+      showDragReason('');
+      palette.classList.remove('blockui-delete-zone');
       state?.visual?.classList.remove('blockui-dragging');
       if (state?.started) suppressClickUntil = Date.now() + 350;
       if (dragFrame !== null) doc.defaultView.cancelAnimationFrame(dragFrame);
@@ -3265,9 +3699,9 @@
         try {
           state.element.releasePointerCapture(state.pointerId);
         } catch (_) {}
-      for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid,.blockui-dragging'))
-        n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid', 'blockui-dragging');
-      root.classList.remove('blockui-drag-active');
+      for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid,.blockui-dragging,.blockui-lift'))
+        n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid', 'blockui-dragging', 'blockui-lift');
+      root.classList.remove('blockui-drag-active', 'blockui-drag-statement');
       notifyPending();
       updateControls();
     }
@@ -3275,40 +3709,51 @@
       if (!drag) return;
       for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid'))
         n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid');
-      const element = dragCandidate(point),
-        location = locationFromElement(element),
-        schema = drag.schemaId
+      const schema = drag.schemaId
           ? BLOCK_SCHEMA_BY_ID.get(drag.schemaId)
-          : schemaOf(index.get(drag.id)?.node);
+          : schemaOf(index.get(drag.id)?.node),
+        pr = palette.getBoundingClientRect(),
+        overPalette = !!pr.width && point.clientX >= pr.left && point.clientX <= pr.right && point.clientY >= pr.top && point.clientY <= pr.bottom;
+      // Carried back to the block list, a sentence of the workspace is deleted when let go (E-05).
+      drag.deleteZone = !!drag.id && overPalette && schema?.category === 'statement';
+      palette.classList.toggle('blockui-delete-zone', drag.deleteZone);
+      const element = drag.deleteZone ? null : dragCandidate(point),
+        location = locationFromElement(element);
       let valid = !!location && schema?.category === (location.body ? 'statement' : 'expression'),
         reason = location
-          ? 'つなぐブロックは 本文へ、はめるブロックは あいている ところへ つなぎます'
-          : 'どこへ 動かすか えらんでください。おける ばしょの 外で はなすと やめます';
+          ? 'ここには おけないよ'
+          : '';
       if (valid && drag.id) {
         const parent = index.get(location.parentId);
-        valid = location.parentId !== drag.id && !parent?.ancestors.includes(drag.id);
-        if (!valid) reason = '自分の中には 動かせません';
+        valid = !carriedIds(drag).some(id => location.parentId === id || parent?.ancestors.includes(id));
+        if (!valid) reason = '自分の 中には 入れられないよ';
       }
       if (valid && drag.schemaId) {
         const candidate = availability(drag.schemaId, location, drag.candidate?.candidateNode);
         valid = candidate.enabled;
         if (!valid) reason = candidate.reason;
       }
+      const node = drag.id ? index.get(drag.id)?.node : null,
+        wraps = valid && location?.body && !drag.run ? wrapCount(schema, node, location, drag.id) : 0;
       if (valid && drag.id && schema.category === 'statement')
         try {
           prepareBlockEdit(
             { ...session(), pendingEdit: null },
-            { type: 'move', id: drag.id, ...location },
+            { type: drag.run ? 'move-run' : wraps ? 'wrap' : 'move', id: drag.id, ...location },
           );
         } catch (e) {
           valid = false;
           reason = errorText(e);
         }
 
-      if (valid) reason = location.body ? 'ここにつなぐ' : 'ここの 中身を 入れかえる';
+      if (valid) reason = !location.body ? 'ここの 中身を 入れかえる' : wraps ? '下の ' + wraps + 'この ブロックを 中に 入れる' : 'ここにつなぐ';
       drag.location = location;
       drag.valid = valid;
+      drag.wraps = wraps;
       if (element) element.classList.add(valid ? 'blockui-drop-preview' : 'blockui-drop-invalid');
+      ghost?.classList.toggle('blockui-ghost-invalid', !!location && !valid);
+      showDragReason(location && !valid ? reason : '');
+      moveGhost(point);
       snapPreview?.remove();
       snapPreview = null;
       if (valid && element) {
@@ -3319,9 +3764,10 @@
         snapPreview.style.top = (location.body ? r.top - 14 : r.bottom + 2) + 'px';
         doc.body.append(snapPreview);
       }
-      if (drag.reason !== reason) {
-        drag.reason = reason;
-        announce(reason, !valid && !!location);
+      const spoken = drag.deleteZone ? 'ここで はなすと けす' : reason || 'ここで はなすと 入れるのを やめるよ';
+      if (drag.reason !== spoken) {
+        drag.reason = spoken;
+        announce(spoken, !!location && !valid);
       }
     }
     function scrollDrag(timestamp = doc.defaultView.performance.now()) {
@@ -3362,6 +3808,11 @@
         if (pointerFocusTarget) {
           pointerFocusTarget = null;
           if (root.contains(doc.activeElement)) focusBlockField(doc.activeElement);
+          // A number or text field entered with a press holds its whole value selected, so typing replaces it; a second
+          // press in the field puts the caret there (E-01). The full-text dialog and the code view keep their caret.
+          const active = doc.activeElement;
+          if (active !== pointerFocusPrevious && active?.matches?.('.blockui-world .blockui-field input[type="text"]') && !active.closest('dialog'))
+            active.select();
         }
         if (deferredFocus) {
           deferredFocus = null;
@@ -3374,14 +3825,25 @@
       },
       { capture: true },
     );
+    // A long press on a block gives no menu of the browser (it lifts the block instead).
+    listen(root, 'contextmenu', (event) => {
+      if (touchLike(lastPointerType) && event.target.closest('[data-blockui-drag]')) event.preventDefault();
+    });
+    // A finger held on a block in the list moves the block, not the list.
+    listen(palette, 'touchmove', (event) => {
+      if ((drag?.held || drag?.started) && event.cancelable) event.preventDefault();
+    }, { passive: false });
     listen(root, 'pointerdown', (event) => {
       pointerFocusTarget = event.target;
+      pointerFocusPrevious = doc.activeElement;
+      lastPointerType = event.pointerType || 'mouse';
       const handle = event.target.closest('[data-blockui-drag]');
       if (
         !handle ||
         handle.disabled ||
         handle.getAttribute('aria-disabled') === 'true' ||
         isLocked() ||
+        pinch ||
         event.button !== 0 ||
         event.isPrimary === false
       )
@@ -3397,19 +3859,32 @@
         schemaId = handle.dataset.blockuiDragSchema;
       drag = {
         pointerId: event.pointerId,
+        pointerType: event.pointerType,
         element: handle,
         id,
         schemaId,
+        // After 「ここから下を まとめて もっていく」, carrying that block carries the blocks after it too.
+        run: !!id && moving?.type === 'run' && moving.id === id,
         candidate: handle._akariSearchCandidate,
         startX: event.clientX,
         startY: event.clientY,
         started: false,
+        held: false,
         owner: session()?.ownerKey,
         revision: session()?.sourceRevision,
         contextRevision: session()?.contextRevision,
         location: null,
         valid: false,
       };
+      // A finger held still for a moment lifts the block: it can then be carried in any direction (E-09).
+      if (touchLike(event.pointerType)) {
+        const state = drag;
+        state.holdTimer = setTimeout(() => {
+          if (drag !== state || state.started) return;
+          state.held = true;
+          (state.id ? handle.closest('.blockui-node') : handle.querySelector('.blockui-preview') || handle)?.classList.add('blockui-lift');
+        }, HOLD_MS);
+      }
       try {
         handle.setPointerCapture(event.pointerId);
       } catch (_) {}
@@ -3425,11 +3900,29 @@
         cancelDrag();
         return;
       }
-      if (!drag.started && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5)
+      const dx = event.clientX - drag.startX, dy = event.clientY - drag.startY;
+      // A finger that moved no more than 12 px is still a press; a mouse starts carrying after 5 px.
+      if (!drag.started && (touchLike(drag.pointerType) ? Math.hypot(dx, dy) <= slopOf(drag.pointerType) : Math.hypot(dx, dy) < slopOf(drag.pointerType)))
         return;
+      // A finger that goes up or down without holding first moves the list or the workspace, not the block (E-09).
+      if (!drag.started && touchLike(drag.pointerType) && !drag.held && Math.abs(dy) > Math.abs(dx)) {
+        const state = drag;
+        cancelDrag();
+        if (state.id) {
+          startPan(state.pointerId, state.startX, state.startY);
+          workspace.scrollLeft = pan.left + pan.x - event.clientX;
+          workspace.scrollTop = pan.top + pan.y - event.clientY;
+          suppressClickUntil = Date.now() + 400;
+        }
+        event.preventDefault();
+        return;
+      }
       if (!drag.started) {
         drag.started = true;
+        clearTimeout(drag.holdTimer);
         beginGhost(drag);
+        if (BLOCK_SCHEMA_BY_ID.get(drag.schemaId)?.category === 'statement' || schemaOf(index.get(drag.id)?.node)?.category === 'statement')
+          root.classList.add('blockui-drag-statement');
       }
       drag.clientX = event.clientX;
       drag.clientY = event.clientY;
@@ -3454,23 +3947,39 @@
       if (drag.started) previewDrag(event);
       const state = drag,
         started = state.started;
-      cancelDrag();
-      if (!started) return;
+      if (!started) {
+        cancelDrag();
+        // A long press let go without moving selects the block and shows its tools (E-09).
+        if (state.held && state.id) { selection(state.id); locationElement({ id: state.id })?.focus({ preventScroll: true }); }
+        return;
+      }
+      const wb = workspace.getBoundingClientRect(), pb = palette.getBoundingClientRect(),
+        inside = (r) => !!r.width && event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom,
+        outside = !inside(wb) && !inside(pb);
+      cancelDrag({ animate: !state.deleteZone && (!state.valid || !state.location) });
       event.preventDefault();
       suppressClickUntil = Date.now() + 350;
+      if (state.deleteZone) {
+        const ids = carriedIds(state);
+        const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
+          : removeBlock(index.get(state.id)?.node || { id: state.id });
+        if (result.ok) showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY);
+        return;
+      }
       if (!state.valid || !state.location) {
-        announce('動かすのを やめました');
+        showDropNote(outside || !state.location ? '入れるのを やめたよ' : state.reason || 'ここには おけないよ', event.clientX, event.clientY);
         return;
       }
       if (state.schemaId) {
         destination = state.location;
         paletteAdd(state.candidate || BLOCK_SCHEMA_BY_ID.get(state.schemaId));
-      } else completeMove(state.location, { id: state.id, type: 'move' });
+      } else completeMove(state.location, { id: state.id, type: state.run ? 'run' : 'move' });
     });
     listen(root, 'pointercancel', () => {
       pointerFocusTarget = null;
-      cancelDrag();
-      announce('動かすのを やめました');
+      const started = drag?.started;
+      cancelDrag({ animate: started });
+      if (started) announce('入れるのを やめたよ');
     });
     listen(root, 'lostpointercapture', () => {
       if (drag) cancelDrag();
@@ -3519,6 +4028,8 @@
     });
     listen(root, 'keydown', (event) => {
       pointerFocusTarget = null;
+      // A block put in with the keyboard gives its empty value the typing, as with a mouse (E-03).
+      lastPointerType = 'keyboard';
       if (event.isComposing) return;
       if (event.key === 'Tab') {
         if (deferredFocus === event.target) {
@@ -3529,10 +4040,20 @@
         for (const field of root.querySelectorAll('.blockui-editing-field'))
           field.classList.remove('blockui-editing-field');
       }
+      // Delete or Backspace on a selected sentence deletes it (E-05); in a field they delete characters.
+      if (['Delete', 'Backspace'].includes(event.key) && event.target.matches?.('.blockui-world .blockui-node.blockui-statement') &&
+          !options.readOnly && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        const node = index.get(event.target.dataset.blockId)?.node;
+        if (!node || schemaOf(node)?.draftOnly || isLocked()) return;
+        if (removeBlock(node).ok) focus({ id: session()?.blockSelection });
+        return;
+      }
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        const menu = event.target.closest('.blockui-extra[open],.blockui-subject[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-local-help[open],.blockui-actions[open]');
+        const menu = event.target.closest('.blockui-extra[open],.blockui-who[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-local-help[open],.blockui-actions[open],.blockui-who[open]');
         if (menu) {
           menu.open = false;
           menu.querySelector('summary')?.focus();
@@ -3541,7 +4062,7 @@
         if (pending) cancelField();
         else {
           destination = null; replacement = null; moving = null; cancelDrag();
-          notifyPending(); renderReplacement(); renderPalette(); updateControls();
+          notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
           for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
           for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
           announce('えらぶのを やめました。組み立て中のものは「とちゅうで やめる」、決めたことは「もとにもどす」で もどせます');

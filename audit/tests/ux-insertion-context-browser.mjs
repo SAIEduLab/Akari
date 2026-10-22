@@ -92,7 +92,10 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
   });
   await run(browser,'selection/value-unavailable',insertionSources.tail,async p=>{
     const before=await read(p),say=before.shape[0];const slot=p.locator('#blockEditor [data-parent-id="'+say.id+'"][data-blockui-input="value"]');
-    await field(p,say.valueId).click();await slot.locator('[data-blockui-action="slot-select"]').click();const selected=await read(p);
+    await field(p,say.valueId).click();
+    // At かんたん the value's 計算を入れる is in the 「…」 after the sentence (E-12).
+    await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] > .blockui-node-content > .blockui-node-main > .blockui-extra > summary').click();
+    await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] .blockui-extra [data-blockui-action="slot-select"]').first().click();const selected=await read(p);
     await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えないブロックも見せる"]').check();
     const disabled=await candidate(p,'Say').evaluate(e=>{const reason=e.parentElement.querySelector('.blockui-unavailable');return{ariaDisabled:e.getAttribute('aria-disabled'),reason:reason?.textContent,reasonVisible:!!reason?.getClientRects().length};});
     await candidate(p,'Say').scrollIntoViewIfNeeded();const bounds=await candidate(p,'Say').boundingBox();await p.mouse.click(bounds.x+bounds.width/2,bounds.y+bounds.height/2);

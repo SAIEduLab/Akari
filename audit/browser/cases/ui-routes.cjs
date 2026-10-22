@@ -32,11 +32,21 @@ async function openAnnotations(node){
  await nodeAction(node,'annotations');await details.locator(':scope > summary').waitFor({state:'visible'});assert.notEqual(await details.getAttribute('open'),null);return true;
 }
 const ownedSlots=node=>node.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-input-slot, :scope > .blockui-node-content > .blockui-node-main > .blockui-multiple-inputs > .blockui-input-slot, :scope > .blockui-node-content > .blockui-input-slot, :scope > .blockui-node-content > .blockui-multiple-inputs > .blockui-input-slot');
+// A field whose only tool would be its name has none (E-12).
 async function openSlot(slot){
- const head=slot.locator(':scope > .blockui-slot-head');if(!await head.isVisible())await clickNode(slot.locator(':scope > .blockui-node'));
- await head.waitFor({state:'visible'});return slot;
+ const head=slot.locator(':scope > .blockui-slot-head');if(!await head.count()||!await head.isVisible())await clickNode(slot.locator(':scope > .blockui-node'));
+ if(await head.count())await head.waitFor({state:'visible'});return slot;
 }
-async function slotAction(slot,action='slot-select'){await openSlot(slot);await slot.locator(':scope > .blockui-slot-head [data-blockui-action="'+action+'"]').click();}
+// A value's tools (E-12): at くわしく with the selected field; at かんたん in the 「…」 after its sentence, one row per value.
+async function valueTool(slot,selector){
+ const head=slot.locator(':scope > .blockui-slot-head '+selector);if(await head.count())return head;
+ const label=await slot.getAttribute('aria-label'),statement=slot.locator('xpath=ancestor::article[contains(concat(" ",normalize-space(@class)," ")," blockui-statement ")][1]');
+ const extra=statement.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra');
+ if(await extra.getAttribute('open')===null)await extra.locator(':scope > summary').click();
+ const exact=new RegExp('^'+label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$');
+ return extra.locator('.blockui-value-row').filter({has:slot.page().locator('.blockui-slot-label',{hasText:exact})}).locator(selector);
+}
+async function slotAction(slot,action='slot-select'){await openSlot(slot);await (await valueTool(slot,'[data-blockui-action="'+action+'"]')).click();}
 async function showUnavailable(root){
  const options=root.locator('.blockui-palette-options');if(!await options.count())return false;
  await openDetails(options);await options.getByRole('checkbox',{name:'使えないブロックも見せる',exact:true}).check();await options.locator(':scope > summary').click();return true;

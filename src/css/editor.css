@@ -6019,3 +6019,249 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   body[data-editor-mode] .menutool > :is(.editor-modes, .ui-level-label) { height: 48px; }
   body[data-editor-mode] .menutool > .editor-modes button { min-height: 40px; }
 }
+
+/* ── 1.5.0 block view (theme E) ──────────────────────────────────────────────────────────────────────────────────────
+   Nothing a child does to select or edit a block moves the other blocks: the tools of the selected block, the slot tools
+   and 決める・とちゅうで やめる float over the workspace. */
+
+/* The block list (E-17): every category above one list that scrolls, with no pages. */
+:is(#blockEditor, #callableBlocks) .blockui-palette { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-tools { grid-column: 1; grid-row: 1; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories {
+  grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+  max-height: none; overflow: visible; padding: 6px 8px; border-right: 0; border-bottom: 1px solid #e1e8ef;
+}
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button {
+  position: relative; flex: 0 0 auto; flex-direction: row; gap: 4px; box-sizing: border-box; min-width: 0; min-height: 30px;
+  padding: 2px 8px; border-radius: 15px; font-size: 12px; line-height: 1.3; white-space: nowrap; border: 1px solid #d3dde6; background: #fff;
+}
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::before { flex: none; width: 12px; height: 12px; margin: 0; font-size: 9px; line-height: 12px; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button[aria-pressed="true"] { border-color: #6c8ca5; background: #eaf3fa; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-list { grid-column: 1; grid-row: 3; gap: 10px; padding: 10px 8px 40px; }
+
+/* Thin lines between blocks (E-07): the place between two blocks is an 8 px line; the last place of a body keeps
+   「＋ ここに入れる」 (28 px). While a block is carried, while a place is being chosen and while a block is being moved,
+   every place has the size of 「＋ ここに入れる」. */
+.blockui-world .blockui-insertion:not(.blockui-insertion-end) {
+  height: 8px; min-height: 8px; line-height: 8px; color: transparent !important; font-size: 0;
+  border-color: transparent; background: transparent !important; overflow: visible;
+}
+.blockui-world .blockui-insertion:not(.blockui-insertion-end)::before { top: 2px; height: 4px; left: 12px; }
+.blockui-world .blockui-insertion:not(.blockui-insertion-end):hover::before,
+.blockui-world .blockui-insertion.blockui-implied-destination::before { background: #8aa5b8; }
+.blockui-world .blockui-insertion.blockui-insertion-end { height: 28px; min-height: 28px; line-height: 26px; }
+:is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion:not(.blockui-insertion-end) {
+  height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #47677f !important;
+  border-color: #8aa5b8; background: #f5f9fc !important;
+}
+/* A thin place keeps its height when it takes the focus (a focus never moves the blocks); its line shows the focus. */
+.blockui-world .blockui-insertion:not(.blockui-insertion-end):focus-visible::before { background: #10324f; }
+.blockui-world .blockui-body:has(> .blockui-insertion:last-child) { padding-bottom: 4px; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-body { padding-bottom: 16px; }
+
+/* The trigger block (E-07): its name is not repeated under it; いつ動く？ and 「＋ キーを おす間など、つづけて動かす」 are
+   small buttons right under it. */
+.blockui-world .blockui-script > .blockui-node-head { display: none !important; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main {
+  flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 6px; min-height: 0; padding: 4px 0 6px;
+}
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main > details > summary {
+  display: inline-flex; align-items: center; min-height: 28px; box-sizing: border-box; padding: 2px 10px;
+  border: 1px solid #c9d6e2; border-radius: 14px; background: #fff; font-size: 12px; line-height: 1.4; color: #3e5d75;
+}
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main > details[open] { flex-basis: 100%; }
+
+/* No ▶ inside the workspace (E-14): ▶ is the mark of ▶ 動かす. What opens is shown by 「…」 or by its own words. */
+.blockui-world summary, .blockui-drag-ghost summary { list-style: none; }
+.blockui-world summary::-webkit-details-marker, .blockui-drag-ghost summary::-webkit-details-marker { display: none; }
+.blockui-world summary::marker, .blockui-drag-ghost summary::marker { content: ""; }
+.blockui-world .blockui-extra { flex: none; }
+.blockui-world .blockui-extra > summary {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 28px; min-height: 26px;
+  padding: 0 6px; border: 1px solid #0002; border-radius: 13px; background: #ffffffb3; font-weight: 700; line-height: 1; color: inherit;
+}
+.blockui-world .blockui-extra[open] > summary { background: #fff; border-color: #6c8ca5; }
+.blockui-world .blockui-subject-text { font-weight: 700; }
+.blockui-world .blockui-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.blockui-world .blockui-value-row > .blockui-slot-label { min-width: 4em; font-size: 12px; font-weight: 500; }
+
+/* A number in a slot whose unit is fixed is a field of its own (E-02): no box around a box. */
+.blockui-world .blockui-input-slot.blockui-flat-value { display: inline-flex; align-items: center; padding: 0; background: transparent; box-shadow: none; border-radius: 15px; }
+.blockui-world .blockui-unit-text { font-weight: 700; }
+.blockui-world [data-blockui-action="unit-repair"] { min-height: 26px; padding: 1px 8px; border: 1px solid #b05a4f; border-radius: 13px; background: #fff5f2; color: #8f1d12; font-size: 12px; }
+
+/* The selected block's tools are laid over the workspace beside it (E-12): ↑ まえへ・↓ あとへ・けす・だれが・ほかのそうさ
+   right of its first row, where they cover no other block; when there is no room there, right above it. */
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected > .blockui-node-head {
+  position: absolute; left: calc(100% + 8px); right: auto; top: 6px; bottom: auto; z-index: 120; grid-row: auto; grid-column: auto;
+  width: max-content; max-width: min(640px, calc(100vw - 40px)); min-width: 0; padding: 3px 4px;
+  background: #fffffff2; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
+}
+/* Right above the block, the tools are low, so the words in the middle of the block above stay free to press. */
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected.blockui-tools-above > .blockui-node-head {
+  left: 0; top: auto; bottom: calc(100% + 1px); padding: 1px 3px;
+}
+.blockui-world .blockui-node.blockui-selected.blockui-tools-above > .blockui-node-head > .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-node.blockui-selected.blockui-tools-above > .blockui-node-head > .blockui-node-tools > :is(.blockui-who, .blockui-actions) > summary {
+  min-height: 22px; padding: 1px 6px; font-size: 11px; line-height: 1.3;
+}
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected > .blockui-node-head > .blockui-node-tools { flex-wrap: wrap; width: auto; }
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-button,
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > :is(.blockui-who, .blockui-actions) > summary { white-space: nowrap; }
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-actions > summary,
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > [data-blockui-action="diagnostics"] { min-height: 26px; padding: 2px 7px; line-height: 1.4; }
+.blockui-world .blockui-node-tools > .blockui-who { position: relative; }
+.blockui-world .blockui-node-tools > .blockui-who > summary {
+  display: inline-flex; align-items: center; box-sizing: border-box; min-height: 26px; padding: 2px 7px; border: 1px solid #0003;
+  border-radius: 6px; background: #ffffffb3; font-size: 12px; cursor: pointer;
+}
+.blockui-world .blockui-node-tools > .blockui-who[open] > .blockui-field {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 130; min-width: 220px; padding: 6px 8px;
+  background: #fff; border: 1px solid #9db3c5; border-radius: 8px; box-shadow: 0 4px 12px #12324d30;
+}
+.blockui-world .blockui-node-tools > .blockui-who .blockui-structured-field { display: flex; flex-wrap: wrap; gap: 6px; }
+/* A selected field's tools float under it (くわしく); the block keeps its size. */
+.blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head {
+  position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; min-width: 180px; max-width: 330px;
+}
+.blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
+/* 決める・とちゅうで やめる and the input's mistake float under the field being edited, or over the top of the workspace. */
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls {
+  position: absolute; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
+  max-width: min(520px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
+  background: #eef5fbf5; box-shadow: 0 4px 12px #12324d30;
+}
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
+.blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
+.blockui-view-controls > .blockui-field-error:empty { display: none; }
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-message.blockui-message-near-field {
+  position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); box-shadow: none;
+}
+/* On a touch screen a finger that goes up or down on a block of the list moves the list (E-09). */
+:is(#blockEditor, #callableBlocks) .blockui-palette-item [data-blockui-drag] { touch-action: pan-y; }
+
+/* A long press lifts a block a little (E-09); a block put in by touch lights its empty value (E-03). */
+.blockui-world .blockui-lift { filter: drop-shadow(0 6px 6px #12324d55); translate: 0 -2px; }
+@keyframes blockui-attention { 0%, 100% { box-shadow: 0 0 0 0 #f0a63000; } 30% { box-shadow: 0 0 0 5px #f0a630aa; } }
+.blockui-world .blockui-attention { border-radius: 15px; animation: blockui-attention 0.9s ease-out 2; outline: 2px solid #e08a12; outline-offset: 2px; }
+
+/* Deleting by carrying a block to the block list (E-05). */
+.blockui-palette.blockui-delete-zone { position: relative; outline: 3px solid #c0392b; outline-offset: -3px; }
+.blockui-palette.blockui-delete-zone::after {
+  content: "ここで はなすと けす"; position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
+  background: #fde3dfe6; color: #8f1d12; font-weight: 700; font-size: 16px; pointer-events: none;
+}
+/* A place that cannot take the block: the carried block is grey and says why above it (E-04). */
+.blockui-drag-ghost.blockui-ghost-invalid { opacity: 0.55; filter: grayscale(1); }
+.blockui-drag-reason {
+  position: fixed; z-index: 10001; pointer-events: none; padding: 3px 9px; border-radius: 7px; background: #fff;
+  border: 1px solid #b05a4f; color: #8f1d12; font-size: 13px; font-weight: 700; line-height: 1.5; white-space: nowrap;
+}
+.blockui-drop-note {
+  position: fixed; z-index: 10001; pointer-events: none; max-width: min(360px, calc(100vw - 24px)); padding: 5px 11px; border-radius: 8px;
+  background: #fffbe6; border: 1px solid #c8a740; box-shadow: 0 3px 10px #4a3b0a30; color: #4a3b0a; font-size: 13px; font-weight: 700;
+  transition: opacity 0.3s;
+}
+.blockui-drop-note.blockui-fading { opacity: 0; }
+.blockui-drag-ghost.blockui-returning { transition: left 0.22s ease-in, top 0.22s ease-in, opacity 0.22s ease-in; opacity: 0.4; }
+
+/* The text of the blocks, the block list and the workspace controls is not selected by a press or a drag (E-11);
+   the text in an input is. */
+#blockEditor, #callableBlocks, .blockui-drag-ghost { -webkit-user-select: none; user-select: none; }
+#blockEditor :is(input, textarea), #callableBlocks :is(input, textarea) { -webkit-user-select: text; user-select: text; }
+body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
+
+/* A two-tone focus ring that shows on every block colour (L-11). */
+.blockui-world :is(.blockui-node, .blockui-insertion, button, summary, select, input):focus-visible,
+.blockui-palette :is(button, summary, select, input):focus-visible {
+  outline: 3px solid #10324f !important; outline-offset: 1px; box-shadow: 0 0 0 5px #fff !important;
+}
+
+/* Child text breaks between phrases, not inside a word (E-23). */
+:is(.child-help, .child-help-panel, .blockui-empty, .blockui-message, .blockui-unavailable, .blockui-search-scope, .blockui-drop-note,
+  .status, #statusText, .editor-pending, #entryOutside, .mode-blocked-note, .monitor-empty, .blockui-trigger-scope, .diagnostic-help) {
+  word-break: auto-phrase;
+}
+
+/* Touch screens (E-19): what a finger presses is at least 40 × 40 px — the fields, choices and buttons in the blocks,
+   the category buttons (36 px to see, 40 px to press), the stage's size handles and zoom buttons, and the right
+   column's buttons. A place between blocks is a 40 px target while a block is carried or the block above it is
+   selected; otherwise a tap puts a block after the selected one (E-08). */
+@media (pointer: coarse) {
+  .blockui-world :is(button:not(.blockui-insertion):not(.blockui-drag-handle), select, summary, input:not([type="checkbox"]):not([type="radio"])) {
+    min-height: 40px !important; min-width: 40px; box-sizing: border-box;
+  }
+  .blockui-world .blockui-field input { height: 40px; }
+  .blockui-world .blockui-insertion.blockui-insertion-end,
+  :is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion { height: 40px !important; min-height: 40px !important; line-height: 38px; }
+  .blockui-world .blockui-insertion.blockui-implied-destination::after {
+    content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 40px; z-index: 6;
+  }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories { gap: 4px; }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button { min-height: 36px; padding: 2px 8px; }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::after {
+    content: ""; position: absolute; top: -2px; bottom: -2px; left: min(0px, calc(50% - 20px)); right: min(0px, calc(50% - 20px));
+  }
+  :is(#blockEditor, #callableBlocks) .blockui-palette :is(.blockui-palette-tools .blockui-button, .blockui-palette-options > summary, input, select, .blockui-check),
+  :is(#blockEditor, #callableBlocks) .blockui-palette-list > .blockui-button { min-height: 40px !important; }
+  .blockui-navigation .blockui-button { min-height: 40px !important; min-width: 40px; }
+  .stage-zoom-controls button { min-height: 40px !important; min-width: 40px; }
+  body[data-editor-mode] .side :is(button, select, summary, .tree-item) { min-height: 40px !important; min-width: 40px; }
+  body[data-editor-mode] .side input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 40px !important; }
+}
+
+/* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
+#stageEnlarge { flex: none; min-height: 26px; height: auto; margin-left: 4px; padding: 0 8px; font-size: 12px; line-height: 1.2; white-space: nowrap; }
+.designer > .win-title { flex-wrap: nowrap; gap: 4px; }
+#designerHeading { flex: none; white-space: nowrap; }
+body.stage-enlarged::before { content: ""; position: fixed; inset: 0; z-index: 900; background: #12283acc; }
+body.stage-enlarged #designerWindow {
+  position: fixed; z-index: 901; left: 50%; top: 50%; translate: -50% -50%; box-sizing: border-box; display: flex; flex-direction: column;
+  width: auto; height: auto; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); min-height: 0; flex: none; margin: 0;
+  box-shadow: 0 12px 40px #0006;
+}
+body.stage-enlarged #designerWindow > .designer-wrap {
+  flex: 1 1 auto; width: auto; height: auto; min-height: 0; max-height: calc(100dvh - 120px); overflow: auto; padding: 12px;
+}
+body.stage-enlarged #designerWindow > .win-title .stage-zoom-controls { visibility: hidden; }
+body.stage-enlarged #stageEnlarge { visibility: visible; }
+
+/* The small stage left at the bottom right while the workspace is wide (E-21); pressing it brings the columns back. */
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side {
+  display: block; position: fixed; z-index: 400; right: 18px; bottom: 44px; width: 228px; height: auto; overflow: hidden;
+  border-radius: 12px; box-shadow: 0 6px 18px #12324d40; background: #fff;
+}
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side > :not(#designerWindow) { display: none !important; }
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side > #designerWindow {
+  position: relative; flex: none; width: 228px; height: 158px; min-height: 0; margin: 0; border-radius: 12px;
+}
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .win-title,
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .run-strip { display: none; }
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .designer-wrap { height: 158px; padding: 6px; overflow: hidden; }
+#stageThumbnail {
+  position: absolute; inset: 0; z-index: 3500; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0;
+  border: 2px solid #6c8ca5; border-radius: 12px; background: transparent; cursor: pointer;
+}
+#stageThumbnail[hidden] { display: none; }
+#stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
+body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+
+/* たて・よこを そろえる over the stage (E-22): shown on a touch screen while a part with a box is selected. */
+#designerWindow { position: relative; }
+#designRatioLock {
+  position: absolute; z-index: 3200; left: 10px; top: 44px; min-height: 32px; padding: 3px 10px; border: 1px solid #6c8ca5; border-radius: 16px;
+  background: #ffffffee; font-size: 13px; box-shadow: 0 2px 6px #12324d26;
+}
+#designRatioLock[aria-pressed="true"] { background: #dcebf7; border-color: #1f56b4; font-weight: 700; }
+#designRatioLock[hidden], body.runtime #designRatioLock { display: none; }
+@media not (pointer: coarse) { #designRatioLock { display: none; } }
+@media (pointer: coarse) {
+  #stageEnlarge, #designRatioLock, #stageThumbnail { min-height: 40px; }
+  #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; }
+}
+
+/* The place いっしょに作る points at keeps the size of 「＋ ここに入れる」, so the child can press it (E-07). */
+body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target:not(.blockui-insertion-end) {
+  height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #123b72 !important;
+}

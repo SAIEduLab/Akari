@@ -461,7 +461,8 @@
       if(action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile'))return true;
       const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];if(direct&&element.closest('#'+direct))return true;
       if(step?.block){if(element.closest('#blockEditor [data-lesson-block="'+step.block+'"]'))return tutorialInsertionReady(step);
-        const command=element.closest('#blockEditor [data-blockui-action="body-insert"]'),loc=tutorialDestination(mainEditor.session?.blockView,step);
+        // The place is a 「＋ ここに入れる」, or the hole of an empty enclosure, which is its only place (E-03).
+        const command=element.closest('#blockEditor [data-blockui-action="body-insert"],#blockEditor .blockui-hole-target'),loc=tutorialDestination(mainEditor.session?.blockView,step);
         return !tutorialInsertionReady(step)&&!!command&&!!loc&&command.dataset.parentId===loc.parentId&&command.dataset.blockuiBody===loc.body&&Number(command.dataset.insertIndex)===loc.index;}
       if(step?.ref&&step.action!=='undo'){const control=tutorialRoleControl();return element===control||control?.contains(element)
         ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');}
@@ -546,9 +547,12 @@
     function refreshTutorialPresentation() {
       if(!tutorial)return;
       const step=tutorialStep(tutorial);
+      // An empty enclosure shows its hole as its only place (E-03): the guide names what the child sees.
+      const place=step?.block&&tutorialDestination(mainEditor.session?.blockView,step),
+        holeOnly=!!place&&(()=>{const items=buildBlockIndex(mainEditor.session.blockView).get(place.parentId)?.node.bodies?.[place.body];return items?.length===1&&items[0].schemaId==='Hole:statement';})();
       if(step?.block)$('#tutorialText').textContent=tutorialInsertionReady(step)
         ?'左の青いわくの「'+TUTORIAL_BLOCKS[step.block].label+'」をえらぼう。'
-        :'青いわくの「＋ ここに入れる」を おしてみよう。';
+        :holeOnly?'青いわくの「することを えらぶ」を おしてみよう。':'青いわくの「＋ ここに入れる」を おしてみよう。';
         $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
         for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
           const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
@@ -2026,6 +2030,13 @@
         }
         $('#hintsDisclosure').open = false;
       }
+      // In blocks the body window comes before the stage and the right column, so Tab goes from the toolbar to the block
+      // list, the workspace, and then the stage and the right column (E-16). The code view keeps its order.
+      const code = $('.codewin');
+      if (code.parentElement === main) {
+        if (block && code.compareDocumentPosition(side) & Node.DOCUMENT_POSITION_PRECEDING) main.insertBefore(code, side);
+        else if (!block && code !== main.lastElementChild) main.append(code);
+      }
       $('#designerHeading').textContent = block ? '画面' : '画面づくり';
       $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
       const actions = $('.prop-actions');
@@ -2101,6 +2112,28 @@
       stageView.positionBubbles();
       if (stageZoom === null) $('.designer-wrap').scrollTo({ left: 0, top: 0 });
     }
+    // 大きく見る (E-21): the stage at 100% laid over the page; 「もどる」 or Escape gives back the layout, the zoom it had
+    // and the focus.
+    let enlargedFrom;
+    function setStageEnlarged(on) {
+      const button = $('#stageEnlarge');
+      if (on === document.body.classList.contains('stage-enlarged')) return;
+      document.body.classList.toggle('stage-enlarged', on);
+      button.textContent = on ? 'もどる' : '大きく見る';
+      button.setAttribute('aria-pressed', String(on));
+      if (on) { enlargedFrom = stageZoom; setStageZoom(1); }
+      else { setStageZoom(enlargedFrom ?? null); enlargedFrom = undefined; }
+      button.focus({ preventScroll: true });
+    }
+    $('#stageEnlarge').onclick = () => setStageEnlarged(!document.body.classList.contains('stage-enlarged'));
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || e.isComposing || !document.body.classList.contains('stage-enlarged') || document.querySelector('dialog[open],.modal.show')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setStageEnlarged(false);
+    }, true);
+    // With the workspace made wide, the stage stays small at the bottom right; pressing it brings the columns back.
+    $('#stageThumbnail').onclick = () => $('#blockEditor [data-blockui-action="workspace-expand"]')?.click();
     $('#stageZoomOut').onclick = () => setStageZoom(visibleStageScale - 0.1);
     $('#stageZoomIn').onclick = () => setStageZoom(visibleStageScale + 0.1);
     $('#stageZoomReset').onclick = () => setStageZoom(1);
@@ -2808,8 +2841,17 @@
       el.frame.style.width = project.stage.width + 6 + 'px';
       el.title.textContent = project.name;
     }
+    // 「たて・よこを そろえる」 (E-22) keeps a part's shape while a corner handle is moved, as Shift does with a mouse; it is
+    // shown over the stage on a touch screen while a part with a box is selected.
+    let designRatioLocked = false;
+    $('#designRatioLock').onclick = () => {
+      designRatioLocked = !designRatioLocked;
+      $('#designRatioLock').setAttribute('aria-pressed', String(designRatioLocked));
+    };
     function positionResizeHandles(c = designResizePreview || componentById(selectedId)) {
       if (!c) return;
+      // On a touch screen a handle is a 24 px dot that a finger presses within 40 px (E-19).
+      const coarse = matchMedia('(pointer: coarse)').matches, hit = coarse ? 40 : 24, dot = coarse ? 24 : 12;
       const rect = el.form.getBoundingClientRect(),
         stageScale = rect.width / project.stage.width || 1,
         s = c.scalePercent / 100;
@@ -2819,9 +2861,9 @@
           [hx, hy] = DESIGN_RESIZE_DIRECTIONS[handle.dataset.resizeDirection];
         handle.style.left = p.x + 'px';
         handle.style.top = project.stage.height - p.y + 'px';
-        handle.style.width = handle.style.height = 24 / stageScale + 'px';
+        handle.style.width = handle.style.height = hit / stageScale + 'px';
         handle.style.minWidth = handle.style.minHeight = '0';
-        handle.style.setProperty('--resize-dot', 12 / stageScale + 'px');
+        handle.style.setProperty('--resize-dot', dot / stageScale + 'px');
         handle.style.setProperty('--resize-stroke', 1.5 / stageScale + 'px');
         handle.hidden = false;
         if (designResizeMode(c) === 'box') {
@@ -2890,10 +2932,13 @@
       el.form
         .querySelectorAll('.design-resize-handle,.design-resize-outline')
         .forEach((n) => n.remove());
+      $('#designRatioLock').hidden = true;
       if (modelLocked() || selectedId === 'stage') return;
       const c = componentById(selectedId),
         mode = designResizeMode(c);
       if (!mode || !c.visible) return;
+      // Only a box changes its width and height apart; a picture costume keeps its shape anyway.
+      $('#designRatioLock').hidden = mode !== 'box';
       const node = el.form.querySelector(`[data-runtime-id="${CSS.escape(c.id)}"].component`);
       if (!node || node.style.display === 'none') return;
       const outline = document.createElement('div');
@@ -3801,7 +3846,7 @@
         }
         if (e.cancelable) e.preventDefault();
         const p = toStage(e);
-        next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey);
+        next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey || designRatioLocked);
         designResizePreview = { ...before, ...next };
         paintResizePreview(designResizePreview);
         setStatus(sizeText(next));
@@ -7442,6 +7487,7 @@
             ? () => {
                 const expanded = document.body.dataset.workbenchWide !== 'true';
                 document.body.dataset.workbenchWide = String(expanded);
+                $('#stageThumbnail').hidden = !expanded;
                 requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
                 return expanded;
               }
@@ -7555,7 +7601,9 @@
           event.stopImmediatePropagation();
           event.key.toLowerCase() === 'y' || event.shiftKey ? redoDo() : undo();
         }
-        if (event.key === 'Delete' && event.target.closest('#blockEditor,#callableBlocks'))
+        // Delete stays inside the block editor; on a selected sentence the editor itself deletes the block (E-05).
+        if (event.key === 'Delete' && event.target.closest('#blockEditor,#callableBlocks') &&
+            !event.target.matches('.blockui-world .blockui-node.blockui-statement'))
           event.stopPropagation();
       },
       true,

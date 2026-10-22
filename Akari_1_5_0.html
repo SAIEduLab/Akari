@@ -6031,6 +6031,252 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   body[data-editor-mode] .menutool > :is(.editor-modes, .ui-level-label) { height: 48px; }
   body[data-editor-mode] .menutool > .editor-modes button { min-height: 40px; }
 }
+
+/* ── 1.5.0 block view (theme E) ──────────────────────────────────────────────────────────────────────────────────────
+   Nothing a child does to select or edit a block moves the other blocks: the tools of the selected block, the slot tools
+   and 決める・とちゅうで やめる float over the workspace. */
+
+/* The block list (E-17): every category above one list that scrolls, with no pages. */
+:is(#blockEditor, #callableBlocks) .blockui-palette { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-tools { grid-column: 1; grid-row: 1; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories {
+  grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+  max-height: none; overflow: visible; padding: 6px 8px; border-right: 0; border-bottom: 1px solid #e1e8ef;
+}
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button {
+  position: relative; flex: 0 0 auto; flex-direction: row; gap: 4px; box-sizing: border-box; min-width: 0; min-height: 30px;
+  padding: 2px 8px; border-radius: 15px; font-size: 12px; line-height: 1.3; white-space: nowrap; border: 1px solid #d3dde6; background: #fff;
+}
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::before { flex: none; width: 12px; height: 12px; margin: 0; font-size: 9px; line-height: 12px; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button[aria-pressed="true"] { border-color: #6c8ca5; background: #eaf3fa; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-list { grid-column: 1; grid-row: 3; gap: 10px; padding: 10px 8px 40px; }
+
+/* Thin lines between blocks (E-07): the place between two blocks is an 8 px line; the last place of a body keeps
+   「＋ ここに入れる」 (28 px). While a block is carried, while a place is being chosen and while a block is being moved,
+   every place has the size of 「＋ ここに入れる」. */
+.blockui-world .blockui-insertion:not(.blockui-insertion-end) {
+  height: 8px; min-height: 8px; line-height: 8px; color: transparent !important; font-size: 0;
+  border-color: transparent; background: transparent !important; overflow: visible;
+}
+.blockui-world .blockui-insertion:not(.blockui-insertion-end)::before { top: 2px; height: 4px; left: 12px; }
+.blockui-world .blockui-insertion:not(.blockui-insertion-end):hover::before,
+.blockui-world .blockui-insertion.blockui-implied-destination::before { background: #8aa5b8; }
+.blockui-world .blockui-insertion.blockui-insertion-end { height: 28px; min-height: 28px; line-height: 26px; }
+:is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion:not(.blockui-insertion-end) {
+  height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #47677f !important;
+  border-color: #8aa5b8; background: #f5f9fc !important;
+}
+/* A thin place keeps its height when it takes the focus (a focus never moves the blocks); its line shows the focus. */
+.blockui-world .blockui-insertion:not(.blockui-insertion-end):focus-visible::before { background: #10324f; }
+.blockui-world .blockui-body:has(> .blockui-insertion:last-child) { padding-bottom: 4px; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-body { padding-bottom: 16px; }
+
+/* The trigger block (E-07): its name is not repeated under it; いつ動く？ and 「＋ キーを おす間など、つづけて動かす」 are
+   small buttons right under it. */
+.blockui-world .blockui-script > .blockui-node-head { display: none !important; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main {
+  flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 6px; min-height: 0; padding: 4px 0 6px;
+}
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main > details > summary {
+  display: inline-flex; align-items: center; min-height: 28px; box-sizing: border-box; padding: 2px 10px;
+  border: 1px solid #c9d6e2; border-radius: 14px; background: #fff; font-size: 12px; line-height: 1.4; color: #3e5d75;
+}
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main > details[open] { flex-basis: 100%; }
+
+/* No ▶ inside the workspace (E-14): ▶ is the mark of ▶ 動かす. What opens is shown by 「…」 or by its own words. */
+.blockui-world summary, .blockui-drag-ghost summary { list-style: none; }
+.blockui-world summary::-webkit-details-marker, .blockui-drag-ghost summary::-webkit-details-marker { display: none; }
+.blockui-world summary::marker, .blockui-drag-ghost summary::marker { content: ""; }
+.blockui-world .blockui-extra { flex: none; }
+.blockui-world .blockui-extra > summary {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 28px; min-height: 26px;
+  padding: 0 6px; border: 1px solid #0002; border-radius: 13px; background: #ffffffb3; font-weight: 700; line-height: 1; color: inherit;
+}
+.blockui-world .blockui-extra[open] > summary { background: #fff; border-color: #6c8ca5; }
+.blockui-world .blockui-subject-text { font-weight: 700; }
+.blockui-world .blockui-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.blockui-world .blockui-value-row > .blockui-slot-label { min-width: 4em; font-size: 12px; font-weight: 500; }
+
+/* A number in a slot whose unit is fixed is a field of its own (E-02): no box around a box. */
+.blockui-world .blockui-input-slot.blockui-flat-value { display: inline-flex; align-items: center; padding: 0; background: transparent; box-shadow: none; border-radius: 15px; }
+.blockui-world .blockui-unit-text { font-weight: 700; }
+.blockui-world [data-blockui-action="unit-repair"] { min-height: 26px; padding: 1px 8px; border: 1px solid #b05a4f; border-radius: 13px; background: #fff5f2; color: #8f1d12; font-size: 12px; }
+
+/* The selected block's tools are laid over the workspace beside it (E-12): ↑ まえへ・↓ あとへ・けす・だれが・ほかのそうさ
+   right of its first row, where they cover no other block; when there is no room there, right above it. */
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected > .blockui-node-head {
+  position: absolute; left: calc(100% + 8px); right: auto; top: 6px; bottom: auto; z-index: 120; grid-row: auto; grid-column: auto;
+  width: max-content; max-width: min(640px, calc(100vw - 40px)); min-width: 0; padding: 3px 4px;
+  background: #fffffff2; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
+}
+/* Right above the block, the tools are low, so the words in the middle of the block above stay free to press. */
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected.blockui-tools-above > .blockui-node-head {
+  left: 0; top: auto; bottom: calc(100% + 1px); padding: 1px 3px;
+}
+.blockui-world .blockui-node.blockui-selected.blockui-tools-above > .blockui-node-head > .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-node.blockui-selected.blockui-tools-above > .blockui-node-head > .blockui-node-tools > :is(.blockui-who, .blockui-actions) > summary {
+  min-height: 22px; padding: 1px 6px; font-size: 11px; line-height: 1.3;
+}
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected > .blockui-node-head > .blockui-node-tools { flex-wrap: wrap; width: auto; }
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-button,
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > :is(.blockui-who, .blockui-actions) > summary { white-space: nowrap; }
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-actions > summary,
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > [data-blockui-action="diagnostics"] { min-height: 26px; padding: 2px 7px; line-height: 1.4; }
+.blockui-world .blockui-node-tools > .blockui-who { position: relative; }
+.blockui-world .blockui-node-tools > .blockui-who > summary {
+  display: inline-flex; align-items: center; box-sizing: border-box; min-height: 26px; padding: 2px 7px; border: 1px solid #0003;
+  border-radius: 6px; background: #ffffffb3; font-size: 12px; cursor: pointer;
+}
+.blockui-world .blockui-node-tools > .blockui-who[open] > .blockui-field {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 130; min-width: 220px; padding: 6px 8px;
+  background: #fff; border: 1px solid #9db3c5; border-radius: 8px; box-shadow: 0 4px 12px #12324d30;
+}
+.blockui-world .blockui-node-tools > .blockui-who .blockui-structured-field { display: flex; flex-wrap: wrap; gap: 6px; }
+/* A selected field's tools float under it (くわしく); the block keeps its size. */
+.blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head {
+  position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; min-width: 180px; max-width: 330px;
+}
+.blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
+/* 決める・とちゅうで やめる and the input's mistake float under the field being edited, or over the top of the workspace. */
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls {
+  position: absolute; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
+  max-width: min(520px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
+  background: #eef5fbf5; box-shadow: 0 4px 12px #12324d30;
+}
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
+.blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
+.blockui-view-controls > .blockui-field-error:empty { display: none; }
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-message.blockui-message-near-field {
+  position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); box-shadow: none;
+}
+/* On a touch screen a finger that goes up or down on a block of the list moves the list (E-09). */
+:is(#blockEditor, #callableBlocks) .blockui-palette-item [data-blockui-drag] { touch-action: pan-y; }
+
+/* A long press lifts a block a little (E-09); a block put in by touch lights its empty value (E-03). */
+.blockui-world .blockui-lift { filter: drop-shadow(0 6px 6px #12324d55); translate: 0 -2px; }
+@keyframes blockui-attention { 0%, 100% { box-shadow: 0 0 0 0 #f0a63000; } 30% { box-shadow: 0 0 0 5px #f0a630aa; } }
+.blockui-world .blockui-attention { border-radius: 15px; animation: blockui-attention 0.9s ease-out 2; outline: 2px solid #e08a12; outline-offset: 2px; }
+
+/* Deleting by carrying a block to the block list (E-05). */
+.blockui-palette.blockui-delete-zone { position: relative; outline: 3px solid #c0392b; outline-offset: -3px; }
+.blockui-palette.blockui-delete-zone::after {
+  content: "ここで はなすと けす"; position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
+  background: #fde3dfe6; color: #8f1d12; font-weight: 700; font-size: 16px; pointer-events: none;
+}
+/* A place that cannot take the block: the carried block is grey and says why above it (E-04). */
+.blockui-drag-ghost.blockui-ghost-invalid { opacity: 0.55; filter: grayscale(1); }
+.blockui-drag-reason {
+  position: fixed; z-index: 10001; pointer-events: none; padding: 3px 9px; border-radius: 7px; background: #fff;
+  border: 1px solid #b05a4f; color: #8f1d12; font-size: 13px; font-weight: 700; line-height: 1.5; white-space: nowrap;
+}
+.blockui-drop-note {
+  position: fixed; z-index: 10001; pointer-events: none; max-width: min(360px, calc(100vw - 24px)); padding: 5px 11px; border-radius: 8px;
+  background: #fffbe6; border: 1px solid #c8a740; box-shadow: 0 3px 10px #4a3b0a30; color: #4a3b0a; font-size: 13px; font-weight: 700;
+  transition: opacity 0.3s;
+}
+.blockui-drop-note.blockui-fading { opacity: 0; }
+.blockui-drag-ghost.blockui-returning { transition: left 0.22s ease-in, top 0.22s ease-in, opacity 0.22s ease-in; opacity: 0.4; }
+
+/* The text of the blocks, the block list and the workspace controls is not selected by a press or a drag (E-11);
+   the text in an input is. */
+#blockEditor, #callableBlocks, .blockui-drag-ghost { -webkit-user-select: none; user-select: none; }
+#blockEditor :is(input, textarea), #callableBlocks :is(input, textarea) { -webkit-user-select: text; user-select: text; }
+body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
+
+/* A two-tone focus ring that shows on every block colour (L-11). */
+.blockui-world :is(.blockui-node, .blockui-insertion, button, summary, select, input):focus-visible,
+.blockui-palette :is(button, summary, select, input):focus-visible {
+  outline: 3px solid #10324f !important; outline-offset: 1px; box-shadow: 0 0 0 5px #fff !important;
+}
+
+/* Child text breaks between phrases, not inside a word (E-23). */
+:is(.child-help, .child-help-panel, .blockui-empty, .blockui-message, .blockui-unavailable, .blockui-search-scope, .blockui-drop-note,
+  .status, #statusText, .editor-pending, #entryOutside, .mode-blocked-note, .monitor-empty, .blockui-trigger-scope, .diagnostic-help) {
+  word-break: auto-phrase;
+}
+
+/* Touch screens (E-19): what a finger presses is at least 40 × 40 px — the fields, choices and buttons in the blocks,
+   the category buttons (36 px to see, 40 px to press), the stage's size handles and zoom buttons, and the right
+   column's buttons. A place between blocks is a 40 px target while a block is carried or the block above it is
+   selected; otherwise a tap puts a block after the selected one (E-08). */
+@media (pointer: coarse) {
+  .blockui-world :is(button:not(.blockui-insertion):not(.blockui-drag-handle), select, summary, input:not([type="checkbox"]):not([type="radio"])) {
+    min-height: 40px !important; min-width: 40px; box-sizing: border-box;
+  }
+  .blockui-world .blockui-field input { height: 40px; }
+  .blockui-world .blockui-insertion.blockui-insertion-end,
+  :is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion { height: 40px !important; min-height: 40px !important; line-height: 38px; }
+  .blockui-world .blockui-insertion.blockui-implied-destination::after {
+    content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 40px; z-index: 6;
+  }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories { gap: 4px; }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button { min-height: 36px; padding: 2px 8px; }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::after {
+    content: ""; position: absolute; top: -2px; bottom: -2px; left: min(0px, calc(50% - 20px)); right: min(0px, calc(50% - 20px));
+  }
+  :is(#blockEditor, #callableBlocks) .blockui-palette :is(.blockui-palette-tools .blockui-button, .blockui-palette-options > summary, input, select, .blockui-check),
+  :is(#blockEditor, #callableBlocks) .blockui-palette-list > .blockui-button { min-height: 40px !important; }
+  .blockui-navigation .blockui-button { min-height: 40px !important; min-width: 40px; }
+  .stage-zoom-controls button { min-height: 40px !important; min-width: 40px; }
+  body[data-editor-mode] .side :is(button, select, summary, .tree-item) { min-height: 40px !important; min-width: 40px; }
+  body[data-editor-mode] .side input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 40px !important; }
+}
+
+/* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
+#stageEnlarge { flex: none; min-height: 26px; height: auto; margin-left: 4px; padding: 0 8px; font-size: 12px; line-height: 1.2; white-space: nowrap; }
+.designer > .win-title { flex-wrap: nowrap; gap: 4px; }
+#designerHeading { flex: none; white-space: nowrap; }
+body.stage-enlarged::before { content: ""; position: fixed; inset: 0; z-index: 900; background: #12283acc; }
+body.stage-enlarged #designerWindow {
+  position: fixed; z-index: 901; left: 50%; top: 50%; translate: -50% -50%; box-sizing: border-box; display: flex; flex-direction: column;
+  width: auto; height: auto; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); min-height: 0; flex: none; margin: 0;
+  box-shadow: 0 12px 40px #0006;
+}
+body.stage-enlarged #designerWindow > .designer-wrap {
+  flex: 1 1 auto; width: auto; height: auto; min-height: 0; max-height: calc(100dvh - 120px); overflow: auto; padding: 12px;
+}
+body.stage-enlarged #designerWindow > .win-title .stage-zoom-controls { visibility: hidden; }
+body.stage-enlarged #stageEnlarge { visibility: visible; }
+
+/* The small stage left at the bottom right while the workspace is wide (E-21); pressing it brings the columns back. */
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side {
+  display: block; position: fixed; z-index: 400; right: 18px; bottom: 44px; width: 228px; height: auto; overflow: hidden;
+  border-radius: 12px; box-shadow: 0 6px 18px #12324d40; background: #fff;
+}
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side > :not(#designerWindow) { display: none !important; }
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side > #designerWindow {
+  position: relative; flex: none; width: 228px; height: 158px; min-height: 0; margin: 0; border-radius: 12px;
+}
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .win-title,
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .run-strip { display: none; }
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .designer-wrap { height: 158px; padding: 6px; overflow: hidden; }
+#stageThumbnail {
+  position: absolute; inset: 0; z-index: 3500; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0;
+  border: 2px solid #6c8ca5; border-radius: 12px; background: transparent; cursor: pointer;
+}
+#stageThumbnail[hidden] { display: none; }
+#stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
+body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+
+/* たて・よこを そろえる over the stage (E-22): shown on a touch screen while a part with a box is selected. */
+#designerWindow { position: relative; }
+#designRatioLock {
+  position: absolute; z-index: 3200; left: 10px; top: 44px; min-height: 32px; padding: 3px 10px; border: 1px solid #6c8ca5; border-radius: 16px;
+  background: #ffffffee; font-size: 13px; box-shadow: 0 2px 6px #12324d26;
+}
+#designRatioLock[aria-pressed="true"] { background: #dcebf7; border-color: #1f56b4; font-weight: 700; }
+#designRatioLock[hidden], body.runtime #designRatioLock { display: none; }
+@media not (pointer: coarse) { #designRatioLock { display: none; } }
+@media (pointer: coarse) {
+  #stageEnlarge, #designRatioLock, #stageThumbnail { min-height: 40px; }
+  #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; }
+}
+
+/* The place いっしょに作る points at keeps the size of 「＋ ここに入れる」, so the child can press it (E-07). */
+body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target:not(.blockui-insertion-end) {
+  height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #123b72 !important;
+}
 </style>
 </head>
 <body>
@@ -6066,6 +6312,10 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
       <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ ものを 動かす、やることの まとまりです。「なおす動き」で えらびます。「いつ動く？」で 動く きっかけを かえます。</p>
       <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。本文は コピーしません。</p>
+      <p id="addActionHelp"><strong>絵を おく・お絵かき・音を 入れる</strong>：絵の ファイルや かいた 絵を キャラクターにして 画面に おきます。「音を 入れる」は 音の ファイルを 入れます。</p>
+      <p id="stageSizeHelp"><strong>画面の 大きさ</strong>：画面の 見出しの「41%」のような 数を おすと、100%で 見られます。「全体」で 画面 全体が 入る 大きさに もどります。「大きく見る」は 画面を 100%で 重ねて 見せます。「もどる」か Escキーで もどります。</p>
+      <p id="resizeHelp"><strong>部品の 大きさ</strong>：えらんだ 部品の まわりの 青い 丸を おしたまま 動かすと、大きさが かわります。Shiftキーを おしながら 角の 丸を 動かすか、指で そうさする ときは「たて・よこを そろえる」を おしてから 動かすと、形を かえずに 大きさだけ かわります。</p>
+      <p id="workspaceSizeHelp"><strong>作業台の 大きさ</strong>：作業台の 下の「100%」のような 数を おすと、100%に もどります。「−」「＋」では 50%から 200%まで かわります。2本の 指を 広げたり せばめたり しても かわります。</p>
       <p><strong>もとにもどす・やり直す</strong>：決めた ことを 1つ もとにもどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけている 入力を やめます。</p>
     </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
@@ -6271,7 +6521,9 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
         <button id="stageZoomReset" type="button" aria-label="作品画面を100%で見る" title="100%で見る">100%</button>
         <button id="stageZoomIn" type="button" aria-label="作品画面を 大きく">＋</button>
         <button id="stageZoomFit" type="button" aria-label="作品画面の 全体を見る" aria-pressed="true">全体</button>
-      </div></div>
+      </div><button id="stageEnlarge" type="button" aria-pressed="false">大きく見る</button></div>
+      <button id="stageThumbnail" type="button" aria-label="画面も見る" hidden></button>
+      <button id="designRatioLock" type="button" aria-pressed="false" hidden>たて・よこを そろえる</button>
       <div class="designer-wrap">
         <div id="formFrame">
           <div class="form-title" id="formTitle">はじめてのあかり</div>
@@ -27534,6 +27786,15 @@ function createAkariExtensionHost(options) {
       if (location.slot.multiple) location.array[location.index] = node;
       else location.parent.inputs[location.slot.key] = node;
     };
+    // A body that shows only its hole (〔くり返すことを えらぶ〕) takes the first block put into it in the hole's place.
+    const loneHole = (array) => array.length === 1 && array[0].schemaId === 'Hole:statement';
+    // A body that needs a block and lost its last one shows its hole again, as after 「けす」.
+    const refillRequired = (parentId, key) => {
+      const parent = lookup(parentId).node, slot = BLOCK_SCHEMA_BY_ID.get(parent.schemaId)?.bodies.find(s => s.key === key);
+      if (!slot?.requiredExecutable || parent.bodies[key].length) return;
+      const hole = fresh(createBlock('Hole:statement', { allowHoles: true })); hole.fields.label = slot.label;
+      parent.bodies[key].push(hole);
+    };
     const replaceEntry = (entry, node) => {
       if (!entry.parentId) editorCheckError('本文全体はこの操作では置換できません');
       if (entry.body) {
@@ -27600,13 +27861,59 @@ function createAkariExtensionHost(options) {
           node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node, op.type === 'duplicate');
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
           editorError('ここには ブロックを 入れてね。計算は ここには 入れられません。');
-        // A visible body placeholder is replaced by the command the child chooses.
+        // A visible body placeholder is replaced by the command the child chooses (inserted, copied or moved there).
         // Complete existing bodies still use ordinary insertion semantics.
-        if (op.type === 'insert' && destination.array.length === 1 &&
-            destination.array[0].schemaId === 'Hole:statement')
-          destination.array.splice(0, 1, node);
+        if (loneHole(destination.array)) destination.array.splice(0, 1, node);
         else destination.array.splice(at, 0, node);
         selectedId = node.id;
+        return;
+      }
+      // An enclosure put above blocks takes the blocks below it into its first body (E-03): a new one (node) or a
+      // moved one whose first body holds no block yet (id). Below the last block it stays empty, showing its hole.
+      if (op.type === 'wrap') {
+        const destination = bodySlot(op.parentId, op.body);
+        let at = position(op.index, destination.array.length, true), node, source = null, from = null;
+        if (op.id) {
+          const entry = lookup(op.id), target = lookup(op.parentId);
+          if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+          if (target.node.id === op.id || target.ancestors.includes(op.id))
+            editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+          source = lookup(entry.parentId).node.bodies[entry.body]; from = entry;
+          node = entry.node;
+        } else node = fresh(op.node);
+        const inner = BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.bodies?.[0]?.key;
+        if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement' || !inner) editorCheckError('囲いではありません');
+        if (node.bodies[inner].some(n => n.schemaId !== 'Hole:statement'))
+          editorError('中に ブロックが ある 囲いは、下の ブロックを 中に 入れられません。');
+        if (source) {
+          if (source === destination.array && from.index < at) at--;
+          source.splice(from.index, 1);
+        }
+        if (loneHole(destination.array)) destination.array.splice(0, 1, node);
+        else {
+          const taken = destination.array.splice(at, destination.array.length - at, node);
+          if (taken.length) node.bodies[inner] = taken;
+        }
+        if (source && !source.length) refillRequired(from.parentId, from.body);
+        selectedId = node.id;
+        return;
+      }
+      // A block and the blocks below it in the same body move together (E-06 「ここから下を まとめて もっていく」).
+      if (op.type === 'move-run') {
+        const entry = lookup(op.id), target = lookup(op.parentId);
+        if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+        const source = lookup(entry.parentId).node.bodies[entry.body], run = source.slice(entry.index);
+        if (run.some(n => n.id === target.node.id || target.ancestors.includes(n.id)))
+          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+        const destination = bodySlot(op.parentId, op.body);
+        const at = position(op.index, destination.array.length, true);
+        // Within its own body a run moves up only; anywhere at or below its first block it stays where it is.
+        if (source === destination.array && at >= entry.index) return;
+        source.splice(entry.index, run.length);
+        if (loneHole(destination.array)) destination.array.splice(0, 1, ...run);
+        else destination.array.splice(at, 0, ...run);
+        if (!source.length) refillRequired(entry.parentId, entry.body);
+        selectedId = op.id;
         return;
       }
       if (op.type === 'remove') {
@@ -27631,9 +27938,9 @@ function createAkariExtensionHost(options) {
       if (op.type === 'move') {
         const entry = lookup(op.id),
           target = lookup(op.parentId);
-        if (!entry.body) editorError('この ブロックは ここから 動かせません。');
+        if (!entry.body) editorError('この ブロックは ここから もっていけません。');
         if (target.node.id === op.id || target.ancestors.includes(op.id))
-          editorError('ブロックを 自分の 中には 動かせません。ほかの ばしょを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
         const source = lookup(entry.parentId).node.bodies[entry.body],
           destination = bodySlot(op.parentId, op.body),
           at = position(op.index, destination.array.length, true);
@@ -27641,7 +27948,9 @@ function createAkariExtensionHost(options) {
         if (source === destination.array && entry.index < at) adjusted--;
         if (source === destination.array && entry.index === adjusted) return;
         source.splice(entry.index, 1);
-        destination.array.splice(adjusted, 0, entry.node);
+        if (loneHole(destination.array)) destination.array.splice(0, 1, entry.node);
+        else destination.array.splice(adjusted, 0, entry.node);
+        if (!source.length) refillRequired(entry.parentId, entry.body);
         selectedId = op.id;
         return;
       }
@@ -27669,10 +27978,10 @@ function createAkariExtensionHost(options) {
           !entry.input ||
           BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.category !== 'expression'
         )
-          editorError('この 計算は ここから 動かせません。');
+          editorError('この 計算は ここから もっていけません。');
         const destination = inputSlot(op.parentId, op.input, op.index);
         if (target.node.id === op.id || target.ancestors.includes(op.id))
-          editorError('ブロックを 自分の 中には 動かせません。ほかの ばしょを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
         if (
           entry.parentId === op.parentId &&
           entry.input === op.input &&
@@ -28056,8 +28365,16 @@ function createAkariExtensionHost(options) {
       ` V ${h - r} Q ${w} ${h} ${w - r} ${h} H 50 L 44 ${h + 6} H 26 L 20 ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`
     );
   }
+  // The workspace zoom: 50% to 200% (pinch, Ctrl and the wheel); − and ＋ step through the presets (E-10).
+  const BLOCK_ZOOM_STEPS = Object.freeze([0.5, 0.75, 1, 1.25, 1.5, 2]);
   function blockZoomCore(value) {
-    return Math.max(0.2, Math.min(2, Number(value) || 1));
+    return Math.max(0.5, Math.min(2, Number(value) || 1));
+  }
+  // The next preset above (direction 1) or below (−1) the zoom; a zoom between presets goes to the nearer one that way.
+  function blockZoomStep(value, direction) {
+    const now = blockZoomCore(value);
+    return direction > 0 ? BLOCK_ZOOM_STEPS.find(step => step > now + 1e-9) ?? 2
+      : [...BLOCK_ZOOM_STEPS].reverse().find(step => step < now - 1e-9) ?? 0.5;
   }
   function blockZoomScroll(scroll, anchor, oldZoom, newZoom) {
     return Math.max(0, ((scroll + anchor) / blockZoomCore(oldZoom)) * blockZoomCore(newZoom) - anchor);
@@ -28288,18 +28605,57 @@ function createAkariExtensionHost(options) {
     }return states;
   }
   // End entry workshop pure definitions.
-  const SEARCH_READINGS = Object.freeze({
-    '点数':'てんすう','代金':'だいきん','持ち物':'もちもの','大きさ':'おおきさ',
-    '右':'みぎ','左':'ひだり','上':'うえ','下':'した','小さく':'ちいさく',
-    '変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
-  });
+  // Kana, katakana and kanji search the same (E-13): every kanji word of the block names, their search words and the
+  // sentence forms has its reading here. Longer words are read first (回数 before 回), then single kanji. The audit checks
+  // that no kanji is left in any block's search text once it is read.
+  const SEARCH_READINGS = Object.freeze(Object.entries({
+    '四捨五入':'ししゃごにゅう','自然対数':'しぜんたいすう','常用対数':'じょうようたいすう','何文字目':'なんもじめ',
+    '切り上げ':'きりあげ','切り捨て':'きりすて','繰り返す':'くりかえす','繰り返し':'くりかえし','追いかける':'おいかける',
+    '分かれ道':'わかれみち','見えなく':'みえなく','出てくる':'でてくる','右回り':'みぎまわり','左回り':'ひだりまわり',
+    '非表示':'ひひょうじ','周波数':'しゅうはすう','文字数':'もじすう','絶対値':'ぜったいち','平方根':'へいほうこん',
+    '逆正弦':'ぎゃくせいげん','逆余弦':'ぎゃくよげん','逆正接':'ぎゃくせいせつ','何番目':'なんばんめ','持ち物':'もちもの',
+    '見た目':'みため','大きさ':'おおきさ','小さく':'ちいさく','小さい':'ちいさい','大きく':'おおきく','新しい':'あたらしい',
+    '近づく':'ちかづく','落ちる':'おちる','消える':'きえる','増やす':'ふやす','減らす':'へらす','見せる':'みせる',
+    '調べる':'しらべる','尋ねる':'たずねる','触れる':'ふれる','当たる':'あたる','重なる':'かさなる','重なり':'かさなり',
+    '鳴らす':'ならす','止める':'とめる','止まる':'とまる','終わる':'おわる','終わり':'おわり','始める':'はじめる',
+    '始まる':'はじまる','続ける':'つづける','続き':'つづき','変える':'かえる','変わる':'かわる','決める':'きめる',
+    '決まる':'きまる','入れる':'いれる','入る':'はいる','入っ':'はいっ','出す':'だす','回る':'まわる','回し':'まわし',
+    '下ろす':'おろす','下げる':'さげる','下がる':'さがる','上げる':'あげる','上がる':'あがる','行う':'おこなう','行った':'おこなった','行く':'いく','答え':'こたえ','後ろ':'うしろ','速さ':'はやさ','長さ':'ながさ',
+    '高さ':'たかさ','太さ':'ふとさ','向き':'むき','余り':'あまり','一つ':'ひとつ','同じ':'おなじ','歩く':'あるく',
+    '点数':'てんすう','代金':'だいきん','変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
+    '記録':'きろく','代入':'だいにゅう','時間':'じかん','歩数':'ほすう','方向':'ほうこう','座標':'ざひょう','移動':'いどう',
+    '回数':'かいすう','合図':'あいず','中身':'なかみ','名前':'なまえ','表示':'ひょうじ','部品':'ぶひん','文字':'もじ',
+    '背景':'はいけい','番号':'ばんごう','衣装':'いしょう','条件':'じょうけん','全部':'ぜんぶ','内容':'ないよう','関数':'かんすう',
+    '位置':'いち','場所':'ばしょ','相手':'あいて','回転':'かいてん','角度':'かくど','最後':'さいご','途中':'とちゅう',
+    '番目':'ばんめ','要素':'ようそ','削除':'さくじょ','何度':'なんど','発言':'はつげん','質問':'しつもん','返事':'へんじ',
+    '自分':'じぶん','動作':'どうさ','実行':'じっこう','最初':'さいしょ','作品':'さくひん','全体':'ぜんたい','画面':'がめん',
+    '手前':'てまえ','入力':'にゅうりょく','音量':'おんりょう','音程':'おんてい','段階':'だんかい','反対':'はんたい',
+    '乱数':'らんすう','正弦':'せいげん','余弦':'よげん','正接':'せいせつ','指数':'しすう','最小':'さいしょう','最大':'さいだい',
+    '以前':'いぜん','空白':'くうはく','空色':'そらいろ','問題':'もんだい','発表':'はっぴょう','題名':'だいめい',
+    '横':'よこ','縦':'たて','右':'みぎ','左':'ひだり','上':'うえ','下':'した','前':'まえ','後':'うし','中':'なか','間':'あいだ',
+    '端':'はし','奥':'おく','元':'もと','方':'ほう','目':'め','数':'かず','値':'あたい','秒':'びょう','歩':'ほ','回':'かい',
+    '度':'ど','個':'こ','体':'たい','点':'てん','色':'いろ','線':'せん','音':'おと','姿':'すがた','今':'いま','次':'つぎ',
+    '何':'なに','一':'いち','空':'そら','道':'みち','行':'い','動':'うご','返':'かえ','続':'つづ','決':'き','向':'む',
+    '進':'すす','追':'お','近':'ちか','変':'か','始':'はじ','待':'ま','入':'い','新':'あたら','足':'た','増':'ふ','減':'へ',
+    '引':'ひ','消':'け','終':'お','残':'のこ','分':'わ','繰':'く','見':'み','調':'しら','言':'い','話':'はな','答':'こた',
+    '尋':'たず','聞':'き','送':'おく','知':'し','受':'う','作':'つく','呼':'よ','出':'で','使':'つか','止':'と','触':'ふ',
+    '跳':'は','隠':'かく','重':'かさ','押':'お','太':'ふと','鳴':'な','高':'たか','読':'よ','同':'おな','大':'おお',
+    '小':'ちい','求':'もと','余':'あま','切':'き','捨':'す','直':'なお','長':'なが','取':'と','当':'あ','落':'お','速':'はや',
+    '問':'と','題':'だい','発':'はつ','表':'ひょう','示':'じ','名':'な','記':'き','録':'ろく','代':'だい',
+  }).sort((a, b) => b[0].length - a[0].length));
   function normalizeSearchText(value) {
     return String(value || '').normalize('NFKC').toLocaleLowerCase()
       .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s+/g, '');
   }
+  const SEARCH_READING_CACHE = new Map();
   function searchReading(value) {
     let text = normalizeSearchText(value);
-    for (const [word, reading] of Object.entries(SEARCH_READINGS)) text = text.split(word).join(reading);
+    const known = SEARCH_READING_CACHE.get(text);
+    if (known !== undefined) return known;
+    const key = text;
+    for (const [word, reading] of SEARCH_READINGS) if (text.includes(word)) text = text.split(word).join(reading);
+    if (SEARCH_READING_CACHE.size >= 2000) SEARCH_READING_CACHE.clear();
+    SEARCH_READING_CACHE.set(key, text);
     return text;
   }
   function searchIntent(value) {
@@ -28326,6 +28682,38 @@ function createAkariExtensionHost(options) {
   function matchesSearch(text, query) {
     return searchQueryVariants(query).some(q => normalizeSearchText(text).includes(normalizeSearchText(q)) || searchReading(text).includes(searchReading(q)));
   }
+  // The other forms of a verb find its block too (E-13): ふれた・ふれて・ふれたら・ふれない・ふれます → ふれる,
+  // まわった → まわる, and ふれる also finds the forms that keep its stem (ふれている). A stem keeps at least two kana, so
+  // short words such as した (下) stay as they are.
+  const SEARCH_A_TO_U = Object.freeze({ わ:'う', か:'く', が:'ぐ', さ:'す', た:'つ', な:'ぬ', ば:'ぶ', ま:'む', ら:'る' });
+  const SEARCH_I_TO_U = Object.freeze({ い:'う', き:'く', ぎ:'ぐ', し:'す', ち:'つ', に:'ぬ', び:'ぶ', み:'む', り:'る' });
+  function searchVerbForms(word) {
+    const out = [], add = (stem, ...endings) => { if ([...stem].length >= 2) for (const ending of endings) out.push(stem + ending); };
+    const s = word.replace(/([ただ])ら$/, '$1');
+    let m;
+    if ((m = s.match(/^(.+)っ[たて]$/))) add(m[1], 'る', 'う', 'つ');
+    else if ((m = s.match(/^(.+)ん[だで]$/))) add(m[1], 'む', 'ぶ', 'ぬ');
+    else if ((m = s.match(/^(.+)い[たて]$/))) add(m[1], 'く'), add(m[1] + 'い', 'る');
+    else if ((m = s.match(/^(.+)い[だで]$/))) add(m[1], 'ぐ');
+    else if ((m = s.match(/^(.+)し[たて]$/))) add(m[1], 'す'), add(m[1] + 'し', 'る');
+    else if ((m = s.match(/^(.+)[たて]$/))) add(m[1], 'る');
+    // A noun made from a verb (くりかえし, うごき) finds the verb (くりかえす, うごく).
+    if ([...word].length >= 3 && SEARCH_I_TO_U[word.slice(-1)]) add(word.slice(0, -1), SEARCH_I_TO_U[word.slice(-1)]);
+    if ((m = word.match(/^(.+)ない$/))) {
+      const last = m[1].slice(-1);
+      if (SEARCH_A_TO_U[last]) add(m[1].slice(0, -1), SEARCH_A_TO_U[last]);
+      add(m[1], 'る');
+    }
+    if ((m = word.match(/^(.+)ま(?:す|した|せん)$/))) {
+      const last = m[1].slice(-1);
+      if (SEARCH_I_TO_U[last]) add(m[1].slice(0, -1), SEARCH_I_TO_U[last]);
+      add(m[1], 'る');
+    }
+    // A verb like ふれる・かくれる・とめる (its stem ends in an -i or -e sound) also finds the forms that keep the stem:
+    // ふれる finds ふれている. A stem like うご (動く) would find every 動き block, so other verbs do not.
+    for (const form of [word, ...out]) if (/[いきしちにひみりぎじびぴえけせてねへめれげぜでべぺ]る$/.test(form)) add(form.slice(0, -1), '');
+    return [...new Set(out)];
+  }
   // A child searches with what they want: 少し待つ, みんなで待つ, ねこだけ待つ, 待ちたい, 止めたい, ぜんぶけす, スペース, ゆっくり.
   function searchQueryVariants(query) {
     const q = normalizeSearchText(query), out = new Set([q]);
@@ -28334,6 +28722,7 @@ function createAkariExtensionHost(options) {
     const wishes = {ちたい:['つ'],きたい:['く'],したい:['す'],みたい:['む','る'],りたい:['る'],いたい:['う'],びたい:['ぶ'],ぎたい:['ぐ'],
       めたい:['める'],えたい:['える'],せたい:['せる'],れたい:['れる'],げたい:['げる'],べたい:['べる'],けたい:['ける']};
     for (const [wish, endings] of Object.entries(wishes)) if (t.endsWith(wish)) for (const ending of endings) out.add(t.slice(0, -wish.length) + ending);
+    for (const form of searchVerbForms(t)) out.add(form);
     let written = t;
     for (const [word, key] of [['すぺーすきー','空白'],['すぺーす','空白'],['えんたー','決定'],['りたーん','決定'],['えすけーぷ','取消'],['ぜんぶ','全部'],['けす','消す']])
       written = written.split(word).join(key);
@@ -28408,6 +28797,17 @@ function createAkariExtensionHost(options) {
       out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
         draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
     }
+    // よく使う blocks first, then the ones whose name starts with the word (or has it right after a particle): まつ
+    // finds 秒待つ before …まで待つ (E-13). The order is otherwise kept.
+    const words = searchQueryVariants(query).map(searchReading).filter(word => [...word].length >= 2 || word === searchReading(query));
+    const wordStart = schema => {
+      const names = [schema.searchLabel, schema.label].filter(Boolean).map(searchReading);
+      if (words.some(word => names.some(name => name.startsWith(word)))) return 0;
+      const marks = ['を', 'に', 'の', 'で', 'と', 'へ', 'が', 'は', 'て', '、', '・', 'びょう', 'かい', 'ばんめ'];
+      return words.some(word => names.some(name => marks.some(mark => name.includes(mark + word)))) ? 1 : 2;
+    };
+    const rank = schema => (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 3) + wordStart(schema);
+    out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
     if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
@@ -28415,18 +28815,24 @@ function createAkariExtensionHost(options) {
   }
 
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
-    'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける'],
+    'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける',
+      'おちる', '落ちる', 'さがる', 'のぼる', 'ゆっくり'],
     ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
     'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
     'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '向きを変える', '回転'],
     'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '向きを変える', '回転'],
-    'LooksCommand:SHOW': ['見せる', '表示', '出す'],
-    'LooksCommand:HIDE': ['隠す', 'かくす', '非表示'],
+    // The words of what a child wants to make lead to the block too (E-13): でてくる, きえる, しつもん, おわる …
+    'LooksCommand:SHOW': ['見せる', '表示', '出す', 'でてくる', '出てくる', 'あらわれる', 'みえる'],
+    'LooksCommand:HIDE': ['隠す', 'かくす', '非表示', 'きえる', '消える', 'かくれる', 'みえなくする'],
+    'LooksCommand:SET_COSTUME': ['きがえる', 'みため', '見た目'],
+    'StopCommand:ALL': ['とめる', '止める', 'おわる', 'おわり'],
+    'StopCommand:THIS': ['とめる', '止める'],
+    'PenCommand:DOWN': ['せん', '線', 'かく', 'えがく'],
     'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
-    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒'],
-    Ask: ['質問', 'たずねる', '答え'],
+    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう'],
+    Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
     RepeatCount: ['くり返す', '繰り返す', '何度も', '回数'],
@@ -28576,6 +28982,10 @@ function createAkariExtensionHost(options) {
       currentLocation = null,
       suppressClickUntil = 0,
       pointerFocusTarget = null,
+      // The element focused when the pointer went down: a field entered from elsewhere selects its whole value (E-01).
+      pointerFocusPrevious = null,
+      // How the last press was made (mouse, touch or pen): a touch drop does not open the screen keyboard (E-03).
+      lastPointerType = 'mouse',
       highlightedId = null,
       lineNodes = new Map(),
       displaySession = null,
@@ -28584,7 +28994,6 @@ function createAkariExtensionHost(options) {
       previousSearch = '',
       category = document.body.dataset.uiLevel !== 'advanced' ? 'basic' : '',
       showOutside = false,
-      page = 0,
       paletteMode = 'all',
       categoryExplicit = false,
       availabilityCache = new Map(),
@@ -28601,9 +29010,8 @@ function createAkariExtensionHost(options) {
       bodyPages = new Map(),
       bodyExtraPages = new Map(),
       inputPages = new Map();
-    const PAGE = 12,
-      // Bound both the opening batch and a revealed later batch with role controls.
-      BODY_PAGE = 40,
+    // Bound both the opening batch and a revealed later batch with role controls.
+    const BODY_PAGE = 40,
       INPUT_PAGE = 20;
     let zoom = 1,
       pan = null,
@@ -28676,6 +29084,8 @@ function createAkariExtensionHost(options) {
       messageBox.textContent = message || '';
       messageBox.classList.toggle('blockui-error', error);
       messageBox.setAttribute('role', error ? 'alert' : 'status');
+      // The mistake of the field being edited is read here and seen under the field.
+      messageBox.classList.toggle('blockui-message-near-field', !!message && !!pending && message === pending.error);
     };
     const notifyPending = () =>
       onPending(
@@ -28695,7 +29105,7 @@ function createAkariExtensionHost(options) {
           : replacement
             ? { ownerKey: session()?.ownerKey, reason: 'もとの ばしょに 入れる ブロックを えらんでください' }
             : drag?.started
-              ? { ownerKey: session()?.ownerKey, reason: 'ブロックを動かしている とちゅうです' }
+              ? { ownerKey: session()?.ownerKey, reason: 'ブロックを 運んでいる とちゅうです' }
               : null,
       );
     const localIndex = (rootNode) => {
@@ -28739,8 +29149,10 @@ function createAkariExtensionHost(options) {
       destinationLabel = E('div', 'blockui-destination', '本文の いちばん下に入れる'),
       cancelButton = button('とちゅうで やめる', 'cancel', () => cancel()),
       commitButton = button('決める', 'commit', () => flush({explicit:true})),
-      messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' });
-    controls.append(destinationLabel, commitButton, cancelButton);
+      messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' }),
+      // An input's mistake is shown right under the field, in the floating 決める・とちゅうで やめる (E-12).
+      fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
+    controls.append(fieldError, destinationLabel, commitButton, cancelButton);
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
@@ -28760,10 +29172,11 @@ function createAkariExtensionHost(options) {
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
       'aria-label': '大きさを100%に もどす',
     });
-    const minus = button('\u2212', 'zoom-out', () => setZoom(zoom - 0.05), {
+    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
+    const minus = button('\u2212', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
         'aria-label': '\u5c0f\u3055\u304f\u898b\u308b',
       }),
-      plus = button('\uff0b', 'zoom-in', () => setZoom(zoom + 0.05), {
+      plus = button('\uff0b', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
         'aria-label': '\u5927\u304d\u304f\u898b\u308b',
       });
     const home = button('\u306f\u3058\u3081\u3078', 'workspace-home', () => {
@@ -28843,20 +29256,10 @@ function createAkariExtensionHost(options) {
       outsideLabel = E('label', 'blockui-check');
     outside.checked = showOutside;
     outsideLabel.append(outside, doc.createTextNode('使えないブロックも見せる'));
+    // One list that scrolls, with no pages (E-17).
     const paletteList = E('div', 'blockui-palette-list'),
-      palettePages = E('div', 'blockui-paging'),
-      previous = button('前', 'palette-prev', () => {
-        page = Math.max(0, page - 1);
-        renderPalette();
-      }),
-      next = button('次', 'palette-next', () => {
-        page++;
-        renderPalette();
-      }),
-      pageLabel = E('span'),
       paletteOptions = E('details', 'blockui-palette-options');
     paletteOptions.append(E('summary', '', 'ブロックの しゅるい'), outsideLabel);
-    palettePages.append(previous, pageLabel, next);
     paletteOptions.append(modeSelect);
     const searchLabel=E('label','blockui-search-label','ブロックを さがす');
     searchLabel.append(search);
@@ -28865,7 +29268,6 @@ function createAkariExtensionHost(options) {
     paletteControls.append(searchScope);
     const restoreSearch = button('', 'restore-search', () => {
       searchText = search.value = previousSearch;
-      page = 0;
       renderPalette();
     });
     paletteControls.append(restoreSearch);
@@ -28892,7 +29294,7 @@ function createAkariExtensionHost(options) {
     paletteToggle.setAttribute('aria-controls', paletteControls.id);
     const paletteTools = E('div', 'blockui-palette-tools');
     paletteTools.append(paletteToggle, paletteControls);
-    palette.append(paletteTools, categorySelect, paletteList, palettePages);
+    palette.append(paletteTools, categorySelect, paletteList);
     layout.append(palette, workspaceShell);
     root.append(layout);
     const promptArea = E('div', 'blockui-replacement');
@@ -28908,6 +29310,8 @@ function createAkariExtensionHost(options) {
         };
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         placeActions(menu, menu.querySelector('.blockui-action-items'));
+      placeControls();
+      placeNodeTools();
     });
     listen(doc.defaultView, 'resize', () => {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
@@ -28928,19 +29332,34 @@ function createAkariExtensionHost(options) {
     }
     listen(search, 'input', () => {
       searchText = search.value;
-      page = 0;
+      paletteList.scrollTop = 0;
       renderPalette();
+    });
+    // Enter puts the first block that can go in the chosen place there and returns to it; ↓ goes to the list (E-16).
+    // The Enter that ends a kana-kanji conversion is not this Enter.
+    listen(search, 'keydown', (event) => {
+      if (event.isComposing || event.keyCode === 229) return;
+      const first = [...paletteList.querySelectorAll('.blockui-palette-item > button')]
+        .find(b => !b.disabled && b.getAttribute('aria-disabled') !== 'true');
+      if (event.key === 'Enter' && first) { event.preventDefault(); event.stopPropagation(); first.click(); }
+      else if (event.key === 'ArrowDown' && first) { event.preventDefault(); event.stopPropagation(); first.focus(); }
+    });
+    // ↑ and ↓ move along the list; ↑ on the first block goes back to the search field.
+    listen(paletteList, 'keydown', (event) => {
+      if (!['ArrowDown', 'ArrowUp'].includes(event.key) || !event.target.matches('.blockui-palette-item > button')) return;
+      const items = [...paletteList.querySelectorAll('.blockui-palette-item > button')], at = items.indexOf(event.target);
+      event.preventDefault(); event.stopPropagation();
+      if (event.key === 'ArrowDown') items[Math.min(items.length - 1, at + 1)]?.focus();
+      else if (at <= 0) search.focus(); else items[at - 1].focus();
     });
     listen(modeSelect, 'change', () => {
       paletteMode = modeSelect.value;
       category = '';
       categoryExplicit = false;
-      page = 0;
       renderPalette();
     });
     listen(outside, 'change', () => {
       showOutside = outside.checked;
-      page = 0;
       renderPalette();
     });
     function normalizedResult(result) {
@@ -29049,6 +29468,7 @@ function createAkariExtensionHost(options) {
           }
         }
         const previous = pending?.input === input ? pending : null;
+        if (!previous) announce('');
         pending = {
           input,
           id: node.id,
@@ -29063,6 +29483,9 @@ function createAkariExtensionHost(options) {
           read,
           error: '',
           invalid: false,
+          // A mistake shown under the field stays while the field keeps the value it was shown for.
+          shown: previous?.shown && previous.shownValue === input.value,
+          shownValue: previous?.shownValue,
         };
         try {
           read();
@@ -29121,38 +29544,34 @@ function createAkariExtensionHost(options) {
         const reason='いつ動くかを えらんだら「この動きの きっかけを かえる」を おしてください';
         announce(reason,true);return {ok:false,pending:true,reason};
       }
-      if (p.composing || p.input.dataset.composing === 'true') {
-        p.error = '日本語の へんかんを おわらせてから、もう一度 やってください';
+      // A mistake found when the input is to be decided is shown right under the field (E-12).
+      const refused = (message) => {
+        p.error = message;
+        p.shown = true;
+        p.shownValue = p.input.value;
         notifyPending();
         announce(p.error, true);
+        updateControls();
         return { ok: false, pending: true, reason: p.error };
-      }
-      if (session()?.ownerKey !== p.ownerKey) {
-        p.error = '入れている とちゅうで、なおしていた ところが かわりました。「決める」を おすか、とちゅうで やめてください';
-        announce(p.error, true);
-        return { ok: false, pending: true, reason: p.error };
-      }
+      };
+      if (p.composing || p.input.dataset.composing === 'true')
+        return refused('日本語の へんかんを おわらせてから、もう一度 やってください');
+      if (session()?.ownerKey !== p.ownerKey)
+        return refused('入れている とちゅうで、なおしていた ところが かわりました。「決める」を おすか、とちゅうで やめてください');
       if (
         session()?.sourceRevision !== p.sourceRevision ||
         session()?.contextRevision !== p.contextRevision
       ) {
-        p.error =
-          '入れている とちゅうで、本文や まわりが かわりました。とちゅうで やめて、もう一度 あいている ところを えらんでください';
-        announce(p.error, true);
-        notifyPending();
-        return { ok: false, pending: true, reason: p.error };
+        return refused('入れている とちゅうで、本文や まわりが かわりました。とちゅうで やめて、もう一度 あいている ところを えらんでください');
       }
       let value;
       try {
         value = p.read();
       } catch (error) {
-        p.error = error.message;
         p.invalid = true;
         p.input.setAttribute('aria-invalid', 'true');
-        announce(p.error, true);
-        notifyPending();
         if (focus) p.input.focus();
-        return { ok: false, pending: true, reason: p.error };
+        return refused(error.message);
       }
       if (Object.is(value, p.original)) {
         pending = null;
@@ -29179,11 +29598,9 @@ function createAkariExtensionHost(options) {
         op = { type: 'comment-lines', id: p.id, lines: value.replace(/\r\n?/g, '\n').split('\n') };
       const result = operate(op, { fromPending: true });
       if (!result.ok) {
-        p.error = errorText(result.error || result.reason);
         p.input.setAttribute('aria-invalid', 'true');
-        notifyPending();
         if (focus) p.input.focus();
-        return { ...result, pending: true, reason: p.error };
+        return { ...result, ...refused(errorText(result.error || result.reason)) };
       }
       pending = null;
       notifyPending();
@@ -29262,15 +29679,43 @@ function createAkariExtensionHost(options) {
       controls.hidden = !pending && !moving && !drag && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
+      // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07).
+      root.classList.toggle('blockui-choosing', !!destination?.body);
+      root.classList.toggle('blockui-moving-block', !!moving && schemaOf(index.get(moving.id)?.node)?.category === 'statement');
+      fieldError.textContent = pending?.shown && pending.error || '';
+      if (pending?.input) {
+        const described = (pending.input.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== fieldError.id);
+        if (pending.shown && pending.error) described.push(fieldError.id);
+        if (described.length) pending.input.setAttribute('aria-describedby', described.join(' '));
+        else pending.input.removeAttribute('aria-describedby');
+      }
+      placeControls();
       destinationLabel.textContent = replacement
         ? 'もとの ばしょに 入れる ブロックを えらんでください'
         : moving
-          ? 'どこへ 動かすか えらんでください'
+          ? 'どこへ もっていくか えらんでください'
           : destination?.input
             ? destinationDescription()
             : destination?.body
               ? destinationDescription()
               : draft ? 'あいている ところを えらんで、ブロックを 入れてください' : '入れたら「決める」を おしてください';
+    }
+    // The floating controls go right under the field being edited, or over the top left of the workspace while a place
+    // is chosen or a block is moved: they never take a row of their own, so nothing moves (E-12).
+    function placeControls() {
+      if (controls.hidden) return;
+      const box = root.getBoundingClientRect(), shell = workspaceShell.getBoundingClientRect();
+      if (!box.width) return;
+      const field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      let left = shell.left - box.left + 8, top = shell.top - box.top + 6;
+      if (field && field.width) {
+        left = field.left - box.left;
+        top = field.bottom - box.top + 4;
+      }
+      const width = controls.offsetWidth || 300;
+      left = Math.max(4, Math.min(left, box.width - width - 4));
+      controls.style.setProperty('--blockui-controls-left', Math.round(left) + 'px');
+      controls.style.setProperty('--blockui-controls-top', Math.round(top) + 'px');
     }
     function listLocation(info) {
       return info?.body
@@ -29293,13 +29738,87 @@ function createAkariExtensionHost(options) {
       }
       for (const n of workspace.querySelectorAll('.blockui-node'))
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
+      showImpliedDestination();
+      placeNodeTools();
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
       const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),slot=selectedNode?.parentElement.closest('.blockui-input-slot');
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
     }
-    function chooseDestination(location) {
+    // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
+    // is in it), where they cover no other block: first the selected block's tools, under them the selected field's
+    // tools, under those the tools of a selected value. With no room on the right a block's tools go right above it
+    // and a field's tools under the field.
+    function placeNodeTools() {
+      const room = workspace.getBoundingClientRect(),
+        box = workspace.querySelector('.blockui-node.blockui-selected'), head = box?.querySelector(':scope > .blockui-node-head'),
+        slot = workspace.querySelector('.blockui-input-slot.blockui-slot-active'), slotHead = slot?.querySelector(':scope > .blockui-slot-head');
+      const ownerOf = (el) => el?.closest('.blockui-statement') || el?.closest('.blockui-node');
+      const lineOf = (owner) => owner?.querySelector(':scope > .blockui-node-content > .blockui-node-main') || owner;
+      // Moves an absolutely placed element so that its top left is at (x, y) on the screen; the world may be zoomed.
+      const moveTo = (el, x, y) => {
+        const cs = doc.defaultView.getComputedStyle(el), r = el.getBoundingClientRect();
+        el.style.left = (parseFloat(cs.left) || 0) + (x - r.left) / zoom + 'px';
+        el.style.top = (parseFloat(cs.top) || 0) + (y - r.top) / zoom + 'px';
+      };
+      const fits = (owner, el) => owner.getBoundingClientRect().right + 8 + el.getBoundingClientRect().width <= room.right - 8;
+      // The other blocks (not the selected one, what is in it or what holds it) and the places to put a block in (「＋ ここに
+      // 入れる」 and the lines between blocks) must stay free to press.
+      const blockers = box ? [...world.querySelectorAll('.blockui-statement, .blockui-event-hat, .blockui-insertion')].filter(n => !box.contains(n) && !n.contains(box)) : [];
+      const clear = (r, places = true) => r.right <= room.right - 4 && blockers.every(n => {
+        if (!places && n.classList.contains('blockui-insertion')) return true;
+        const b = n.getBoundingClientRect();
+        return !b.width || b.right <= r.left || b.left >= r.right || b.bottom <= r.top + 1 || b.top >= r.bottom - 1;
+      });
+      for (const el of [head, slotHead]) if (el) { el.style.left = el.style.top = el.style.transform = el.style.maxWidth = ''; }
+      box?.classList.remove('blockui-tools-above');
+      let below = null;
+      if (head?.getClientRects().length) {
+        const owner = box.classList.contains('blockui-statement') ? box : ownerOf(box.parentElement);
+        if (box.classList.contains('blockui-statement') && owner === box) {
+          // One row when it fits; else the row wraps into the room left on the right; else right above the block.
+          let r = head.getBoundingClientRect();
+          const room2 = room.right - 8 - (box.getBoundingClientRect().right + 8);
+          if (r.right > room.right - 4 && room2 >= 120) { head.style.maxWidth = room2 / zoom + 'px'; r = head.getBoundingClientRect(); }
+          if (clear(r)) below = { owner: box, top: r.bottom + 4 };
+          else {
+            const beside = r, besideWidth = head.style.maxWidth;
+            head.style.maxWidth = ''; box.classList.add('blockui-tools-above');
+            // Right above the block, unless that is out of the workspace (a block at its top edge): then beside it, over
+            // a place to put a block in rather than over another block.
+            if (head.getBoundingClientRect().top < room.top + 2 && clear(beside, false)) {
+              box.classList.remove('blockui-tools-above'); head.style.maxWidth = besideWidth;
+              below = { owner: box, top: beside.bottom + 4 };
+            }
+          }
+        }
+      }
+      if (slotHead?.getClientRects().length) {
+        const owner = ownerOf(slot);
+        if (owner && fits(owner, slotHead)) {
+          moveTo(slotHead, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
+          below = { owner, top: slotHead.getBoundingClientRect().bottom + 4 };
+        } else {
+          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width;
+          moveTo(slotHead, Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w)), sr.bottom + 4);
+        }
+      }
+      if (head?.getClientRects().length && box.classList.contains('blockui-expression')) {
+        const owner = ownerOf(box.parentElement);
+        if (owner && fits(owner, head)) moveTo(head, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
+        else box.classList.add('blockui-tools-above');
+      }
+    }
+    // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
+    function showImpliedDestination() {
+      const info = !destination && !moving && selectedStatement(),
+        implied = info && { parentId: info.parentId, body: info.body, index: info.index + 1 };
+      for (const n of workspace.querySelectorAll('.blockui-insertion'))
+        n.classList.toggle('blockui-implied-destination', !!implied && sameLocation(implied, locationFromElement(n)));
+    }
+    // A place chosen with the keyboard (Enter on 「＋ ここに入れる」) opens 「ブロックを さがす」 to type in (E-16).
+    function chooseDestination(location, { keyboard = false } = {}) {
       if (isLocked()) return;
       const ready = flush();
       if (!ready.ok) return;
@@ -29319,10 +29838,56 @@ function createAkariExtensionHost(options) {
         );
       announce(destinationDescription() + (modeChanged ? ' 見せるブロックを「すべてのブロック」に かえました。なかまと さがす言葉は そのままです。' : ''));
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
-      else search.focus({ preventScroll: true });
+      else {
+        if (keyboard && paletteControls.hidden) paletteToggle.click();
+        search.focus({ preventScroll: true });
+      }
     }
+    // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
+    // body when nothing is selected (E-08).
     function defaultDestination() {
+      const info = selectedStatement();
+      if (info) return { parentId: info.parentId, body: info.body, index: info.index + 1 };
       return tree ? { parentId: tree.id, body: 'body', index: tree.bodies.body.length } : null;
+    }
+    function selectedStatement() {
+      const info = selected && index.get(selected);
+      return info?.body && info.parentId && schemaOf(info.node)?.category === 'statement' && !schemaOf(info.node)?.draftOnly ? info : null;
+    }
+    // An enclosure put where blocks follow takes them into its first body (E-03): a new one, or a moved one whose first
+    // body holds no block yet. The count is of the blocks that would go in.
+    function wrapCount(schema, node, location, movingId = null) {
+      if (!location?.body || !schema?.bodies?.length || schema.category !== 'statement') return 0;
+      const inner = node?.bodies?.[schema.bodies[0].key];
+      if (inner && inner.some(n => n.schemaId !== 'Hole:statement')) return 0;
+      const siblings = index.get(location.parentId)?.node.bodies[location.body] || [];
+      if (siblings.length === 1 && siblings[0].schemaId === 'Hole:statement') return 0;
+      return siblings.slice(location.index).filter(n => n.id !== movingId).length;
+    }
+    // After an enclosure goes in, its empty count (or other empty value) takes the typing at once with a mouse or the
+    // keyboard; after a touch it only lights up, so the screen keyboard does not open by itself (E-03).
+    let attention = null;
+    function emptyValueOf(id) {
+      const box = locationElement({ id }), main = box?.querySelector(':scope > .blockui-node-content > .blockui-node-main');
+      return main && [...main.querySelectorAll('input[data-expression-hole="true"], [data-blockui-action="hole-select-expression"]')]
+        .find(n => n.closest('.blockui-node') === box || n.closest('.blockui-node')?.parentElement?.closest('.blockui-node') === box);
+    }
+    // The light stays through the renders that follow the drop, for two seconds.
+    function lightEmptyValue() {
+      if (!attention || Date.now() > attention.until) { attention = null; return; }
+      const empty = emptyValueOf(attention.id), field = empty && (empty.closest('.blockui-field, .blockui-input-slot') || empty);
+      if (field && !field.classList.contains('blockui-attention')) field.classList.add('blockui-attention');
+    }
+    function attendEmptyValue(id) {
+      doc.defaultView.requestAnimationFrame(() => {
+        const empty = emptyValueOf(id);
+        if (!empty) return;
+        if (lastPointerType === 'touch' || lastPointerType === 'pen') {
+          attention = { id, until: Date.now() + 2000 };
+          lightEmptyValue();
+          empty.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        } else { empty.focus({ preventScroll: true }); empty.select?.(); }
+      });
     }
     function sameLocation(a, b) {
       return (
@@ -29392,7 +29957,7 @@ function createAkariExtensionHost(options) {
       }
       if (schema.category === 'expression' && !location?.input) {
         announce(
-          'あいている ところへ おしたまま 動かしてね。あいている ところの「計算を入れる」からも 入れられます',
+          'あいている ところへ おしたまま 運んでね。あいている ところの「計算を入れる」からも 入れられます',
         );
         return;
       }
@@ -29402,8 +29967,9 @@ function createAkariExtensionHost(options) {
         return;
       }
       const node = a.node || createBlock(schema.id, { ...context(), idPrefix: viewId });
+      const wraps = wrapCount(schema, node, location);
       const op = location.body
-        ? { type: 'insert', ...location, node }
+        ? { type: wraps ? 'wrap' : 'insert', ...location, node }
         : { type: 'expression', ...location, node };
       const result = operate(op);
       if (result.ok) {
@@ -29418,11 +29984,24 @@ function createAkariExtensionHost(options) {
         }
         destination = null;
         for (const chosen of workspace.querySelectorAll('.blockui-chosen-destination')) chosen.classList.remove('blockui-chosen-destination');
-        page = 0;
         renderPalette();
         updateControls();
-        focus({ id: session()?.blockSelection });
+        const placedId = location.body ? placedAt(location, node.schemaId, true) : session()?.blockSelection;
+        focus({ id: placedId });
+        if (schema.bodies?.length) attendEmptyValue(placedId);
       }
+    }
+    // The block just put in (at its place, or in the hole it replaced) or moved (the one selected; a block moved down in
+    // its own body is one place higher).
+    function placedAt(location, schemaId, inserted = false) {
+      const siblings = location?.body ? index.get(location.parentId)?.node.bodies[location.body] : null,
+        selectedId = session()?.blockSelection;
+      if (!siblings) return selectedId;
+      if (inserted && siblings[Math.min(location.index, siblings.length - 1)]?.schemaId === schemaId) return siblings[Math.min(location.index, siblings.length - 1)].id;
+      if (siblings.some(n => n.id === selectedId && n.schemaId === schemaId)) return selectedId;
+      for (const at of [location.index, location.index - 1, siblings.length - 1])
+        if (siblings[at]?.schemaId === schemaId) return siblings[at].id;
+      return selectedId;
     }
     function phrase(schema) {
       if (phraseCache.has(schema.id)) return phraseCache.get(schema.id);
@@ -29564,11 +30143,23 @@ function createAkariExtensionHost(options) {
         main.append(doc.createTextNode('\u203b \u30e1\u30e2'));
       else if (schema.kind === 'Say') {
         main.append(pill(scalar(node.inputs.value) ?? 'ことば'));
-        if (node.inputs.seconds) main.append(doc.createTextNode('を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
+        if (node.inputs.seconds) main.append(doc.createTextNode(node.inputs.value?.schemaId === 'StringLiteral' ? 'と ' : 'を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
         else main.append(doc.createTextNode(' と言う'));
       }
       else if (schema.kind === 'VariableRead')
         main.append(pill(node.fields.name || 'へんすう'));
+      // The direction a placed block lets the child choose shows as a value here too, so the list and the workspace
+      // read the same (E-14): いまのばしょから、［右］へ［10］歩動く, ［前］へ［10］歩進む.
+      else if ((schema.id === 'MotionCommand:MOVE_BY' && !(node.inputs.x && node.inputs.y)) || schema.id === 'MotionCommand:MOVE') {
+        if (node.inputs.seconds) main.append(pill(scalar(node.inputs.seconds) ?? '1'), doc.createTextNode('秒かけて、'));
+        if (schema.id === 'MotionCommand:MOVE') {
+          const back = node.fields.direction === 'backward';
+          main.append(pill(back ? '後ろ' : '前'), doc.createTextNode('へ'), pill(scalar(node.inputs.args?.[0]) ?? '10'), doc.createTextNode(back ? '歩動く' : '歩進む'));
+        } else {
+          const key = node.inputs.x ? 'x' : 'y', word = { right: '右', left: '左', up: '上', down: '下' }[node.fields[key + 'Dir']];
+          main.append(doc.createTextNode('いまのばしょから、'), pill(word), doc.createTextNode('へ'), pill(scalar(node.inputs[key]) ?? '10'), doc.createTextNode('歩動く'));
+        }
+      }
       else {
         const parts = phrase(schema);
         if (parts)
@@ -29621,8 +30212,10 @@ function createAkariExtensionHost(options) {
       modeSelect.value = paletteMode;
       const entry = document.body.dataset.uiLevel === 'entry';
       const query = entry ? '' : searchText.trim().toLocaleLowerCase();
+      // A quantity whose unit is chosen (たんいを つけた 数) is a くわしく block: only there are units chosen (E-02).
+      const unitChoice = document.body.dataset.uiLevel === 'advanced';
       const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category)
-        && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id)));
+        && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id)) && (unitChoice || s.id !== 'QuantityLiteral'));
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [
         ['basic', 'よく使う'],
@@ -29651,7 +30244,6 @@ function createAkariExtensionHost(options) {
           () => {
             category = g;
             categoryExplicit = true;
-            page = 0;
             paletteList.scrollTop = 0;
             renderPalette();
           },
@@ -29664,7 +30256,8 @@ function createAkariExtensionHost(options) {
         categorySelect.append(chip);
       }
       categorySelect.scrollTop = categoryScroll;
-      searchScope.textContent=query&&categoryExplicit&&category?`${groups.find(([g])=>g===category)?.[1]||category}の中を さがしています`:'すべての なかまから さがせます';
+      // A search looks through every category, whichever is chosen (E-13); the results keep their category colours.
+      searchScope.textContent=query?'すべての なかまから さがしています':'すべての なかまから さがせます';
       restoreSearch.hidden = !previousSearch || !!query;
       restoreSearch.textContent = `前の「${previousSearch}」を もう一度 さがす`;
       const location = destination || defaultDestination(),
@@ -29676,11 +30269,12 @@ function createAkariExtensionHost(options) {
       if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'言うことと 秒数を 決めて 話す'});}
       let candidates = searched.filter(
         (s) =>
-          (entry || (query && !categoryExplicit) || !category || (category === 'basic'
+          (entry || query || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
           (entry || paletteMode === 'all' || s.category === paletteMode) &&
-          (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech'),
+          (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech') &&
+          (unitChoice || s.id !== 'QuantityLiteral'),
       );
       if (!showOutside && !entry)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
@@ -29695,12 +30289,9 @@ function createAkariExtensionHost(options) {
         if(at<0)candidates.push(candidate);else candidates.splice(at,1,candidate);
       }
       // Keep the normal palette visible: a lesson guides a choice, never makes it.
-      const guided=!!options.tutorialActive?.();
-      const pages = Math.max(1, Math.ceil(candidates.length / PAGE));
-      page = Math.min(page, pages - 1);
       const scroll = paletteList.scrollTop;
       paletteList.replaceChildren();
-      for (const schema of (guided ? candidates : candidates.slice(page * PAGE, (page + 1) * PAGE))) {
+      for (const schema of candidates) {
         const a = paletteAvailability(schema, location),
           item = E('div', 'blockui-palette-item', null, {
             'data-palette-tone': blockPaletteGroup(schema),
@@ -29760,11 +30351,7 @@ function createAkariExtensionHost(options) {
               : 'この ばしょで 使える ブロックが ありません。なかまを かえるか、「ブロックの しゅるい」で 使えない理由を見られます。',
           ),
         );
-      previous.disabled = page === 0;
-      if(!options.tutorialActive?.()&&category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
-      next.disabled = page >= pages - 1;
-      pageLabel.textContent = page + 1 + ' / ' + pages;
-      palettePages.hidden = guided || pages === 1;
+      if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
       scheduleGeometry();
       options.onPresentation?.();
@@ -29817,7 +30404,32 @@ function createAkariExtensionHost(options) {
     function joinAccessibleName(owner, part) {
       return owner === part ? owner : owner + ' ' + part;
     }
-    function fieldControl(node, field, annotation = false) {
+    // A block reads like its code (E-14): the subject shows only where the code writes one (だんごは), as plain text;
+    // the body's owner and みんな of a wait are not written. Who acts is chosen with 「だれが」 among the selected block's
+    // tools (actorTool), so the sentence itself has no control for it.
+    function subjectFace(node, field) {
+      const value = node.fields[field.key], owner = node.schemaId === 'ActorQualifiedRead';
+      if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
+      const name = value?.kind === 'named' ? value.name : subjectName(node);
+      return E('span', 'blockui-phrase-text blockui-subject-text', owner ? name : name + (value?.particle || 'は'), { 'data-block-id': node.id });
+    }
+    // A subject carried over from the sentence before (たくどんは…。2回くり返す。) is not written in this one.
+    function subjectWritten(node, name) {
+      const at = session()?.nodeMap?.get?.(node.id), range = at?.surface?.range || at?.surface?.extent, source = session()?.sourceText;
+      if (!range || typeof source !== 'string') return true;
+      const text = source.slice(range.start, range.end).replace(/^[\s　]+/, '');
+      return ['は', 'が'].some(mark => text.startsWith(name + mark) || text.includes('、' + name + mark));
+    }
+    function actorTool(node) {
+      const field = schemaOf(node)?.fields.find(f => f.type === 'actor-ref' && f.key === 'actorRef');
+      if (!field || options.readOnly) return null;
+      const owner = node.schemaId === 'ActorQualifiedRead', details = editDisclosure(node, 'actorRef', owner ? 'だれの' : 'だれが', 'blockui-who');
+      details.querySelector('summary').setAttribute('aria-label', (owner ? 'だれのかを えらぶ: ' : 'だれが するかを えらぶ: ') + subjectName(node));
+      details.append(fieldControl(node, field, false, true));
+      return details;
+    }
+    function fieldControl(node, field, annotation = false, tool = false) {
+      if (field.type === 'actor-ref' && !tool && !options.readOnly) return subjectFace(node, field);
       const value = annotation ? node.annotations[field.key] : node.fields[field.key],
         wrap = E(['actor-ref', 'heading', 'argument-names'].includes(field.type) ? 'div' : 'label', 'blockui-field', null, { 'data-field-type': field.type }),
         title = E('span', 'blockui-field-label', field.label),
@@ -29958,15 +30570,7 @@ function createAkariExtensionHost(options) {
               flushToTarget(event.relatedTarget);
           });
         }
-        if (field.type === 'actor-ref') {
-          const subject = value?.kind === 'all' || (!value && field.everyone) ? 'みんな' : subjectName(node);
-          // A part's state (たくどん の よこのばしょ) takes の from the phrase, so its part name has no は.
-          const owner = node.schemaId === 'ActorQualifiedRead';
-          const details = editDisclosure(node, 'actorRef', owner ? subject : subject + (value?.particle || 'は'), 'blockui-subject');
-          details.querySelector('summary').setAttribute('aria-label', (owner ? 'だれのかを かえる: ' : 'だれが動くかを かえる: ') + subject);
-          details.append(group);
-          wrap.append(details);
-        } else wrap.append(group);
+        wrap.append(group);
         return wrap;
       }
       if (field.type === 'unit' || field.type === 'direction') {
@@ -30106,14 +30710,16 @@ function createAkariExtensionHost(options) {
       }
       n.classList.toggle('blockui-chosen-destination', sameLocation(destination, location));
     }
-    function insertion(parentId, body, pos) {
+    // Between two blocks the place is a thin line; the last place of a body keeps 「＋ ここに入れる」 (E-07).
+    function insertion(parentId, body, pos, end = false) {
       const b = button(
         '＋ ここに入れる',
         'body-insert',
-        () => chooseDestination({ parentId, body, index: pos }),
+        (event) => chooseDestination({ parentId, body, index: pos }, { keyboard: event.detail === 0 }),
         { 'aria-label': (pos + 1) + '番目の ばしょに ブロックを入れる' },
       );
       b.classList.add('blockui-insertion');
+      if (end) b.classList.add('blockui-insertion-end');
       b.disabled = isLocked();
       markDrop(b, { parentId, body, index: pos });
       return b;
@@ -30124,8 +30730,11 @@ function createAkariExtensionHost(options) {
       selection(node.id);
       moving = { id: node.id, type };
       destination = null;
-      announce(type === 'copy' ? 'コピーする ばしょを えらんでください' : 'どこへ 動かすか えらんでください');
+      announce(type === 'copy' ? 'コピーする ところを えらんでください'
+        : type === 'run' ? 'この ブロックから 下の ' + runIds(node.id).length + 'この ブロックを もっていく ところを えらぶか、そのまま 運んでください'
+          : 'どこへ もっていくか えらんでください');
       updateControls();
+      showImpliedDestination();
 
       // The menu is now hidden; Escape must remain inside this editor.
       focus({ id: node.id });
@@ -30139,20 +30748,22 @@ function createAkariExtensionHost(options) {
       }
       const kind = schemaOf(info.node).category;
       if ((kind === 'statement') !== !!location.body) {
-        announce('つなぐブロックは 本文へ、はめるブロックは あいている ところへ 動かします', true);
+        announce('つなぐブロックは 本文へ、はめるブロックは あいている ところへ もっていきます', true);
         return;
       }
-      const parent = index.get(location.parentId);
+      const parent = index.get(location.parentId), carried = source.type === 'run' ? runIds(source.id) : [source.id];
       if (
         source.type !== 'copy' &&
-        (location.parentId === source.id || parent?.ancestors.includes(source.id))
+        carried.some(id => location.parentId === id || parent?.ancestors.includes(id))
       ) {
-        announce('自分の中には 動かせません', true);
+        announce('自分の中には もっていけません', true);
         return;
       }
       if (kind === 'statement') {
+        // An empty enclosure moved above blocks takes them in, as a new one does (E-03).
+        const wraps = source.type === 'move' && wrapCount(schemaOf(info.node), info.node, location, source.id);
         const result = operate({
-          type: source.type === 'copy' ? 'duplicate' : 'move',
+          type: source.type === 'copy' ? 'duplicate' : source.type === 'run' ? 'move-run' : wraps ? 'wrap' : 'move',
           id: source.id,
           ...location,
         });
@@ -30160,6 +30771,7 @@ function createAkariExtensionHost(options) {
           moving = null;
           destination = null;
           render({ force: true });
+          if (wraps) attendEmptyValue(placedAt(location, info.node.schemaId));
         }
         return;
       }
@@ -30191,7 +30803,7 @@ function createAkariExtensionHost(options) {
         note = E(
           'p',
           '',
-          'もとの ばしょを 空っぽには できません。えらんだブロックを はじめの中身で おいてから、動かす先へ つなぎます。',
+          'もとの ばしょを 空っぽには できません。えらんだブロックを はじめの中身で おいてから、もっていく先へ つなぎます。',
         ),
         select = E('select', '', null, {
           'aria-label': 'もとの ばしょに 入れる ブロック',
@@ -30200,7 +30812,7 @@ function createAkariExtensionHost(options) {
       for (const s of BLOCK_SCHEMAS.filter((x) => x.category === 'expression'))
         select.append(E('option', '', s.palette + ' / ' + s.label, { value: s.id }));
       select.value = 'NumberLiteral';
-      const accept = button('このブロックを おいて動かす', 'confirm-expression-move', () => {
+      const accept = button('このブロックを おいて もっていく', 'confirm-expression-move', () => {
         const action = replacement;
         replacement = null;
         onPending(null);
@@ -30222,7 +30834,7 @@ function createAkariExtensionHost(options) {
         note,
         select,
         accept,
-        button('動かすのを やめる', 'cancel-expression-move', () => cancel()),
+        button('もっていくのを やめる', 'cancel-expression-move', () => cancel()),
       );
       select.focus();
     }
@@ -30250,18 +30862,16 @@ function createAkariExtensionHost(options) {
         dy = Math.max(bounds.top + 8 - rect.top, Math.min(0, bounds.bottom - 8 - rect.bottom));
       commands.style.transform = 'translate(' + dx / zoom + 'px,' + dy / zoom + 'px)';
     }
+    // A selected field's tools are placed with the block's tools (placeNodeTools).
     function placeSlotHead(slot){
-      const head=slot?.querySelector(':scope > .blockui-slot-head');if(!head||!slot.isConnected)return;
-      head.style.transform='';const bounds=workspace.getBoundingClientRect(),r=head.getBoundingClientRect();
-      const dx=Math.max(bounds.left+8-r.left,Math.min(0,bounds.right-8-r.right)),dy=Math.max(bounds.top+8-r.top,Math.min(0,bounds.bottom-8-r.bottom));
-      head.style.transform=`translate(${dx/zoom}px,${dy/zoom}px)`;
+      if(slot?.isConnected)placeNodeTools();
     }
     function nodeTools(node, info) {
       const schema = schemaOf(node),
         tools = E('div', 'blockui-node-tools');
       if (schema.category === 'target' || schema.category === 'script') return tools;
       const dragHandle = button('⠿', 'drag-handle', () => selection(node.id), {
-        'aria-label': schema.label + 'を おしたまま 動かす',
+        'aria-label': schema.label + 'を おしたまま 運ぶ',
         'data-blockui-drag': 'node',
         'data-block-id': node.id,
       });
@@ -30286,7 +30896,8 @@ function createAkariExtensionHost(options) {
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
       });
-      const move = button(document.body.dataset.uiLevel==='entry'?'うごかす':'動かす', 'move', () => moveStart(node), { 'data-block-id': node.id }),
+      // Moving a block is 「もっていく」: 「動かす」 is only for the characters and ▶ 動かす (E-05, §4).
+      const move = button('ほかへ もっていく', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
           '同じものをもう1つ作る',
           'duplicate',
@@ -30303,11 +30914,18 @@ function createAkariExtensionHost(options) {
           },
           { 'data-block-id': node.id },
         );
-      commands.append(move, duplicate);
+      commands.append(move);
+      if (info.body) {
+        const siblings = index.get(info.parentId)?.node.bodies[info.body] || [];
+        // Several blocks go together only when asked (E-06): this block and the ones below it in the same body.
+        if (info.index < siblings.length - 1)
+          commands.append(button('ここから下を まとめて もっていく', 'move-run', () => moveStart(node, 'run'), { 'data-block-id': node.id }));
+      }
+      commands.append(duplicate);
       if (info.body) {
         const siblings = index.get(info.parentId)?.node.bodies[info.body] || [];
         const up = button(
-            'うえへ',
+            '↑ まえへ',
             'move-up',
             () =>
               operate({
@@ -30317,10 +30935,10 @@ function createAkariExtensionHost(options) {
                 body: info.body,
                 index: info.index - 1,
               }),
-            { 'aria-label': schema.label + 'をうえへ', 'data-block-id': node.id },
+            { 'aria-label': schema.label + 'を まえへ', 'data-block-id': node.id },
           ),
           down = button(
-            'したへ',
+            '↓ あとへ',
             'move-down',
             () =>
               operate({
@@ -30330,25 +30948,25 @@ function createAkariExtensionHost(options) {
                 body: info.body,
                 index: info.index + 2,
               }),
-            { 'aria-label': schema.label + 'をしたへ', 'data-block-id': node.id },
+            { 'aria-label': schema.label + 'を あとへ', 'data-block-id': node.id },
           );
         up.disabled = info.index === 0;
         down.disabled = info.index === siblings.length - 1;
         tools.insertBefore(up, menu);
         tools.insertBefore(down, menu);
+        // One press to delete the selected block (E-05); undo brings it back.
+        if (!schema.draftOnly)
+          tools.insertBefore(button('けす', 'remove-quick', () => removeBlock(node, info), {
+            'aria-label': schema.label + (schema.bodies.length ? 'と 中の ブロックを けす' : 'を けす'), 'data-block-id': node.id }), menu);
+      }
+      const who = actorTool(node);
+      if (who) tools.insertBefore(who, menu);
+      if (info.body) {
         commands.append(
           button(
             schema.bodies.length ? 'このまとまりと中のブロックをけす' : 'このブロックをけす',
             'remove',
-            () => {
-              const result = operate({ type: 'remove', id: node.id });
-              if (!result.ok && index.get(info.parentId)?.node.schemaId !== 'Script')
-                announce(
-                  errorText(result.error || result.reason) +
-                    '。「何もしないへ」で 入れかえるか、まとまりごと けせます',
-                  true,
-                );
-            },
+            () => removeBlock(node, info),
             { 'data-block-id': node.id },
           ),
         );
@@ -30366,7 +30984,8 @@ function createAkariExtensionHost(options) {
               { 'data-block-id': node.id, 'aria-label': schema.label + 'を 何もしないに 入れかえる' },
             ),
           );
-      } else if (info.input) {
+      } else if (info.input && document.body.dataset.uiLevel !== 'entry') {
+        // はじめて has no 計算を入れる in its values (E-12).
         commands.append(
           button('計算を入れる', 'replace-expression', () => chooseDestination(listLocation(info)), {
             'data-block-id': node.id,
@@ -30408,6 +31027,17 @@ function createAkariExtensionHost(options) {
         if (b.dataset.blockuiAction !== 'collapse' && isLocked()) b.disabled = true;
       return tools;
     }
+    // The blocks 「ここから下を まとめて もっていく」 carries: the block and the ones after it in its body.
+    function runIds(id) {
+      const info = index.get(id), siblings = info?.body ? index.get(info.parentId)?.node.bodies[info.body] || [] : [];
+      return info?.body ? siblings.slice(info.index).map(n => n.id) : [id];
+    }
+    function removeBlock(node, info = index.get(node.id)) {
+      const result = operate({ type: 'remove', id: node.id });
+      if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
+        announce(errorText(result.error || result.reason) + '。「何もしないへ」で 入れかえるか、まとまりごと けせます', true);
+      return result;
+    }
     function statementBody(parent, slot) {
       const enabled = !slot.when || parent.fields[slot.when];
       if (!enabled) return null;
@@ -30443,6 +31073,20 @@ function createAkariExtensionHost(options) {
         render({ force: true });
       };
       let end = 0;
+      // An empty enclosure shows only its hole (〔くり返すことを えらぶ〕) as the place to put a block in (E-03).
+      if (children.length === 1 && children[0].schemaId === 'Hole:statement') {
+        const hole = renderNode(children[0]);
+        markDrop(hole, { parentId: parent.id, body: slot.key, index: 0 });
+        hole.classList.add('blockui-hole-target');
+        // The whole hole is the place: pressing it chooses the place, as 「＋ ここに入れる」 does.
+        if (!options.readOnly)
+          listen(hole, 'click', (event) => {
+            if (event.target.closest('button,input,select,textarea,summary') || Date.now() < suppressClickUntil) return;
+            chooseDestination({ parentId: parent.id, body: slot.key, index: 0 }, { keyboard: event.detail === 0 });
+          });
+        box.append(hole);
+        return box;
+      }
       for (const [begin, limit] of ranges) {
         if (begin > end) {
           const gap = E('div', 'blockui-body-gap'),
@@ -30460,7 +31104,7 @@ function createAkariExtensionHost(options) {
           box.append(insertion(parent.id, slot.key, i));
           box.append(renderNode(children[i]));
         }
-        box.append(insertion(parent.id, slot.key, limit));
+        box.append(insertion(parent.id, slot.key, limit, limit === children.length));
         end = limit;
       }
       if (end < children.length) {
@@ -30488,32 +31132,7 @@ function createAkariExtensionHost(options) {
       if (slot.type === 'expression') markDrop(box, location);
       const head = E('div', 'blockui-slot-head');
       head.append(E('span', 'blockui-slot-label', label));
-      if (slot.type === 'expression' && !options.readOnly) {
-        const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の中身の しゅるい', 'data-blockui-value-type': 'true' });
-        for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','計算']])
-          types.append(E('option', '', text, { value }));
-        types.disabled = isLocked();
-        listen(types, 'change', () => {
-          const kind = types.value; if (!kind) return;
-          const local = pending && (pending.id === child.id || index.get(pending.id)?.ancestors.includes(child.id));
-          if (pending?.composing) { announce('日本語の へんかんを おわらせてから えらんでください', true); types.value=''; return; }
-          const text = local ? pending.input.value : child.schemaId === 'StringLiteral' ? child.fields.value : '';
-          if (local) cancelField();
-          if (kind === 'expression') { chooseDestination(location); return; }
-          const next = createBlock(kind);
-          if (kind === 'StringLiteral') next.fields.value = text;
-          const result = operate({ type:'expression', ...location, node:next });
-          if (result.ok) {
-            const current = index.get(parent.id)?.node.inputs[slot.key], value = i === undefined ? current : current?.[i];
-            if (value) focus({ id:value.id });
-          }
-        });
-        const b = button('計算を入れる', 'slot-select', () => chooseDestination(location), {
-          'aria-label': label + 'に計算を入れる',
-        });
-        b.disabled = isLocked();
-        head.append(types, b);
-      }
+      if (slot.type === 'expression' && valueToolsShown()) head.append(...valueTools(location, label, child));
       if (slot.multiple && slot.variadic) {
         const n = parent.inputs[slot.key].length;
         const up = button(
@@ -30554,7 +31173,9 @@ function createAkariExtensionHost(options) {
         remove.disabled = isLocked() || n <= slot.minItems;
         head.append(up, down, remove);
       }
-      box.append(renderNode(child), head);
+      // A field's tools show when it has some; a name alone is its accessible name (E-12: no noise for beginners).
+      box.append(renderNode(child));
+      if (head.childElementCount > 1) box.append(head);
       if (!options.readOnly && parent.schemaId === 'ListRead' && slot.key === 'list' && child.schemaId === 'StringLiteral') {
         const recovery = E('div', 'blockui-list-repair'), select = E('select', '', null, { 'aria-label':'文字の代わりに使うリストを えらぶ' });
         select.append(E('option', '', 'リストを えらぶ', { value:'' }));
@@ -30629,24 +31250,123 @@ function createAkariExtensionHost(options) {
       }
       return wrap;
     }
-    function renderMotionBlock(node, schema, main) {
-      const value = schema.discriminator.value, extra = editDisclosure(node, 'extra', 'なおす', 'blockui-extra'), extraControls = E('div', 'blockui-extra-controls');
-      extra.querySelector('summary').setAttribute('aria-label', schema.label + 'を なおす');
+    // The 「…」 after a sentence opens what changes it beyond its values (E-14): time, a second direction, 計算 …
+    function extraDisclosure(node, label) {
+      const extra = editDisclosure(node, 'extra', '…', 'blockui-extra'), extraControls = E('div', 'blockui-extra-controls');
+      extra.querySelector('summary').setAttribute('aria-label', label);
       extra.append(extraControls);
+      return { extra, extraControls };
+    }
+    // E-02: a value whose unit the sentence fixes (回る → 度, 進む・動く → 歩, 待つ・〜秒かけて → 秒, 大きさ → ％ …) shows the
+    // unit as text, with no unit to choose: a number is its own field (1 秒), a range has the unit on both ends (1 秒から
+    // 3 秒の どれか, as the code writes it) and no unit after it. A quantity written with another unit shows the unit
+    // written, next to a button that puts the fixed one (「度に なおす」); ⚠ たしかめる explains it.
+    function roleUnit(node, key, index) {
+      const schema = schemaOf(node), form = SENTENCE_FORMS.find(item => item.kind === schema?.kind && (!item.op || item.op === schema.discriminator?.value));
+      const path = key + (index === undefined || index === null ? '' : '.' + index);
+      return form?.roleSlots?.find(role => role.path === path)?.unit || null;
+    }
+    function flatNumber(literal, location) {
+      const label = slotLabel(location), wrap = E('span', 'blockui-input-slot blockui-flat-value', null, { 'data-block-id': literal.id, 'aria-label': label });
+      if (!options.readOnly) markDrop(wrap, location);
+      wrap.append(fieldControl(literal, BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value')));
+      if (valueToolsShown()) {
+        const head = E('div', 'blockui-slot-head');
+        head.append(E('span', 'blockui-slot-label', label), ...valueTools(location, label, literal));
+        wrap.append(head);
+      }
+      return wrap;
+    }
+    function slotLabel(location) {
+      const parent = index.get(location.parentId)?.node, slot = schemaOf(parent)?.inputs.find(s => s.key === location.input);
+      if (parent?.schemaId === 'QuantityLiteral') return slotLabel(listLocation(index.get(parent.id)) || {}) || '数';
+      return slot ? slot.labels?.[location.index] || slot.label + (location.index === undefined ? '' : ' ' + (location.index + 1)) : '';
+    }
+    // ちがう ものに かえる and 計算を入れる (E-12): not at はじめて; at かんたん in the 「…」 after the sentence; at くわしく
+    // with the selected field.
+    function valueToolsShown() {
+      return !options.readOnly && document.body.dataset.uiLevel === 'advanced';
+    }
+    function valueTools(location, label, child) {
+      const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の中身の しゅるい', 'data-blockui-value-type': 'true' });
+      for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','計算']])
+        types.append(E('option', '', text, { value }));
+      types.disabled = isLocked();
+      listen(types, 'change', () => {
+        const kind = types.value; if (!kind) return;
+        const local = pending && (pending.id === child.id || index.get(pending.id)?.ancestors.includes(child.id));
+        if (pending?.composing) { announce('日本語の へんかんを おわらせてから えらんでください', true); types.value=''; return; }
+        const text = local ? pending.input.value : child.schemaId === 'StringLiteral' ? child.fields.value : '';
+        if (local) cancelField();
+        if (kind === 'expression') { chooseDestination(location); return; }
+        const next = createBlock(kind);
+        if (kind === 'StringLiteral') next.fields.value = text;
+        const result = operate({ type:'expression', ...location, node:next });
+        if (result.ok) {
+          const current = index.get(location.parentId)?.node.inputs[location.input], value = location.index === undefined ? current : current?.[location.index];
+          if (value) focus({ id:value.id });
+        }
+      });
+      const b = button('計算を入れる', 'slot-select', () => chooseDestination(location), {
+        'aria-label': label + 'に計算を入れる',
+      });
+      b.disabled = isLocked();
+      return [types, b];
+    }
+    // かんたん: a sentence's 「…」 holds 「ちがう ものに かえる」 and 「計算を入れる」 for each value in it (E-12).
+    function addValueToolsToExtra(node, box, main) {
+      if (options.readOnly || document.body.dataset.uiLevel !== 'basic' || schemaOf(node)?.category !== 'statement') return;
+      // The sentence's own parts (its bodies are not in main): its values and those of the calculations in it.
+      const places = [...main.querySelectorAll('.blockui-input-slot[data-blockui-drop]')].filter(n => !n.closest('.blockui-extra'));
+      if (!places.length) return;
+      let extra = main.querySelector(':scope > .blockui-extra');
+      if (!extra) { extra = extraDisclosure(node, schemaOf(node).label + 'の 中身を かえる').extra; main.append(extra); }
+      const controls = extra.querySelector(':scope > .blockui-extra-controls');
+      for (const place of places) {
+        const location = locationFromElement(place), parent = index.get(location.parentId)?.node,
+          current = parent?.inputs[location.input], child = location.index === undefined ? current : current?.[location.index];
+        if (!child) continue;
+        const row = E('div', 'blockui-value-row'), label = place.getAttribute('aria-label') || slotLabel(location);
+        row.append(E('span', 'blockui-slot-label', label), ...valueTools(location, label, child));
+        controls.append(row);
+      }
+    }
+    // 「度に なおす」: a quantity with another unit takes the fixed one; 右に（15秒）度回る, a quantity in a quantity, becomes
+    // 右に15度回る (the inner unit goes).
+    function unitRepair(quantity, unit, nested) {
+      if (options.readOnly) return doc.createDocumentFragment();
+      const repair = button(unit + 'に なおす', 'unit-repair', () => nested
+          ? operate({ type: 'replace', id: nested.id, node: copy(nested.inputs.value) })
+          : operate({ type: 'field', id: quantity.id, key: 'unit', value: unit }),
+        { 'aria-label': 'たんいを ' + unit + 'に なおす', 'data-block-id': (nested || quantity).id });
+      repair.disabled = isLocked();
+      return repair;
+    }
+    function unitValue(node, key, index, unit) {
+      const slot = schemaOf(node).inputs.find(s => s.key === key),
+        child = index === undefined ? node.inputs[key] : node.inputs[key]?.[index],
+        quantity = child?.schemaId === 'QuantityLiteral' ? child : null,
+        nested = quantity?.fields.unit === unit && quantity.inputs.value?.schemaId === 'QuantityLiteral' ? quantity.inputs.value : null,
+        shown = nested || quantity,
+        inner = shown ? shown.inputs.value
+          : child?.schemaId === 'UnitlessRead' && child.inputs.value?.schemaId === 'NumberLiteral' ? child.inputs.value : child,
+        written = shown?.fields.unit || unit,
+        text = s => E('span', 'blockui-phrase-text blockui-unit-text', s), parts = [];
+      // The place of the value is the sentence's own (a calculation put there takes the place of the number and its unit).
+      const at = { parentId: node.id, input: key, ...(index === undefined ? {} : { index }) };
+      if (inner?.schemaId === 'NumberLiteral' || inner?.schemaId === 'Hole:expression') parts.push(flatNumber(inner, at), text(written));
+      else if (inner?.schemaId === 'BuiltinCall:乱数' && inner.inputs.args?.length === 2) {
+        const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
+        parts.push(renderInput(inner, args, 0), text(written + 'から'), renderInput(inner, args, 1), text(written + 'のどれか'));
+      } else if (shown) parts.push(renderInput(shown, BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').inputs.find(s => s.key === 'value')), text(written));
+      else parts.push(renderInput(node, slot, index), text(written));
+      if (shown && written !== unit) parts.push(unitRepair(quantity, unit, nested));
+      return parts;
+    }
+    function renderMotionBlock(node, schema, main) {
+      const value = schema.discriminator.value, { extra, extraControls } = extraDisclosure(node, schema.label + 'を なおす');
       const text = s => E('span', 'blockui-phrase-text', s), fieldOf = key => schema.fields.find(f => f.key === key);
-      const numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value');
-      // A number is its own box with the unit after it; a range shows the unit on both ends (1 秒から 3 秒の どれか, as
-      // the code writes it); anything else keeps its slot.
-      const quantity = (key, unit, index) => {
-        const slot = schema.inputs.find(s => s.key === key), child = index === undefined ? node.inputs[key] : node.inputs[key]?.[index];
-        const wrapper = child?.schemaId === 'QuantityLiteral' && child.fields.unit === unit ? child : null, inner = wrapper ? wrapper.inputs.value : child;
-        if (inner?.schemaId === 'NumberLiteral') main.append(fieldControl(inner, numberField), text(unit));
-        else if (inner?.schemaId === 'BuiltinCall:乱数' && inner.inputs.args?.length === 2) {
-          const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
-          main.append(renderInput(inner, args, 0), text(unit + 'から'), renderInput(inner, args, 1), text(unit + 'のどれか'));
-        } else if (wrapper) main.append(renderInput(wrapper, BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').inputs.find(s => s.key === 'value')), text(unit));
-        else main.append(renderInput(node, slot, index), text(unit));
-      };
+      const quantity = (key, unit, index) => main.append(...unitValue(node, key, index, unit));
       const actor = fieldOf('actorRef');
       if (actor) main.append(fieldControl(node, actor));
       // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く
@@ -30740,38 +31460,23 @@ function createAkariExtensionHost(options) {
       const parts = phrase(schema);
       if (parts) {
         const displayParts = [...parts];
-        const form = SENTENCE_FORMS.find(item =>
-          item.kind === schema.kind && (!item.op || item.op === schema.discriminator?.value));
+        // A value whose unit the sentence fixes shows that unit itself (unitValue, E-02), so the phrase does not repeat
+        // it: 50 ％ にする, 50 ％から 150 ％の どれか.
+        const unitOf = part => part && typeof part === 'object' && part.slot ? roleUnit(node, part.slot.key, part.index) : null;
         for (let i = 0; i < displayParts.length; i++) {
-          const part = displayParts[i];
-          if (!part || typeof part !== 'object' || !part.slot) continue;
-          const path = part.slot.key + (part.index === undefined ? '' : '.' + part.index);
-          const unit = form?.roleSlots.find(role => role.path === path)?.unit;
-          const values = node.inputs?.[part.slot.key];
-          const value = Array.isArray(values) ? values[part.index] : values;
-          const following = displayParts[i + 1];
-          if (unit && value?.schemaId === 'QuantityLiteral' && value.fields?.unit === unit &&
-              typeof following === 'string' && following.startsWith(unit))
-            displayParts[i + 1] = following.slice(unit.length);
+          const unit = unitOf(displayParts[i]), following = displayParts[i + 1];
+          if (unit && typeof following === 'string' && following.startsWith(unit)) displayParts[i + 1] = following.slice(unit.length);
         }
-        // 50％から150％のどれか: a range in a slot with a fixed unit shows the unit on both ends, as the code writes it.
-        const unitRange = part => {
-          const path = part.slot.key + (part.index === undefined ? '' : '.' + part.index), unit = form?.roleSlots.find(role => role.path === path)?.unit;
-          const values = node.inputs?.[part.slot.key], value = Array.isArray(values) ? values[part.index] : values;
-          const inner = value?.schemaId === 'QuantityLiteral' && value.fields?.unit === unit ? value.inputs.value : null;
-          if (!unit || inner?.schemaId !== 'BuiltinCall:乱数' || inner.inputs.args?.length !== 2) return null;
-          const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
-          return [renderInput(inner, args, 0), E('span', 'blockui-phrase-text', unit + 'から'), renderInput(inner, args, 1), E('span', 'blockui-phrase-text', unit + 'のどれか')];
-        };
         for (const part of displayParts)
           main.append(...(
             typeof part === 'string'
-              ? [E('span', 'blockui-phrase-text', part)]
+              ? (part ? [E('span', 'blockui-phrase-text', part)] : [])
               : part.lineBreak
                 ? [E('span', 'blockui-phrase-break')]
               : part.field
                 ? [fieldControl(node, part.field)]
-                : unitRange(part) || [renderInput(node, part.slot, part.index)]
+                : unitOf(part) ? unitValue(node, part.slot.key, part.index, unitOf(part))
+                  : [renderInput(node, part.slot, part.index)]
           ));
         return;
       }
@@ -30815,7 +31520,11 @@ function createAkariExtensionHost(options) {
           // released pointer. Keep the field the user actually entered selected.
           if(focused&&focused!==box&&box.contains(focused)&&active.matches('input,textarea'))
             selection(focused.dataset.blockId);
-          else selection(node.id);
+          else {
+            selection(node.id);
+            // A press on a block's words gives the block the focus, so Delete and Backspace act on it (E-05).
+            if (!event.target.closest('input,textarea,select,button,summary,label,a,[contenteditable]')) box.focus({ preventScroll: true });
+          }
         }
       });
       const line = session()?.nodeMap?.get?.(node.id)?.sourceSpan?.startLine;
@@ -30879,21 +31588,11 @@ function createAkariExtensionHost(options) {
           if(schema.kind==='CompareExpression')main.append(slot('left'),E('span','blockui-phrase-text','が'),slot('right'),operator);
           else main.append(slot('left'),operator,slot('right'));
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
-          const extra=editDisclosure(node,'extra','なおす','blockui-extra'),extraControls=E('div','blockui-extra-controls');
-          extra.querySelector('summary').setAttribute('aria-label',schema.label+'の数・計算・時間を なおす');
-          extra.append(extraControls);
+          const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
+          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place.
           const numberSlot=(key,unit)=>{
-            const child=node.inputs[key],literal=(child?.schemaId==='QuantityLiteral'&&child.fields.unit===unit)||child?.schemaId==='UnitlessRead'?child.inputs.value:child;
-            if(literal?.schemaId==='NumberLiteral'||literal?.schemaId==='Hole:expression'){
-              main.append(fieldControl(literal,BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f=>f.key==='value')));
-              main.append(E('span','blockui-phrase-text',unit));
-              if(child?.schemaId==='QuantityLiteral')extraControls.append(fieldControl(child,BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').fields.find(f=>f.key==='unit')));
-            }else if(literal?.schemaId==='BuiltinCall:乱数'&&literal.inputs.args?.length===2){
-              // 1 秒から 3 秒の どれか: a range takes the unit on both ends, as the code writes it.
-              const args=BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s=>s.key==='args');
-              main.append(renderInput(literal,args,0),E('span','blockui-phrase-text',unit+'から'),renderInput(literal,args,1),E('span','blockui-phrase-text',unit+'のどれか'));
-            }else {main.append(slot(key));if(child?.schemaId!=='QuantityLiteral')main.append(E('span','blockui-phrase-text',unit));}
+            main.append(...unitValue(node,key,undefined,unit));
             extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
@@ -30911,7 +31610,8 @@ function createAkariExtensionHost(options) {
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
             });extraControls.append(data);
-            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text','を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
+            // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
+            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
             else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
           main.append(extra);
@@ -30920,7 +31620,27 @@ function createAkariExtensionHost(options) {
             control = fieldControl(child, numberField), input = control.querySelector('input');
           if (input) { input.value = '－' + decimalSource(child.fields.value); input.dataset.signedParentId = node.id; input.dataset.signedEdit = 'true'; }
           main.append(control);
-        } else if (schema.kind === 'QuantityLiteral') main.append(slot('value'), field('unit'));
+        } else if (schema.kind === 'QuantityLiteral') {
+          // A quantity in a slot with no fixed unit (へんすうに 入れる数, くらべる数 …): the unit is chosen only at くわしく,
+          // where 単位なし takes it off (E-02); the other levels show it as text.
+          const inner = node.inputs.value;
+          main.append(inner?.schemaId === 'NumberLiteral' || inner?.schemaId === 'Hole:expression'
+            ? flatNumber(inner, { parentId: node.id, input: 'value' }) : slot('value'));
+          if (document.body.dataset.uiLevel === 'advanced' && !options.readOnly) {
+            const unit = E('select', 'blockui-unit-choice', null, { 'aria-label': 'たんい', 'data-block-id': node.id, 'data-blockui-field': 'unit' });
+            for (const [v, label] of [...['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz'].map(u => [u, u]), ['', '単位なし']])
+              unit.append(E('option', '', label, { value: v }));
+            unit.value = node.fields.unit; unit.disabled = isLocked();
+            listen(unit, 'change', () => {
+              const result = unit.value ? operate({ type: 'field', id: node.id, key: 'unit', value: unit.value })
+                : operate({ type: 'replace', id: node.id, node: copy(node.inputs.value) });
+              if (!result.ok) unit.value = node.fields.unit;
+            });
+            const wrap = E('label', 'blockui-field', null, { 'data-field-type': 'unit' });
+            wrap.append(E('span', 'blockui-field-label', 'たんい'), unit);
+            main.append(wrap);
+          } else main.append(E('span', 'blockui-phrase-text blockui-unit-text', node.fields.unit));
+        }
         else if (schema.kind === 'UnitlessRead') main.append(slot('value'), E('span', '', 'の数だけ'));
         else if (schema.kind === 'ActorQualifiedRead') main.append(field('actorRef'), E('span', '', 'の'), slot('value'));
         else if (schema.kind === 'CloneCommand' && ['CREATE_SELF','CREATE_TARGET'].includes(schema.discriminator?.value)) {
@@ -30932,9 +31652,12 @@ function createAkariExtensionHost(options) {
         }
         else if (schema.kind === 'ContinuousRule') {
           main.style.flexWrap = 'wrap'; main.style.whiteSpace = 'normal';
-          main.append(field('actorRef'), E('span', '', 'は、'), slot('condition'), E('span', '', 'にあてはまる間、'),
-            field('direction'), E('span', '', 'へ、'), slot('seconds'), E('span', '', '秒に'), slot('distance'), E('span', '', '歩の速さで 動きつづける'));
-          for (const input of main.querySelectorAll(':scope > .blockui-input-slot')) {
+          // The same words as its code (E-14): 「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける.
+          if (node.fields.actorRef?.kind === 'named') main.append(field('actorRef'), E('span', 'blockui-phrase-text', '、'));
+          main.append(slot('condition'), E('span', 'blockui-phrase-text', 'あいだ、'), field('direction'), E('span', 'blockui-phrase-text', 'へ'),
+            ...unitValue(node, 'seconds', undefined, '秒'), E('span', 'blockui-phrase-text', 'に'),
+            ...unitValue(node, 'distance', undefined, '歩'), E('span', 'blockui-phrase-text', 'の速さで動き続ける'));
+          for (const input of main.querySelectorAll(':scope > .blockui-input-slot:not(.blockui-flat-value)')) {
             input.style.flexShrink = '0'; input.style.flexDirection = 'column';
             const head = input.querySelector(':scope > .blockui-slot-head');
             if (head) { head.style.position = 'static'; head.style.minWidth = '0'; }
@@ -30982,9 +31705,18 @@ function createAkariExtensionHost(options) {
             const actor = schema.fields.find(f => f.key === 'actorRef');
             if (actor) main.append(fieldControl(node, actor));
             renderPhrase(node, schema, main);
-            for (const f of schema.fields.filter(f => ['argument-names', 'reference'].includes(f.type))) main.append(fieldControl(node, f));
+            for (const f of schema.fields.filter(f => f.type === 'reference')) main.append(fieldControl(node, f));
+            // How the values are handed over (書いた じゅんに / 名前を つけて) is not a word of the sentence: it is in the
+            // 「…」 after it, so the placed block reads like its palette face and its code (E-14).
+            const handOver = schema.fields.find(f => f.type === 'argument-names');
+            if (handOver) {
+              let extra = main.querySelector(':scope > .blockui-extra');
+              if (!extra) { extra = extraDisclosure(node, schema.label + 'の わたし方を かえる').extra; main.append(extra); }
+              extra.querySelector(':scope > .blockui-extra-controls').append(fieldControl(node, handOver));
+            }
           } else renderPhrase(node, schema, main);
         }
+        addValueToolsToExtra(node, box, main);
         if (['statement', 'expression'].includes(schema.category)) {
           main.dataset.blockuiDrag = 'node';
           main.dataset.blockId = node.id;
@@ -31269,6 +32001,7 @@ function createAkariExtensionHost(options) {
       updateGeometry();
       observeMore();
       selection(selected, s?.blockSelectionLocation || null);
+      lightEmptyValue();
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
       rememberViewState();
@@ -31511,8 +32244,9 @@ function createAkariExtensionHost(options) {
           Math.ceil(world.offsetHeight * zoom + workspace.clientHeight * 0.4),
         ) + 'px';
       zoomLabel.textContent = Math.round(zoom * 100) + '%';
-      minus.disabled = zoom <= 0.2;
+      minus.disabled = zoom <= 0.5;
       plus.disabled = zoom >= 2;
+      placeNodeTools();
     }
     function scheduleGeometry() {
       if (destroyed || geometryFrame !== null) return;
@@ -31533,15 +32267,13 @@ function createAkariExtensionHost(options) {
       workspace.scrollTop = top;
       rememberViewState();
     }
+    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it (E-07).
     function fitBlocks() {
       const script = world.querySelector('.blockui-script');
       if (!script) return;
-      setZoom(
-        Math.min(
-          1,
-          Math.max(0.75,(workspace.clientWidth - 80) / (script.offsetWidth + 56)),
-        ),
-      );
+      const across = (workspace.clientWidth - 80) / (script.offsetWidth + 56),
+        down = (workspace.clientHeight - 24) / (world.offsetHeight + 24);
+      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
@@ -31577,23 +32309,73 @@ function createAkariExtensionHost(options) {
         } catch (_) {}
       rememberViewState();
     }
+    function startPan(pointerId, x, y, left = workspace.scrollLeft, top = workspace.scrollTop) {
+      pan = { id: pointerId, x, y, left, top };
+      try { workspace.setPointerCapture(pointerId); } catch (_) {}
+      workspace.classList.add('blockui-panning');
+    }
+    const touchLike = (type) => type === 'touch' || type === 'pen',
+      // A press that moves no more than this is a press (E-09); a mouse starts carrying sooner.
+      slopOf = (type) => (touchLike(type) ? 12 : 5),
+      HOLD_MS = 300;
+    // Two fingers spread or pinch the workspace around the point between them, from 50% to 200% (E-10). Whatever one
+    // finger had started (carrying, moving the workspace) stops.
+    const pinchPointers = new Map();
+    let pinch = null, pendingPan = null;
+    listen(workspace, 'pointerdown', (event) => {
+      if (event.pointerType !== 'touch') return;
+      pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pinchPointers.size === 2) {
+        if (drag) cancelDrag();
+        endPan();
+        pendingPan = null;
+        const [a, b] = [...pinchPointers.values()];
+        pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y) || 1, zoom };
+        for (const id of pinchPointers.keys()) try { workspace.setPointerCapture(id); } catch (_) {}
+        suppressClickUntil = Date.now() + 400;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      // A finger that starts on 「＋ ここに入れる」 or a button and goes up or down moves the workspace (E-09).
+      if (!drag && !pan && event.target.closest('.blockui-insertion,button,summary') && !event.target.closest('[data-blockui-drag]'))
+        pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop };
+    }, { capture: true });
+    listen(workspace, 'pointermove', (event) => {
+      if (pinch && pinchPointers.has(event.pointerId)) {
+        pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (pinchPointers.size < 2) return;
+        const [a, b] = [...pinchPointers.values()], r = workspace.getBoundingClientRect();
+        setZoom(pinch.zoom * Math.hypot(a.x - b.x, a.y - b.y) / pinch.distance, { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top });
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (pendingPan?.id === event.pointerId && !pan && Math.hypot(event.clientX - pendingPan.x, event.clientY - pendingPan.y) > slopOf('touch')) {
+        const start = pendingPan;
+        pendingPan = null;
+        startPan(start.id, start.x, start.y, start.left, start.top);
+        suppressClickUntil = Date.now() + 400;
+      }
+    }, { capture: true });
+    for (const type of ['pointerup', 'pointercancel'])
+      listen(workspace, type, (event) => {
+        pinchPointers.delete(event.pointerId);
+        if (pinchPointers.size < 2 && pinch) { pinch = null; rememberViewState(); }
+        if (pendingPan?.id === event.pointerId) pendingPan = null;
+      }, { capture: true });
+    // Pressing anywhere that is not a block, a place, a field or a button and moving moves the workspace (E-11),
+    // also right of a short block and around the blocks of an enclosure.
     listen(workspace, 'pointerdown', (event) => {
       if (
+        pinch ||
         event.button !== 0 ||
         event.isPrimary === false ||
         drag ||
-        event.target.closest('.blockui-node,.blockui-event-hat,button,input,select,textarea,summary,a')
+        event.target.closest('[data-blockui-drag],.blockui-insertion,.blockui-input-slot,.blockui-field,.blockui-node-head,button,input,select,textarea,summary,a,label,details[open]')
       )
         return;
-      pan = {
-        id: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        left: workspace.scrollLeft,
-        top: workspace.scrollTop,
-      };
-      workspace.setPointerCapture(event.pointerId);
-      workspace.classList.add('blockui-panning');
+      startPan(event.pointerId, event.clientX, event.clientY);
       event.preventDefault();
     });
     listen(workspace, 'pointermove', (event) => {
@@ -31606,8 +32388,9 @@ function createAkariExtensionHost(options) {
       if (pan?.id === event.pointerId) endPan();
     });
     listen(workspace, 'pointercancel', endPan);
-    listen(workspace, 'lostpointercapture', () => {
-      if (pan) endPan();
+    // A block that hands its finger over to the workspace loses the capture too; only the workspace's own loss ends the move.
+    listen(workspace, 'lostpointercapture', (event) => {
+      if (pan && event.target === workspace && event.pointerId === pan.id) endPan();
     });
     listen(
       workspace,
@@ -31648,6 +32431,10 @@ function createAkariExtensionHost(options) {
     shapeObserver?.observe(world);
     shapeObserver?.observe(workspace);
     shapeObserver?.observe(palette);
+    // The carried blocks: the block itself, or with 「ここから下を まとめて もっていく」 it and the blocks after it (E-06).
+    function carriedIds(state) {
+      return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
+    }
     function beginGhost(state) {
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
@@ -31655,7 +32442,8 @@ function createAkariExtensionHost(options) {
       if (!source) return;
       const rect = source.getBoundingClientRect(),
         scale = state.schemaId ? 1 : zoom,
-        clone = source.cloneNode(true);
+        holder = E('div', 'blockui-world blockui-ghost-world'),
+        parts = state.run ? carriedIds(state).map(id => locationElement({ id })).filter(Boolean) : [source];
       ghost = E('div', 'blockui-editor blockui-drag-ghost');
       ghost.setAttribute('aria-hidden', 'true');
       ghost.inert = true;
@@ -31663,27 +32451,45 @@ function createAkariExtensionHost(options) {
         source.dataset.paletteTone ||
         state.element.closest('[data-palette-tone]')?.dataset.paletteTone ||
         'data';
-      clone.classList.remove('blockui-selected', 'blockui-current', 'blockui-dragging');
-      clone.style.width = source.offsetWidth + 'px';
-      clone.style.maxWidth = 'none';
-      for (const n of clone.querySelectorAll('[id]')) n.removeAttribute('id');
-      for (const n of clone.querySelectorAll('.blockui-actions[open]')) n.open = false;
-      const holder = E('div', 'blockui-world blockui-ghost-world');
-      holder.append(clone);
+      for (const part of parts) {
+        const clone = part.cloneNode(true);
+        clone.classList.remove('blockui-selected', 'blockui-current', 'blockui-dragging', 'blockui-lift');
+        clone.style.width = part.offsetWidth + 'px';
+        clone.style.maxWidth = 'none';
+        for (const n of clone.querySelectorAll('[id]')) n.removeAttribute('id');
+        for (const n of clone.querySelectorAll('.blockui-actions[open],details[open]')) n.open = false;
+        // The ghost shows what the block says, also the values typed into it (a select keeps 度, not 歩).
+        const from = part.querySelectorAll('select,input,textarea'), to = clone.querySelectorAll('select,input,textarea');
+        from.forEach((n, i) => { if (to[i]) to[i].value = n.value; });
+        holder.append(clone);
+        part.classList.add('blockui-dragging');
+      }
       ghost.append(holder);
-      ghost.style.width = source.offsetWidth + 'px';
+      ghost.style.width = Math.max(...parts.map(part => part.offsetWidth)) + 'px';
       ghost.style.transform = `scale(${scale})`;
       doc.body.append(ghost);
       state.grabX = Math.min(rect.width, Math.max(0, state.startX - rect.left));
       state.grabY = Math.min(rect.height, Math.max(0, state.startY - rect.top));
       state.visual = source;
-      source.classList.add('blockui-dragging');
+      state.parts = parts;
     }
     function moveGhost(point) {
       if (!ghost || !drag) return;
       ghost.style.left = point.clientX - drag.grabX + 'px';
       ghost.style.top = point.clientY - drag.grabY + 'px';
+      if (dragReason) {
+        dragReason.style.left = Math.max(4, point.clientX - 20) + 'px';
+        dragReason.style.top = Math.max(4, point.clientY - drag.grabY - 32) + 'px';
+      }
     }
+    // An empty value place (an unfilled hole): a sentence carried right over it cannot go in (E-04).
+    function holeAt(element) {
+      const location = locationFromElement(element), parent = location && index.get(location.parentId)?.node,
+        value = parent && (location.index === undefined ? parent.inputs?.[location.input] : parent.inputs?.[location.input]?.[location.index]);
+      return value?.schemaId === 'Hole:expression';
+    }
+    // Inside the workspace a sentence goes to the nearest place: before a block from its upper half, after it from its
+    // lower half, after an enclosure from below its bottom line (E-04). A value goes to a value place within 40 px.
     function dragCandidate(event) {
       const bounds = workspace.getBoundingClientRect();
       if (
@@ -31696,40 +32502,74 @@ function createAkariExtensionHost(options) {
       const schema = drag?.schemaId
           ? BLOCK_SCHEMA_BY_ID.get(drag.schemaId)
           : schemaOf(index.get(drag?.id)?.node),
-        category = schema?.category;
+        category = schema?.category,
+        carried = (drag?.parts || []).filter(Boolean);
       const direct = doc.elementFromPoint(event.clientX, event.clientY)?.closest('[data-blockui-drop]');
-      if (
-        direct &&
-        world.contains(direct) &&
-        (category === 'statement') === !!direct.dataset.blockuiBody
-      )
-        return direct;
+      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct))) {
+        if ((category === 'statement') === !!direct.dataset.blockuiBody) return direct;
+        if (category === 'statement' && holeAt(direct)) return direct;
+      }
       let best = null,
         distance = Infinity;
       const candidates =
         category === 'statement'
-          ? world.querySelectorAll('.blockui-insertion')
+          ? world.querySelectorAll('.blockui-insertion,.blockui-hole-target')
           : world.querySelectorAll('.blockui-input-slot[data-blockui-drop]');
       for (const element of candidates) {
+        if (carried.some(part => part.contains(element))) continue;
         const r = element.getBoundingClientRect();
-        if (r.bottom < bounds.top || r.top > bounds.bottom) continue;
+        if (!r.width || r.bottom < bounds.top || r.top > bounds.bottom) continue;
         const dx = Math.max(r.left - event.clientX, 0, event.clientX - r.right),
           dy = Math.max(r.top - event.clientY, 0, event.clientY - r.bottom),
-          d = Math.hypot(dx, dy);
-        if (d < 28 && d < distance) {
+          d = category === 'statement' ? dy + 0.35 * dx : Math.hypot(dx, dy);
+        if ((category === 'statement' || d < 40) && d < distance) {
           best = element;
           distance = d;
         }
       }
       return best;
     }
-    function cancelDrag() {
+    let dragReason = null, dropNote = null, dropNoteTimer = null;
+    function showDragReason(text) {
+      if (!text) { dragReason?.remove(); dragReason = null; return; }
+      if (!dragReason) { dragReason = E('div', 'blockui-drag-reason', null, { 'aria-hidden': 'true' }); doc.body.append(dragReason); }
+      dragReason.textContent = text;
+    }
+    // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
+    function showDropNote(text, x, y) {
+      announce(text);
+      clearTimeout(dropNoteTimer);
+      dropNote?.remove();
+      dropNote = E('div', 'blockui-drop-note', text, { 'aria-hidden': 'true' });
+      doc.body.append(dropNote);
+      const w = dropNote.offsetWidth, h = dropNote.offsetHeight, view = doc.documentElement;
+      dropNote.style.left = Math.max(8, Math.min(x + 12, view.clientWidth - w - 8)) + 'px';
+      dropNote.style.top = Math.max(8, Math.min(y - h - 14, view.clientHeight - h - 8)) + 'px';
+      const note = dropNote;
+      dropNoteTimer = setTimeout(() => { note.classList.add('blockui-fading'); setTimeout(() => note.remove(), 320); if (dropNote === note) dropNote = null; }, 2200);
+    }
+    // A cancelled drop: the carried block goes back where it came from.
+    function returnGhost(state) {
+      const flying = ghost, target = (state.schemaId ? state.visual : state.parts?.[0] || state.visual)?.getBoundingClientRect();
+      ghost = null;
+      if (!flying) return;
+      if (!target?.width) { flying.remove(); return; }
+      flying.classList.add('blockui-returning');
+      flying.style.left = target.left + 'px';
+      flying.style.top = target.top + 'px';
+      setTimeout(() => flying.remove(), 260);
+    }
+    function cancelDrag({ animate = false } = {}) {
       const state = drag;
       drag = null;
+      clearTimeout(state?.holdTimer);
+      if (animate && state) returnGhost(state);
       ghost?.remove();
       ghost = null;
       snapPreview?.remove();
       snapPreview = null;
+      showDragReason('');
+      palette.classList.remove('blockui-delete-zone');
       state?.visual?.classList.remove('blockui-dragging');
       if (state?.started) suppressClickUntil = Date.now() + 350;
       if (dragFrame !== null) doc.defaultView.cancelAnimationFrame(dragFrame);
@@ -31738,9 +32578,9 @@ function createAkariExtensionHost(options) {
         try {
           state.element.releasePointerCapture(state.pointerId);
         } catch (_) {}
-      for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid,.blockui-dragging'))
-        n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid', 'blockui-dragging');
-      root.classList.remove('blockui-drag-active');
+      for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid,.blockui-dragging,.blockui-lift'))
+        n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid', 'blockui-dragging', 'blockui-lift');
+      root.classList.remove('blockui-drag-active', 'blockui-drag-statement');
       notifyPending();
       updateControls();
     }
@@ -31748,40 +32588,51 @@ function createAkariExtensionHost(options) {
       if (!drag) return;
       for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid'))
         n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid');
-      const element = dragCandidate(point),
-        location = locationFromElement(element),
-        schema = drag.schemaId
+      const schema = drag.schemaId
           ? BLOCK_SCHEMA_BY_ID.get(drag.schemaId)
-          : schemaOf(index.get(drag.id)?.node);
+          : schemaOf(index.get(drag.id)?.node),
+        pr = palette.getBoundingClientRect(),
+        overPalette = !!pr.width && point.clientX >= pr.left && point.clientX <= pr.right && point.clientY >= pr.top && point.clientY <= pr.bottom;
+      // Carried back to the block list, a sentence of the workspace is deleted when let go (E-05).
+      drag.deleteZone = !!drag.id && overPalette && schema?.category === 'statement';
+      palette.classList.toggle('blockui-delete-zone', drag.deleteZone);
+      const element = drag.deleteZone ? null : dragCandidate(point),
+        location = locationFromElement(element);
       let valid = !!location && schema?.category === (location.body ? 'statement' : 'expression'),
         reason = location
-          ? 'つなぐブロックは 本文へ、はめるブロックは あいている ところへ つなぎます'
-          : 'どこへ 動かすか えらんでください。おける ばしょの 外で はなすと やめます';
+          ? 'ここには おけないよ'
+          : '';
       if (valid && drag.id) {
         const parent = index.get(location.parentId);
-        valid = location.parentId !== drag.id && !parent?.ancestors.includes(drag.id);
-        if (!valid) reason = '自分の中には 動かせません';
+        valid = !carriedIds(drag).some(id => location.parentId === id || parent?.ancestors.includes(id));
+        if (!valid) reason = '自分の 中には 入れられないよ';
       }
       if (valid && drag.schemaId) {
         const candidate = availability(drag.schemaId, location, drag.candidate?.candidateNode);
         valid = candidate.enabled;
         if (!valid) reason = candidate.reason;
       }
+      const node = drag.id ? index.get(drag.id)?.node : null,
+        wraps = valid && location?.body && !drag.run ? wrapCount(schema, node, location, drag.id) : 0;
       if (valid && drag.id && schema.category === 'statement')
         try {
           prepareBlockEdit(
             { ...session(), pendingEdit: null },
-            { type: 'move', id: drag.id, ...location },
+            { type: drag.run ? 'move-run' : wraps ? 'wrap' : 'move', id: drag.id, ...location },
           );
         } catch (e) {
           valid = false;
           reason = errorText(e);
         }
 
-      if (valid) reason = location.body ? 'ここにつなぐ' : 'ここの 中身を 入れかえる';
+      if (valid) reason = !location.body ? 'ここの 中身を 入れかえる' : wraps ? '下の ' + wraps + 'この ブロックを 中に 入れる' : 'ここにつなぐ';
       drag.location = location;
       drag.valid = valid;
+      drag.wraps = wraps;
       if (element) element.classList.add(valid ? 'blockui-drop-preview' : 'blockui-drop-invalid');
+      ghost?.classList.toggle('blockui-ghost-invalid', !!location && !valid);
+      showDragReason(location && !valid ? reason : '');
+      moveGhost(point);
       snapPreview?.remove();
       snapPreview = null;
       if (valid && element) {
@@ -31792,9 +32643,10 @@ function createAkariExtensionHost(options) {
         snapPreview.style.top = (location.body ? r.top - 14 : r.bottom + 2) + 'px';
         doc.body.append(snapPreview);
       }
-      if (drag.reason !== reason) {
-        drag.reason = reason;
-        announce(reason, !valid && !!location);
+      const spoken = drag.deleteZone ? 'ここで はなすと けす' : reason || 'ここで はなすと 入れるのを やめるよ';
+      if (drag.reason !== spoken) {
+        drag.reason = spoken;
+        announce(spoken, !!location && !valid);
       }
     }
     function scrollDrag(timestamp = doc.defaultView.performance.now()) {
@@ -31835,6 +32687,11 @@ function createAkariExtensionHost(options) {
         if (pointerFocusTarget) {
           pointerFocusTarget = null;
           if (root.contains(doc.activeElement)) focusBlockField(doc.activeElement);
+          // A number or text field entered with a press holds its whole value selected, so typing replaces it; a second
+          // press in the field puts the caret there (E-01). The full-text dialog and the code view keep their caret.
+          const active = doc.activeElement;
+          if (active !== pointerFocusPrevious && active?.matches?.('.blockui-world .blockui-field input[type="text"]') && !active.closest('dialog'))
+            active.select();
         }
         if (deferredFocus) {
           deferredFocus = null;
@@ -31847,14 +32704,25 @@ function createAkariExtensionHost(options) {
       },
       { capture: true },
     );
+    // A long press on a block gives no menu of the browser (it lifts the block instead).
+    listen(root, 'contextmenu', (event) => {
+      if (touchLike(lastPointerType) && event.target.closest('[data-blockui-drag]')) event.preventDefault();
+    });
+    // A finger held on a block in the list moves the block, not the list.
+    listen(palette, 'touchmove', (event) => {
+      if ((drag?.held || drag?.started) && event.cancelable) event.preventDefault();
+    }, { passive: false });
     listen(root, 'pointerdown', (event) => {
       pointerFocusTarget = event.target;
+      pointerFocusPrevious = doc.activeElement;
+      lastPointerType = event.pointerType || 'mouse';
       const handle = event.target.closest('[data-blockui-drag]');
       if (
         !handle ||
         handle.disabled ||
         handle.getAttribute('aria-disabled') === 'true' ||
         isLocked() ||
+        pinch ||
         event.button !== 0 ||
         event.isPrimary === false
       )
@@ -31870,19 +32738,32 @@ function createAkariExtensionHost(options) {
         schemaId = handle.dataset.blockuiDragSchema;
       drag = {
         pointerId: event.pointerId,
+        pointerType: event.pointerType,
         element: handle,
         id,
         schemaId,
+        // After 「ここから下を まとめて もっていく」, carrying that block carries the blocks after it too.
+        run: !!id && moving?.type === 'run' && moving.id === id,
         candidate: handle._akariSearchCandidate,
         startX: event.clientX,
         startY: event.clientY,
         started: false,
+        held: false,
         owner: session()?.ownerKey,
         revision: session()?.sourceRevision,
         contextRevision: session()?.contextRevision,
         location: null,
         valid: false,
       };
+      // A finger held still for a moment lifts the block: it can then be carried in any direction (E-09).
+      if (touchLike(event.pointerType)) {
+        const state = drag;
+        state.holdTimer = setTimeout(() => {
+          if (drag !== state || state.started) return;
+          state.held = true;
+          (state.id ? handle.closest('.blockui-node') : handle.querySelector('.blockui-preview') || handle)?.classList.add('blockui-lift');
+        }, HOLD_MS);
+      }
       try {
         handle.setPointerCapture(event.pointerId);
       } catch (_) {}
@@ -31898,11 +32779,29 @@ function createAkariExtensionHost(options) {
         cancelDrag();
         return;
       }
-      if (!drag.started && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5)
+      const dx = event.clientX - drag.startX, dy = event.clientY - drag.startY;
+      // A finger that moved no more than 12 px is still a press; a mouse starts carrying after 5 px.
+      if (!drag.started && (touchLike(drag.pointerType) ? Math.hypot(dx, dy) <= slopOf(drag.pointerType) : Math.hypot(dx, dy) < slopOf(drag.pointerType)))
         return;
+      // A finger that goes up or down without holding first moves the list or the workspace, not the block (E-09).
+      if (!drag.started && touchLike(drag.pointerType) && !drag.held && Math.abs(dy) > Math.abs(dx)) {
+        const state = drag;
+        cancelDrag();
+        if (state.id) {
+          startPan(state.pointerId, state.startX, state.startY);
+          workspace.scrollLeft = pan.left + pan.x - event.clientX;
+          workspace.scrollTop = pan.top + pan.y - event.clientY;
+          suppressClickUntil = Date.now() + 400;
+        }
+        event.preventDefault();
+        return;
+      }
       if (!drag.started) {
         drag.started = true;
+        clearTimeout(drag.holdTimer);
         beginGhost(drag);
+        if (BLOCK_SCHEMA_BY_ID.get(drag.schemaId)?.category === 'statement' || schemaOf(index.get(drag.id)?.node)?.category === 'statement')
+          root.classList.add('blockui-drag-statement');
       }
       drag.clientX = event.clientX;
       drag.clientY = event.clientY;
@@ -31927,23 +32826,39 @@ function createAkariExtensionHost(options) {
       if (drag.started) previewDrag(event);
       const state = drag,
         started = state.started;
-      cancelDrag();
-      if (!started) return;
+      if (!started) {
+        cancelDrag();
+        // A long press let go without moving selects the block and shows its tools (E-09).
+        if (state.held && state.id) { selection(state.id); locationElement({ id: state.id })?.focus({ preventScroll: true }); }
+        return;
+      }
+      const wb = workspace.getBoundingClientRect(), pb = palette.getBoundingClientRect(),
+        inside = (r) => !!r.width && event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom,
+        outside = !inside(wb) && !inside(pb);
+      cancelDrag({ animate: !state.deleteZone && (!state.valid || !state.location) });
       event.preventDefault();
       suppressClickUntil = Date.now() + 350;
+      if (state.deleteZone) {
+        const ids = carriedIds(state);
+        const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
+          : removeBlock(index.get(state.id)?.node || { id: state.id });
+        if (result.ok) showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY);
+        return;
+      }
       if (!state.valid || !state.location) {
-        announce('動かすのを やめました');
+        showDropNote(outside || !state.location ? '入れるのを やめたよ' : state.reason || 'ここには おけないよ', event.clientX, event.clientY);
         return;
       }
       if (state.schemaId) {
         destination = state.location;
         paletteAdd(state.candidate || BLOCK_SCHEMA_BY_ID.get(state.schemaId));
-      } else completeMove(state.location, { id: state.id, type: 'move' });
+      } else completeMove(state.location, { id: state.id, type: state.run ? 'run' : 'move' });
     });
     listen(root, 'pointercancel', () => {
       pointerFocusTarget = null;
-      cancelDrag();
-      announce('動かすのを やめました');
+      const started = drag?.started;
+      cancelDrag({ animate: started });
+      if (started) announce('入れるのを やめたよ');
     });
     listen(root, 'lostpointercapture', () => {
       if (drag) cancelDrag();
@@ -31992,6 +32907,8 @@ function createAkariExtensionHost(options) {
     });
     listen(root, 'keydown', (event) => {
       pointerFocusTarget = null;
+      // A block put in with the keyboard gives its empty value the typing, as with a mouse (E-03).
+      lastPointerType = 'keyboard';
       if (event.isComposing) return;
       if (event.key === 'Tab') {
         if (deferredFocus === event.target) {
@@ -32002,10 +32919,20 @@ function createAkariExtensionHost(options) {
         for (const field of root.querySelectorAll('.blockui-editing-field'))
           field.classList.remove('blockui-editing-field');
       }
+      // Delete or Backspace on a selected sentence deletes it (E-05); in a field they delete characters.
+      if (['Delete', 'Backspace'].includes(event.key) && event.target.matches?.('.blockui-world .blockui-node.blockui-statement') &&
+          !options.readOnly && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        const node = index.get(event.target.dataset.blockId)?.node;
+        if (!node || schemaOf(node)?.draftOnly || isLocked()) return;
+        if (removeBlock(node).ok) focus({ id: session()?.blockSelection });
+        return;
+      }
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        const menu = event.target.closest('.blockui-extra[open],.blockui-subject[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-local-help[open],.blockui-actions[open]');
+        const menu = event.target.closest('.blockui-extra[open],.blockui-who[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-local-help[open],.blockui-actions[open],.blockui-who[open]');
         if (menu) {
           menu.open = false;
           menu.querySelector('summary')?.focus();
@@ -32014,7 +32941,7 @@ function createAkariExtensionHost(options) {
         if (pending) cancelField();
         else {
           destination = null; replacement = null; moving = null; cancelDrag();
-          notifyPending(); renderReplacement(); renderPalette(); updateControls();
+          notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
           for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
           for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
           announce('えらぶのを やめました。組み立て中のものは「とちゅうで やめる」、決めたことは「もとにもどす」で もどせます');
@@ -32699,7 +33626,8 @@ function createAkariExtensionHost(options) {
       if(action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile'))return true;
       const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];if(direct&&element.closest('#'+direct))return true;
       if(step?.block){if(element.closest('#blockEditor [data-lesson-block="'+step.block+'"]'))return tutorialInsertionReady(step);
-        const command=element.closest('#blockEditor [data-blockui-action="body-insert"]'),loc=tutorialDestination(mainEditor.session?.blockView,step);
+        // The place is a 「＋ ここに入れる」, or the hole of an empty enclosure, which is its only place (E-03).
+        const command=element.closest('#blockEditor [data-blockui-action="body-insert"],#blockEditor .blockui-hole-target'),loc=tutorialDestination(mainEditor.session?.blockView,step);
         return !tutorialInsertionReady(step)&&!!command&&!!loc&&command.dataset.parentId===loc.parentId&&command.dataset.blockuiBody===loc.body&&Number(command.dataset.insertIndex)===loc.index;}
       if(step?.ref&&step.action!=='undo'){const control=tutorialRoleControl();return element===control||control?.contains(element)
         ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');}
@@ -32784,9 +33712,12 @@ function createAkariExtensionHost(options) {
     function refreshTutorialPresentation() {
       if(!tutorial)return;
       const step=tutorialStep(tutorial);
+      // An empty enclosure shows its hole as its only place (E-03): the guide names what the child sees.
+      const place=step?.block&&tutorialDestination(mainEditor.session?.blockView,step),
+        holeOnly=!!place&&(()=>{const items=buildBlockIndex(mainEditor.session.blockView).get(place.parentId)?.node.bodies?.[place.body];return items?.length===1&&items[0].schemaId==='Hole:statement';})();
       if(step?.block)$('#tutorialText').textContent=tutorialInsertionReady(step)
         ?'左の青いわくの「'+TUTORIAL_BLOCKS[step.block].label+'」をえらぼう。'
-        :'青いわくの「＋ ここに入れる」を おしてみよう。';
+        :holeOnly?'青いわくの「することを えらぶ」を おしてみよう。':'青いわくの「＋ ここに入れる」を おしてみよう。';
         $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
         for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
           const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
@@ -34264,6 +35195,13 @@ function createAkariExtensionHost(options) {
         }
         $('#hintsDisclosure').open = false;
       }
+      // In blocks the body window comes before the stage and the right column, so Tab goes from the toolbar to the block
+      // list, the workspace, and then the stage and the right column (E-16). The code view keeps its order.
+      const code = $('.codewin');
+      if (code.parentElement === main) {
+        if (block && code.compareDocumentPosition(side) & Node.DOCUMENT_POSITION_PRECEDING) main.insertBefore(code, side);
+        else if (!block && code !== main.lastElementChild) main.append(code);
+      }
       $('#designerHeading').textContent = block ? '画面' : '画面づくり';
       $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
       const actions = $('.prop-actions');
@@ -34339,6 +35277,28 @@ function createAkariExtensionHost(options) {
       stageView.positionBubbles();
       if (stageZoom === null) $('.designer-wrap').scrollTo({ left: 0, top: 0 });
     }
+    // 大きく見る (E-21): the stage at 100% laid over the page; 「もどる」 or Escape gives back the layout, the zoom it had
+    // and the focus.
+    let enlargedFrom;
+    function setStageEnlarged(on) {
+      const button = $('#stageEnlarge');
+      if (on === document.body.classList.contains('stage-enlarged')) return;
+      document.body.classList.toggle('stage-enlarged', on);
+      button.textContent = on ? 'もどる' : '大きく見る';
+      button.setAttribute('aria-pressed', String(on));
+      if (on) { enlargedFrom = stageZoom; setStageZoom(1); }
+      else { setStageZoom(enlargedFrom ?? null); enlargedFrom = undefined; }
+      button.focus({ preventScroll: true });
+    }
+    $('#stageEnlarge').onclick = () => setStageEnlarged(!document.body.classList.contains('stage-enlarged'));
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || e.isComposing || !document.body.classList.contains('stage-enlarged') || document.querySelector('dialog[open],.modal.show')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setStageEnlarged(false);
+    }, true);
+    // With the workspace made wide, the stage stays small at the bottom right; pressing it brings the columns back.
+    $('#stageThumbnail').onclick = () => $('#blockEditor [data-blockui-action="workspace-expand"]')?.click();
     $('#stageZoomOut').onclick = () => setStageZoom(visibleStageScale - 0.1);
     $('#stageZoomIn').onclick = () => setStageZoom(visibleStageScale + 0.1);
     $('#stageZoomReset').onclick = () => setStageZoom(1);
@@ -35046,8 +36006,17 @@ function createAkariExtensionHost(options) {
       el.frame.style.width = project.stage.width + 6 + 'px';
       el.title.textContent = project.name;
     }
+    // 「たて・よこを そろえる」 (E-22) keeps a part's shape while a corner handle is moved, as Shift does with a mouse; it is
+    // shown over the stage on a touch screen while a part with a box is selected.
+    let designRatioLocked = false;
+    $('#designRatioLock').onclick = () => {
+      designRatioLocked = !designRatioLocked;
+      $('#designRatioLock').setAttribute('aria-pressed', String(designRatioLocked));
+    };
     function positionResizeHandles(c = designResizePreview || componentById(selectedId)) {
       if (!c) return;
+      // On a touch screen a handle is a 24 px dot that a finger presses within 40 px (E-19).
+      const coarse = matchMedia('(pointer: coarse)').matches, hit = coarse ? 40 : 24, dot = coarse ? 24 : 12;
       const rect = el.form.getBoundingClientRect(),
         stageScale = rect.width / project.stage.width || 1,
         s = c.scalePercent / 100;
@@ -35057,9 +36026,9 @@ function createAkariExtensionHost(options) {
           [hx, hy] = DESIGN_RESIZE_DIRECTIONS[handle.dataset.resizeDirection];
         handle.style.left = p.x + 'px';
         handle.style.top = project.stage.height - p.y + 'px';
-        handle.style.width = handle.style.height = 24 / stageScale + 'px';
+        handle.style.width = handle.style.height = hit / stageScale + 'px';
         handle.style.minWidth = handle.style.minHeight = '0';
-        handle.style.setProperty('--resize-dot', 12 / stageScale + 'px');
+        handle.style.setProperty('--resize-dot', dot / stageScale + 'px');
         handle.style.setProperty('--resize-stroke', 1.5 / stageScale + 'px');
         handle.hidden = false;
         if (designResizeMode(c) === 'box') {
@@ -35128,10 +36097,13 @@ function createAkariExtensionHost(options) {
       el.form
         .querySelectorAll('.design-resize-handle,.design-resize-outline')
         .forEach((n) => n.remove());
+      $('#designRatioLock').hidden = true;
       if (modelLocked() || selectedId === 'stage') return;
       const c = componentById(selectedId),
         mode = designResizeMode(c);
       if (!mode || !c.visible) return;
+      // Only a box changes its width and height apart; a picture costume keeps its shape anyway.
+      $('#designRatioLock').hidden = mode !== 'box';
       const node = el.form.querySelector(`[data-runtime-id="${CSS.escape(c.id)}"].component`);
       if (!node || node.style.display === 'none') return;
       const outline = document.createElement('div');
@@ -36039,7 +37011,7 @@ function createAkariExtensionHost(options) {
         }
         if (e.cancelable) e.preventDefault();
         const p = toStage(e);
-        next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey);
+        next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey || designRatioLocked);
         designResizePreview = { ...before, ...next };
         paintResizePreview(designResizePreview);
         setStatus(sizeText(next));
@@ -39680,6 +40652,7 @@ function createAkariExtensionHost(options) {
             ? () => {
                 const expanded = document.body.dataset.workbenchWide !== 'true';
                 document.body.dataset.workbenchWide = String(expanded);
+                $('#stageThumbnail').hidden = !expanded;
                 requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
                 return expanded;
               }
@@ -39793,7 +40766,9 @@ function createAkariExtensionHost(options) {
           event.stopImmediatePropagation();
           event.key.toLowerCase() === 'y' || event.shiftKey ? redoDo() : undo();
         }
-        if (event.key === 'Delete' && event.target.closest('#blockEditor,#callableBlocks'))
+        // Delete stays inside the block editor; on a selected sentence the editor itself deletes the block (E-05).
+        if (event.key === 'Delete' && event.target.closest('#blockEditor,#callableBlocks') &&
+            !event.target.matches('.blockui-world .blockui-node.blockui-statement'))
           event.stopPropagation();
       },
       true,
@@ -40043,6 +41018,8 @@ function createAkariExtensionHost(options) {
     hintCandidates,
     searchHintCandidates,
     blockSearchCandidates,
+    blockPaletteSearchText,
+    searchReading,
     searchIntent,
     insertionContext,
     insertSource,

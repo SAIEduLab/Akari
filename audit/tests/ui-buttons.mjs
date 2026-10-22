@@ -134,7 +134,7 @@ const cases = {
     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {
     if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); } const before=await fingerprint(p);
     const insertions=p.locator(root+' .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action="body-insert"]'); assert.equal(await insertions.count(),4,'three statements need four insertion boundaries');
-    const sizes=[]; for(let i=0;i<4;i++) { const b=insertions.nth(i); assert.equal(await b.isVisible(),true); const r=await reachable(b); assert.ok(r.width>=24&&r.height>=24,'minimum pointer target 24px'); sizes.push(r); assert.ok(await p.locator(root+' .blockui-chosen-destination').count()); await p.keyboard.press('Escape'); }
+    const sizes=[]; for(let i=0;i<4;i++) { const b=insertions.nth(i); assert.equal(await b.isVisible(),true); const r=await reachable(b); assert.ok(r.width>=24&&r.height>=(i===3?24:8),i===3?'minimum pointer target 24px':'a place between blocks is a thin line (E-07)'); sizes.push(r); assert.ok(await p.locator(root+' .blockui-chosen-destination').count()); await p.keyboard.press('Escape'); }
     assert.deepEqual(await fingerprint(p),before); assert.ok(await p.locator(root+' [data-blockui-drag="node"]').count()>=3,'drag alternative remains available');
     await insertions.last().click(); await p.locator(root+' [data-blockui-action="palette-category"][data-blockui-category="'+'look'+'"]').click(); await p.locator(root+' [data-blockui-schema="'+'Say'+'"]').click();
     assert.equal(await p.locator(root+' .blockui-node[data-schema-id="'+'Say'+'"]').count(),4); assert.equal((await fingerprint(p)).history,before.history+1);
@@ -143,7 +143,8 @@ const cases = {
     const touchContext=await p.context().browser().newContext({offline:true,hasTouch:true,viewport:{width:1024,height:768}}),errors=[],network=[];
     try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve(currentProductFile())).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await installRegressionProject(t); await select(t,'stage'); await fill(t,'1を言う。'); await mode(t,'blocks'); const before=await fingerprint(t);
       async function tap(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>=24&&r.height>=24); await t.touchscreen.tap(r.x+r.width/2,r.y+r.height/2); }
-      await tap(t.locator('#blockEditor [data-blockui-action="body-insert"]').first()); assert.ok(await t.locator('#blockEditor .blockui-chosen-destination').count()); await tap(t.locator('#blockEditor [data-blockui-action="cancel"]')); assert.equal(await t.locator('#blockEditor .blockui-chosen-destination').count(),0); assert.deepEqual(await fingerprint(t),before);
+      // A finger taps 「＋ ここに入れる」; a place between blocks is a thin line until a block is selected (E-07).
+      await tap(t.locator('#blockEditor [data-blockui-action="body-insert"]').last()); assert.ok(await t.locator('#blockEditor .blockui-chosen-destination').count()); await tap(t.locator('#blockEditor [data-blockui-action="cancel"]')); assert.equal(await t.locator('#blockEditor .blockui-chosen-destination').count(),0); assert.deepEqual(await fingerprint(t),before);
     } finally { await touchContext.close(); } assert.deepEqual(errors,[]); assert.deepEqual(network,[]); return {roots,touch:true};
   },
   async 'UI-BUTTON-BLOCK-COMMANDS'(p) {

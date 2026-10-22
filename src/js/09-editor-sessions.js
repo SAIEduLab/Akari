@@ -592,6 +592,15 @@
       if (location.slot.multiple) location.array[location.index] = node;
       else location.parent.inputs[location.slot.key] = node;
     };
+    // A body that shows only its hole (〔くり返すことを えらぶ〕) takes the first block put into it in the hole's place.
+    const loneHole = (array) => array.length === 1 && array[0].schemaId === 'Hole:statement';
+    // A body that needs a block and lost its last one shows its hole again, as after 「けす」.
+    const refillRequired = (parentId, key) => {
+      const parent = lookup(parentId).node, slot = BLOCK_SCHEMA_BY_ID.get(parent.schemaId)?.bodies.find(s => s.key === key);
+      if (!slot?.requiredExecutable || parent.bodies[key].length) return;
+      const hole = fresh(createBlock('Hole:statement', { allowHoles: true })); hole.fields.label = slot.label;
+      parent.bodies[key].push(hole);
+    };
     const replaceEntry = (entry, node) => {
       if (!entry.parentId) editorCheckError('本文全体はこの操作では置換できません');
       if (entry.body) {
@@ -658,13 +667,59 @@
           node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node, op.type === 'duplicate');
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
           editorError('ここには ブロックを 入れてね。計算は ここには 入れられません。');
-        // A visible body placeholder is replaced by the command the child chooses.
+        // A visible body placeholder is replaced by the command the child chooses (inserted, copied or moved there).
         // Complete existing bodies still use ordinary insertion semantics.
-        if (op.type === 'insert' && destination.array.length === 1 &&
-            destination.array[0].schemaId === 'Hole:statement')
-          destination.array.splice(0, 1, node);
+        if (loneHole(destination.array)) destination.array.splice(0, 1, node);
         else destination.array.splice(at, 0, node);
         selectedId = node.id;
+        return;
+      }
+      // An enclosure put above blocks takes the blocks below it into its first body (E-03): a new one (node) or a
+      // moved one whose first body holds no block yet (id). Below the last block it stays empty, showing its hole.
+      if (op.type === 'wrap') {
+        const destination = bodySlot(op.parentId, op.body);
+        let at = position(op.index, destination.array.length, true), node, source = null, from = null;
+        if (op.id) {
+          const entry = lookup(op.id), target = lookup(op.parentId);
+          if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+          if (target.node.id === op.id || target.ancestors.includes(op.id))
+            editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+          source = lookup(entry.parentId).node.bodies[entry.body]; from = entry;
+          node = entry.node;
+        } else node = fresh(op.node);
+        const inner = BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.bodies?.[0]?.key;
+        if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement' || !inner) editorCheckError('囲いではありません');
+        if (node.bodies[inner].some(n => n.schemaId !== 'Hole:statement'))
+          editorError('中に ブロックが ある 囲いは、下の ブロックを 中に 入れられません。');
+        if (source) {
+          if (source === destination.array && from.index < at) at--;
+          source.splice(from.index, 1);
+        }
+        if (loneHole(destination.array)) destination.array.splice(0, 1, node);
+        else {
+          const taken = destination.array.splice(at, destination.array.length - at, node);
+          if (taken.length) node.bodies[inner] = taken;
+        }
+        if (source && !source.length) refillRequired(from.parentId, from.body);
+        selectedId = node.id;
+        return;
+      }
+      // A block and the blocks below it in the same body move together (E-06 「ここから下を まとめて もっていく」).
+      if (op.type === 'move-run') {
+        const entry = lookup(op.id), target = lookup(op.parentId);
+        if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+        const source = lookup(entry.parentId).node.bodies[entry.body], run = source.slice(entry.index);
+        if (run.some(n => n.id === target.node.id || target.ancestors.includes(n.id)))
+          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+        const destination = bodySlot(op.parentId, op.body);
+        const at = position(op.index, destination.array.length, true);
+        // Within its own body a run moves up only; anywhere at or below its first block it stays where it is.
+        if (source === destination.array && at >= entry.index) return;
+        source.splice(entry.index, run.length);
+        if (loneHole(destination.array)) destination.array.splice(0, 1, ...run);
+        else destination.array.splice(at, 0, ...run);
+        if (!source.length) refillRequired(entry.parentId, entry.body);
+        selectedId = op.id;
         return;
       }
       if (op.type === 'remove') {
@@ -689,9 +744,9 @@
       if (op.type === 'move') {
         const entry = lookup(op.id),
           target = lookup(op.parentId);
-        if (!entry.body) editorError('この ブロックは ここから 動かせません。');
+        if (!entry.body) editorError('この ブロックは ここから もっていけません。');
         if (target.node.id === op.id || target.ancestors.includes(op.id))
-          editorError('ブロックを 自分の 中には 動かせません。ほかの ばしょを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
         const source = lookup(entry.parentId).node.bodies[entry.body],
           destination = bodySlot(op.parentId, op.body),
           at = position(op.index, destination.array.length, true);
@@ -699,7 +754,9 @@
         if (source === destination.array && entry.index < at) adjusted--;
         if (source === destination.array && entry.index === adjusted) return;
         source.splice(entry.index, 1);
-        destination.array.splice(adjusted, 0, entry.node);
+        if (loneHole(destination.array)) destination.array.splice(0, 1, entry.node);
+        else destination.array.splice(adjusted, 0, entry.node);
+        if (!source.length) refillRequired(entry.parentId, entry.body);
         selectedId = op.id;
         return;
       }
@@ -727,10 +784,10 @@
           !entry.input ||
           BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.category !== 'expression'
         )
-          editorError('この 計算は ここから 動かせません。');
+          editorError('この 計算は ここから もっていけません。');
         const destination = inputSlot(op.parentId, op.input, op.index);
         if (target.node.id === op.id || target.ancestors.includes(op.id))
-          editorError('ブロックを 自分の 中には 動かせません。ほかの ばしょを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
         if (
           entry.parentId === op.parentId &&
           entry.input === op.input &&
@@ -1114,8 +1171,16 @@
       ` V ${h - r} Q ${w} ${h} ${w - r} ${h} H 50 L 44 ${h + 6} H 26 L 20 ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`
     );
   }
+  // The workspace zoom: 50% to 200% (pinch, Ctrl and the wheel); − and ＋ step through the presets (E-10).
+  const BLOCK_ZOOM_STEPS = Object.freeze([0.5, 0.75, 1, 1.25, 1.5, 2]);
   function blockZoomCore(value) {
-    return Math.max(0.2, Math.min(2, Number(value) || 1));
+    return Math.max(0.5, Math.min(2, Number(value) || 1));
+  }
+  // The next preset above (direction 1) or below (−1) the zoom; a zoom between presets goes to the nearer one that way.
+  function blockZoomStep(value, direction) {
+    const now = blockZoomCore(value);
+    return direction > 0 ? BLOCK_ZOOM_STEPS.find(step => step > now + 1e-9) ?? 2
+      : [...BLOCK_ZOOM_STEPS].reverse().find(step => step < now - 1e-9) ?? 0.5;
   }
   function blockZoomScroll(scroll, anchor, oldZoom, newZoom) {
     return Math.max(0, ((scroll + anchor) / blockZoomCore(oldZoom)) * blockZoomCore(newZoom) - anchor);
@@ -1346,18 +1411,57 @@
     }return states;
   }
   // End entry workshop pure definitions.
-  const SEARCH_READINGS = Object.freeze({
-    '点数':'てんすう','代金':'だいきん','持ち物':'もちもの','大きさ':'おおきさ',
-    '右':'みぎ','左':'ひだり','上':'うえ','下':'した','小さく':'ちいさく',
-    '変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
-  });
+  // Kana, katakana and kanji search the same (E-13): every kanji word of the block names, their search words and the
+  // sentence forms has its reading here. Longer words are read first (回数 before 回), then single kanji. The audit checks
+  // that no kanji is left in any block's search text once it is read.
+  const SEARCH_READINGS = Object.freeze(Object.entries({
+    '四捨五入':'ししゃごにゅう','自然対数':'しぜんたいすう','常用対数':'じょうようたいすう','何文字目':'なんもじめ',
+    '切り上げ':'きりあげ','切り捨て':'きりすて','繰り返す':'くりかえす','繰り返し':'くりかえし','追いかける':'おいかける',
+    '分かれ道':'わかれみち','見えなく':'みえなく','出てくる':'でてくる','右回り':'みぎまわり','左回り':'ひだりまわり',
+    '非表示':'ひひょうじ','周波数':'しゅうはすう','文字数':'もじすう','絶対値':'ぜったいち','平方根':'へいほうこん',
+    '逆正弦':'ぎゃくせいげん','逆余弦':'ぎゃくよげん','逆正接':'ぎゃくせいせつ','何番目':'なんばんめ','持ち物':'もちもの',
+    '見た目':'みため','大きさ':'おおきさ','小さく':'ちいさく','小さい':'ちいさい','大きく':'おおきく','新しい':'あたらしい',
+    '近づく':'ちかづく','落ちる':'おちる','消える':'きえる','増やす':'ふやす','減らす':'へらす','見せる':'みせる',
+    '調べる':'しらべる','尋ねる':'たずねる','触れる':'ふれる','当たる':'あたる','重なる':'かさなる','重なり':'かさなり',
+    '鳴らす':'ならす','止める':'とめる','止まる':'とまる','終わる':'おわる','終わり':'おわり','始める':'はじめる',
+    '始まる':'はじまる','続ける':'つづける','続き':'つづき','変える':'かえる','変わる':'かわる','決める':'きめる',
+    '決まる':'きまる','入れる':'いれる','入る':'はいる','入っ':'はいっ','出す':'だす','回る':'まわる','回し':'まわし',
+    '下ろす':'おろす','下げる':'さげる','下がる':'さがる','上げる':'あげる','上がる':'あがる','行う':'おこなう','行った':'おこなった','行く':'いく','答え':'こたえ','後ろ':'うしろ','速さ':'はやさ','長さ':'ながさ',
+    '高さ':'たかさ','太さ':'ふとさ','向き':'むき','余り':'あまり','一つ':'ひとつ','同じ':'おなじ','歩く':'あるく',
+    '点数':'てんすう','代金':'だいきん','変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
+    '記録':'きろく','代入':'だいにゅう','時間':'じかん','歩数':'ほすう','方向':'ほうこう','座標':'ざひょう','移動':'いどう',
+    '回数':'かいすう','合図':'あいず','中身':'なかみ','名前':'なまえ','表示':'ひょうじ','部品':'ぶひん','文字':'もじ',
+    '背景':'はいけい','番号':'ばんごう','衣装':'いしょう','条件':'じょうけん','全部':'ぜんぶ','内容':'ないよう','関数':'かんすう',
+    '位置':'いち','場所':'ばしょ','相手':'あいて','回転':'かいてん','角度':'かくど','最後':'さいご','途中':'とちゅう',
+    '番目':'ばんめ','要素':'ようそ','削除':'さくじょ','何度':'なんど','発言':'はつげん','質問':'しつもん','返事':'へんじ',
+    '自分':'じぶん','動作':'どうさ','実行':'じっこう','最初':'さいしょ','作品':'さくひん','全体':'ぜんたい','画面':'がめん',
+    '手前':'てまえ','入力':'にゅうりょく','音量':'おんりょう','音程':'おんてい','段階':'だんかい','反対':'はんたい',
+    '乱数':'らんすう','正弦':'せいげん','余弦':'よげん','正接':'せいせつ','指数':'しすう','最小':'さいしょう','最大':'さいだい',
+    '以前':'いぜん','空白':'くうはく','空色':'そらいろ','問題':'もんだい','発表':'はっぴょう','題名':'だいめい',
+    '横':'よこ','縦':'たて','右':'みぎ','左':'ひだり','上':'うえ','下':'した','前':'まえ','後':'うし','中':'なか','間':'あいだ',
+    '端':'はし','奥':'おく','元':'もと','方':'ほう','目':'め','数':'かず','値':'あたい','秒':'びょう','歩':'ほ','回':'かい',
+    '度':'ど','個':'こ','体':'たい','点':'てん','色':'いろ','線':'せん','音':'おと','姿':'すがた','今':'いま','次':'つぎ',
+    '何':'なに','一':'いち','空':'そら','道':'みち','行':'い','動':'うご','返':'かえ','続':'つづ','決':'き','向':'む',
+    '進':'すす','追':'お','近':'ちか','変':'か','始':'はじ','待':'ま','入':'い','新':'あたら','足':'た','増':'ふ','減':'へ',
+    '引':'ひ','消':'け','終':'お','残':'のこ','分':'わ','繰':'く','見':'み','調':'しら','言':'い','話':'はな','答':'こた',
+    '尋':'たず','聞':'き','送':'おく','知':'し','受':'う','作':'つく','呼':'よ','出':'で','使':'つか','止':'と','触':'ふ',
+    '跳':'は','隠':'かく','重':'かさ','押':'お','太':'ふと','鳴':'な','高':'たか','読':'よ','同':'おな','大':'おお',
+    '小':'ちい','求':'もと','余':'あま','切':'き','捨':'す','直':'なお','長':'なが','取':'と','当':'あ','落':'お','速':'はや',
+    '問':'と','題':'だい','発':'はつ','表':'ひょう','示':'じ','名':'な','記':'き','録':'ろく','代':'だい',
+  }).sort((a, b) => b[0].length - a[0].length));
   function normalizeSearchText(value) {
     return String(value || '').normalize('NFKC').toLocaleLowerCase()
       .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s+/g, '');
   }
+  const SEARCH_READING_CACHE = new Map();
   function searchReading(value) {
     let text = normalizeSearchText(value);
-    for (const [word, reading] of Object.entries(SEARCH_READINGS)) text = text.split(word).join(reading);
+    const known = SEARCH_READING_CACHE.get(text);
+    if (known !== undefined) return known;
+    const key = text;
+    for (const [word, reading] of SEARCH_READINGS) if (text.includes(word)) text = text.split(word).join(reading);
+    if (SEARCH_READING_CACHE.size >= 2000) SEARCH_READING_CACHE.clear();
+    SEARCH_READING_CACHE.set(key, text);
     return text;
   }
   function searchIntent(value) {
@@ -1384,6 +1488,38 @@
   function matchesSearch(text, query) {
     return searchQueryVariants(query).some(q => normalizeSearchText(text).includes(normalizeSearchText(q)) || searchReading(text).includes(searchReading(q)));
   }
+  // The other forms of a verb find its block too (E-13): ふれた・ふれて・ふれたら・ふれない・ふれます → ふれる,
+  // まわった → まわる, and ふれる also finds the forms that keep its stem (ふれている). A stem keeps at least two kana, so
+  // short words such as した (下) stay as they are.
+  const SEARCH_A_TO_U = Object.freeze({ わ:'う', か:'く', が:'ぐ', さ:'す', た:'つ', な:'ぬ', ば:'ぶ', ま:'む', ら:'る' });
+  const SEARCH_I_TO_U = Object.freeze({ い:'う', き:'く', ぎ:'ぐ', し:'す', ち:'つ', に:'ぬ', び:'ぶ', み:'む', り:'る' });
+  function searchVerbForms(word) {
+    const out = [], add = (stem, ...endings) => { if ([...stem].length >= 2) for (const ending of endings) out.push(stem + ending); };
+    const s = word.replace(/([ただ])ら$/, '$1');
+    let m;
+    if ((m = s.match(/^(.+)っ[たて]$/))) add(m[1], 'る', 'う', 'つ');
+    else if ((m = s.match(/^(.+)ん[だで]$/))) add(m[1], 'む', 'ぶ', 'ぬ');
+    else if ((m = s.match(/^(.+)い[たて]$/))) add(m[1], 'く'), add(m[1] + 'い', 'る');
+    else if ((m = s.match(/^(.+)い[だで]$/))) add(m[1], 'ぐ');
+    else if ((m = s.match(/^(.+)し[たて]$/))) add(m[1], 'す'), add(m[1] + 'し', 'る');
+    else if ((m = s.match(/^(.+)[たて]$/))) add(m[1], 'る');
+    // A noun made from a verb (くりかえし, うごき) finds the verb (くりかえす, うごく).
+    if ([...word].length >= 3 && SEARCH_I_TO_U[word.slice(-1)]) add(word.slice(0, -1), SEARCH_I_TO_U[word.slice(-1)]);
+    if ((m = word.match(/^(.+)ない$/))) {
+      const last = m[1].slice(-1);
+      if (SEARCH_A_TO_U[last]) add(m[1].slice(0, -1), SEARCH_A_TO_U[last]);
+      add(m[1], 'る');
+    }
+    if ((m = word.match(/^(.+)ま(?:す|した|せん)$/))) {
+      const last = m[1].slice(-1);
+      if (SEARCH_I_TO_U[last]) add(m[1].slice(0, -1), SEARCH_I_TO_U[last]);
+      add(m[1], 'る');
+    }
+    // A verb like ふれる・かくれる・とめる (its stem ends in an -i or -e sound) also finds the forms that keep the stem:
+    // ふれる finds ふれている. A stem like うご (動く) would find every 動き block, so other verbs do not.
+    for (const form of [word, ...out]) if (/[いきしちにひみりぎじびぴえけせてねへめれげぜでべぺ]る$/.test(form)) add(form.slice(0, -1), '');
+    return [...new Set(out)];
+  }
   // A child searches with what they want: 少し待つ, みんなで待つ, ねこだけ待つ, 待ちたい, 止めたい, ぜんぶけす, スペース, ゆっくり.
   function searchQueryVariants(query) {
     const q = normalizeSearchText(query), out = new Set([q]);
@@ -1392,6 +1528,7 @@
     const wishes = {ちたい:['つ'],きたい:['く'],したい:['す'],みたい:['む','る'],りたい:['る'],いたい:['う'],びたい:['ぶ'],ぎたい:['ぐ'],
       めたい:['める'],えたい:['える'],せたい:['せる'],れたい:['れる'],げたい:['げる'],べたい:['べる'],けたい:['ける']};
     for (const [wish, endings] of Object.entries(wishes)) if (t.endsWith(wish)) for (const ending of endings) out.add(t.slice(0, -wish.length) + ending);
+    for (const form of searchVerbForms(t)) out.add(form);
     let written = t;
     for (const [word, key] of [['すぺーすきー','空白'],['すぺーす','空白'],['えんたー','決定'],['りたーん','決定'],['えすけーぷ','取消'],['ぜんぶ','全部'],['けす','消す']])
       written = written.split(word).join(key);
@@ -1466,6 +1603,17 @@
       out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
         draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
     }
+    // よく使う blocks first, then the ones whose name starts with the word (or has it right after a particle): まつ
+    // finds 秒待つ before …まで待つ (E-13). The order is otherwise kept.
+    const words = searchQueryVariants(query).map(searchReading).filter(word => [...word].length >= 2 || word === searchReading(query));
+    const wordStart = schema => {
+      const names = [schema.searchLabel, schema.label].filter(Boolean).map(searchReading);
+      if (words.some(word => names.some(name => name.startsWith(word)))) return 0;
+      const marks = ['を', 'に', 'の', 'で', 'と', 'へ', 'が', 'は', 'て', '、', '・', 'びょう', 'かい', 'ばんめ'];
+      return words.some(word => names.some(name => marks.some(mark => name.includes(mark + word)))) ? 1 : 2;
+    };
+    const rank = schema => (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 3) + wordStart(schema);
+    out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
     if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
@@ -1473,18 +1621,24 @@
   }
 
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
-    'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける'],
+    'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける',
+      'おちる', '落ちる', 'さがる', 'のぼる', 'ゆっくり'],
     ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
     'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
     'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '向きを変える', '回転'],
     'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '向きを変える', '回転'],
-    'LooksCommand:SHOW': ['見せる', '表示', '出す'],
-    'LooksCommand:HIDE': ['隠す', 'かくす', '非表示'],
+    // The words of what a child wants to make lead to the block too (E-13): でてくる, きえる, しつもん, おわる …
+    'LooksCommand:SHOW': ['見せる', '表示', '出す', 'でてくる', '出てくる', 'あらわれる', 'みえる'],
+    'LooksCommand:HIDE': ['隠す', 'かくす', '非表示', 'きえる', '消える', 'かくれる', 'みえなくする'],
+    'LooksCommand:SET_COSTUME': ['きがえる', 'みため', '見た目'],
+    'StopCommand:ALL': ['とめる', '止める', 'おわる', 'おわり'],
+    'StopCommand:THIS': ['とめる', '止める'],
+    'PenCommand:DOWN': ['せん', '線', 'かく', 'えがく'],
     'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
-    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒'],
-    Ask: ['質問', 'たずねる', '答え'],
+    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう'],
+    Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
     RepeatCount: ['くり返す', '繰り返す', '何度も', '回数'],

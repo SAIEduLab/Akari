@@ -17,8 +17,17 @@ const rootBody=p=>p.locator('#blockEditor .blockui-world > .blockui-script > .bl
 async function putCode(p,text){await p.locator('#codeEditor').fill(text);if(await p.locator('#sourceImportConfirm').isVisible())await p.locator('#sourceImportConfirm').click();}
 async function addSay(p,text,where=null){if(where)await where.click();else await rootBody(p).locator(':scope > .blockui-insertion').last().click();await add(p,'Say:timed','話す');const n=p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').last();await edit(n.locator('[data-schema-id="StringLiteral"] [data-blockui-field="value"]'),text);return n;}
 async function addWait(p,where=null){if(where)await where.click();else await rootBody(p).locator(':scope > .blockui-insertion').last().click();await add(p,'WaitTime','待つ');await edit(node(p,'WaitTime').locator(':scope > .blockui-node-content > .blockui-node-main [data-blockui-field="value"]').first(),'1');}
-async function typeSlot(slot,schema,text=null){await slot.locator(':scope > .blockui-node').click();await slot.locator(':scope > .blockui-slot-head [data-blockui-value-type]').selectOption(schema);if(text!==null)await edit(slot.locator('[data-blockui-field="value"]').first(),text);}
-async function chooseExpression(p,slot,schema){const hole=slot.locator('[data-blockui-action="hole-select-expression"]');if(await hole.count())await hole.click();else{await slot.locator(':scope > .blockui-node').click();await slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]').click();}await add(p,schema,schema);}
+// A value's tools (E-12): at くわしく with the selected field; at かんたん in the 「…」 after its sentence, one row per value.
+async function valueTool(slot,selector){
+ const head=slot.locator(':scope > .blockui-slot-head '+selector);if(await head.count())return head;
+ const label=await slot.getAttribute('aria-label'),statement=slot.locator('xpath=ancestor::article[contains(concat(" ",normalize-space(@class)," ")," blockui-statement ")][1]');
+ const extra=statement.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra');
+ if(await extra.getAttribute('open')===null)await extra.locator(':scope > summary').click();
+ const exact=new RegExp('^'+label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$');
+ return extra.locator('.blockui-value-row').filter({has:slot.page().locator('.blockui-slot-label',{hasText:exact})}).locator(selector);
+}
+async function typeSlot(slot,schema,text=null){await slot.locator(':scope > .blockui-node').click();await (await valueTool(slot,'[data-blockui-value-type]')).selectOption(schema);if(text!==null)await edit(slot.locator('[data-blockui-field="value"]').first(),text);}
+async function chooseExpression(p,slot,schema){const hole=slot.locator('[data-blockui-action="hole-select-expression"]');if(await hole.count())await hole.click();else{await slot.locator(':scope > .blockui-node').click();await (await valueTool(slot,'[data-blockui-action="slot-select"]')).click();}await add(p,schema,schema);}
 async function selectOwner(p,id,event){await p.locator('#objectSelect').selectOption(id);if(event)await p.locator('#eventSelect').selectOption(event);if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();}
 async function headingClick(p){await p.locator('#sourceHeadingBtn').click();const r=s=>p.locator('#blockEditor [data-blockui-structured-role="heading.'+s+'"]');await(await reveal(r('enabled'))).selectOption('yes');await r('event').selectOption('click');await p.locator('#blockEditor [data-blockui-action="heading-commit"]').click();}
 async function replaceCode(p,from,to){const e=p.locator('#codeEditor'),text=await e.inputValue(),at=text.indexOf(from);assert.ok(at>=0);await e.focus();await e.evaluate((e,{at,length})=>e.setSelectionRange(at,at+length),{at,length:from.length});await e.press('Backspace');await e.pressSequentially(to);}

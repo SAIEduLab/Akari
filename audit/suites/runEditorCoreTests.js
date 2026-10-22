@@ -79,7 +79,7 @@ function runEditorCoreTests() {
           ok(path.startsWith('M ') && path.endsWith('Z') && !/NaN|undefined|Infinity/.test(path));
         }
       ok(blockShapePath(120, 48).includes('L 26 6'));
-      ok(blockZoomCore(20) === 2 && blockZoomCore(0.01) === 0.2);
+      ok(blockZoomCore(20) === 2 && blockZoomCore(0.01) === 0.5);
       ok(blockZoomScroll(100, 50, 1, 2) === 250 && blockZoomScroll(250, 50, 2, 1) === 100);
       ok(blockShapeKind(BLOCK_SCHEMA_BY_ID.get('CompareExpression:EQ')) === 'boolean');
       for (const schema of BLOCK_SCHEMAS.filter((s) =>
