@@ -3102,7 +3102,8 @@
     if(starts.length>LIMITS.scripts)throw new AkariError('P208','見出しが 多すぎて、これ いじょう ふやせません。いらない 見出しの 本文を けしてください',1,1);
     const units=starts.map((entry,index)=>{
       const end=starts[index+1]?.start??source.length,text=source.slice(entry.start,end);let unit;
-      try{unit=parseScriptUnit(text,symbols,{...ctx,previousHeading:entry.previousHeading});}catch(error){if(error instanceof AkariError)error.line=(error.line||1)+entry.lineNo-1;throw error;}
+      // A fix's place is in the whole text, as the code view applies it (the unit's own places start at its heading).
+      try{unit=parseScriptUnit(text,symbols,{...ctx,previousHeading:entry.previousHeading});}catch(error){if(error instanceof AkariError){error.line=(error.line||1)+entry.lineNo-1;for(const proposal of error.proposals||[]){if(Number.isInteger(proposal.start))proposal.start+=entry.start;if(Number.isInteger(proposal.end))proposal.end+=entry.start;}}throw error;}
       const pending=[unit],shift=entry.lineNo-1;
       while(pending.length){
         const node=pending.pop();
