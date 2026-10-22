@@ -1152,6 +1152,13 @@
         canSplit: entries.every(x => x.independent), projectFingerprint: currentFingerprint() };
     }
     function hideSourceImport() { $('#sourceImport').hidden = true; $('#sourceImport').replaceChildren(); }
+    // While the import review waits, ▶ 動かす and うごく作品を ファイルにする say how to finish it, in the words of the
+    // review's own buttons.
+    function sourceImportChoice() {
+      if ($('#sourceImport').hidden) return '';
+      const take = ['#sourceImportConfirm', '#sourceImportSeparate', '#sourceImportEditCurrent'].map((id) => $(id)).find((b) => b && !b.disabled);
+      return take ? `「${take.textContent}」か「取りこみを やめる」を おしてね` : '「取りこみを やめる」を おしてね';
+    }
     function confirmSourceImport(binding, source, separate = false, editCurrent = false) {
       if (modelLocked() || composingEditors.has(binding.textarea) || binding.textarea.value !== source) return false;
       try {
@@ -1159,7 +1166,8 @@
         if (!plan || (editCurrent ? !plan.canEditCurrent : (!separate && !plan.safe) || (plan.hasExisting && !plan.canSplit))) return false;
         if (editCurrent || !plan.hasExisting) {
           commitSource(binding, source, { atomic: true });
-          hideSourceImport(); renderEditorBinding(binding); refreshEditor(); return true;
+          hideSourceImport(); renderEditorBinding(binding); refreshEditor();
+          setStatus('書いた 文を 本文に 入れたよ'); return true;
         }
         const next = cloneDesignProject(project), old = scriptBySourceKey(next, plan.ownerKey),
           incoming = plan.entries.filter(x => separate || !x.equal), ids = allIds();
@@ -1248,6 +1256,14 @@
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
               value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
+            // The text reads now: a mistake shown for an earlier keystroke goes away, above the code and in the status
+            // line, and the status line says what waits (the review) instead.
+            clearEditorFailure(binding);
+            if (editorFailureStatus !== null) {
+              if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を 直せたよ');
+              editorFailureStatus = null;
+            }
+            if (plan) setStatus('本文を 入れる ところを たしかめてね。' + sourceImportChoice());
             scheduleAutosave(); updateDirty(); return false;
           }
         }
@@ -5370,7 +5386,7 @@
       // A refused run always tells the child why nothing moved.
       const refuse = (reason) => setStatus('まだ 動かせないよ。' + reason);
       if (!flushActiveEditor()) {
-        refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
+        refuse(sourceImportChoice() || editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
       }
       if(tutorial){
@@ -5388,7 +5404,7 @@
         return;
       }
       if (!flushActiveEditor()) {
-        refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
+        refuse(sourceImportChoice() || editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
       }
       compiled = compileProject(project);
@@ -5729,7 +5745,14 @@
     let exportBusy = false;
     function exportProject() {
       if(tutorial)return;
-      if (!flushActiveEditor()) return;
+      if (!flushActiveEditor()) {
+        // A press that cannot make the file says why (the review waits, or the code has a mistake).
+        const why = sourceImportChoice() || editorFailureStatus;
+        if (why) setStatus('まだ ファイルに できないよ。' + why);
+        return;
+      }
+      clearTimeout(historyTimer);
+      pushHistoryNow();
       if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
@@ -8021,8 +8044,9 @@
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          // ▶ 動かす closes the input itself and says why it does not run (startRun).
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn')
+          // ▶ 動かす and うごく作品を ファイルにする close the input themselves and say why they do not go on (startRun,
+          // exportProject).
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn,#exportBtn,#entryExport')
         )
           return;
         if (!flushActiveEditor()) {
