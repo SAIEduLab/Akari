@@ -22,10 +22,10 @@ function geometry(g){
 }
 function exercise(o,callable=false){
   geometry(o.initial);geometry(o.queried);geometry(o.optionsOpen);
-  assert.equal(o.initial.scopeText,'すべての なかまから さがせます');assert.equal(o.initial.value,'');assert.equal(o.queried.value,'時間を待つ');
+  assert.equal(o.initial.scopeText,'すべての なかまから さがせるよ');assert.equal(o.initial.value,'');assert.equal(o.queried.value,'時間を待つ');
   assert.equal(o.optionsOpen.value,'時間を待つ');assert.equal(o.optionsOpen.optionsExpanded,true);assert.ok(o.optionsOpen.mode.width>0);contains(o.optionsOpen.controls,o.optionsOpen.mode,'expanded candidate mode');
   assert.deepEqual(o.keyboard,{inputFocused:true,tabReachedSummary:true,enterOpened:true,enterClosed:true,shiftTabReturned:true,candidateEntered:true});
-  assert.equal(o.category.scope,'すべての なかまから さがしています');assert.equal(o.category.pressed,'true');assert.equal(o.category.query,'時間を待つ');assert.equal(o.cleared,'');
+  assert.equal(o.category.scope,'すべての なかまから さがしているよ');assert.equal(o.category.pressed,'true');assert.equal(o.category.query,'時間を待つ');assert.equal(o.cleared,'');
   assert.ok(o.matches.includes('WaitTime'));assert.equal(o.insertionQuery,'時間を待つ');assert.deepEqual(o.afterSearch,o.before);assert.deepEqual(o.projectAfterSearch,o.before.project);
   assert.equal(o.inserted.waits.length,1);assert.equal(o.inserted.waits[0].seconds,1);assert.equal(o.inserted.history,o.before.history+1);
   assert.equal(o.after.source.includes('本文を守る'),true);assert.notEqual(o.after.source,o.before.source);
