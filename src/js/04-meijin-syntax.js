@@ -449,7 +449,9 @@
       const list = set(p[1]);
       if (list) return { set: exprNode('PartPick', { list, by: { kind: 'variable', name: p[3], order: p[4] === '大きい' ? 'max' : 'min' } }) };
     }
-    if ((p = /^(.+?)に(?:ふれ|触れ)ている(.+)$/.exec(phrase)) && isMeijinPart(p[1], symbols, ctx)) {
+    // 「ねこ」にふれているもの: the part's name in 「 」 is the same part (C-touch-R2-05).
+    if ((p = /^(.+?)に(?:ふれ|触れ)ている(.+)$/.exec(phrase)) && /^「[^「」]+」$/.test(p[1]) && isMeijinPart(p[1].slice(1, -1), symbols, ctx)) p = [p[0], p[1].slice(1, -1), p[2]];
+    if (p && /^(.+?)に(?:ふれ|触れ)ている(.+)$/.test(phrase) && isMeijinPart(p[1], symbols, ctx)) {
       const of = p[2] === 'もの' ? null : isMeijinPart(p[2], symbols, ctx) ? p[2] : undefined;
       if (of !== undefined) return { set: exprNode('PartsTouching', { target: meijinPartRef(p[1]), ...(of ? { of: meijinPartRef(of) } : {}) }) };
     }
@@ -571,7 +573,9 @@
     {
       const actorOf = name => isMeijinPart(name, symbols, scope) ? { kind: 'named', name: meijinBare(name) }
         : meijinVariableName(name, symbols, scope) ? meijinValueActor(meijinVariableRead(name)) : null;
-      const targetOf = name => isMeijinPart(name, symbols, scope) ? meijinPartRef(name)
+      // 「ロケット」 (the part's name in 「 」, as common text writes it) is the same part (R2-B-05).
+      const quotedPart = name => { const m = /^「([^「」]+)」$/.exec(name); return m && isMeijinPart(m[1], symbols, scope) ? m[1] : null; };
+      const targetOf = name => quotedPart(name) ? meijinPartRef(quotedPart(name)) : isMeijinPart(name, symbols, scope) ? meijinPartRef(name)
         : meijinVariableName(name, symbols, scope) ? meijinVariableRead(name) : ['マウス', '「マウス」'].includes(name) ? exprNode('StringLiteral', { value: 'マウス' }) : null;
       // With no subject written, the subject carried on goes (決まり4); with none, the check asks who goes.
       const go = (subject, other, seconds) => {
