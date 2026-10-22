@@ -557,7 +557,18 @@
       }
       return input.value;
     }
+    let pressing = false;
+    listen(root, 'pointerdown', () => { pressing = true; }, { capture: true });
+    for (const type of ['pointerup', 'pointercancel']) listen(doc.defaultView, type, () => { pressing = false; }, { capture: true });
     function flushToTarget(next) {
+      // A number that cannot be read is given up when another field is entered: its field shows the value it had, and
+      // the new input starts without the old mistake (E-12).
+      if (pending && next !== pending.input && next?.matches?.('input,textarea,select') && root.contains(next) &&
+          !next.closest('dialog') && !readable(pending)) {
+        dropPending();
+        announce('');
+        return { ok: true };
+      }
       // Keep the incoming control alive until it receives its native click or
       // input. A blur commit must not replace that control during focus transfer.
       deferredFocus = next && root.contains(next) ? next : null;
@@ -738,16 +749,27 @@
       }
       return { ok: true, changed: result.changed !== false };
     }
-    function cancelField() {
+    function readable(p) {
+      try { p.read(); return true; } catch (_) { return false; }
+    }
+    // Gives up the value being typed: the field shows the value it had again.
+    function dropPending() {
       const field = pending;
       pending = null;
       if (field?.input?.isConnected) {
         field.input.value = field.field.type === 'qualifier' ? field.original ?? 'none'
           : field.field.type === 'number' ? field.original === undefined ? '' : decimalSource(field.original) : edgeShown(index.get(field.id)?.node, field.field, field.original) ?? '';
         field.input.setAttribute('aria-invalid', 'false');
+        if (field.input.tagName === 'INPUT') field.input.title = field.input.value;
+        // A surface left open for a field that no longer has the focus closes with it.
+        if (field.input !== doc.activeElement) field.input.closest('.blockui-editing-field')?.classList.remove('blockui-editing-field');
       }
       notifyPending();
       updateControls();
+      scheduleGeometry();
+    }
+    function cancelField() {
+      dropPending();
       announce('ここに 入れかけた ものを やめました。組み立て中の ブロックは のこっています');
       return { ok: true };
     }
@@ -828,18 +850,37 @@
       placeControls();
     }
     // The floating controls never take a row of their own, so nothing moves (E-12). They go right under the field being
-    // edited (above it when the window ends below). While a place is chosen, a block is moved or an enclosure waits for
+    // edited (above it when the window ends below), unless they would cover something to press there and another place
+    // near the field is free (until a mistake is shown). While a place is chosen, a block is moved or an enclosure waits for
     // what goes in it, they go in the free middle of the row above the workspace (options.controlsSpace), else in a
     // corner of the workspace where they cover no block, else over its top left.
     function placeControls() {
       if (controls.hidden || !root.getBoundingClientRect().width) return;
+      // While a press is held they stay where they are, so a press that ends a field's input never lands on them.
+      if (pressing && controls.style.getPropertyValue('--blockui-controls-top')) return;
       const view = doc.documentElement, room = workspace.getBoundingClientRect(),
         w = controls.offsetWidth || 300, h = controls.offsetHeight || 40,
         field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
       let spot;
-      if (field?.width)
-        spot = { x: field.left, y: field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4) };
-      else {
+      if (field?.width) {
+        const under = field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4);
+        spot = { x: field.left, y: under };
+        // Before a mistake is shown they may go where they cover nothing to press (a 「＋ ここに入れる」, a field, a choice
+        // or a button of the blocks; the thin lines between blocks may be covered): right above the field, or at the
+        // right end of the workspace under or above it. A mistake is always shown right under the field.
+        if (!(pending.shown && pending.error)) {
+          const own = pending.input.closest('.blockui-field') || pending.input,
+            marks = [...world.querySelectorAll('.blockui-insertion, input, select, textarea, summary, button')]
+              .filter(n => !own.contains(n) && n.checkVisibility?.({ visibilityProperty: true }) !== false)
+              .map(n => n.getBoundingClientRect()).filter(b => b.width && b.height >= 12),
+            at = (x) => Math.max(4, Math.min(x, view.clientWidth - w - 4)),
+            free = ([x, y]) => y >= Math.max(4, room.top) && y + h <= Math.min(room.bottom, view.clientHeight - 4) &&
+              !marks.some(b => b.right > x && b.left < x + w && b.bottom > y && b.top < y + h),
+            far = room.left + workspace.clientWidth - 8 - w, above = field.top - h - 4,
+            best = [[at(field.left), under], [at(field.left), above], [at(far), under], [at(far), above]].find(free);
+          if (best) spot = { x: best[0], y: best[1] };
+        }
+      } else {
         const free = options.controlsSpace?.();
         spot = free && free.right - free.left >= w
           ? { x: free.left, y: free.top + Math.max(0, (free.bottom - free.top - h) / 2) }
@@ -913,12 +954,15 @@
     }
     // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
     // is in it), where they cover no other block: first the selected block's tools, under them the selected field's
-    // tools, under those the tools of a selected value. With no room on the right a block's tools go right above it
-    // and a field's tools under the field.
+    // tools, under those the tools of a selected value. With no room on the right a block's tools go right above it.
+    // A text field's editing surface lies over the blocks: its field's tools go on its line when they fit there. Else a
+    // field's tools go beside the sentence, under the field, under the whole sentence or right above the field, where
+    // they cover no value of this sentence or of another block (else where they cover the fewest).
     function placeNodeTools() {
       const room = workspace.getBoundingClientRect(),
         box = workspace.querySelector('.blockui-node.blockui-selected'), head = box?.querySelector(':scope > .blockui-node-head'),
-        slot = workspace.querySelector('.blockui-input-slot.blockui-slot-active'), slotHead = slot?.querySelector(':scope > .blockui-slot-head');
+        slot = workspace.querySelector('.blockui-input-slot.blockui-slot-active'), slotHead = slot?.querySelector(':scope > .blockui-slot-head'),
+        editing = workspace.querySelector('.blockui-field.blockui-editing-field');
       const ownerOf = (el) => el?.closest('.blockui-statement') || el?.closest('.blockui-node');
       const lineOf = (owner) => owner?.querySelector(':scope > .blockui-node-content > .blockui-node-main') || owner;
       // Moves an absolutely placed element so that its top left is at (x, y) on the screen; the world may be zoomed.
@@ -927,7 +971,23 @@
         el.style.left = (parseFloat(cs.left) || 0) + (x - r.left) / zoom + 'px';
         el.style.top = (parseFloat(cs.top) || 0) + (y - r.top) / zoom + 'px';
       };
-      const fits = (owner, el) => owner.getBoundingClientRect().right + 8 + el.getBoundingClientRect().width <= room.right - 8;
+      for (const el of [head, slotHead]) if (el) { el.style.left = el.style.top = el.style.transform = el.style.maxWidth = ''; }
+      box?.classList.remove('blockui-tools-above');
+      const showsSlotHead = !!slotHead?.getClientRects().length,
+        inline = !!editing && showsSlotHead && slot.contains(editing) && sizeEditingField(editing, slotHead.getBoundingClientRect().width);
+      if (editing && !inline) sizeEditingField(editing);
+      // What an element covers on the screen, with the editing surface of a text field in it.
+      const surface = editing ? [...editing.querySelectorAll(':scope > input, :scope > textarea, :scope > .blockui-edit-text')] : [];
+      const extent = (el) => {
+        const r = el.getBoundingClientRect(), e = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+        if (editing && el.contains(editing))
+          for (const s of surface.map(n => n.getBoundingClientRect()).filter(s => s.width)) {
+            e.left = Math.min(e.left, s.left); e.top = Math.min(e.top, s.top);
+            e.right = Math.max(e.right, s.right); e.bottom = Math.max(e.bottom, s.bottom);
+          }
+        return e;
+      };
+      const fits = (owner, el) => extent(owner).right + 8 + el.getBoundingClientRect().width <= room.right - 8;
       // The other blocks (not the selected one, what is in it or what holds it) and the places to put a block in (「＋ ここに
       // 入れる」 and the lines between blocks) must stay free to press.
       const blockers = box ? [...world.querySelectorAll('.blockui-statement, .blockui-event-hat, .blockui-insertion')].filter(n => !box.contains(n) && !n.contains(box)) : [];
@@ -936,51 +996,107 @@
         const b = n.getBoundingClientRect();
         return !b.width || b.right <= r.left || b.left >= r.right || b.bottom <= r.top + 1 || b.top >= r.bottom - 1;
       });
-      for (const el of [head, slotHead]) if (el) { el.style.left = el.style.top = el.style.transform = el.style.maxWidth = ''; }
-      box?.classList.remove('blockui-tools-above');
+      // The fields, choices, 「…」 and buttons of the blocks (and the value places that hold none) and the other floating
+      // tools, which a field's or a value's tools must not cover; what belongs to the tools' own field or value is not
+      // counted. Lying over the other tools counts as covering three of them.
+      const floating = [head, slotHead].filter(Boolean), meets = (b, r) => b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom;
+      let marks = null;
+      const covers = (r, own) => (marks ??= [...world.querySelectorAll('input, select, textarea, summary, button:not(.blockui-insertion), .blockui-input-slot:not(:has(input, select, textarea, summary, button))')]
+        .filter(n => !floating.some(f => f.contains(n)) && n.checkVisibility?.({ visibilityProperty: true }) !== false)
+        .map(n => [n, n.getBoundingClientRect()]).filter(([, b]) => b.width && b.height))
+        .filter(([n, b]) => !own.some(o => o.contains(n) || n.contains(o)) && meets(b, r)).length
+        + 3 * [...floating, ...surface].filter(f => !own.includes(f) && f.getClientRects().length && meets(f.getBoundingClientRect(), r)).length;
+      // Right above a block whose editing surface rises above it, the tools go above the surface.
+      const aboveSurface = () => {
+        const rise = box.getBoundingClientRect().top - extent(box).top;
+        if (rise > 0) head.style.transform = 'translateY(' + -rise / zoom + 'px)';
+      };
+      // The first of the places that covers nothing, else the one that covers the least.
+      const bestOf = (spots, w, h, own) => {
+        let best = spots[0], fewest = Infinity;
+        for (const spot of spots) {
+          const n = covers({ left: spot[0], top: spot[1], right: spot[0] + w, bottom: spot[1] + h }, own);
+          if (n < fewest) { best = spot; fewest = n; }
+          if (!n) break;
+        }
+        return best;
+      };
       let below = null;
       if (head?.getClientRects().length) {
         const owner = box.classList.contains('blockui-statement') ? box : ownerOf(box.parentElement);
         if (box.classList.contains('blockui-statement') && owner === box) {
           // One row when it fits; else the row wraps into the room left on the right; else right above the block.
+          const right = extent(box).right;
+          if (right > box.getBoundingClientRect().right + 1) moveTo(head, right + 8, head.getBoundingClientRect().top);
           let r = head.getBoundingClientRect();
-          const room2 = room.right - 8 - (box.getBoundingClientRect().right + 8);
+          const room2 = room.right - 8 - (right + 8);
           if (r.right > room.right - 4 && room2 >= 120) { head.style.maxWidth = room2 / zoom + 'px'; r = head.getBoundingClientRect(); }
           if (clear(r)) below = { owner: box, top: r.bottom + 4 };
           else {
-            const beside = r, besideWidth = head.style.maxWidth;
-            head.style.maxWidth = ''; box.classList.add('blockui-tools-above');
+            const beside = r, besideStyle = [head.style.maxWidth, head.style.left, head.style.top];
+            head.style.maxWidth = head.style.left = head.style.top = ''; box.classList.add('blockui-tools-above'); aboveSurface();
             // Right above the block, unless that is out of the workspace (a block at its top edge): then beside it, over
             // a place to put a block in rather than over another block.
             if (head.getBoundingClientRect().top < room.top + 2 && clear(beside, false)) {
-              box.classList.remove('blockui-tools-above'); head.style.maxWidth = besideWidth;
+              box.classList.remove('blockui-tools-above'); [head.style.maxWidth, head.style.left, head.style.top] = besideStyle; head.style.transform = '';
               below = { owner: box, top: beside.bottom + 4 };
+            } else {
+              // Right above the block at its left end, else at the right end of the workspace when that covers fewer
+              // values of the block above.
+              const above = head.getBoundingClientRect(), left = parseFloat(doc.defaultView.getComputedStyle(head).left) || 0,
+                far = room.right - 8 - above.width, shifted = { left: far, top: above.top, right: far + above.width, bottom: above.bottom };
+              if (far > above.left && covers(above, [box, head]) && covers(shifted, [box, head]) < covers(above, [box, head]))
+                head.style.left = left + (far - above.left) / zoom + 'px';
             }
           }
         }
       }
-      if (slotHead?.getClientRects().length) {
-        const owner = ownerOf(slot);
-        if (owner && fits(owner, slotHead)) {
-          moveTo(slotHead, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
-          below = { owner, top: slotHead.getBoundingClientRect().bottom + 4 };
+      if (showsSlotHead) {
+        const owner = ownerOf(slot), sr = extent(slot), hr = slotHead.getBoundingClientRect(), w = hr.width, h = hr.height;
+        if (inline) {
+          const line = editing.querySelector(':scope > input, :scope > textarea').getBoundingClientRect();
+          moveTo(slotHead, sr.right + 8, line.top + Math.max(0, (Math.min(line.height, 60 * zoom) - h) / 2));
+          // A selected value's tools go after them on that line, or right above the value.
+          surface.push(slotHead);
         } else {
-          // Under the field, unless that covers another value of the same sentence (a long value wraps the rest of the
-          // sentence onto the next line): then under the whole sentence.
-          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width, x = Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w));
-          moveTo(slotHead, x, sr.bottom + 4);
-          const r = slotHead.getBoundingClientRect(),
-            covered = owner && [...owner.querySelectorAll('.blockui-input-slot, .blockui-field, input, select, button')]
-              .some(n => !slot.contains(n) && !slotHead.contains(n) && (b => b.width && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom)(n.getBoundingClientRect()));
-          if (covered) moveTo(slotHead, x, lineOf(owner).getBoundingClientRect().bottom + 4);
+          // Beside the sentence (under the block's tools when they are there, else above them or after them), under the
+          // field, under the whole sentence (a long value wraps the rest of the sentence onto the next line), right
+          // above the field.
+          const x = Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w)),
+            tools = below?.owner === owner ? head.getBoundingClientRect() : null,
+            beside = owner && fits(owner, slotHead) ? [extent(owner).right + 8, tools ? below.top : lineOf(owner).getBoundingClientRect().top + 4] : null,
+            besides = [beside, beside && tools && [beside[0], tools.top - h - 4], tools && tools.right + 8 + w <= room.right - 8 && [tools.right + 8, tools.top]].filter(Boolean),
+            far = Math.max(x, room.right - 8 - w), tops = [sr.bottom + 4, lineOf(owner).getBoundingClientRect().bottom + 4, sr.top - h - 4],
+            // At the field's left first; at the right end of the workspace when that covers a value there.
+            spot = bestOf([...besides, ...tops.map(top => [x, top]), ...(far > x ? tops.map(top => [far, top]) : [])], w, h, [slot, slotHead]);
+          moveTo(slotHead, ...spot);
+          if (besides.includes(spot)) below = { owner, top: Math.max(tools?.bottom ?? 0, slotHead.getBoundingClientRect().bottom) + 4 };
         }
       }
       if (head?.getClientRects().length && box.classList.contains('blockui-expression')) {
-        const owner = ownerOf(box.parentElement);
-        if (owner && fits(owner, head)) moveTo(head, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
-        else box.classList.add('blockui-tools-above');
+        const owner = ownerOf(box.parentElement), r = head.getBoundingClientRect(),
+          spot = owner && fits(owner, head) ? [extent(owner).right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4] : null;
+        if (spot && !covers({ left: spot[0], top: spot[1], right: spot[0] + r.width, bottom: spot[1] + r.height }, [box, head])) moveTo(head, ...spot);
+        else { box.classList.add('blockui-tools-above'); aboveSurface(); }
       }
       clearOfControls();
+    }
+    // The editing surface of a text field reaches toward the right end of the workspace, at most 672 px wide, with room
+    // for 「全部見て なおす」 (E-12). Given the width of the field's tools, it also leaves room for them on its line when
+    // the surface keeps at least 200 px; it says whether it did. A tall surface (a メモ) opens upward when it would
+    // reach below the workspace, so typing never scrolls the blocks.
+    function sizeEditingField(field, tools = 0) {
+      const box = field.getBoundingClientRect(), bounds = workspace.getBoundingClientRect(),
+        editText = field.querySelector(':scope > .blockui-edit-text'),
+        button = editText?.getClientRects().length ? editText.getBoundingClientRect().width + 6 : 0,
+        room = Math.min(bounds.left + workspace.clientWidth, doc.defaultView.innerWidth) - box.left - button - 18,
+        inline = tools > 0 && room - tools - 8 >= 200, area = field.querySelector(':scope > textarea');
+      field.style.setProperty('--blockui-edit-width', Math.max(100, Math.min(672, inline ? room - tools - 8 : room)) / zoom + 'px');
+      if (area) {
+        const height = area.getBoundingClientRect().height, top = bounds.top + 24, bottom = bounds.top + workspace.clientHeight - 24;
+        field.classList.toggle('blockui-editing-up', box.top + height > bottom && box.bottom - height >= top);
+      }
+      return inline;
     }
     // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
     function showImpliedDestination() {
@@ -2884,7 +3000,10 @@
             const actor = schema.fields.find(f => f.key === 'actorRef');
             if (actor) main.append(fieldControl(node, actor));
             renderPhrase(node, schema, main);
-            for (const f of schema.fields.filter(f => f.type === 'reference')) main.append(fieldControl(node, f));
+            // A 「〜の合図を送る」 gets its link to the wait after it (broadcastRef) from the code that follows it; it is not
+            // a word of its sentence, so the block shows no field for it (E-14).
+            for (const f of schema.fields.filter(f => f.type === 'reference' && !(schema.kind === 'Broadcast' && f.key === 'broadcastRef')))
+              main.append(fieldControl(node, f));
             // How the values are handed over (書いた じゅんに / 名前を つけて) is not a word of the sentence: it is in the
             // 「…」 after it, so the placed block reads like its palette face and its code (E-14).
             const handOver = schema.fields.find(f => f.type === 'argument-names');
@@ -3501,13 +3620,16 @@
     // finger had started (carrying, moving the workspace) stops.
     const pinchPointers = new Map();
     let pinch = null, pendingPan = null;
+    // A field, a choice, a 「…」 or a button in a placed block keeps a press for itself (E-09).
+    const CONTROL_IN_BLOCK = 'input,textarea,select,summary,a,button:not([data-blockui-drag])';
+    const dropPendingPan = () => { clearTimeout(pendingPan?.holdTimer); pendingPan = null; };
     listen(workspace, 'pointerdown', (event) => {
       if (event.pointerType !== 'touch') return;
       pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       if (pinchPointers.size === 2) {
         if (drag) cancelDrag();
         endPan();
-        pendingPan = null;
+        dropPendingPan();
         const [a, b] = [...pinchPointers.values()];
         pinch = { distance: Math.hypot(a.x - b.x, a.y - b.y) || 1, zoom };
         for (const id of pinchPointers.keys()) try { workspace.setPointerCapture(id); } catch (_) {}
@@ -3516,8 +3638,21 @@
         event.stopImmediatePropagation();
         return;
       }
-      // A finger that starts on 「＋ ここに入れる」 or a button and goes up or down moves the workspace (E-09).
-      if (!drag && !pan && event.target.closest('.blockui-insertion,button,summary') && !event.target.closest('[data-blockui-drag]'))
+      // A finger that starts on 「＋ ここに入れる」 or a button and goes up or down moves the workspace (E-09). One that
+      // starts on a field, a choice, a 「…」 or a button of a placed block also moves the workspace when it goes up or
+      // down; going sideways or held still it carries the block, as from the block's words. A press that moves no more
+      // than 12 px stays the control's.
+      if (drag || pan) return;
+      const handle = event.target.closest('[data-blockui-drag="node"]');
+      if (handle && event.target.closest(CONTROL_IN_BLOCK)) {
+        if (!pressHandle(event)) return;
+        const start = pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop, handle };
+        start.holdTimer = setTimeout(() => {
+          if (pendingPan !== start) return;
+          pendingPan = null;
+          pressBlock(handle, start.id, 'touch', start.x, start.y, { held: true });
+        }, HOLD_MS);
+      } else if (event.target.closest('.blockui-insertion,button,summary') && !event.target.closest('[data-blockui-drag]'))
         pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop };
     }, { capture: true });
     listen(workspace, 'pointermove', (event) => {
@@ -3532,16 +3667,21 @@
       }
       if (pendingPan?.id === event.pointerId && !pan && Math.hypot(event.clientX - pendingPan.x, event.clientY - pendingPan.y) > slopOf('touch')) {
         const start = pendingPan;
-        pendingPan = null;
-        startPan(start.id, start.x, start.y, start.left, start.top);
+        dropPendingPan();
         suppressClickUntil = Date.now() + 400;
+        // Sideways from a control of a placed block: the block's own handler carries it from where the finger started.
+        if (start.handle && Math.abs(event.clientX - start.x) > Math.abs(event.clientY - start.y))
+          pressBlock(start.handle, start.id, 'touch', start.x, start.y);
+        else startPan(start.id, start.x, start.y, start.left, start.top);
       }
     }, { capture: true });
+    // A finger is forgotten wherever it is lifted, also outside the workspace, so the next touch is never taken for a
+    // second finger.
     for (const type of ['pointerup', 'pointercancel'])
-      listen(workspace, type, (event) => {
+      listen(doc.defaultView, type, (event) => {
         pinchPointers.delete(event.pointerId);
         if (pinchPointers.size < 2 && pinch) { pinch = null; rememberViewState(); }
-        if (pendingPan?.id === event.pointerId) pendingPan = null;
+        if (pendingPan?.id === event.pointerId) dropPendingPan();
       }, { capture: true });
     // Pressing anywhere that is not a block, a place, a field or a button and moving moves the workspace (E-11),
     // also right of a short block and around the blocks of an enclosure.
@@ -3661,14 +3801,11 @@
         dragReason.style.top = Math.max(4, point.clientY - drag.grabY - 32) + 'px';
       }
     }
-    // An empty value place (an unfilled hole): a sentence carried right over it cannot go in (E-04).
-    function holeAt(element) {
-      const location = locationFromElement(element), parent = location && index.get(location.parentId)?.node,
-        value = parent && (location.index === undefined ? parent.inputs?.[location.input] : parent.inputs?.[location.input]?.[location.index]);
-      return value?.schemaId === 'Hole:expression';
-    }
     // Inside the workspace a sentence goes to the nearest place: before a block from its upper half, after it from its
     // lower half, after an enclosure from below its bottom line (E-04). A value goes to a value place within 40 px.
+    // Right over a place of the other kind (a sentence over a value, a value over a line between sentences) that place
+    // is the answer: it cannot take the block, so the carried block turns grey and says why, and letting go there
+    // puts nothing in.
     function dragCandidate(event) {
       const bounds = workspace.getBoundingClientRect();
       if (
@@ -3684,10 +3821,7 @@
         category = schema?.category,
         carried = (drag?.parts || []).filter(Boolean);
       const direct = doc.elementFromPoint(event.clientX, event.clientY)?.closest('[data-blockui-drop]');
-      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct))) {
-        if ((category === 'statement') === !!direct.dataset.blockuiBody) return direct;
-        if (category === 'statement' && holeAt(direct)) return direct;
-      }
+      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct))) return direct;
       let best = null,
         distance = Infinity;
       const candidates =
@@ -3891,41 +4025,37 @@
     listen(palette, 'touchmove', (event) => {
       if ((drag?.held || drag?.started) && event.cancelable) event.preventDefault();
     }, { passive: false });
+    // The block (or the block of the list) a press may carry, or null when it cannot carry one now.
+    function pressHandle(event) {
+      const handle = event.target.closest('[data-blockui-drag]');
+      return !handle || handle.disabled || handle.getAttribute('aria-disabled') === 'true' || isLocked() || pinch ||
+        event.button !== 0 || event.isPrimary === false ? null : handle;
+    }
     listen(root, 'pointerdown', (event) => {
       pointerFocusTarget = event.target;
       pointerFocusPrevious = doc.activeElement;
       lastPointerType = event.pointerType || 'mouse';
-      const handle = event.target.closest('[data-blockui-drag]');
-      if (
-        !handle ||
-        handle.disabled ||
-        handle.getAttribute('aria-disabled') === 'true' ||
-        isLocked() ||
-        pinch ||
-        event.button !== 0 ||
-        event.isPrimary === false
-      )
-        return;
-      if (
-        handle.dataset.blockuiDrag === 'node' &&
-        event.target.closest('input,textarea,select,summary,a,button:not([data-blockui-drag])')
-      )
-        return;
+      const handle = pressHandle(event);
+      if (!handle || (handle.dataset.blockuiDrag === 'node' && event.target.closest(CONTROL_IN_BLOCK))) return;
+      pressBlock(handle, event.pointerId, event.pointerType, event.clientX, event.clientY);
+    });
+    // A press that carries the block once it moves; a touch held still for a moment lifts the block first (E-09).
+    function pressBlock(handle, pointerId, pointerType, x, y, { held = false } = {}) {
       if (pending) deferredFocus = handle;
-      if (!flush().ok) { deferredFocus = null; return; }
+      if (!flush().ok) { deferredFocus = null; return false; }
       const id = handle.dataset.blockId,
         schemaId = handle.dataset.blockuiDragSchema;
-      drag = {
-        pointerId: event.pointerId,
-        pointerType: event.pointerType,
+      const state = drag = {
+        pointerId,
+        pointerType,
         element: handle,
         id,
         schemaId,
         // After 「ここから下を まとめて もっていく」, carrying that block carries the blocks after it too.
         run: !!id && moving?.type === 'run' && moving.id === id,
         candidate: handle._akariSearchCandidate,
-        startX: event.clientX,
-        startY: event.clientY,
+        startX: x,
+        startY: y,
         started: false,
         held: false,
         owner: session()?.ownerKey,
@@ -3935,18 +4065,18 @@
         valid: false,
       };
       // A finger held still for a moment lifts the block: it can then be carried in any direction (E-09).
-      if (touchLike(event.pointerType)) {
-        const state = drag;
-        state.holdTimer = setTimeout(() => {
-          if (drag !== state || state.started) return;
-          state.held = true;
-          (state.id ? handle.closest('.blockui-node') : handle.querySelector('.blockui-preview') || handle)?.classList.add('blockui-lift');
-        }, HOLD_MS);
-      }
+      const lift = () => {
+        if (drag !== state || state.started) return;
+        state.held = true;
+        (state.id ? handle.closest('.blockui-node') : handle.querySelector('.blockui-preview') || handle)?.classList.add('blockui-lift');
+      };
+      if (held) lift();
+      else if (touchLike(pointerType)) state.holdTimer = setTimeout(lift, HOLD_MS);
       try {
-        handle.setPointerCapture(event.pointerId);
+        handle.setPointerCapture(pointerId);
       } catch (_) {}
-    });
+      return true;
+    }
     listen(root, 'pointermove', (event) => {
       if (!drag || drag.pointerId !== event.pointerId) return;
       if (
@@ -4039,14 +4169,25 @@
       cancelDrag({ animate: started });
       if (started) announce('入れるのを やめたよ');
     });
-    listen(root, 'lostpointercapture', () => {
-      if (drag) cancelDrag();
+    // Only the carried block's own loss of the finger ends carrying: a control that a touch started on loses it to the
+    // block when the touch goes on to carry the block (E-09).
+    listen(root, 'lostpointercapture', (event) => {
+      if (drag && event.target === drag.element && event.pointerId === drag.pointerId) cancelDrag();
     });
     listen(root, 'focusout', (event) => {
       if (deferredFocus !== event.target) return;
       deferredFocus = event.relatedTarget && root.contains(event.relatedTarget) ? event.relatedTarget : null;
       if (!deferredFocus && deferredRender) render({ force: true });
     }, { capture: true });
+    // A text field's editing surface closes when the focus leaves the field, its value and the value's tools, and nothing
+    // is left to decide in it (E-12).
+    listen(root, 'focusout', (event) => {
+      const field = event.target.closest?.('.blockui-editing-field'), to = event.relatedTarget;
+      if (!field || [field, field.closest('.blockui-node'), field.closest('.blockui-input-slot')].some(n => n?.contains(to)) ||
+          (pending?.input && field.contains(pending.input))) return;
+      field.classList.remove('blockui-editing-field');
+      placeNodeTools();
+    });
     // Finish pointer activation before folding the old selection or growing the new one.
     // Keyboard focus selects immediately so Tab can discover the selected block's tools.
     function focusBlockField(target) {
@@ -4056,13 +4197,12 @@
         field = target.closest('.blockui-field');
       for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
       if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea')) {
-        const bounds = workspace.getBoundingClientRect(), position = target.getBoundingClientRect(),
-          editText = field.querySelector(':scope > .blockui-edit-text'),
-          buttonSpace = editText ? editText.getBoundingClientRect().width +
-            (parseFloat(doc.defaultView.getComputedStyle(field).columnGap) || 0) * zoom : 0,
-          available = Math.max(100, Math.min(bounds.right, doc.defaultView.innerWidth) - position.left - buttonSpace - 18);
-        field.style.setProperty('--blockui-edit-width', Math.min(672, available) / zoom + 'px');
+        // The field keeps the box it has now; the editing surface lies over the blocks (E-12).
+        const idle = field.getBoundingClientRect();
+        field.style.setProperty('--blockui-idle-width', idle.width / zoom + 'px');
+        field.style.setProperty('--blockui-idle-height', idle.height / zoom + 'px');
         field.classList.add('blockui-editing-field');
+        sizeEditingField(field);
       }
       for (const n of root.querySelectorAll('.blockui-focused')) n.classList.remove('blockui-focused');
       for (const n of root.querySelectorAll('.blockui-slot-active'))
@@ -4094,7 +4234,8 @@
           deferredFocus = null;
           if (deferredRender) render({ force: true });
         }
-        if (pending?.input === event.target) flush({ focus:false });
+        // A number that cannot be read is left to the blur: another field given up for, else its mistake shown.
+        if (pending?.input === event.target && readable(pending)) flush({ focus:false });
         for (const field of root.querySelectorAll('.blockui-editing-field'))
           field.classList.remove('blockui-editing-field');
       }

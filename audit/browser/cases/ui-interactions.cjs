@@ -37,6 +37,14 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    await fixture('点数を1にする\n点数に2を足す');const old=await state(),field=nodes('NumberLiteral').first().locator('input');
    await (await reveal(field)).fill('-');await (await reveal(root.locator('[data-blockui-action="commit"]'))).click();let now=await state();assert.equal(now.source,old.source);assert.equal(now.history,old.history);assert.equal(now.pending.value,'-');
    await (await reveal(root.locator('[data-blockui-action="cancel"]'))).click();assert.equal(await field.inputValue(),'1');await (await reveal(field)).fill('7');await field.press('Enter');assert.equal((await state()).ast.body[0].value.value,7);
+   // Entering a text field or typing in it moves no other block (E-12). A number that cannot be read is given up, with
+   // its mistake, when another field is entered; the new field takes the typing (E-12).
+   await fixture('右に15度回る。\n「こんにちは」と言う。\n1秒待つ。');const tops=()=>root.locator('.blockui-world .blockui-node.blockui-statement').evaluateAll(n=>n.map(e=>Math.round(e.getBoundingClientRect().top)).join(','));
+   const t0=await tops(),text=nodes('Say').locator('.blockui-field[data-field-type="string"] input').first();await (await reveal(text)).click();assert.equal(await tops(),t0);await page.keyboard.insertText('あ');assert.equal(await tops(),t0);await page.keyboard.press('Escape');
+   const main=':scope > .blockui-node-content > .blockui-node-main input',turn=nodes('MotionCommand:TURN_RIGHT').locator(main).first(),wait=nodes('WaitTime').locator(main).first(),error=root.locator('.blockui-field-error');
+   await (await reveal(turn)).click();await page.keyboard.type('x');await page.keyboard.press('Enter');assert.notEqual((await error.textContent()).trim(),'');
+   await (await reveal(wait)).click();assert.equal((await error.textContent()).trim(),'');assert.equal(await turn.inputValue(),'15');await page.keyboard.type('3');await page.keyboard.press('Enter');
+   now=await state();assert(now.source.includes('右に15度回る。')&&now.source.includes('3秒待つ。'),now.source);
   });
   await test('UI-statement-duplicate-order-delete',async()=>{
    await fixture('点数を1にする\n点数に2を足す');await U.nodeAction(nodes('Assignment').first(),'duplicate');assert.equal((await state()).ast.body.length,3);
@@ -67,6 +75,17 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    let old=await state();const drag=async()=>{let h=await handle.boundingBox(),d=await drop.boundingBox();await page.mouse.move(h.x+h.width/2,h.y+h.height/2);await page.mouse.down();await page.mouse.move(d.x+20,d.y+d.height/2,{steps:7});d=await drop.boundingBox();await page.mouse.move(d.x+20,d.y+d.height/2);};
    await drag();assert.equal(await root.locator('.blockui-drop-preview').count(),1);assert.equal((await state()).source,old.source);await page.mouse.up();assert.deepEqual((await state()).ast.body.map(x=>x.value.value),[2,3,1]);assert.equal((await state()).history,old.history+1);await page.waitForTimeout(400);
    old=await state();await drag();await root.dispatchEvent('pointercancel',{pointerId:1});await page.mouse.up();assert.equal((await state()).source,old.source);assert.equal((await state()).history,old.history);assert.equal((await state()).pending,null);
+   // Right over a value place a sentence turns grey and says why, and let go there it puts nothing in (E-04). Over the
+   // block list only the block list is the red delete zone (E-05).
+   await page.waitForTimeout(400);await fixture('右に15度回る。\n1秒待つ。');old=await state();
+   const wait=nodes('WaitTime').locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').last(),slot=nodes('MotionCommand:TURN_RIGHT').locator('.blockui-input-slot[data-blockui-drop]').first(),list=root.locator('.blockui-palette');
+   let w=await wait.boundingBox(),s=await slot.boundingBox();await page.mouse.move(w.x+w.width/2,w.y+w.height/2);await page.mouse.down();await page.mouse.move(s.x+s.width/2,s.y+s.height/2,{steps:7});s=await slot.boundingBox();await page.mouse.move(s.x+s.width/2,s.y+s.height/2);
+   assert.equal(await page.locator('.blockui-drag-ghost.blockui-ghost-invalid').count(),1);assert.equal((await page.locator('.blockui-drag-reason').textContent()).trim(),'ここには おけないよ');
+   const l=await list.boundingBox();await page.mouse.move(l.x+l.width/2,l.y+l.height/2,{steps:7});
+   const zone=await list.evaluate(p=>{const a=getComputedStyle(p,'::after');return{on:p.classList.contains('blockui-delete-zone'),w:parseFloat(a.width),h:parseFloat(a.height),cw:p.clientWidth,ch:p.clientHeight};});
+   assert(zone.on&&Math.abs(zone.w-zone.cw)<=2&&Math.abs(zone.h-zone.ch)<=2,JSON.stringify(zone));
+   s=await slot.boundingBox();await page.mouse.move(s.x+s.width/2,s.y+s.height/2,{steps:7});await page.mouse.up();
+   assert.equal((await state()).source,old.source);assert.equal((await state()).history,old.history);assert.equal((await page.locator('.blockui-drop-note').textContent()).trim(),'ここには おけないよ');await page.waitForTimeout(400);
   });
   await test('UI-IME-switch-hold-end-commit',async()=>{
    await fixture('1を言う');const old=await state(),field=nodes('NumberLiteral').locator('input');await field.dispatchEvent('compositionstart');await (await reveal(field)).fill('24');await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();assert.equal((await state()).mode,'blocks');assert.equal((await state()).source,old.source);await field.dispatchEvent('compositionend');await field.press('Enter');assert.equal((await state()).ast.body[0].value.value,24);
@@ -104,6 +123,18 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
     await root.locator('.blockui-dragging').waitFor();for(let attempt=0;attempt<5;attempt++){await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const current=await drop.boundingBox();end.x=current.x+20;end.y=current.y+10;if(pointerType==='touch')await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{...end,id:1}]});else await cdp.send('Input.dispatchMouseEvent',{type:'mouseMoved',...end,buttons:1,pointerType:'pen'});await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));previews=await root.locator('.blockui-drop-preview').count();if(previews===1)break;}assert.equal((await state()).source,old.source);
    }finally{if(pointerType==='touch'){await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:false});}else await cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',...end,button:'left',buttons:0,clickCount:1,pointerType:'pen'});await cdp.detach();}
    assert.equal(previews,1,JSON.stringify({h,d,end,pointers:await page.evaluate(()=>__pointerEvidence)}));assert.deepEqual((await state()).ast.body.map(n=>n.value.value),[2,3,1]);const movedSource=(await state()).source;await page.keyboard.press('Control+z');assert.equal((await state()).source,old.source);await page.keyboard.press('Control+y');assert.equal((await state()).source,movedSource);assert.deepEqual(await page.evaluate(()=>__pointerEvidence),[{type:pointerType,trusted:true}]);await page.waitForTimeout(400);
+   // A finger that goes up from a number, a choice, a 「…」 or a text of a placed block moves the workspace and changes
+   // nothing (E-09).
+   if(pointerType==='touch'){
+    await page.setViewportSize({width:1366,height:768});await fixture(Array.from({length:16},(_,i)=>i%2?'前へ'+(i+1)+'歩進む。':'「やあ'+i+'」と言う。').join('\n'));
+    const before=await state(),space=root.locator('.blockui-workspace'),move=nodes('MotionCommand:MOVE').nth(1).locator(':scope > .blockui-node-content > .blockui-node-main'),touch=await page.context().newCDPSession(page);
+    await touch.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+    try{for(const control of [move.locator('input').first(),move.locator('select').first(),move.locator('.blockui-extra > summary').first(),nodes('Say').nth(2).locator('.blockui-field[data-field-type="string"] input').first()]){
+     await space.evaluate(w=>w.scrollTo(0,0));await control.evaluate(e=>e.scrollIntoView({block:'center'}));await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const b=await control.boundingBox(),at={x:b.x+b.width/2,y:b.y+b.height/2},top0=await space.evaluate(w=>w.scrollTop);
+     await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...at,id:1}]});for(let i=1;i<=8;i++){await page.waitForTimeout(20);await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:at.x+1,y:at.y-i*18,id:1}]});}await touch.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+     const top=await space.evaluate(w=>w.scrollTop)-top0;assert(top>100,'a swipe from '+await control.evaluate(e=>e.tagName)+' moved the workspace '+top+' px');assert.equal((await state()).source,before.source);await page.waitForTimeout(400);
+    }}finally{await touch.send('Emulation.setTouchEmulationEnabled',{enabled:false});await touch.detach();}
+   }
   });
   await test('UI-outside-drop-preserves-state',async()=>{
    await fixture('1を言う。\n2を言う。');const old=await state(),h=await nodes('Say').first().locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').boundingBox();await page.mouse.move(h.x+h.width/2,h.y+h.height/2);await page.mouse.down();await page.mouse.move(10,10,{steps:7});await page.mouse.up();const now=await state();for(const key of ['source','history','redo'])assert.equal(now[key],old[key]);assert.equal(now.pending,null);assert.equal(await root.locator('.blockui-drop-preview,.blockui-drop-invalid').count(),0);await page.waitForTimeout(400);

@@ -5639,12 +5639,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-wor
     min-height: 900px;
   }
 }
+/* The field keeps the box it had and the editing surface lies over the blocks, so the rest of the sentence and the
+   other blocks stay where they are (E-12). */
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field:has(> input),
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field:has(> textarea) {
   position: relative;
   z-index: 100;
+  flex: none;
+  width: var(--blockui-idle-width);
+  height: var(--blockui-idle-height);
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > input {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
   width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1))) !important;
   max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-width: 0;
@@ -5659,6 +5668,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   text-overflow: clip;
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > textarea {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1)));
   max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-height: calc(150px * var(--blockui-inverse-scale, 1));
@@ -5672,11 +5684,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field.blockui-editing-up > textarea { top: auto; bottom: 0; }
 .child-word { white-space: nowrap; }
 .child-word rt, .child-help rt { font-size: 0.65em; }
 .child-help { min-width: 0; color: var(--dark, #283e50); }
 .child-help > summary { cursor: pointer; min-height: 28px; padding: 5px 8px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fffaf3; line-height: 1.4; }
-.child-help p { margin: 6px 0; line-height: 1.65; white-space: normal; word-break: normal; overflow-wrap: break-word; }
+.child-help p { margin: 6px 0; line-height: 1.65; white-space: normal; overflow-wrap: break-word; }
 .child-help-panel { box-sizing: border-box; max-height: min(40dvh, 360px); overflow: auto; padding: 8px 12px; border: 1px solid var(--line, #d8e3ec); border-radius: 8px; background: #fff; font-size: 14px; }
 .child-help-panel { overscroll-behavior: contain; touch-action: pan-y; }
 .child-help-panel:focus-visible { outline: 3px solid var(--accent, #307cac); outline-offset: -3px; }
@@ -5688,6 +5701,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .sprite-preset-grid .tool:has(.child-material-name) { min-height: 72px; }
 @media (max-width: 600px) { .child-help-panel { font-size: 14px; max-height: 38dvh; } }
 .blockui-field > .blockui-edit-text { order: 2; align-self: center; font-size: 11px; padding: 2px 5px; }
+/* 「全部見て なおす」 lies over the sentence right of the field, or right of the editing surface, so showing it moves
+   nothing (E-12). */
+.blockui-world .blockui-field:has(> .blockui-edit-text) { position: relative; }
+.blockui-world .blockui-field > .blockui-edit-text {
+  position: absolute; z-index: 101; left: calc(100% + 4px); top: 50%; translate: 0 -50%; white-space: nowrap;
+}
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > .blockui-edit-text {
+  left: calc(var(--blockui-edit-width) + 6px * var(--blockui-inverse-scale, 1));
+}
 .blockui-text-dialog { width: min(42rem, 90vw); max-width: 90vw; max-height: 85dvh; box-sizing: border-box; padding: 16px; border: 2px solid #145b8c; border-radius: 12px; background: #fff; color: #172a3b; }
 .blockui-text-dialog::backdrop { background: #18364b55; }
 .blockui-text-dialog h2 { margin: 0 0 12px; font-size: 20px; }
@@ -6127,7 +6149,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 .blockui-world .blockui-node-tools > .blockui-who .blockui-structured-field { display: flex; flex-wrap: wrap; gap: 6px; }
 /* A selected field's tools float under it (くわしく); the block keeps its size. */
 .blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head {
-  position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; min-width: 180px; max-width: 330px;
+  position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; width: max-content; min-width: 180px; max-width: 330px;
 }
 .blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
 /* 決める・とちゅうで やめる and the input's mistake float under the field being edited; while a place is chosen they float
@@ -6161,8 +6183,9 @@ body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="bl
 @keyframes blockui-attention { 0%, 100% { box-shadow: 0 0 0 0 #f0a63000; } 30% { box-shadow: 0 0 0 5px #f0a630aa; } }
 .blockui-world .blockui-attention { border-radius: 15px; animation: blockui-attention 0.9s ease-out 2; outline: 2px solid #e08a12; outline-offset: 2px; }
 
-/* Deleting by carrying a block to the block list (E-05). */
-.blockui-palette.blockui-delete-zone { position: relative; outline: 3px solid #c0392b; outline-offset: -3px; }
+/* Deleting by carrying a block to the block list (E-05): only the block list turns red. */
+.blockui-palette.blockui-delete-zone,
+body[data-editor-mode] :is(#blockEditor, #callableBlocks) .blockui-palette.blockui-delete-zone { position: relative; outline: 3px solid #c0392b; outline-offset: -3px; }
 .blockui-palette.blockui-delete-zone::after {
   content: "ここで はなすと けす"; position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
   background: #fde3dfe6; color: #8f1d12; font-weight: 700; font-size: 16px; pointer-events: none;
@@ -6261,6 +6284,16 @@ body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #desig
 #stageThumbnail[hidden] { display: none; }
 #stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
 body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+/* The small stage takes the right end of the workspace: the navigation strip ends left of it and the blocks wrap
+   before it, so it covers no button and no block (E-21). */
+@media (min-width: 761px) {
+  body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #blockEditor .blockui-workspace-shell > .blockui-navigation {
+    margin-right: 252px; max-width: calc(100% - 264px);
+  }
+  body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #blockEditor .blockui-world {
+    width: max(220px, calc(var(--blockui-content-width, 560px) - 252px * var(--blockui-inverse-scale, 1)));
+  }
+}
 
 /* はじめて has no ヒント: how to change a part's size (and to see the screen at 100%) is written under the screen while a
    part shows its handles (E-22). Its room is kept when no part is selected, so the screen never moves. */

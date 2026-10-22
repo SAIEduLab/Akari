@@ -92,8 +92,9 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
   });
   await run(browser,'selection/value-unavailable',insertionSources.tail,async p=>{
     const before=await read(p),say=before.shape[0];const slot=p.locator('#blockEditor [data-parent-id="'+say.id+'"][data-blockui-input="value"]');
-    await field(p,say.valueId).click();
-    // At かんたん the value's 計算を入れる is in the 「…」 after the sentence (E-12).
+    // A text field's editing surface lies over the rest of its sentence (E-12), so the child chooses the sentence by its
+    // words; at かんたん the value's 計算を入れる is in the 「…」 after the sentence (E-12).
+    await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first().click();
     await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] > .blockui-node-content > .blockui-node-main > .blockui-extra > summary').click();
     await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] .blockui-extra [data-blockui-action="slot-select"]').first().click();const selected=await read(p);
     await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えないブロックも見せる"]').check();
