@@ -8,10 +8,18 @@
     const at = lines.slice(0, diagnostic.line - 1).reduce((n, l) => n + l.length + 1, 0) + text.match(/^[ \u3000\t]*/)[0].length;
     try { return insertionContext(source, at, at).depth > 0; } catch (_) { return null; }
   }
+  // The names an example may use (FM2-12): the work's first variable or list and its first sound, never one the work
+  // does not have. Without the work, the example leaves them out.
+  function diagnosticExampleNames(work) {
+    const data = [...(work?.projectData?.variables || []), ...(work?.components || []).flatMap(c => c?.localData?.variables || []),
+      ...(work?.projectData?.lists || [])].find(x => typeof x?.name === 'string' && x.name);
+    return { value: data ? nameSource(data.name) : null, sound: work?.sounds?.find(x => typeof x?.name === 'string' && x.name)?.name || null };
+  }
   // Presentation only: parser/runtime diagnostics and their original messages stay unchanged. With the body's source,
   // an indentation message names もし／くり返す only for a line inside one (F-24); the parser's Tab message is shown as it is.
-  function childDiagnosticText(diagnostic, source = null) {
-    const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください');
+  // With the work, the examples name its own data and sounds.
+  function childDiagnosticText(diagnostic, source = null, work = null) {
+    const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください'), names = diagnosticExampleNames(work);
     if (diagnostic?.code === 'R403')
       return '計算の 答えが 大きすぎるなどの 理由で、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめてください。';
     if (/「ではない」が 2つ つづいています/.test(message))
@@ -30,12 +38,16 @@
       return '「 」・【 】・（ ）などの とじる しるしを 足します。れい：「こんにちは」';
     if (/で つなぐ きまりを、1つずつ（ ）で かこんで|きまりを 1つずつ（ ）で かこんで 分けて/.test(message))
       return '「で、」「か、」で つなぐ 文の 中に「かつ」「または」は 書けません。ぜんぶを「条件（…）が成り立つ」で ひとまとめに します。れい：もし条件（1が1と同じかつ2が2と同じかつ3が3と同じ）が成り立つなら、';
-    if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message))
-      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【点数】が10より大きい';
+    if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message)) {
+      // The name is the one the child wrote before が (もし点数が…), else the work's own data.
+      const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
+        own = /^[ 　\t]*(?:もし)?([^\s　、。「」（）【】]+?)が/.exec(line)?.[1];
+      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【' + (own || names.value?.replace(/^【|】$/g, '') || '点数') + '】が10より大きい';
+    }
     if (/言う ことは「「文字」と言う」/.test(message))
-      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。へんすうの 中身を 話すときは「点数を言う」のように 書きます。';
+      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。' + (names.value ? 'へんすうの 中身を 話すときは「' + names.value + 'を言う」のように 書きます。' : '');
     if (/そのまま 言う 文字か、入れた 音か/.test(message))
-      return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：「おはよう」と言う／「ベル」を鳴らす／点数を言う。';
+      return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：' + ['「おはよう」と言う', names.sound && '「' + names.sound + '」を鳴らす', names.value && names.value + 'を言う'].filter(Boolean).join('／') + '。';
     if (/重ねるときは、次の 行に 書いて/.test(message))
       return '「もし」「くり返す」の 中の 文は、次の 行に 書いて 行の はじめを 右へ ずらします。\nれい：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
     if (/いちばん 外の 文は、行の はじめを 右へ ずらさずに/.test(message))
@@ -50,8 +62,17 @@
       return '中の 文を 同じ 行と 次の 行の 両方に 書いています。次の 行に まとめ、行の はじめを 右へ ずらしてください。\nれい：2回くり返す。\n  「おはよう」と言う。';
     if (/「ここまで」は 書きません/.test(message))
       return '「ここまで」を けして、次の 文の はじめを 左へ もどします。\nれい：2回くり返す。\n  「中」と言う。\n「外」と言う。';
-    if (/と 組になる「もし」が ありません/.test(message))
+    if (/と 組になる「もし」が ありません/.test(message)) {
+      // Only a line that starts with そうでなければ／でなければ is about its もし (F-24). Another line that comes out of the
+      // body (one not moved to the right) is told to move to the right, with the body's own heading (FM2-01).
+      const lines = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/) : null,
+        text = lines?.[diagnostic.line - 1]?.replace(/^[ 　\t]+/, '');
+      if (text && !/^(?:そうでなければ|でなければ)/.test(text)) {
+        const heading = lines[0] && /、$/.test(lines[0].trim()) && !/^[ 　\t]/.test(lines[0]) ? lines[0].trim() : '作品を動かしたとき、';
+        return '「' + heading + '」の 中の 文は、上の 文と 同じ だけ 右へ ずらして 書きます。\nれい：' + heading + '\n  ' + splitComment(text).code.trim();
+      }
       return '「そうでなければ、」は、組に なる「もし」と 行の はじめを そろえます。上に「もし」が あるか たしかめてください。';
+    }
     if (/の 中では、動く・音を 出す・待つ|の 中では、この ブロックは 使えません/.test(message))
       return '「答えを もとめる」では、部品を 動かす・音を 出す・待つ などの やることは 使えません。これらは「てじゅん」へ 入れます。れい：1＋2を答えとして返す。';
     if (/の 中からは、作品や 部品の へんすう・リストを かえられません/.test(message))
@@ -2597,7 +2618,7 @@
         if (diagnostics.length) {
           box.classList.add('blockui-diagnostic');
           const ul = E('ul', 'blockui-node-diagnostics');
-          for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText)); appendDiagnosticDetails(item, d); ul.append(item); }
+          for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText, project())); appendDiagnosticDetails(item, d); ul.append(item); }
           box.append(ul);
         }
       }
@@ -3076,7 +3097,7 @@
       if (diagnostics.length) {
         box.classList.add('blockui-diagnostic');
         const ul = E('ul', 'blockui-node-diagnostics');
-        for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText)); appendDiagnosticDetails(item, d); ul.append(item); }
+        for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText, project())); appendDiagnosticDetails(item, d); ul.append(item); }
         box.append(ul);
         const warning = button(
           '⚠ たしかめる',
@@ -3087,7 +3108,7 @@
           },
           {
             'aria-label': diagnostics.length + 'か所の 直す手がかりを見せる',
-            title: diagnostics.map((d) => childDiagnosticText(d, session()?.sourceText)).join('\n'),
+            title: diagnostics.map((d) => childDiagnosticText(d, session()?.sourceText, project())).join('\n'),
           },
         );
         head.prepend(warning);
@@ -3340,7 +3361,7 @@
       diagnosticPage = Math.min(diagnosticPage, pages - 1);
       const ul = E('ul');
       for (const d of diagnostics.slice(diagnosticPage * 20, (diagnosticPage + 1) * 20)) {
-        const item = E('li', 'diagnostic-help', diagnosticPlace(d) + childDiagnosticText(d, session()?.sourceText));
+        const item = E('li', 'diagnostic-help', diagnosticPlace(d) + childDiagnosticText(d, session()?.sourceText, project()));
         appendDiagnosticDetails(item, d); ul.append(item);
       }
       details.append(ul);
