@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "bdd42f13a92e8bcbf258670a38b9bb45497b7ced1c90926e92866efbbc46f52f",
+  "fixedIdSha256": "cc99a6dc4403f2755a897bfe842cd0e4e555214d5224eaa6da5b69780a77bd4b",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -721,6 +721,10 @@
         "CORE meijin lanes cannot end a repeat outside them",
         "CORE meijin script is never made into blocks",
         "CORE meijin exported work keeps its procedures and events",
+        "CORE meijin exported work opens: two conditions",
+        "CORE meijin exported work opens: touch body without a subject",
+        "CORE meijin exported work opens: after a group subject",
+        "CORE exported work opens a body with two headings and no document record",
         "CORE exported work keeps a subject written with が"
       ],
       "environments": [

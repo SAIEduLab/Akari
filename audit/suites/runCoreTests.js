@@ -807,6 +807,29 @@ function runCoreTests() {
       eq(restored.compiled.items.map(i => i.event || i.key.split(':')[0]).sort(), ['action', 'interval', 'start', 'touchStart']);
       ok(restored.compiled.symbols.actions.has('ジャンプ'), 'the procedure made in the text travels');
     });
+    // XR-01: the うごく作品 opens every 名人 work the editor runs. The 名人 reader marks some subjects for the work check
+    // only (a sentence after a group subject or after two named subjects, a sentence with no subject under 〜が〜にふれたとき).
+    for (const [name, source, variables] of [
+      ['two conditions', '点数を3にする。\nもし点数が奇数なら、ねこは「きすう」と2秒話す。\nもし点数が偶数なら、ねこは「ぐうすう」と2秒話す。', ['点数']],
+      ['touch body without a subject', '犬がねこにふれたとき、点数を1ふやす。', ['点数']],
+      ['after a group subject', 'なかまは、順番に「やあ」と1秒話す。\n点数を1ふやす。', ['点数']],
+    ]) test('meijin exported work opens: ' + name, () => {
+      const p = meijinWork('', { variables });
+      Akari.updateScriptSource(p.scripts[0], source, p);
+      eq(compileProject(p).errors.map(e => e.code), []);
+      const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
+      ok(restored.compiled.items.length > 0, 'restored');
+    });
+    // XR-03: a body with two headings opens in the うごく作品 also when its script has no document record (a file
+    // written by a tool, or a project given straight to the public API).
+    test('exported work opens a body with two headings and no document record', () => {
+      const p = makeRegressionProject();
+      p.scripts = [{ id: 'core-two-headings', targetId: 'sprite-1', event: 'start', source: '作品を動かしたとき、\n  「はじめ」と言う。\nおされたとき、\n  「おされた」と言う。' }];
+      eq(compileProject(p).errors.map(e => e.code), []);
+      ok(!p.scripts[0].document, 'no document record');
+      const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
+      eq(restored.compiled.items.filter(i => String(i.key).startsWith('script')).map(i => i.event).sort(), ['click', 'start']);
+    });
     test('exported work keeps a subject written with が', () => {
       const p = laneProject(); p.scripts = [{ id: 'core-ga', targetId: 'stage', event: 'start', source: '犬が、いまのばしょから、右へ10歩動く。\nタイマーを0にする。\n犬は、ねこが2回おされるまで待つ。' }];
       eq(compileProject(p).errors, []);
