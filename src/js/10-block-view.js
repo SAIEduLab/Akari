@@ -1145,6 +1145,19 @@
         const rise = box.getBoundingClientRect().top - extent(box).top;
         if (rise > 0) head.style.transform = 'translateY(' + -rise / zoom + 'px)';
       };
+      // Tools right above a block near the top of the workspace would reach under the bars over it, where they cannot
+      // be pressed: they go right under the block instead when more of them shows there.
+      const inView = () => {
+        const above = head.getBoundingClientRect(), top = room.top + 2;
+        if (above.top >= top) return;
+        const under = extent(box).bottom + 4, bottom = room.top + workspace.clientHeight - 2,
+          shownAbove = Math.max(0, above.bottom - Math.max(above.top, top)), shownUnder = Math.max(0, Math.min(bottom, under + above.height) - under);
+        if (shownUnder <= shownAbove) return;
+        box.classList.remove('blockui-tools-above'); head.style.transform = '';
+        const left = Math.max(room.left + 8, Math.min(above.left, room.left + workspace.clientWidth - 8 - above.width));
+        head.style.maxWidth = Math.max(120, room.left + workspace.clientWidth - 8 - left) / zoom + 'px';
+        moveTo(head, left, under);
+      };
       // The first of the places that covers nothing, else the one that covers the least.
       const bestOf = (spots, w, h, own) => {
         let best = spots[0], fewest = Infinity;
@@ -1181,6 +1194,7 @@
                 far = room.right - 8 - above.width, shifted = { left: far, top: above.top, right: far + above.width, bottom: above.bottom };
               if (far > above.left && covers(above, [box, head]) && covers(shifted, [box, head]) < covers(above, [box, head]))
                 head.style.left = left + (far - above.left) / zoom + 'px';
+              inView();
             }
           }
         }
@@ -1211,7 +1225,7 @@
         const owner = ownerOf(box.parentElement), r = head.getBoundingClientRect(),
           spot = owner && fits(owner, head) ? [extent(owner).right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4] : null;
         if (spot && !covers({ left: spot[0], top: spot[1], right: spot[0] + r.width, bottom: spot[1] + r.height }, [box, head])) moveTo(head, ...spot);
-        else { box.classList.add('blockui-tools-above'); aboveSurface(); }
+        else { box.classList.add('blockui-tools-above'); aboveSurface(); inView(); }
       }
       clearOfControls();
     }
