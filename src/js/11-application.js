@@ -557,7 +557,7 @@
       if(step?.action==='save')expected=expected&&!!tutorialSave&&tutorialSave.fingerprint===currentFingerprint();
       if(step?.action==='verify-save')expected=expected&&!!tutorialSave?.verified;
       return {confirmedStep:tutorial.confirmedStep,sameWork:workspaceIdentity===tutorial.identity&&selectedId===tutorial.target&&currentEvent==='click',
-        pending:!!mainEditor.session?.pendingEdit&&mainEditor.session.pendingEdit.kind!=='block-draft'||composingEditors.size>0,
+        pending:!!mainEditor.session?.pendingEdit&&mainEditor.session.pendingEdit.kind!=='block-draft'||composingAny(),
         failed:!!tutorialTrace?.failed,expected};
     }
     function refreshTutorialPresentation() {
@@ -681,14 +681,14 @@
       if(allowed&&event.type==='click'&&step?.allowed[0]==='runtime:click'&&target.closest('.component')&&tutorialTrace?.busy)allowed=false;
       if(allowed&&event.type==='pointerdown'&&target.closest('#tutorialExit'))event.preventDefault();
       if(allowed&&step?.allowed[0].startsWith('field:')&&(
-        event.type==='keydown'&&event.key==='Enter'&&!event.isComposing&&!composingEditors.size
+        event.type==='keydown'&&event.key==='Enter'&&!event.isComposing&&!composingAny()
         ||event.type==='change'&&target instanceof HTMLSelectElement
         ||event.type==='click'&&target.closest('[data-blockui-action="commit"]'))){
         // A confirmed unchanged value is still an explicit learning operation.
         // Observe after the normal field handler; invalid/pending input cannot count.
         const epoch=tutorial.epoch,id=step.id;
         setTimeout(()=>{if(tutorial?.epoch===epoch&&tutorialStep(tutorial)?.id===id
-          &&(!mainEditor.session?.pendingEdit||mainEditor.session.pendingEdit.kind==='block-draft')&&!composingEditors.size){confirmTutorialOperation(step.allowed[0]);tutorialRefresh();}},0);
+          &&(!mainEditor.session?.pendingEdit||mainEditor.session.pendingEdit.kind==='block-draft')&&!composingAny()){confirmTutorialOperation(step.allowed[0]);tutorialRefresh();}},0);
       }
       if(!allowed){
         event.preventDefault();event.stopImmediatePropagation();
@@ -1419,6 +1419,8 @@
           pending.dataset.notice = 'block-draft';
           pending.hidden = false;
           renderEditorBinding(binding);
+          // The status line says what the floating prompt says, not what was true before the block went in (F2-18).
+          setStatus(binding.session.pendingEdit?.reason || 'あいている ところを えらんで、ブロックを 入れてね');
           scheduleAutosave();
           confirmTutorialOperation();
           return { ok: true, changed: true, draftOnly: true };
@@ -2736,7 +2738,7 @@
     }
     function undo() {
       if (!tutorialAllows(tutorial,'undo')) return;
-      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit) return;
+      if (modelLocked() || composingAny() || activeDragCleanup || colorEdit) return;
       flushActiveEditor();
       clearTimeout(historyTimer);
       const cur = snapshot();
@@ -2749,7 +2751,7 @@
     }
     function redoDo() {
       if (tutorial) return;
-      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit || !redo.length) return;
+      if (modelLocked() || composingAny() || activeDragCleanup || colorEdit || !redo.length) return;
       flushActiveEditor();
       if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
       clearTimeout(historyTimer);
@@ -2803,7 +2805,7 @@
       const content = currentFingerprint(), editor = openEditorFingerprint();
       return { fingerprint: stableJson([content, editor]),
         unsaved: content !== lastSavedFingerprint || editor !== lastSavedEditorFingerprint ||
-          composingEditors.size > 0 || !!colorEdit };
+          composingAny() || !!colorEdit };
     }
     let openRequest = null;
     function finishOpenSelection() {
@@ -5392,6 +5394,8 @@
     let hintPage = 0,
       callableHintPage = 0;
     const composingEditors = new WeakSet();
+    // A WeakSet has no size: whether a word is still being typed (IME) in either editor.
+    function composingAny() { return composingEditors.has(el.editor) || composingEditors.has(draftEditor.textarea); }
     // 書ける ことば names a value by its group in the block list (FCB-13): しらべる for a reading of the screen, へんすう・リスト
     // for a value written as it is (［1、2、3］, 条件の答え（あてはまる）), 計算 for a calculation and the ready-made ones. A
     // calculation for くわしく only (2＾3, 平方根, 正弦 …) is not offered below くわしく, as in the block list (F-21).
@@ -6128,7 +6132,7 @@
     function saveProject() {
       if (!tutorialAllows(tutorial,'save')) return false;
       if (appState === 'IMPORTING' || appState === 'PREPARING') return false;
-      if(composingEditors.size){setStatus('日本語の 入力を 決めてから、ほぞんしてね');return false;}
+      if(composingAny()){setStatus('日本語の 入力を 決めてから、ほぞんしてね');return false;}
       flushActiveEditor();
       try {
         const editorState=captureEditorState(),unfinished=editorState.pendingEditors.length||editorState.callableDraft||compileProject(project).errors.length;
@@ -6346,7 +6350,7 @@
     }
 
     function writeAutosave() {
-      if (composingEditors.size || activeDragCleanup || colorEdit) {
+      if (composingAny() || activeDragCleanup || colorEdit) {
         scheduleAutosave();
         return Promise.resolve(false);
       }
@@ -8005,12 +8009,12 @@
       // 名人: the selected body becomes a 名人 text after the confirm (an empty one when there is no body to move).
       if($('#uiLevel').value==='meijin'){
         $('#uiLevel').value=baseUiLevel;
-        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、レベルを かえてね。'); return; }
+        if (tutorial || composingAny() || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、レベルを かえてね。'); return; }
         if(!workIsMeijin())startMeijin();
         applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);mainEditor.view.render({force:true});
         return;
       }
-      if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
+      if (tutorial || composingAny() || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
         applyUiLevel();
         setStatus('入力を 決めるか やめてから、レベルを かえてね。');
         return;

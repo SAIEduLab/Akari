@@ -5785,6 +5785,9 @@ body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
 body[data-ui-level="entry"] .blockui-layout { flex:1; height:auto; min-height:0; grid-template-columns:240px minmax(0,1fr); }
 body[data-ui-level="entry"] .blockui-palette { display:flex; flex-direction:column; min-height:0; }
 body[data-ui-level="entry"] .blockui-palette::before { content:'ブロックの いちらん'; padding:8px; font-weight:bold; }
+/* はじめて's list shows each block by its face only: the one caption (「話す」 under 「こんにちは と 2 秒話す」) only repeated
+   the face's own word (FM2-15). */
+body[data-ui-level="entry"] .blockui-palette .blockui-bound-name { display: none; }
 body[data-ui-level="entry"] .blockui-palette-list { flex:1; min-height:0; overflow:auto; }
 body[data-ui-level="entry"] :is(.blockui-palette-controls,.blockui-categories,.blockui-palette-options,.blockui-palette-tools,.blockui-search-scope,.blockui-search-restore) { display:none; }
 body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
