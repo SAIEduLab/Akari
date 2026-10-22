@@ -2169,8 +2169,10 @@
           return quantity(r.mouseY, '歩');
         case 'マウスが押されている':
           return r.mouseDown;
+        // In whole milliseconds: the browser's clock has digits below them that are only noise, and a race time a
+        // child says would show them (0.773800000012秒).
         case 'タイマー':
-          return quantity((r.now() - r.startTime - r.timerOffset) / 1000, '秒');
+          return quantity(Math.round(r.now() - r.startTime - r.timerOffset) / 1000, '秒');
         case '拡張の値':
           if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張「できごとの値」は、かくちょうの きっかけの 本文で 使ってください');
           return assertRuntimeValueLimit(ctx.eventContext.payload);
