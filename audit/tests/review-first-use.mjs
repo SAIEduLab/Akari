@@ -181,7 +181,7 @@ async function reviewModePreference(page) {
     }
     observations.push({mode,reloaded:true,source:initial.source,historyUnchanged:true});
   }
-  await page.locator('#editorModecode').click();const edited='画面の右へ12歩動く。';assert.notEqual(edited,initial.source);
+  await page.locator('#editorModecode').click();const edited='いまのばしょから、右へ12歩動く。';assert.notEqual(edited,initial.source);
   await page.locator('#codeEditor').fill(edited);
   await page.waitForFunction(source=>Akari.app.editorState.main.sourceText===source&&Akari.app.editorState.history>1,edited);
   const committed=await read();
@@ -258,7 +258,8 @@ async function reviewDefaults(page, capture) {
   assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),0,'kana alias respects the expression category filter');
   await openPaletteOptions(page);await paletteMode.selectOption('statement');await closePaletteOptions(page);
   await page.locator('#blockEditor [data-blockui-category="motion"]:visible').click();
-  assert.equal(await page.locator('#blockEditor [data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),0,'kana respects a selected motion category');
+  // A chosen なかま does not narrow a search: the search looks in every なかま (LANGUAGE.md ブロックを さがす).
+  assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),1,'a search with 動き chosen still finds the size block');
   await page.locator('#blockEditor [data-blockui-category="look"]:visible').click();
   assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),1,'kana finds size in its appearance category');
   await page.locator('#blockEditor [data-blockui-category=""]:visible').click();
@@ -307,7 +308,9 @@ async function reviewDefaults(page, capture) {
   assert.equal(roundtrip.after, source, 'source and blocks round trip');
   assert.equal(runtime.failure, '', 'the new default scale executes without a runtime failure');
   assert.ok(runtime.bubbles.some(text => text.includes('こんにちは')), 'the program visibly speaks its greeting');
-  assert.match(runtime.finalSpriteTransform, /rotate\(15deg\)/, 'the new rotation value is reflected on the stage');
+  // 右に15度回る lowers the angle from 0 to 345 (LANGUAGE.md 向き); the stage draws rotate(−向き), 15 degrees clockwise.
+  const shown = Number(/rotate\((-?[0-9.]+)deg\)/.exec(runtime.finalSpriteTransform)?.[1]);
+  assert.equal(((shown % 360) + 360) % 360, 15, 'the new rotation value is reflected on the stage');
   evidence.blockDiscoverability = await reviewBlockDiscoverability(page);
   capture(evidence);
   return evidence;

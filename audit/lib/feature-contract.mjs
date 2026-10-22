@@ -52,7 +52,7 @@ export function verifyAudio(report, inputs, platform) {
 export const designerZoomIds = [
   'DESIGN-ZOOM-FIT-CODE', 'DESIGN-ZOOM-FIT-BLOCKS', 'DESIGN-ZOOM-ZOOM-SCROLL',
   'DESIGN-ZOOM-STABLE-RESIZE', 'DESIGN-ZOOM-POINTER-HISTORY', 'DESIGN-ZOOM-RUNTIME',
-  'DESIGN-ZOOM-SAVE-EXPORT', 'DESIGN-ZOOM-FORMAT', 'DESIGN-ZOOM-NARROW-TOUCH',
+  'DESIGN-ZOOM-SAVE-EXPORT', 'DESIGN-ZOOM-FORMAT', 'DESIGN-ZOOM-NARROW-TOUCH', 'DESIGN-ZOOM-HANDLE-KEYS',
 ];
 export function verifyDesignerZoom(report, inputs) {
   assert.equal(report.schema, 'akari-designer-v1');

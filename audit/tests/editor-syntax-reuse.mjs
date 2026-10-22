@@ -22,7 +22,7 @@ export function runEditorSyntaxReuseTests(html=fs.readFileSync(currentProductFil
     assert.deepEqual(plain(actual),plain(expected),id+' session parity');
     if(actual.blockView) {
       const locate=s=>({parentId:s.blockView.id,body:'body',index:s.blockView.bodies.body.length});
-      for(const schema of ['Say','WaitTime','MotionCommand:MOVE_DIRECTION','UserActionCall','IfStatement']) {
+      for(const schema of ['Say','WaitTime','MotionCommand:MOVE_BY','UserActionCall','IfStatement']) {
         assert.deepEqual(plain(cached.blockInsertionAvailability(actual,schema,locate(actual),{project:p,context})),
           plain(uncached.blockInsertionAvailability(expected,schema,locate(expected),{project:p,context})),id+' '+schema);
       }
@@ -73,7 +73,7 @@ export function runEditorSyntaxReuseTests(html=fs.readFileSync(currentProductFil
   const create=()=>measured.createEditorSession('script:start',large.scripts[0].source,
     {targetId:'sprite-1',targetType:'sprite',event:'start',args:[]},large);
   const session=create(), point={parentId:session.blockView.id,body:'body',index:1};
-  for(const schema of ['Say','WaitTime','MotionCommand:MOVE_DIRECTION','UserActionCall'])
+  for(const schema of ['Say','WaitTime','MotionCommand:MOVE_BY','UserActionCall'])
     measured.blockInsertionAvailability(session,schema,point,{project:large,context:session.context});
   create();
   const count=()=>new Map(measured.auditSyntaxProbe().counts).get(sharedSource);

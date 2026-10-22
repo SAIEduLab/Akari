@@ -17,7 +17,7 @@ function fixture(){
   cat.name='ねこ';cat.x=0;cat.y=0;cat.localData={variables:[],lists:[]};
   p.components=[cat];p.projectData={variables:[{id:'review-score',name:'点数',initialValue:0}],lists:[]};
   p.actions=[];p.functions=[];
-  p.scripts=[{id:'review-units',targetId:cat.id,event:'start',source:'ねこは右へ10歩動く。\n点数を1秒 + 2点にする。'}];return p;
+  p.scripts=[{id:'review-units',targetId:cat.id,event:'start',source:'ねこは、いまのばしょから、右へ10歩動く。\n点数を1秒 + 2点にする。'}];return p;
 }
 async function openBody(page){
   await page.locator('#uiLevel').selectOption('advanced');
@@ -89,7 +89,7 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     await openBody(page);await observe(page);const before=await state(page);
     const sources=['大きさを0％にする。','大きさを−1％にする。','大きさを１００１％にする。','大きさを（1000 + 1）％にする。'];
     const compile=await page.evaluate(sources=>sources.map(source=>{
-      const p=structuredClone(Akari.app.project);p.scripts[0].source='右へ10歩動く。\n'+source;
+      const p=structuredClone(Akari.app.project);p.scripts[0].source='いまのばしょから、右へ10歩動く。\n'+source;
       return{source,errors:Akari.compileProject(p).errors};
     }),sources);
     for(const row of compile)assert.ok(row.errors.some(d=>d.code==='R412'&&d.line===2),row.source+' must be diagnosed statically at its position');
@@ -117,7 +117,8 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     await page.locator('#codeEditor').fill('大きさを100％にする。');
     await page.waitForFunction(()=>Akari.app.editorState.main.sourceText==='大きさを100％にする。');
     await page.locator('#editorModeblocks').click();
-    const blockBefore=await state(page),field=page.locator('#blockEditor [data-schema-id="LooksCommand:SET_SCALE"] [data-schema-id="NumberLiteral"] input[data-blockui-field="value"]');
+    // The number sits in the block face itself (no inner NumberLiteral node), as the field of the size block.
+    const blockBefore=await state(page),field=page.locator('#blockEditor [data-schema-id="LooksCommand:SET_SCALE"] input[data-blockui-field="value"]');
     assert.equal(await field.count(),1);assert.equal(await field.inputValue(),'100');
     await field.fill('0');await field.press('Enter');
     await page.waitForFunction(()=>document.querySelector('#codeIssue').textContent.includes('R412'));

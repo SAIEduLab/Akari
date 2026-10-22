@@ -92,7 +92,7 @@ const report=await withBrowser(browserPath,async browser=>{
           ['もし、','歩','大きければ',10,5],
           ['もし、','歩','大きいなら',5,10],
         ]){
-          const source=`${prefix}${left}${unit}が${right}${unit}より${ending}、\n  あかりは右へ20歩動く。`,
+          const source=`${prefix}${left}${unit}が${right}${unit}より${ending}、\n  あかりは、いまのばしょから、右へ20歩動く。`,
             ast=A.parseSyntax(source).ast;
           check(ast,'natural condition did not parse');
           equal(ast.body[0].condition.op,'GT');
@@ -101,9 +101,9 @@ const report=await withBrowser(browserPath,async browser=>{
           equal(unit?condition.left.value.value:condition.left.value,left);
           equal(unit?condition.right.value.value:condition.right.value,right);
           equal(condition.sourceSpan.startColumn,prefix.length+1);
-          equal(ast.body[0].thenBody[0].direction,'right');
+          equal(ast.body[0].thenBody[0].op,'MOVE_BY');equal(ast.body[0].thenBody[0].xDir,'right');
           const formatted=A.formatScript(A.blockDecode(A.blockEncode(ast).tree)),again=A.parseSyntax(formatted).ast;
-          check(again,'formatted condition did not parse');equal(again.body[0].condition.op,'GT');equal(again.body[0].thenBody[0].direction,'right');
+          check(again,'formatted condition did not parse');equal(again.body[0].condition.op,'GT');equal(again.body[0].thenBody[0].op,'MOVE_BY');equal(again.body[0].thenBody[0].xDir,'right');
           const p=project();p.components[0].name='あかり';p.scripts=[{id:'condition',targetId:'stage',event:'start',source}];
           const expectedX=p.components[0].x+(left>right?20:0),expectedY=p.components[0].y;
           for(const packed of[false,true]){const actor=run(p,packed).runtime.actor('sprite-1');equal(actor.x,expectedX);equal(actor.y,expectedY);}

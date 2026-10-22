@@ -12,23 +12,25 @@ const U=require('../browser/cases/ui-routes.cjs');
 const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
 const [product,browserPath,output]=process.argv.slice(2);assert.ok(product&&browserPath&&output,'product, browser and output required');fs.mkdirSync(output,{recursive:true});
 const html=fs.readFileSync(product,'utf8'),A=loadApi(html),productSha256=crypto.createHash('sha256').update(html).digest('hex'),reports=[],initialSnapshot=snapshot(product),pageErrors=[],networkRequests=[];let browserVersion=null;
-const source='いぬは右へ1歩動く。\nもし点数が0と同じなら、\n  自分は右へ2歩動く。';
+const source='いぬは、いまのばしょから、右へ1歩動く。\nもし点数が0と同じなら、\n  自分は、いまのばしょから、右へ2歩動く。';
 function fixture(text=source){const p=makeRegressionProject(A),sprite=p.components.find(c=>c.type==='sprite');p.components=['ねこ','いぬ'].map((name,i)=>({...structuredClone(sprite),id:i?'dog':'cat',name,x:i?100:0,y:0,costumes:[{id:'costume-'+i,name:'顔',kind:'text',value:'🐈'}],costumeId:'costume-'+i,localData:{variables:[],lists:[]}}));p.scripts=[{id:'scope-start',targetId:'cat',event:'start',source:text}];p.actions=[];p.functions=[];return p;}
 function compile(p){const c=A.compileProject(p);assert.deepEqual(JSON.parse(JSON.stringify(c.errors)),[]);return c;}
-function run(p,api=A,compiled=null){const c=compiled||api.compileProject(p);assert.deepEqual(JSON.parse(JSON.stringify(c.errors||[])),[]);const r=new api.RuntimeModel(p,{}),q=new api.EventScheduler(p,c,r,{});r.now=()=>0;q.schedule=()=>{};q.start();for(let i=0;i<500&&q.ready.length;i++)q.runTurn();assert.equal(q.tasks.size,0);assert.deepEqual(JSON.parse(JSON.stringify(q.errorRecords)),[]);const result={cat:r.actor('cat').x,dog:r.actor('dog').x};q.stop();return result;}
+function run(p,api=A,compiled=null){const c=compiled||api.compileProject(p);assert.deepEqual(JSON.parse(JSON.stringify(c.errors||[])),[]);const r=new api.RuntimeModel(p,{}),q=new api.EventScheduler(p,c,r,{});let now=0;r.now=()=>now;q.schedule=()=>{};q.start();
+ // A loop turn that moves a part waits for the next こま (LANGUAGE.md くり返しと画面の動き), so the logical clock steps by 1 ms.
+ for(;now<=1000&&(q.ready.length||q.tasks.size);now++){for(let i=0;i<500&&q.ready.length;i++)q.runTurn();q.recheckBlocked();}assert.equal(q.tasks.size,0);assert.deepEqual(JSON.parse(JSON.stringify(q.errorRecords)),[]);const result={cat:r.actor('cat').x,dog:r.actor('dog').x};q.stop();return result;}
 async function reviewControlEdits(){
  const controls=[
-  ['if','もし横位置が0より大きければ、\n  右へ2歩動く。',103,105,102],
-  ['repeat','1回くり返す。\n  右へ2歩動く。',103,105,102],
-  ['while','横位置が102より小さいあいだ、くり返す。\n  右へ2歩動く。',103,103,102],
-  ['until','横位置が102以上になるまで、くり返す。\n  右へ2歩動く。',103,103,102],
-  ['forever','次のことをずっとくり返す。\n  右へ2歩動く。\n  このくり返しを終える。',103,105,102],
-  ['foreach-inline-binder','名前一覧の各要素を項目として、次のことをくり返す。\n  右へ2歩動く。',105,109,104],
-  ['foreach-declared-binder','名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  右へ2歩動く。',105,109,104],
+  ['if','もしよこのばしょが0より大きければ、\n  いまのばしょから、右へ2歩動く。',103,105,102],
+  ['repeat','1回くり返す。\n  いまのばしょから、右へ2歩動く。',103,105,102],
+  ['while','よこのばしょが102より小さいあいだ、くり返す。\n  いまのばしょから、右へ2歩動く。',103,103,102],
+  ['until','よこのばしょが102以上になるまで、くり返す。\n  いまのばしょから、右へ2歩動く。',103,103,102],
+  ['forever','次のことをずっとくり返す。\n  いまのばしょから、右へ2歩動く。\n  このくり返しを終える。',103,105,102],
+  ['foreach-inline-binder','名前一覧の各要素を項目として、次のことをくり返す。\n  いまのばしょから、右へ2歩動く。',105,109,104],
+  ['foreach-declared-binder','名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  いまのばしょから、右へ2歩動く。',105,109,104],
  ];
  const results=[];
  for(const [kind,text,moved,duplicated,removed] of controls)for(const operation of ['move','duplicate','remove']){
-  const source='いぬは右へ1歩動く。\n'+text,p=fixture(source),s=A.createEditorSession('script:scope-start',source,{targetId:'cat',event:'start'},p,0),body=s.blockView.bodies.body;
+  const source='いぬは、いまのばしょから、右へ1歩動く。\n'+text,p=fixture(source),s=A.createEditorSession('script:scope-start',source,{targetId:'cat',event:'start'},p,0),body=s.blockView.bodies.body;
   compile(p);const before=JSON.stringify(p),op=operation==='remove'?{type:'remove',id:body[0].id}:{type:operation,id:body[1].id,parentId:s.blockView.id,body:'body',index:0};
   const edit=A.prepareBlockEdit(s,op);assert.equal(JSON.stringify(p),before,'preparing edits preserves the full project');
   assert.ok(edit.changed&&!edit.draftOnly);const expectedAst={...s.syntaxAst,body:operation==='remove'?[s.syntaxAst.body[1]]:operation==='move'?[s.syntaxAst.body[1],s.syntaxAst.body[0]]:[s.syntaxAst.body[1],...s.syntaxAst.body]};
@@ -40,10 +42,10 @@ async function reviewControlEdits(){
   results.push({kind,operation,source:edit.source,expected,savedReloadEqual:true,executableRestoreEqual:true});
  }
  for(const text of [
-  '名前一覧の各要素を項目として、次のことをくり返す。  ※ 見出しを保持\n  項目の値を言う。\n  右へ 02 歩動く。  ※ 本文を保持',
-  '2回くり返す。  ※ 外側\n  名前一覧の各要素を項目として、次のことをくり返す。\n    項目の値を言う。\n    右へ2歩動く。',
+  '名前一覧の各要素を項目として、次のことをくり返す。  ※ 見出しを保持\n  項目の値を言う。\n  いまのばしょから、右へ 02 歩動く。  ※ 本文を保持',
+  '2回くり返す。  ※ 外側\n  名前一覧の各要素を項目として、次のことをくり返す。\n    項目の値を言う。\n    いまのばしょから、右へ2歩動く。',
  ]){
-  const source='いぬは右へ1歩動く。\n'+text,p=fixture(source),s=A.createEditorSession('script:scope-start',source,{targetId:'cat',event:'start'},p,0);
+  const source='いぬは、いまのばしょから、右へ1歩動く。\n'+text,p=fixture(source),s=A.createEditorSession('script:scope-start',source,{targetId:'cat',event:'start'},p,0);
   const edit=A.prepareBlockEdit(s,{type:'remove',id:s.blockView.bodies.body[0].id});
   assert.equal(edit.source,'いぬは、'+text,'topic-only changes preserve all original binder, comments, spacing and body bytes');
   assert.equal(A.astEquivalent(edit.syntaxAst,{...s.syntaxAst,body:[s.syntaxAst.body[1]]}),true);
@@ -66,11 +68,11 @@ async function reviewPendingDeletion(page){
  finally{page.off('dialog',onDialog);}
 }
 async function reviewForEachDeletion(page){
- const text='いぬは右へ1歩動く。\n名前一覧の各要素を項目として、次のことをくり返す。  ※ 項目を保持\n  項目の値を言う。\n  右へ2歩動く。',project=fixture(text);
+ const text='いぬは、いまのばしょから、右へ1歩動く。\n名前一覧の各要素を項目として、次のことをくり返す。  ※ 項目を保持\n  項目の値を言う。\n  いまのばしょから、右へ2歩動く。',project=fixture(text);
  await page.locator('#fileInput').setInputFiles({name:'foreach-owner.akari.md',mimeType:'text/markdown',buffer:Buffer.from(A.serializeProject(project))});
  await openRegressionEditor(page,{target:'cat',mode:'blocks'});
  const read=()=>page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,pending:Akari.app.editorState.main.pendingEdit,diagnostics:Akari.app.editorState.main.diagnostics,history:Akari.app.editorState.history,project:Akari.app.project}));
- const before=await read();await U.nodeAction(page.locator('#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE_DIRECTION"]').first(),'remove');
+ const before=await read();await U.nodeAction(page.locator('#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE_BY"]').first(),'remove');
  const after=await read();assert.equal(after.source,'いぬは、'+text.split('\n').slice(1).join('\n'),'normal UI removal preserves binder and body');assert.equal(after.pending,null);assert.deepEqual(after.diagnostics,[]);assert.equal(after.history,before.history+1);assert.deepEqual(run(after.project),{cat:0,dog:104});
  await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),after.source);await page.locator('#editorModeblocks').click();assert.equal((await read()).source,after.source);
  await (await reveal(page.locator('#undoBtn'))).click();assert.equal((await read()).source,before.source);await (await reveal(page.locator('#redoBtn'))).click();assert.equal((await read()).source,after.source);
@@ -80,17 +82,17 @@ async function test(id,fn){try{reports.push({id,pass:true,evidence:await fn()});
 (async()=>{
 await test('REVIEW-SELF-ACTOR-NESTED-ROUNDTRIP',async()=>{const examples=[
  {id:'if-self',text:source,expected:{cat:2,dog:101}},
- {id:'if-branch-scope-restored',text:source+'\n右へ3歩動く。',expected:{cat:2,dog:104}},
- {id:'else-self',text:'いぬは右へ1歩動く。\nもし点数が1と同じなら、\n  右へ40歩動く。\nそうでなければ、\n  自分は右へ2歩動く。\n右へ3歩動く。',expected:{cat:2,dog:104}},
- {id:'repeat-nested-self',text:'いぬは右へ1歩動く。\n2回くり返す。\n  もし点数が0と同じなら、\n    自分は右へ2歩動く。\n  右へ3歩動く。\n右へ4歩動く。',expected:{cat:4,dog:111}},
- {id:'broadcast-reference-keeps-inherited-topic',text:'いぬはみんなに「出発」と知らせる。\nその知らせを受けて始めたことが全部終わるまで待つ。\nもし点数が0と同じなら、\n  自分は右へ2歩動く。',expected:{cat:2,dog:100}},
- {id:'inner-topic-does-not-leak',text:'2回くり返す。\n  いぬは右へ1歩動く。\n右へ2歩動く。',expected:{cat:2,dog:102}},
+ {id:'if-branch-scope-restored',text:source+'\nいまのばしょから、右へ3歩動く。',expected:{cat:2,dog:104}},
+ {id:'else-self',text:'いぬは、いまのばしょから、右へ1歩動く。\nもし点数が1と同じなら、\n  いまのばしょから、右へ40歩動く。\nそうでなければ、\n  自分は、いまのばしょから、右へ2歩動く。\nいまのばしょから、右へ3歩動く。',expected:{cat:2,dog:104}},
+ {id:'repeat-nested-self',text:'いぬは、いまのばしょから、右へ1歩動く。\n2回くり返す。\n  もし点数が0と同じなら、\n    自分は、いまのばしょから、右へ2歩動く。\n  いまのばしょから、右へ3歩動く。\nいまのばしょから、右へ4歩動く。',expected:{cat:4,dog:111}},
+ {id:'broadcast-reference-keeps-inherited-topic',text:'いぬはみんなに「出発」と知らせる。\nその知らせを受けて始めたことが全部終わるまで待つ。\nもし点数が0と同じなら、\n  自分は、いまのばしょから、右へ2歩動く。',expected:{cat:2,dog:100}},
+ {id:'inner-topic-does-not-leak',text:'2回くり返す。\n  いぬは、いまのばしょから、右へ1歩動く。\nいまのばしょから、右へ2歩動く。',expected:{cat:2,dog:102}},
  ];const results=[];for(const ex of examples){const original=compile(fixture(ex.text)).items[0].ast;let text=ex.text;assert.deepEqual(run(fixture(text)),ex.expected,ex.id+' original independent effect');for(let round=0;round<3;round++){const ast=compile(fixture(text)).items[0].ast,encoded=A.blockEncode(ast),decoded=A.blockDecode(encoded.tree);assert.equal(A.astEquivalent(original,decoded),true,ex.id+' codec semantic AST');text=A.formatScript(decoded);const parsed=compile(fixture(text)).items[0].ast;assert.equal(A.astEquivalent(original,parsed),true,ex.id+' formatted semantic AST');assert.deepEqual(run(fixture(text)),ex.expected,ex.id+' roundtrip effect');}results.push({id:ex.id,expected:ex.expected,formatted:text,rounds:3});}
  const moves=[
-  {id:'implicit-self-moves-after-named',source:'右へ2歩動く。\nいぬは右へ1歩動く。',expectedSource:'いぬは右へ1歩動く。\n自分は画面の右へ2歩動く。',expected:{cat:2,dog:101}},
-  {id:'same-topic-move-keeps-bytes',source:'右へ 02 歩動く。  ※ 元  \n右へ1歩動く。',expectedSource:'右へ1歩動く。\n右へ 02 歩動く。  ※ 元  ',expected:{cat:3,dog:100}},
-  {id:'explicit-self-cross-topic-keeps-bytes',source:'自分は右へ 02 歩動く。  ※ 元  \nいぬは右へ1歩動く。',expectedSource:'いぬは右へ1歩動く。\n自分は右へ 02 歩動く。  ※ 元  ',expected:{cat:2,dog:101}},
-  {id:'delete-topic-setter-preserves-tail-actor',source:'いぬは右へ1歩動く。\n右へ2歩動く。',expectedSource:'いぬは画面の右へ2歩動く。',expected:{cat:0,dog:102},remove:true},
+  {id:'implicit-self-moves-after-named',source:'いまのばしょから、右へ2歩動く。\nいぬは、いまのばしょから、右へ1歩動く。',expectedSource:'いぬは、いまのばしょから、右へ1歩動く。\n自分は、いまのばしょから、右へ2歩動く。',expected:{cat:2,dog:101}},
+  {id:'same-topic-move-keeps-bytes',source:'いまのばしょから、右へ 02 歩動く。  ※ 元  \nいまのばしょから、右へ1歩動く。',expectedSource:'いまのばしょから、右へ1歩動く。\nいまのばしょから、右へ 02 歩動く。  ※ 元  ',expected:{cat:3,dog:100}},
+  {id:'explicit-self-cross-topic-keeps-bytes',source:'自分は、いまのばしょから、右へ 02 歩動く。  ※ 元  \nいぬは、いまのばしょから、右へ1歩動く。',expectedSource:'いぬは、いまのばしょから、右へ1歩動く。\n自分は、いまのばしょから、右へ 02 歩動く。  ※ 元  ',expected:{cat:2,dog:101}},
+  {id:'delete-topic-setter-preserves-tail-actor',source:'いぬは、いまのばしょから、右へ1歩動く。\nいまのばしょから、右へ2歩動く。',expectedSource:'いぬは、いまのばしょから、右へ2歩動く。',expected:{cat:0,dog:102},remove:true},
  ];
  for(const ex of moves){const project=fixture(ex.source),session=A.createEditorSession('script:scope-start',ex.source,{targetId:'cat',event:'start'},project,0),body=session.blockView.bodies.body,
    edit=A.prepareBlockEdit(session,ex.remove?{type:'remove',id:body[0].id}:{type:'move',id:body[0].id,parentId:session.blockView.id,body:'body',index:2}),
@@ -99,9 +101,9 @@ await test('REVIEW-SELF-ACTOR-NESTED-ROUNDTRIP',async()=>{const examples=[
  }
  // An explicit subject inside a body keeps its own bytes when moved: its extent starts after the indent, so the
  // comment's trailing spaces stay on its own line (they had moved onto the next line's comment).
- {const text='2回くり返す。\n  右へ1歩動く。  ※ 先 \n  自分は右へ 02 歩動く。  ※ 元  ',project=fixture(text),session=A.createEditorSession('script:scope-start',text,{targetId:'cat',event:'start'},project,0),loop=session.blockView.bodies.body[0],
+ {const text='2回くり返す。\n  いまのばしょから、右へ1歩動く。  ※ 先 \n  自分は、いまのばしょから、右へ 02 歩動く。  ※ 元  ',project=fixture(text),session=A.createEditorSession('script:scope-start',text,{targetId:'cat',event:'start'},project,0),loop=session.blockView.bodies.body[0],
    edit=A.prepareBlockEdit(session,{type:'move',id:loop.bodies.body[1].id,parentId:loop.id,body:'body',index:0});
-  assert.equal(edit.source,'2回くり返す。\n  自分は右へ 02 歩動く。  ※ 元  \n  右へ1歩動く。  ※ 先 ','nested explicit self move keeps bytes');
+  assert.equal(edit.source,'2回くり返す。\n  自分は、いまのばしょから、右へ 02 歩動く。  ※ 元  \n  いまのばしょから、右へ1歩動く。  ※ 先 ','nested explicit self move keeps bytes');
   assert.deepEqual(run(fixture(edit.source)),{cat:6,dog:100},'nested explicit self move effect');results.push({id:'explicit-self-nested-move-keeps-bytes',source:text,result:edit.source,expected:{cat:6,dog:100}});}
  results.push(...await reviewControlEdits());return results;});
 await test('REVIEW-SELF-ACTOR-ELSE-EDIT',async()=>{const browser=await chromium.launch({executablePath:browserPath,headless:true,args:['--allow-file-access-from-files']}),context=await browser.newContext({viewport:{width:1440,height:1000}}),errors=pageErrors,network=networkRequests;browserVersion=browser.version();await context.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await answerProductConfirms(page,true);try{await page.goto(pathToFileURL(path.resolve(product)).href);await setupRegressionPage(page);await page.locator('#fileInput').setInputFiles({name:'actor-scope.akari.md',mimeType:'text/markdown',buffer:Buffer.from(A.serializeProject(fixture()))});await page.waitForFunction(()=>Akari.app.project.components.some(c=>c.id==='cat'));await openRegressionEditor(page,{target:'cat',mode:'code'});

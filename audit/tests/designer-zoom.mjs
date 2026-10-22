@@ -152,8 +152,10 @@ const cases = {
       await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await p.mouse.down();
       await p.mouse.move(r.x + r.width / 2 + 12, r.y + r.height / 2 + 8, {steps: 4}); await p.mouse.up();
       const after = await p.evaluate(() => ({c: structuredClone(Akari.app.project.components.find(c => c.id === 'sprite-1')), history: Akari.app.editorState.history}));
+      // The place is measured from the bottom-left corner with たて growing upward (LANGUAGE.md 移動量と座標の意味), so a
+      // drag down the screen lowers たてのばしょ; the centre is rounded to whole steps.
       assert.equal(after.c.x, Math.round(before.c.x + 12 / g.scale));
-      assert.equal(after.c.y, Math.round(before.c.y + 8 / g.scale));
+      assert.equal(after.c.y, Math.round(before.c.y - 8 / g.scale));
       assert.equal(after.history, before.history + 1);
       await p.locator('#undoBtn').click();
       assert.deepEqual(await p.evaluate(() => Akari.app.project.components.find(c => c.id === 'sprite-1')), before.c);
@@ -164,10 +166,14 @@ const cases = {
       await p.mouse.move(hr.x + hr.width / 2, hr.y + hr.height / 2); await p.mouse.down();
       await p.mouse.move(hr.x + hr.width / 2 + 8, hr.y + hr.height / 2 + 8, {steps: 4}); await p.mouse.up();
       const resized = await p.evaluate(() => Akari.app.project.components.find(c => c.id === 'sprite-1'));
-      // Box resizing retains fractional geometry; dragging alone snaps position to pixels.
+      // A handle keeps the centre, so the far side moves too: the corner handle 8 px out adds twice that to はば and 高さ,
+      // which are rounded to whole steps (LANGUAGE.md 「せってい」の らん and 編集画面のつまみ).
       assert.equal(after.c.direction, 0); assert.equal(after.c.scalePercent, 100);
-      near(resized.w, after.c.w + 8 / g.scale, 'resized width in project coordinates');
-      near(resized.h, after.c.h + 8 / g.scale, 'resized height in project coordinates');
+      assert.equal(resized.x, after.c.x, 'resizing keeps the centre よこ'); assert.equal(resized.y, after.c.y, 'resizing keeps the centre たて');
+      for (const key of ['w', 'h']) {
+        assert.ok(Number.isInteger(resized[key]), key + ' is a whole number of steps');
+        assert.ok(Math.abs(resized[key] - (after.c[key] + 2 * 8 / g.scale)) <= 1, key + ' grows by twice the handle move: ' + JSON.stringify({resized, after: after.c, scale: g.scale}));
+      }
       await p.locator('#undoBtn').click();
       assert.deepEqual(await p.evaluate(() => Akari.app.project.components.find(c => c.id === 'sprite-1')), after.c);
     }
@@ -216,7 +222,11 @@ const cases = {
     assert.equal(await p.evaluate(() => Akari.app.project.appVersion), (""+currentProductVersion()+"")); await assertFit(p);
     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);
     const before = await state(p);
-    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 4', '"formatVersion": 2'))});
+    // The saved-file format number is the release record's (features.json), not a copy in this test.
+    const format = JSON.parse(fs.readFileSync('audit/manifests/features.json', 'utf8')).EXECUTABLE_CONTRACT.projectFormatVersion;
+    const current = '"formatVersion": ' + format, older = before.saved.replace(current, '"formatVersion": 2');
+    assert.ok(before.saved.includes(current) && older !== before.saved, 'the saved file names the current format');
+    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(older)});
     await p.waitForFunction(() => /F\d{3}/.test(document.querySelector('#console').textContent));
     assert.deepEqual(await state(p), before, 'unsupported-format rejection retains current work');
   },
@@ -237,6 +247,47 @@ const cases = {
     }
     await cdp.detach();
   },
+  // LANGUAGE.md 画面デザイナ: with a handle chosen, an arrow key moves it 1 step that way (10 with Shift), ↑ upward; the
+  // centre stays, so the size changes by twice the move, and the keys never move the part. A character whose look is
+  // text keeps its shape: ↑・→ add 10% to its size and ↓・← take 10% off (1% with Shift).
+  async 'DESIGN-ZOOM-HANDLE-KEYS'(p) {
+    const read = () => p.evaluate(() => ({c: structuredClone(Akari.app.project.components.find(c => c.id === 'sprite-1')), history: Akari.app.editorState.history}));
+    const press = async (direction, key) => {
+      const handle = p.locator(`.design-resize-handle[data-resize-direction="${direction}"]`);
+      await handle.scrollIntoViewIfNeeded(); await handle.focus(); const before = await read();
+      await p.keyboard.press(key); await settle(p); const after = await read(), label = direction + ' ' + key;
+      assert.deepEqual([after.c.x, after.c.y], [before.c.x, before.c.y], label + ' keeps the place');
+      assert.equal(after.history, before.history + 1, label + ' is one undo step');
+      return {before: before.c, after: after.c, label};
+    };
+    // The corner handles: the side handles are left out while a part is small on the screen.
+    await size(p); await select(p, 'sprite-1');
+    const box = [];
+    for (const [direction, key, dw, dh] of [['ne', 'ArrowUp', 0, 2], ['ne', 'Shift+ArrowUp', 0, 20], ['ne', 'ArrowDown', 0, -2],
+      ['sw', 'ArrowDown', 0, 2], ['ne', 'ArrowRight', 2, 0], ['sw', 'ArrowRight', -2, 0]]) {
+      const {before, after, label} = await press(direction, key);
+      assert.equal(after.w, before.w + dw, label + ' はば'); assert.equal(after.h, before.h + dh, label + ' 高さ');
+      assert.equal(after.scalePercent, before.scalePercent, label + ' keeps the size percent');
+      box.push({direction, key, w: after.w, h: after.h});
+    }
+    // The same character with its text look (丸) is opened from a file and resized by its size percent.
+    const api = loadApi(fs.readFileSync(currentProductFile(), 'utf8')), project = makeRegressionProject(api);
+    project.name = 'つまみと矢印キー'; project.components.find(c => c.id === 'sprite-1').costumeId = 'costume-2';
+    await p.locator('#fileInput').setInputFiles({name: 'text-look.akari.md', mimeType: 'text/plain', buffer: Buffer.from(api.serializeProject(project, api.makeDefaultAssetStore()))});
+    // The changed work is not saved, so opening asks first (#loseConfirmModal); the next action answers it (answerProductConfirms).
+    await p.waitForFunction(() => document.querySelector('#loseConfirmModal.show')); await p.locator('#designerWindow').hover();
+    await p.waitForFunction(name => Akari.app.project.name === name && Akari.app.editorState.state === 'DESIGN', project.name);
+    await settle(p);
+    await select(p, 'sprite-1');
+    const scale = [];
+    for (const [key, d] of [['ArrowUp', 10], ['ArrowRight', 10], ['ArrowDown', -10], ['Shift+ArrowLeft', -1]]) {
+      const {before, after, label} = await press('se', key);
+      assert.equal(after.scalePercent, before.scalePercent + d, label + ' size percent');
+      assert.deepEqual([after.w, after.h], [before.w, before.h], label + ' keeps the shape');
+      scale.push({key, scalePercent: after.scalePercent});
+    }
+    return {box, scale};
+  },
 };
 assert.deepEqual(Object.keys(cases), designerZoomIds);
 const browserVersion = await withBrowser(browserPath, async browser => {
@@ -256,7 +307,7 @@ const report = {schema: 'akari-designer-v1', status: results.every(r => r.pass) 
   environment: 'chromium', browser: browserVersion, snapshot: inputs, results, pageErrors: [], networkRequests: []};
 fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
 verifyDesignerZoom(report, inputs);
-console.log(("Designer "+currentProductVersion()+": 9/9 cases PASS"));
+console.log("Designer "+currentProductVersion()+": "+designerZoomIds.length+"/"+designerZoomIds.length+" cases PASS");
 
 // Enter the visible body editor before exercising editing operations.
 async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

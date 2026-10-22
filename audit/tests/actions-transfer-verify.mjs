@@ -54,12 +54,13 @@ function syntheticComposition(){
  for(const d of prose.drafts){
   const actor={id:'sprite-1',x:100,y:100,direction:0,isClone:false},star={...actor,id:'composition-star',x:200};
   const state=time=>({time,actors:[structuredClone(actor),structuredClone(star)],variables:[['点数',0]],lists:[],speech:[]});
-  const times={I07:[0],I08:[0,1999,2000,3999,4000,5999,6000],I09:[0,999,1000],I10:[0],I11:[0,999,1000,1999,2000],I12:[0,999,1000]}[d.id],states=times.map(state);
+  const times={I07:[0],I08:[0,1999,2000,3999,4000,5999,6000],I09:[0,999,1000],I10:[0,17],I11:[0,999,1000,1999,2000],I12:[0,999,1000]}[d.id],states=times.map(state);
   const say=(text,time,id='sprite-1')=>({kind:'say',id,text,time});let trace=[];
   if(d.id==='I07'){states[0].variables=[['点数',{magnitude:3,unit:'点'}]];trace=[say('できた！',0),say('3点',0)];}
   if(d.id==='I08'){trace=[say('本',0),say('かさ',2000),say('ぼうし',4000)];for(const s of states)s.lists=[['持ち物',['本','かさ','ぼうし']]];}
   if(d.id==='I09')trace=[{kind:'ask',text:'名前を教えてください',time:0},say('はる「青空」さん、こんにちは',1000)];
-  if(d.id==='I10')trace=[... [15,0,15,0].map(direction=>({kind:'motion',after:{direction},time:0})),say('250',0)];
+  // 右に15度回る lowers the angle to 345; the second turn of the repeat waits for the next こま (17 ms).
+  if(d.id==='I10')trace=[...[[345,0],[0,0],[345,17],[0,17]].map(([direction,time])=>({kind:'motion',after:{direction},time})),say('250',17)];
   if(d.id==='I11')trace=[say('準備できた',1000),say('準備できた',2000,'composition-star'),say('全員集合',2000)];
   if(d.id==='I12')for(const s of states)if(s.time<1000)s.actors.push(...[0,1,2].map(i=>({...actor,id:'clone-'+i,x:120,isClone:true})));
   for(const s of states)s.speech=trace.filter(x=>x.kind==='say'&&x.time<=s.time);
@@ -72,7 +73,7 @@ function syntheticComposition(){
  }
  const extra=prose.drafts.find(d=>d.id==='I10').extra;
  for(const kind of ['action','function'])r.results.push({id:'I10/'+kind+'-original',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{kind,original:kind==='action'?extra.actionBody:extra.functionBody,compileErrors:[]}});
- const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';
+ const source='あかりがクリックされたとき、\n  あかりは、いまのばしょから、右へ30歩動いて、「今日はどこへ行こう」と言う。';
  const observation={textarea:source,event:'click',scripts:[{id:'synthetic-body-id',targetId:'sprite-1',event:'click',source}]};
  const baseline={project:'synthetic-original-project',owner:'synthetic-original-owner',event:'start'};
  const staged={...baseline,raw:source};
@@ -131,7 +132,7 @@ try{
 }catch(error){results.push({file:'ux-validator-negative',status:'FAIL',error:error.stack});}
 try{
  const fixture=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json'));
- const details=[{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},{jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true},{rate:30,elapsed:1.05,distance:31.5,stopped:true},{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'},{closedSquare:true,ink:160},{rate:20,elapsed:1.05,distance:21,stopped:true}];
+ const details=[{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},{jumpY:124,returnY:100,repeatedDownIdle:true,secondPress:true},{rate:30,elapsed:1.05,distance:31.5,stopped:true},{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'},{closedSquare:true,ink:160},{rate:20,elapsed:1.05,distance:21,stopped:true}];
  const control={schema:'akari-basic-intents-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:fixture.cases.map((d,i)=>({id:d.id,status:'PASS',observed:{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true,detail:details[i]}}))};
   for(const i of [2,6]){const d=details[i];control.results[i].releaseObservation={pressedAt:0,releasedAt:1050,elapsed:d.elapsed,distance:d.distance,domOnRelease:100+d.distance-.3,domAfterPaint:100+d.distance,domAfter300:100+d.distance};}
   verifyBasicBrowser(control);

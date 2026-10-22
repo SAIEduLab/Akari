@@ -95,7 +95,7 @@ try{
   await nameLegacyFixtureActor(page);
   await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
   const input=page.locator('#codeEditor');await input.fill('');
-  const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';
+  const source='あかりがクリックされたとき、\n  あかりは、いまのばしょから、右へ30歩動いて、「今日はどこへ行こう」と言う。';
   const baseline=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,event:document.querySelector('#eventSelect').value}));
   await input.fill(source);await page.waitForTimeout(150);
   const staged=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,event:document.querySelector('#eventSelect').value,raw:document.querySelector('#codeEditor').value}));
@@ -146,7 +146,9 @@ try{
   return {name:'途中の答え',holeRestored:true,closedWithoutDiscard:true};
  });
  await run('SAVE/unfinished-number','DRAFT_PERSISTENCE',async(page)=>{
-  await install(page,prose.drafts[0]);await page.locator('#codeEditor').fill('10歩動く。');await page.locator('#editorModeblocks').click();const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]');await field.fill('－');
+  await install(page,prose.drafts[0]);await page.locator('#codeEditor').fill('前へ10歩進む。');await page.locator('#editorModeblocks').click();
+  // The step count sits in the block face of 前へ進む (no inner NumberLiteral node).
+  const field=page.locator('#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE"] input[data-blockui-field="value"]');await field.fill('－');
   const saved=await downloadProject(page,'unfinished-number');await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(()=>Akari.app.editorState.main.pendingEdit?.value==='－');assert.equal(await field.inputValue(),'－');
   await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');return {input:'－',restored:await field.inputValue(),runBlocked:true};
  });
