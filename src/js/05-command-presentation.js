@@ -999,6 +999,9 @@
             0,
           );
       }
+      // いまのばしょから動く has one or two legs; with none it would be written いまのばしょから、動く, which does not read.
+      if (schema.kind === 'MotionCommand' && node.op === 'MOVE_BY' && !Object.hasOwn(node, 'x') && !Object.hasOwn(node, 'y'))
+        blockStructureError('よこか たての どちらかの 歩数を 入れてください', path);
       if (schema.kind === 'IfStatement' && !node.hasElse && node.elseComment)
         blockDataError('「そうでなければ」がないのに、そこにメモがあります', path);
       if (schema.kind === 'CommentLine' && node.inlineComment)
