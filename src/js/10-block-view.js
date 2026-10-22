@@ -331,10 +331,6 @@
       // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
-    // Only 決める and やめる take a press: the words around them (a mistake shown right under the field may lie over the
-    // next block) let it through to what is under them, so pressing another field starts it (E2-02).
-    controls.style.pointerEvents = 'none';
-    for (const b of [commitButton, cancelButton]) b.style.pointerEvents = 'auto';
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
@@ -351,16 +347,15 @@
       navigation = E('div', 'blockui-navigation', null, {
         'aria-label': '作業台の見え方',
       });
-    // The workspace's zoom is named by the 作業台, as the stage's is by 作品画面 (Y2-08): 「大きく見る」 opens the stage.
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
-      'aria-label': '作業台を 100%に もどす',
+      'aria-label': '大きさを100%に もどす',
     });
     // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
     const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '作業台を 小さく',
+        'aria-label': '小さく見る',
       }),
       plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '作業台を 大きく',
+        'aria-label': '大きく見る',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
     const home = button('さいしょへ', 'workspace-home', () => {
@@ -1259,8 +1254,6 @@
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
         search.focus({ preventScroll: true });
-        // The word kept from the last search is selected, so the next word typed takes its place (E2-06, as E-01).
-        if (search.value) search.select();
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
@@ -1701,10 +1694,8 @@
     // and pressing a block always checks the place it goes (paletteAdd).
     const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
     function listedPlace(location) {
-      const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null,
-        // In 答えを もとめる the last line is 「〜を答えとして返す」: the list is checked just before it (PERF-R2-01).
-        end = siblings?.[siblings.length - 1]?.schemaId === 'ReturnStatement' ? siblings.length - 1 : siblings?.length;
-      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: end } : location;
+      const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
     }
     function paletteAvailability(schema, location) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
@@ -1755,12 +1746,6 @@
         && (unitChoice || !ADVANCED_ONLY_SCHEMA_IDS.has(s.id)));
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [...PALETTE_GROUP_LABELS];
-      // The list is drawn again (after Escape, もとにもどす …): a focused item or なかま keeps the focus (Y2-06).
-      const active = doc.activeElement,
-        focusedChip = categorySelect.contains(active) ? active.dataset.blockuiCategory : null,
-        focusedItem = paletteList.contains(active) ? active.closest('[data-blockui-schema]') : null,
-        itemKey = b => b.dataset.blockuiSchema + '|' + (b.dataset.searchBinding || '') + '|' + (b.dataset.lessonBlock || ''),
-        focusedKey = focusedItem ? itemKey(focusedItem) : null;
       const categoryScroll = categorySelect.scrollTop;
       categorySelect.replaceChildren();
       for (const [g, label] of groups) {
@@ -1861,12 +1846,9 @@
           '',
           'palette-add',
           () => {
-            // The list is checked at the end of the body; a press checks the place the block really goes (PERF-01).
-            const real = !a.enabled && schema.category === 'statement' && location?.body && !schema.candidateReason
-              ? availability(schema.id, location, schema.candidateNode) : a;
-            if (!real.enabled) {
+            if (!a.enabled) {
               reason.hidden = false;
-              announce(real.reason || a.reason, true);
+              announce(a.reason, true);
               return;
             }
             paletteAdd(schema);
@@ -1919,8 +1901,6 @@
         );
       if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
-      if (focusedChip !== null) categorySelect.querySelector(`[data-blockui-category="${focusedChip}"]`)?.focus({ preventScroll: true });
-      else if (focusedKey) ([...paletteList.querySelectorAll('[data-blockui-schema]')].find(b => itemKey(b) === focusedKey) || search).focus({ preventScroll: true });
       scheduleGeometry();
       options.onPresentation?.();
     }
@@ -2621,14 +2601,7 @@
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
         announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
-      if (result.ok) keepFocusInBlocks();
       return result;
-    }
-    // After a block is deleted (けす, a drop on the list), the focus stays in the blocks: on the block now selected, else
-    // on the workspace. The next Delete or Backspace then acts on a block, never on the page (E2-01).
-    function keepFocusInBlocks() {
-      const id = session()?.blockSelection, n = id && index.has(id) ? locationElement({ id }) : null;
-      (n || workspace).focus({ preventScroll: true });
     }
     function statementBody(parent, slot) {
       const enabled = !slot.when || parent.fields[slot.when];
@@ -3523,8 +3496,6 @@
           (s?.notices || []).map(d => d.line + ':' + d.code + ':' + d.message).join(','),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
-      // While the work runs, 作業台を広く has nothing to widen: it keeps its place, unseen (E2-12, as final call 21).
-      if (wide) wide.style.visibility = isLocked() ? 'hidden' : '';
       if (drag && nextSignature !== signature) cancelDrag();
       if (pending) {
         updateControls();
@@ -3956,12 +3927,8 @@
         bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
       }
       const across = (workspace.clientWidth - 24) / (right + 24),
-        down = (workspace.clientHeight - 24) / (bottom + 24),
-        // A body that fits at 100% stays at 100%; the 24 px margin is kept only when it has to shrink (E2-07).
-        frame = workspace.getBoundingClientRect(),
-        fits = box.left - frame.left + workspace.scrollLeft + right <= workspace.clientWidth &&
-          box.top - frame.top + workspace.scrollTop + bottom <= workspace.clientHeight;
-      setZoom(fits ? 1 : Math.min(1, Math.max(0.75, Math.min(across, down))));
+        down = (workspace.clientHeight - 24) / (bottom + 24);
+      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
@@ -4178,7 +4145,6 @@
       return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
     }
     function beginGhost(state) {
-      hideDropNote();
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
         : state.element.closest('.blockui-node');
@@ -4280,12 +4246,6 @@
       dragReason.textContent = text;
     }
     // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
-    // A note about the last drop goes as soon as the next carry starts or a drop goes in (E2-10).
-    function hideDropNote() {
-      clearTimeout(dropNoteTimer);
-      dropNote?.remove();
-      dropNote = null;
-    }
     function showDropNote(text, x, y) {
       announce(text);
       clearTimeout(dropNoteTimer);
@@ -4641,7 +4601,7 @@
         const ids = carriedIds(state);
         const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
           : removeBlock(index.get(state.id)?.node || { id: state.id });
-        if (result.ok) { keepFocusInBlocks(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
+        if (result.ok) showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY);
         return;
       }
       if (!state.valid || !state.location) {
@@ -4650,7 +4610,6 @@
           : !state.location ? '入れるのを やめたよ' : state.reason || 'ここには おけないよ', event.clientX, event.clientY);
         return;
       }
-      hideDropNote();
       if (state.schemaId) {
         destination = state.location;
         paletteAdd(state.candidate || BLOCK_SCHEMA_BY_ID.get(state.schemaId));

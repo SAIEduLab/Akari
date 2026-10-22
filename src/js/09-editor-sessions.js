@@ -1579,11 +1579,8 @@
     if (direction.length === 1 && /行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動/.test(q)
       && !/回|まわ|向[くき]|む[くき]/.test(q))
       return {schemaId:'MotionCommand:MOVE_BY', direction:direction[0][0]};
-    // 小さく・大きく is the part's size unless the words name another size (音の大きさ, ペンの太さ, 文字) or a comparison
-    // (より小さい); those are found by their words (E2-04).
-    const otherSize = /音|おと|ぺん|太さ|ふとさ|文字|もじ|より|くらべ|比べ/.test(q);
-    if (!otherSize && /小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
-    if (!otherSize && /大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
+    if (/小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
+    if (/大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
     if (/(?:番目|ばんめ)/.test(q) && /入[れる]|いれ|挿入|そうにゅう/.test(q) && !/置き換|おきか|替え/.test(q)) {
       const match = q.match(/(\d+)(?:番目|ばんめ)/), index = match ? Number(match[1]) : null;
       return {schemaId:'ListInsert', ...(Number.isSafeInteger(index) && index >= 1 ? {index} : {})};
@@ -1680,15 +1677,15 @@
   }
   function searchHintCandidates(candidates, query, project, context = {}) {
     if (!query.trim()) return candidates;
-    // The sentence an intent names comes first; the sentences its words find follow (E2-04).
-    const intent = searchIntent(query), named = h => !!intent && ((h.binding && matchesSearch(h.binding.name, query)) || hintSchemaId(h.id) === intent.schemaId),
-      matched = candidates.filter(h => named(h) || matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' ') + ' ' + hintSearchSynonyms(h.id).join(' '), query));
+    const intent = searchIntent(query), matched = candidates.filter(h => intent
+      ? (h.binding && matchesSearch(h.binding.name, query)) || hintSchemaId(h.id) === intent.schemaId
+      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' ') + ' ' + hintSearchSynonyms(h.id).join(' '), query));
     return matched.map(h => {
       if (!intent || !project) return h;
       try { const node = nodeForSearchHint(h, project, context, intent);
         return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]},{symbols:buildSymbols(project)})};
       } catch (_) { return h; }
-    }).sort((a,b) => Number(named(b)) - Number(named(a)) || Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
+    }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
   }
   // The keys a child names in a search, by the names the code writes (「スペース」キー, 「エンター」キー).
   const SEARCH_KEYS = Object.freeze({ すぺーす: '空白', えんたー: '決定', りたーん: '決定', えすけーぷ: '取消' });
@@ -1736,12 +1733,10 @@
           candidateKey:hint.id, candidateReason:hint.reason}); boundSchemas.add(schema.id);
       } catch (_) { /* An unavailable incomplete hint remains visible through the generic schema. */ }
     }
-    // The block an intent names comes first, configured (小さく → 大きさを50％にする); the blocks the words find follow it,
-    // so 「ちいさい」 still finds 〜より小さい (E2-04).
     for (const schema of schemas) {
       if (boundSchemas.has(schema.id)) continue;
-      if (!((intent && schema.id === intent.schemaId) || matchesSearch(blockPaletteSearchText(schema), query))) continue;
-      const configured = intent && schema.id === intent.schemaId && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
+      if (!(intent ? schema.id === intent.schemaId : matchesSearch(blockPaletteSearchText(schema), query))) continue;
+      const configured = intent && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
       out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
         draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
     }
@@ -1774,7 +1769,6 @@
     };
     const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
-    if (intent) out.splice(0, out.length, ...out.filter(s => s.id === intent.schemaId), ...out.filter(s => s.id !== intent.schemaId));
     // A key named in the search (スペース, エンター …): the blocks that wait for it, repeat until it is pressed and read it
     // come first, with that key (F2-11).
     const key = searchKey(query);
@@ -1796,8 +1790,8 @@
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
     'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし', 'もどる', '戻る'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
-    'MotionCommand:TURN_RIGHT': ['右へ回る', 'みぎへまわる', '右回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
-    'MotionCommand:TURN_LEFT': ['左へ回る', 'ひだりへまわる', '左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
     'MotionCommand:BOUNCE': ['はね返る', 'はねかえる', 'はねる', 'かべ', 'ぶつかる'],
     CompareExpression: ['くらべる', '比べる'],
     'BuiltinCall:乱数': ['ランダム', 'でたらめ', 'さいころ'],
@@ -1831,13 +1825,8 @@
     Broadcast: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
     BroadcastAndWait: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
     // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them.
-    // 鳴る and 音楽 lead to the sound blocks too (E2-04).
-    'SoundCommand:TONE_WAIT': ['なる', '鳴る', 'おんがく', '音楽', 'ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
-    'SoundCommand:TONE': ['なる', '鳴る', 'おんがく', '音楽', 'ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
-    'SoundCommand:SAMPLE_WAIT': ['なる', '鳴る', 'おんがく', '音楽'],
-    'SoundCommand:SAMPLE': ['なる', '鳴る', 'おんがく', '音楽'],
-    // 音を小さく・音を大きく is the volume, not the part's size (E2-04).
-    'SoundCommand:SET_VOLUME': ['音を小さく', '音を大きく', '音の大きさ', '音量', 'ボリューム', 'しずかに', 'うるさい'],
+    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
     // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
     'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
     'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],
