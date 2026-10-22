@@ -489,8 +489,26 @@
             checkComponentTarget(n.arg, ['input'], ctx, where, '入力らん');
           if (n.sensor === 'DISTANCE_TO')
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス']);
-          if (n.sensor === 'TOUCHING')
+          if (n.sensor === 'TOUCHING') {
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス', ...Object.keys(EDGE_TARGETS)]);
+            // What is touched is a part, the edge or the mouse (C-touch-R2-02): 「ゆか」の上 is ゆか itself, and a number
+            // (点数, 10, 星のよこのばしょ) is no partner. A variable that starts with text may hold a part's name.
+            const arg = n.arg;
+            const data = arg?.kind === 'VariableRead' && !componentByName(arg.name)
+              ? [...project.projectData.variables, ...project.components.flatMap(c => c.localData.variables)].find(v => v.name === arg.name) : null;
+            const of = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' && arg.value?.kind === 'StringLiteral' ? arg.actorRef.name : null;
+            const numeric = ['NumberLiteral', 'QuantityLiteral', 'BinaryExpression', 'UnaryExpression'].includes(arg?.kind)
+              || (arg?.kind === 'ActorQualifiedRead' && arg.value?.kind === 'SensorRead') || (data && typeof data.initialValue === 'number');
+            if ((of && componentByName(of)) || numeric) {
+              // The example is the sentence written, with a partner other than the body's own part (or the mouse), and in
+              // 名人 with who touches.
+              const partner = of || project.components.find(c => c.id !== ctx.targetId && c.type === 'sprite')?.name || project.components.find(c => c.id !== ctx.targetId)?.name || 'マウス';
+              const who = ctx.meijin ? (project.components.find(c => c.type === 'sprite' && c.name !== partner)?.name || 'ねこ') + 'が' : '', shown = touchShown(partner);
+              const example = ctx.node?.kind === 'WaitUntil' ? `${who}${shown}にふれるまで待つ` : ctx.node?.kind === 'RepeatUntil' ? `${who}${shown}にふれるまで、くり返す`
+                : ctx.node?.kind === 'RepeatWhile' ? `${who}${shown}にふれているあいだ、くり返す` : `もし${who}${shown}にふれていれば、`;
+              add('S304', 'ふれる 相手は、部品か 画面のはしか マウスです。' + (of ? `「${of}」の ${arg.value.value}に のったかも、「${of}」に ふれたかで しらべます。` : '数には ふれられません。') + 'れい：' + example, ctx.node, where);
+            }
+          }
           if (n.sensor === 'TOUCHING_COLOR') {
             const v = literalText(n.arg);
             if (v !== null)
