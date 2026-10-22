@@ -3124,6 +3124,15 @@
       designRatioLocked = !designRatioLocked;
       $('#designRatioLock').setAttribute('aria-pressed', String(designRatioLocked));
     };
+    // How far a press must move before it carries a part or a handle, in screen pixels: a finger wobbles more than a
+    // mouse or a pen (Chrome's own tap slop is about 15 px).
+    const pointerSlop = (e) => e.pointerType === 'touch' ? 8 : 3;
+    let designResizeSmall = null;
+    // On a small on-screen part, edge handles would cover the picture: only the corners show, just outside the part.
+    function designHandlesSmall(c) {
+      const stageScale = el.form.getBoundingClientRect().width / project.stage.width || 1, s = c.scalePercent / 100;
+      return designResizeMode(c) === 'box' && Math.min(c.w * s, c.h * s) * stageScale < 64;
+    }
     function positionResizeHandles(c = designResizePreview || componentById(selectedId)) {
       if (!c) return;
       // On a touch screen a handle is a 24 px dot that a finger presses within 40 px (E-19).
@@ -3145,7 +3154,7 @@
         if (designResizeMode(c) === 'box') {
           // On a small on-screen part, edge handles would cover the picture: keep
           // only the corners and move them just outside the part.
-          const small = Math.min(c.w * s, c.h * s) * stageScale < 64,
+          const small = designResizeSmall ?? designHandlesSmall(c),
             rad = ((c.direction % 360) * Math.PI) / 180,
             px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
             py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
@@ -3304,14 +3313,18 @@
             const step = e.shiftKey ? 10 : 1;
             next = designResizeGeometry(c, direction, key[0] * step, -key[1] * step);
           }
+          let changed = false;
           try {
-            if (commitResize(c, next)) refreshEditor();
+            changed = commitResize(c, next);
+            if (changed) refreshEditor();
           } catch (error) {
             log(error.message, 'error');
           }
           renderProperties();
           renderComponents();
           focusResizeHandle(c.id, direction);
+          // The size is said as the pointer path says it (「はば 120　高さ 80」, or 「星1: 110%」), and read out (#statusLive).
+          setStatus(changed ? (mode === 'scale' ? `${c.name}: ${c.scalePercent}%` : `はば ${c.w}　高さ ${c.h}`) : '大きさは かわっていないよ');
         });
         el.form.append(handle);
       }
@@ -4045,7 +4058,7 @@
             y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
-        start = toStage(ev);
+        start = toStage(ev), pressX = ev.clientX, pressY = ev.clientY, slop = pointerSlop(ev);
       let next = { x: c.x, y: c.y },
         finished = false,
         moved = false;
@@ -4059,8 +4072,9 @@
         }
         if (e.cancelable) e.preventDefault();
         const p = toStage(e);
-        // A press without movement keeps the place as it is (320.25 stays 320.25).
-        if (!moved && p.x === start.x && p.y === start.y) return;
+        // A press that does not move past the slop keeps the place as it is (320.25 stays 320.25), and adds nothing to
+        // the history: a finger that wobbles by a pixel or two while it taps a part only selects it (A-09).
+        if (!moved && Math.hypot(e.clientX - pressX, e.clientY - pressY) < slop) return;
         moved = true;
         next = { x: Math.round(before.x + p.x - start.x), y: Math.round(before.y + p.y - start.y) };
         designResizePreview = { ...before, ...next };
@@ -4140,9 +4154,13 @@
             y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
-        start = toStage(ev);
+        start = toStage(ev), pressX = ev.clientX, pressY = ev.clientY, slop = pointerSlop(ev);
       let next = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent },
-        finished = false;
+        finished = false,
+        moved = false;
+      // The handles keep their offset from the part for the whole drag (A-R2-05): whether the part counts as small (its
+      // corner handles just outside it) is decided at the press and again after the release.
+      designResizeSmall = designHandlesSmall(c);
       const sizeText = (at) =>
         designResizeMode(c) === 'scale' ? `${c.name}: ${at.scalePercent}%` : `はば ${at.w}　高さ ${at.h}`;
       const move = (e) => {
@@ -4152,6 +4170,9 @@
           return;
         }
         if (e.cancelable) e.preventDefault();
+        // As for moving: a press on a handle that does not move past the slop changes nothing.
+        if (!moved && Math.hypot(e.clientX - pressX, e.clientY - pressY) < slop) return;
+        moved = true;
         const p = toStage(e);
         next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey || designRatioLocked);
         designResizePreview = { ...before, ...next };
@@ -4173,6 +4194,7 @@
         el.form.removeEventListener('lostpointercapture', cancelPointer);
         if (activeDragCleanup === finish) activeDragCleanup = null;
         designResizePreview = null;
+        designResizeSmall = null;
         if (el.form.hasPointerCapture?.(pointerId))
           try {
             el.form.releasePointerCapture(pointerId);
