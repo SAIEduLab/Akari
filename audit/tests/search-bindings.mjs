@@ -30,6 +30,14 @@ for(const [query,index]of [['５番目に入れたい',5],['3ばんめにいれ�
  const b=find(query)[0];assert.equal(b.id,'ListInsert');assert.equal(b.candidateNode.inputs.index.fields.value,index);
  assert.equal(b.candidateNode.inputs.target.fields.name,'持ち物');assert.match(code(query)[0].text,new RegExp(index+'番目'));return{index,boundList:'持ち物'};
 });
+// E1-R1-07 (E-13; LANGUAGE.md lists くらべる among the かんたん 計算 blocks): words a child uses for a block find it, and
+// 「ひく」 puts a subtraction first, not an addition.
+for(const [query,wanted]of [['くらべる',id=>id.startsWith('CompareExpression:')],['ランダム',id=>id==='BuiltinCall:乱数'],['まわす',id=>id.startsWith('MotionCommand:TURN_')],
+ ['やめる',id=>id.startsWith('StopCommand:')],['とまる',id=>id.startsWith('StopCommand:')],['へる',id=>id==='NumericUpdate:SUB'],
+ ['クリック',id=>id==='SensorRead:マウスが押されている'],['タッチ',id=>['SensorRead:マウスが押されている','SensorRead:TOUCHING'].includes(id)]])check('search/child-words/'+query,()=>{
+ const ids=find(query).map(b=>b.id);assert.ok(ids.some(wanted),query+' finds its block: '+ids.slice(0,5).join(', '));return{first:ids[0]};
+});
+check('search/child-words/ひく-subtracts-first',()=>{const ids=find('ひく').map(b=>b.id);assert.ok(['NumericUpdate:SUB','BinaryExpression:SUB'].includes(ids[0]),'ひく puts a subtraction first: '+ids.slice(0,5).join(', '));return{first:ids[0]};});
 check('search/scopes-remain-distinct',()=>{const reads=find('てんすう').filter(b=>b.id==='VariableRead');assert.deepEqual(plain(reads.map(b=>b.candidateNode.fields.qualifier)),['project','self']);
  assert.ok(!find('点数').some(b=>['UserActionCall','UserFunctionCall','ListInsert','ListReplace'].includes(b.id)));return{qualifiers:['project','self'],typed:true};});
 check('search/callable-arguments-and-kind',()=>{const f=find('だいきん')[0];assert.equal(f.id,'UserFunctionCall');assert.equal(f.candidateNode.fields.name,'代金');assert.deepEqual(plain(f.candidateNode.fields.argumentNames),['個数','ねだん']);assert.equal(f.candidateNode.inputs.args.length,2);return{name:'代金',args:2};});
