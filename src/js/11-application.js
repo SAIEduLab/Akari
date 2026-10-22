@@ -286,6 +286,8 @@
       appState = 'DESIGN',
       // The run screen after the run ended (every body done, or 作品を全部止める): the last picture stays, ■ 止める only.
       runFinished = false,
+      // The run stopped at a mistake (the failure dialog): it cannot go on, so the run screen shows ■ 止める only.
+      runFailed = false,
       // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
       // press) does nothing.
       runPressedAt = -Infinity,
@@ -384,11 +386,11 @@
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and ⏸ いったん止める・▶ つづける (final call
-      // 21) under the stage, as on a video.
-      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#pauseBtn'),$('#continueBtn')]){
+      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and the place of ⏸ いったん止める／▶ つづける
+      // (final call 21; the two take turns in it) under the stage, as on a video.
+      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#runPauseSlot')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
-        if(entry&&['pauseBtn','continueBtn'].includes(node.id)){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
+        if(entry&&node.id==='runPauseSlot'){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
         else if(entry){
           // Keep もとにもどす before やり直す whichever control was moved last.
           const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
@@ -466,7 +468,9 @@
     function tutorialElementAllowed(element) {
       if(!tutorial)return true;if(!(element instanceof Element))return false;
       const step=tutorialStep(tutorial),action=step?.allowed[0];
-      if(element.closest('#tutorialExit,#stopBtn'))return true;
+      // ⏸ いったん止める and ▶ つづける are the run screen's own controls at every level (final call 21): like ■ 止める and the
+      // exit, the guide never blocks them.
+      if(element.closest('#tutorialExit,#stopBtn,#pauseBtn,#continueBtn'))return true;
       if(action==='choice')return !!element.closest('#tutorialChoices button,#tutorialFinish');
       if(action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile'))return true;
       const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];if(direct&&element.closest('#'+direct))return true;
@@ -478,8 +482,10 @@
         ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');}
       if(action==='runtime:click')return !tutorialTrace?.busy&&tutorialTrace?.clicks<step.clicks&&!!element.closest('.component[data-id="'+tutorial.target+'"]');return false;
     }
+    // The step's own place comes first in the guide's Tab order, then ■ 止める and the exit, then ⏸／▶ つづける.
+    const tutorialFocusRank=n=>['pauseBtn','continueBtn'].includes(n.id)?2:['tutorialExit','stopBtn'].includes(n.id)?1:0;
     function tutorialFocusTargets() {
-      return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>Number(a.id==='tutorialExit'||a.id==='stopBtn')-Number(b.id==='tutorialExit'||b.id==='stopBtn'));
+      return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>tutorialFocusRank(a)-tutorialFocusRank(b));
     }
     // A message above the editor changes its height; the guided place stays in view.
     function keepTutorialTargetInView() {
@@ -551,7 +557,7 @@
       if(step?.action==='save')expected=expected&&!!tutorialSave&&tutorialSave.fingerprint===currentFingerprint();
       if(step?.action==='verify-save')expected=expected&&!!tutorialSave?.verified;
       return {confirmedStep:tutorial.confirmedStep,sameWork:workspaceIdentity===tutorial.identity&&selectedId===tutorial.target&&currentEvent==='click',
-        pending:!!mainEditor.session?.pendingEdit&&mainEditor.session.pendingEdit.kind!=='block-draft'||composingEditors.size>0,
+        pending:!!mainEditor.session?.pendingEdit&&mainEditor.session.pendingEdit.kind!=='block-draft'||composingAny(),
         failed:!!tutorialTrace?.failed,expected};
     }
     function refreshTutorialPresentation() {
@@ -570,7 +576,7 @@
             if(n.dataset.tutorialAria===undefined)n.dataset.tutorialAria=n.getAttribute('aria-disabled')??'none';
             if(!allowed)n.setAttribute('aria-disabled','true');else n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);
           }
-          if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
+          if(allowed&&!['tutorialExit','stopBtn','pauseBtn','continueBtn'].includes(n.id))n.classList.add('tutorial-target');
         }
     }
     function tutorialRefresh() {
@@ -675,14 +681,14 @@
       if(allowed&&event.type==='click'&&step?.allowed[0]==='runtime:click'&&target.closest('.component')&&tutorialTrace?.busy)allowed=false;
       if(allowed&&event.type==='pointerdown'&&target.closest('#tutorialExit'))event.preventDefault();
       if(allowed&&step?.allowed[0].startsWith('field:')&&(
-        event.type==='keydown'&&event.key==='Enter'&&!event.isComposing&&!composingEditors.size
+        event.type==='keydown'&&event.key==='Enter'&&!event.isComposing&&!composingAny()
         ||event.type==='change'&&target instanceof HTMLSelectElement
         ||event.type==='click'&&target.closest('[data-blockui-action="commit"]'))){
         // A confirmed unchanged value is still an explicit learning operation.
         // Observe after the normal field handler; invalid/pending input cannot count.
         const epoch=tutorial.epoch,id=step.id;
         setTimeout(()=>{if(tutorial?.epoch===epoch&&tutorialStep(tutorial)?.id===id
-          &&(!mainEditor.session?.pendingEdit||mainEditor.session.pendingEdit.kind==='block-draft')&&!composingEditors.size){confirmTutorialOperation(step.allowed[0]);tutorialRefresh();}},0);
+          &&(!mainEditor.session?.pendingEdit||mainEditor.session.pendingEdit.kind==='block-draft')&&!composingAny()){confirmTutorialOperation(step.allowed[0]);tutorialRefresh();}},0);
       }
       if(!allowed){
         event.preventDefault();event.stopImmediatePropagation();
@@ -1001,9 +1007,12 @@
       const { script, definition } = diagnosticOwner(diagnostic);
       return definition?.source ?? script?.source ?? null;
     }
-    function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null) {
+    // A sentence of a list ends as the others do (FM2-13): with 。, unless it ends with its own mark.
+    const sentence = text => /[。？！]$/.test(text) ? text : text + '。';
+    function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null, { listItem = false } = {}) {
       // A full-width colon after the place (F-26: no ASCII colon in child text).
-      const helpText = (location ? location + '：' : '') + childDiagnosticText(diagnostic, source),
+      const reason = childDiagnosticText(diagnostic, source),
+        helpText = (location ? location + '：' : '') + (listItem ? sentence(reason) : reason),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
         previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
@@ -1020,6 +1029,12 @@
       indicator.textContent = ''; indicator.hidden = true; delete indicator.dataset.notice;
     }
     function showEditorFailure(binding, error, { preservePending = false } = {}) {
+      // A reading error that a 名人 text would read says S317 here too, once the code view has checked it (FM2-04).
+      if (binding.textarea && genericReadingError(error?.diagnostics?.[0] || error)) {
+        const shown = error?.diagnostics?.length ? error.diagnostics : [error], checked = checkedEditorErrors(binding, binding.textarea.value, shown);
+        if (checked && checked !== shown && checked[0]?.code === 'S317')
+          error = Object.assign(new AkariError(checked[0].code, checked[0].message, checked[0].line, checked[0].column), { diagnostics: checked });
+      }
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       delete n.dataset.notice;
@@ -1035,6 +1050,8 @@
         choices.className = 'intent-choices';
         choices.setAttribute('role', 'group');
         choices.setAttribute('aria-label', 'どの動きにしますか');
+        // A mouse press keeps the focus in the code, so the note is not drawn again (taking its button away) before the click.
+        choices.addEventListener('mousedown', (event) => event.preventDefault());
         for (const proposal of proposals) {
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
@@ -1072,7 +1089,7 @@
       const firstDiagnostic = error?.diagnostics?.[0] || error, issueLine = firstDiagnostic?.line || error?.line;
       editorFailureStatus = binding.session?.mode === 'blocks' ? childDiagnosticText(firstDiagnostic, binding.textarea?.value)
         : issueLine ? `書き方に 直す ところが あるよ。コードの ${issueLine}行目を 見てね`
-        : '書き方に 直す ところが あるよ。コードの 上の せつめいを 見てね';
+        : '書き方に 直す ところが あるよ。コードの 下の せつめいを 見てね';
       setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
@@ -1402,6 +1419,8 @@
           pending.dataset.notice = 'block-draft';
           pending.hidden = false;
           renderEditorBinding(binding);
+          // The status line says what the floating prompt says, not what was true before the block went in (F2-18).
+          setStatus(binding.session.pendingEdit?.reason || 'あいている ところを えらんで、ブロックを 入れてね');
           scheduleAutosave();
           confirmTutorialOperation();
           return { ok: true, changed: true, draftOnly: true };
@@ -1434,6 +1453,7 @@
       const session = getEditorSession(binding),
         draft = binding.kind === 'draft',
         blocks = session.mode === 'blocks';
+      session.notices = bodyNotices(session);
       if (!draft) syncEditorShell(sourceOverviewOpen ? chosenEditorMode() : session.mode);
       const textRoot = draft ? binding.textarea : el.editor.closest('.editor-shell');
       textRoot.hidden = blocks;
@@ -1442,6 +1462,11 @@
         ? $('#callableHints').closest('.hint-panel')
         : $('.code-assist .hint-panel');
       hint.hidden = blocks;
+      // The note that offers rewrites comes right after the code in the code view, on the screen (above the line under the
+      // code) and in the Tab order; in the block view it stays above the workspace.
+      const pendingNote = $(draft ? '#callablePending' : '#editorPending'), workspace = $(draft ? '#callableBlocks' : '#sourceImport');
+      if (blocks ? pendingNote.nextElementSibling !== workspace : pendingNote.previousElementSibling !== textRoot)
+        blocks ? workspace.before(pendingNote) : textRoot.after(pendingNote);
       const invalidCodePending = session.pendingEdit?.kind === 'code' && !session.blockDraft;
       paintBindingModeToggle(binding);
       if (!draft) {
@@ -1473,6 +1498,12 @@
       }
       binding.renderedOwner = session.ownerKey;
       if (!draft && sourceOverviewOpen) renderSourceOverview();
+      // The 自分で作ったブロック editor's code view says its first notice under the code too (its block view marks the block).
+      if (draft) {
+        const line = $('#callableIssue'), first = !blocks && $('#callablePending').hidden ? session.notices[0] : null;
+        line.hidden = !first;
+        line.textContent = first ? 'ⓘ ' + (first.line || 1) + '行目：' + first.message + (session.notices.length > 1 ? `（ほかに ${session.notices.length - 1}つ あります）` : '') : '';
+      }
     }
     function rememberEditorMode(kind, mode) {
       editorModes.set(kind, mode);
@@ -1483,21 +1514,25 @@
     // The コード／ブロック toggle (final call 22) is one button that shows the view on the screen with ⇄: 「ブロックモード ⇄」
     // or 「コードモード ⇄」. A press switches to the other view, and the label follows. Of the group's two buttons only the
     // one that switches away from the view shown is there (…Modecode in blocks, …Modeblocks in code); its name says the
-    // view. The toggle is never pale or hidden: where a press cannot switch (はじめて, a work with a 名人 text, a mistake in
-    // the code) it keeps the view and says why under it (modeBlockedNote).
+    // view. The toggle is never pale or hidden on the edit screen: where a press cannot switch (はじめて, a work with a 名人
+    // text, a mistake in the code, a picture, sound or work still being read in) it keeps the view and says why under it
+    // (modeBlockedNote). Only while getting a run ready (the run screen, where the toolbar's toggle is not shown) can it
+    // not be pressed.
     const VIEW_NAMES = { blocks: 'ブロックモード', code: 'コードモード' };
     const MODE_REFUSALS = {
       entry: 'コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね',
       meijin: '名人は、コードモードで だけ 使えるよ',
       error: 'コードの 赤い ところを 直すと、ブロックに もどれるよ',
+      busy: '読みこみが おわるまで、まってね',
     };
     function modeRefusal(binding, shown, codeError = false) {
+      if (appState === 'IMPORTING') return 'busy';
       if (binding === mainEditor && shown === 'blocks' && document.body.dataset.uiLevel === 'entry') return 'entry';
       if (workIsMeijin()) return 'meijin';
       return shown === 'code' && codeError ? 'error' : null;
     }
-    // The toggle of an editor as it is now: the list of all bodies shows the chosen view; a code error keeps the toggle
-    // where it is, in a pale colour, so it does not flicker while the child types.
+    // The toggle of an editor as it is now: the list of all bodies shows the chosen view. A code error does not change the
+    // toggle's look (so it does not flicker while the child types): a press only shows the note.
     function paintBindingModeToggle(binding) {
       const session = binding.session;
       if (!session) return;
@@ -1513,7 +1548,7 @@
         if (!here) continue;
         if (b.textContent !== label) b.textContent = label;
         b.setAttribute('aria-label', VIEW_NAMES[shown]);
-        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        b.disabled = appState === 'PREPARING';
         if (refusal) {
           if (note.textContent !== MODE_REFUSALS[refusal]) note.textContent = MODE_REFUSALS[refusal];
           b.dataset.refused = refusal;
@@ -1527,8 +1562,8 @@
         }
       }
     }
-    // The note under a コード／ブロック toggle that says why it does not switch: it shows on a press of the pale toggle and
-    // goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
+    // The note under a コード／ブロック toggle that says why it does not switch: it shows when a press is refused (the toggle
+    // keeps its look) and goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
     function modeBlockedNote(binding) {
       const id = binding.kind === 'draft' ? 'callableModeBlockedNote' : 'modeBlockedNote';
       let note = document.getElementById(id);
@@ -2025,7 +2060,7 @@
       componentPicker.id = 'componentPickerCore';
       const componentTitle = document.createElement('summary');
       componentTitle.textContent =
-        '\uff0b \u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u30fb\u90e8\u54c1\u3092\u3075\u3084\u3059';
+        '＋ キャラクター・部品を ふやす';
       componentPicker.append(componentTitle);
       componentControls.append(componentPicker);
       for (const selector of ['.properties-window', '.monitor-window']) {
@@ -2489,6 +2524,16 @@
       for (const id of ['assetModal', 'procModal', 'dataModal'])
         $('#' + id)?.classList.remove('show');
     }
+    function placeProjectNameText() {
+      const text = $('#projectNameText'), box = el.projectName;
+      if (text.hidden) return;
+      const style = getComputedStyle(box);
+      Object.assign(text.style, {
+        left: box.offsetLeft + 'px', top: box.offsetTop + 'px', width: box.offsetWidth + 'px', height: box.offsetHeight + 'px',
+        paddingLeft: parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth) + 'px', font: style.font,
+      });
+    }
+    new ResizeObserver(() => placeProjectNameText()).observe($('.menutool'));
     function updateEditingLock() {
       const locked = modelLocked();
       if (locked && colorEdit) closeColorPicker();
@@ -2522,8 +2567,9 @@
         const n = $('#' + id);
         if (n) n.disabled = locked;
       }
-      // The other toolbar controls cannot be pressed while the work runs (保存, いっしょに作る, and the ヒント and 作品 menus
-      // too); the run screen does not show them, but keeps their room (final call 21).
+      // The other toolbar controls cannot be pressed while the work runs either (保存, いっしょに作る, はじめて's もとにもどす・
+      // やり直す, and the ヒント and 作品 menus): the run screen shows none of the locked toolbar controls, but keeps their
+      // room (final call 21), so ■ 止める stays where ▶ 動かす was.
       $('#saveBtn').disabled = locked;
       $('#tutorialStart').disabled = locked;
       for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
@@ -2539,6 +2585,14 @@
       el.obj.disabled = el.event.disabled = appState === 'IMPORTING' || appState === 'PREPARING';
       el.editor.readOnly = locked;
       el.projectName.disabled = locked;
+      // The run screen shows the work's name as plain text in the name box's place: the box keeps its room but is not
+      // shown, so it is not read as an edit field either.
+      const nameText = $('#projectNameText'), runScreen = ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
+      nameText.hidden = !runScreen;
+      if (runScreen) {
+        if (nameText.textContent !== project.name) nameText.textContent = nameText.title = project.name;
+        placeProjectNameText();
+      }
       $$('.tool').forEach((b) => {
         b.disabled = locked;
         b.draggable = !locked;
@@ -2555,6 +2609,8 @@
       if (world) world.inert = document.body.dataset.uiLevel === 'entry' && ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
       if (locked && appState !== 'IMPORTING') closeEditingModals();
       if (mainEditor.view) renderEditorBinding(mainEditor);
+      // A picture or work being read in refuses the toggle's press (読みこみが おわるまで…), and the refusal ends with it.
+      if (draftEditor.session) paintBindingModeToggle(draftEditor);
       updateDirty();
     }
     function ensureUniqueId(prefix, ids = allIds()) {
@@ -2688,7 +2744,7 @@
     }
     function undo() {
       if (!tutorialAllows(tutorial,'undo')) return;
-      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit) return;
+      if (modelLocked() || composingAny() || activeDragCleanup || colorEdit) return;
       flushActiveEditor();
       clearTimeout(historyTimer);
       const cur = snapshot();
@@ -2701,7 +2757,7 @@
     }
     function redoDo() {
       if (tutorial) return;
-      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit || !redo.length) return;
+      if (modelLocked() || composingAny() || activeDragCleanup || colorEdit || !redo.length) return;
       flushActiveEditor();
       if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
       clearTimeout(historyTimer);
@@ -2755,7 +2811,7 @@
       const content = currentFingerprint(), editor = openEditorFingerprint();
       return { fingerprint: stableJson([content, editor]),
         unsaved: content !== lastSavedFingerprint || editor !== lastSavedEditorFingerprint ||
-          composingEditors.size > 0 || !!colorEdit };
+          composingAny() || !!colorEdit };
     }
     let openRequest = null;
     function finishOpenSelection() {
@@ -2964,7 +3020,7 @@
         card.dataset.ownerId = record.ownerId;
         const shared = record.ownerId !== selectedId;
         const heading = make('h3', `${shared ? project.stage.name + ' ／ ' : ''}${record.title}`);
-        const edit = button('この本文を なおす', () => {
+        const edit = button('この 本文を なおす', () => {
           if (!flushActiveEditor()) return;
           if (record.kind === 'script') {
             if (!selectObject(record.ownerId)) return;
@@ -2992,7 +3048,7 @@
               readOnly: true,
               root: preview, getSession: () => session, getProject: () => project,
               getContext: () => record.context, isLocked: () => true,
-              onOperation: () => ({ ok: false, reason: '「この本文を なおす」を えらんでね' }),
+              onOperation: () => ({ ok: false, reason: '「この 本文を なおす」を えらんでね' }),
             }));
           } else {
             if (!session.syntaxAst) body.append(make('p', '書き方を たしかめてください。入力した 本文を 見せています。', 'source-error'));
@@ -3076,6 +3132,15 @@
       designRatioLocked = !designRatioLocked;
       $('#designRatioLock').setAttribute('aria-pressed', String(designRatioLocked));
     };
+    // How far a press must move before it carries a part or a handle, in screen pixels: a finger wobbles more than a
+    // mouse or a pen (Chrome's own tap slop is about 15 px).
+    const pointerSlop = (e) => e.pointerType === 'touch' ? 8 : 3;
+    let designResizeSmall = null;
+    // On a small on-screen part, edge handles would cover the picture: only the corners show, just outside the part.
+    function designHandlesSmall(c) {
+      const stageScale = el.form.getBoundingClientRect().width / project.stage.width || 1, s = c.scalePercent / 100;
+      return designResizeMode(c) === 'box' && Math.min(c.w * s, c.h * s) * stageScale < 64;
+    }
     function positionResizeHandles(c = designResizePreview || componentById(selectedId)) {
       if (!c) return;
       // On a touch screen a handle is a 24 px dot that a finger presses within 40 px (E-19).
@@ -3097,7 +3162,7 @@
         if (designResizeMode(c) === 'box') {
           // On a small on-screen part, edge handles would cover the picture: keep
           // only the corners and move them just outside the part.
-          const small = Math.min(c.w * s, c.h * s) * stageScale < 64,
+          const small = designResizeSmall ?? designHandlesSmall(c),
             rad = ((c.direction % 360) * Math.PI) / 180,
             px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
             py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
@@ -3256,14 +3321,18 @@
             const step = e.shiftKey ? 10 : 1;
             next = designResizeGeometry(c, direction, key[0] * step, -key[1] * step);
           }
+          let changed = false;
           try {
-            if (commitResize(c, next)) refreshEditor();
+            changed = commitResize(c, next);
+            if (changed) refreshEditor();
           } catch (error) {
             log(error.message, 'error');
           }
           renderProperties();
           renderComponents();
           focusResizeHandle(c.id, direction);
+          // The size is said as the pointer path says it (「はば 120　高さ 80」, or 「星1: 110%」), and read out (#statusLive).
+          setStatus(changed ? (mode === 'scale' ? `${c.name}: ${c.scalePercent}%` : `はば ${c.w}　高さ ${c.h}`) : '大きさは かわっていないよ');
         });
         el.form.append(handle);
       }
@@ -3320,6 +3389,13 @@
       if ($('#assetModal').classList.contains('show')) renderAppearance();
     }
     let propHelpSerial = 0;
+    // A name the work cannot take, said before the work is checked (FS2-01): why, and what to write instead.
+    function checkPartName(v, { stage = false } = {}) {
+      if (!v) throw new Error(stage ? '画面の 名前を 書いてね' : '名前を 書いてね');
+      if (cpLen(v) > 80) throw new Error('名前は 80文字までに してね');
+      if (/[\p{Cc}\p{Zl}\p{Zp}「」]/u.test(v)) throw new Error('名前に「 」や 行がえは 使えないよ。けしてね');
+      if (!stage && (v === 'マウス' || isEdgeTarget(v))) throw new Error('「マウス」と「端（はし）」は 名前に 使えないよ。ちがう 名前に してね');
+    }
     // A rename that the work refuses (prepareResourceRename), said in the status line's voice.
     const PROPERTY_REFUSALS = Object.freeze({
       '同じ 名前が あります': 'ほかの キャラクターや 部品と ちがう 名前に してね',
@@ -3363,7 +3439,7 @@
           rollbackDesign(before);
           // The field goes back to what it was; the status line says why and what to write, in its own voice (F-11: no
           // silent no-op; F-18). Another check of the work (with a code) is said in the teacher log only.
-          setStatus(err.code ? PROPERTY_REFUSALS[err.message] || `「${name}」は その 中身に できなかったよ。もとに もどしたよ` : err.message);
+          setStatus(err.code ? PROPERTY_REFUSALS[err.message] || `「${name}」は その 数や 文字には できないよ。もとに もどしたよ` : err.message);
         }
       });
       v.appendChild(inp);
@@ -3450,8 +3526,7 @@
           propSection(
             'きほん',
             propRow('\u540d\u524d', project.stage.name, (v) => {
-              if (!v.trim())
-                throw new Error('画面の 名前を 書いてね');
+              checkPartName(v.trim(), { stage: true });
               project = prepareResourceRename(project,'component:stage',v.trim(),{drafts:resourceDraftRecords()});
               invalidateEditors();
             }),
@@ -3521,7 +3596,7 @@
           'きほん',
           propRow('\u540d\u524d', c.name, (v) => {
             v = v.trim();
-            if (!v) throw new Error('名前を 書いてね');
+            checkPartName(v);
             if (project.components.some((x) => x !== c && x.name === v))
               throw new Error('ほかの キャラクターや 部品と ちがう 名前に してね');
             project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
@@ -3546,12 +3621,19 @@
           propRow(
             c.type === 'sprite' ? '\u4ee3\u308f\u308a\u306e\u6587\u5b57' : '\u6587\u5b57',
             c.text,
-            (v) => (c.text = v),
+            (v) => {
+              if (cpLen(v) > LIMITS.stringChars) throw new Error(`文字は ${LIMITS.stringChars}文字までに してね`);
+              c.text = v;
+            },
           ),
           propRow(
             '文字の 大きさ',
             c.fontSize,
-            (v) => (c.fontSize = Number(v)),
+            (v) => {
+              const n = Number(v);
+              if (n < 8 || n > 200) throw new Error('文字の 大きさは 8から200までの 数に してね');
+              c.fontSize = n;
+            },
             'number',
           ),
         ),
@@ -3997,7 +4079,7 @@
             y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
-        start = toStage(ev);
+        start = toStage(ev), pressX = ev.clientX, pressY = ev.clientY, slop = pointerSlop(ev);
       let next = { x: c.x, y: c.y },
         finished = false,
         moved = false;
@@ -4011,8 +4093,9 @@
         }
         if (e.cancelable) e.preventDefault();
         const p = toStage(e);
-        // A press without movement keeps the place as it is (320.25 stays 320.25).
-        if (!moved && p.x === start.x && p.y === start.y) return;
+        // A press that does not move past the slop keeps the place as it is (320.25 stays 320.25), and adds nothing to
+        // the history: a finger that wobbles by a pixel or two while it taps a part only selects it (A-09).
+        if (!moved && Math.hypot(e.clientX - pressX, e.clientY - pressY) < slop) return;
         moved = true;
         next = { x: Math.round(before.x + p.x - start.x), y: Math.round(before.y + p.y - start.y) };
         designResizePreview = { ...before, ...next };
@@ -4092,9 +4175,13 @@
             y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
-        start = toStage(ev);
+        start = toStage(ev), pressX = ev.clientX, pressY = ev.clientY, slop = pointerSlop(ev);
       let next = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent },
-        finished = false;
+        finished = false,
+        moved = false;
+      // The handles keep their offset from the part for the whole drag (A-R2-05): whether the part counts as small (its
+      // corner handles just outside it) is decided at the press and again after the release.
+      designResizeSmall = designHandlesSmall(c);
       const sizeText = (at) =>
         designResizeMode(c) === 'scale' ? `${c.name}: ${at.scalePercent}%` : `はば ${at.w}　高さ ${at.h}`;
       const move = (e) => {
@@ -4104,6 +4191,9 @@
           return;
         }
         if (e.cancelable) e.preventDefault();
+        // As for moving: a press on a handle that does not move past the slop changes nothing.
+        if (!moved && Math.hypot(e.clientX - pressX, e.clientY - pressY) < slop) return;
+        moved = true;
         const p = toStage(e);
         next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey || designRatioLocked);
         designResizePreview = { ...before, ...next };
@@ -4125,6 +4215,7 @@
         el.form.removeEventListener('lostpointercapture', cancelPointer);
         if (activeDragCleanup === finish) activeDragCleanup = null;
         designResizePreview = null;
+        designResizeSmall = null;
         if (el.form.hasPointerCapture?.(pointerId))
           try {
             el.form.releasePointerCapture(pointerId);
@@ -4603,7 +4694,7 @@
       lead.textContent = entry ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。'
         : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。';
       reason.className = 'failure-reason'; place.className = 'failure-place'; why.className = 'failure-why';
-      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r);
+      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r, diagnosticSource(r));
       reason.append(place, why);
       const latest = r.id === scheduler.errorRecords.at(-1)?.id, sentence = diagnosticSentence(r),
         framed = latest && !!document.querySelector('#blockEditor .blockui-current');
@@ -4806,11 +4897,12 @@
         const last = records.at(-1),
           button = document.createElement('button');
         button.className = 'failure-open';
-        button.textContent = `動きが止まった きろくを 見る（${records.length}こ）`;
+        button.textContent = `動きが 止まった きろくを 見る（${records.length}こ）`;
         button.onclick = () => showFailureDetails();
         el.monitor.appendChild(button);
+        // 動きのようす speaks in Akari's voice (F-18): the reason, in the language's polite words, is in the record.
         section('さいごに うまく いかなかったとき', [
-          ['直す手がかり', childDiagnosticText(last)],
+          ['直す手がかり', 'わけは「動きが 止まった きろくを 見る」で 見られるよ'],
           ['ばしょ', diagnosticLocation(last)],
           ['うまく いかなかった やること', last.statement],
         ]);
@@ -4903,11 +4995,16 @@
       codeLineMeasure.replaceChildren();
       return codeLineLayout = { source:editor.value, key, lines, height };
     }
-    function updateGutter(errors = []) {
+    let gutterMarks = { errors: [], notices: [] };
+    function updateGutter(errors = [], notices = mainEditor.session?.notices || []) {
+      gutterMarks = { errors, notices };
+      // A code view that is not on the screen (the block view) has no width to lay its lines out in: it is laid out when
+      // it is shown (the observer below), not with every character on a line of its own.
+      if (!el.editor.clientWidth) return;
       const layout = wrappedCodeLines(), count = layout.lines.length,
         key = bindingOwner(mainEditor),
         active = activeLoc?.key === key ? activeLoc.line : 0,
-        errs = new Set(errors.map((x) => x.line));
+        errs = new Set(errors.map((x) => x.line)), noticeLines = new Set(notices.map((x) => x.line));
       for (const mark of [activeLoc, keptFail]) if (mark?.key === key && mark.error) errs.add(mark.line);
       let first = 1;
       while (first < count && layout.lines[first].top < el.editor.scrollTop - 220) first++;
@@ -4919,7 +5016,7 @@
       for (let i = first; i <= last; i++) {
         const d = document.createElement('div');
         d.className =
-          'gutter-line' + (i === active ? ' active' : '') + (errs.has(i) ? ' error' : '');
+          'gutter-line' + (i === active ? ' active' : '') + (errs.has(i) ? ' error' : noticeLines.has(i) ? ' notice' : '');
         d.textContent = i;
         d.style.cssText = `position:absolute;top:${layout.lines[i-1].top}px;height:${layout.lines[i-1].height}px;width:100%`;
         space.appendChild(d);
@@ -4927,6 +5024,8 @@
       el.gutter.appendChild(space);
       el.gutter.scrollTop = el.editor.scrollTop;
     }
+    // Shown again after the block view, or given another width: the line numbers follow the lines.
+    new ResizeObserver(() => { if (el.editor.clientWidth) updateGutter(gutterMarks.errors, gutterMarks.notices); }).observe(el.editor);
     function sourceLocation(task, node, error = null) {
       const frame = task.callFrames[task.callFrames.length - 1],
         def = frame ? project.actions.find((x) => x.name === frame.name) : null;
@@ -5079,11 +5178,20 @@
     }
     // Nothing goes on, but an input can start a body again: the status names the first such body's input (the stage's
     // bodies first, then the parts' in the order they were made). A body that starts by itself later (〜秒ごとに, そう
-    // なったとき) keeps 動いているよ.
+    // なったとき) keeps 動いているよ. A body for an event of a running extension (合図「拡張:拡張ID/機能ID」 that the
+    // extension registers) is started from outside the work, as a click or a key body is (lead decision P22 E2); any
+    // other 「拡張:…」 name is an ordinary signal of the work.
     const RUN_HINT_KEYS = { 空白: 'スペース', 決定: 'エンター', 取消: 'エスケープ' };
     let runHint = '';
+    const signalName = item => String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '');
+    function waitsForExtension(item) {
+      if (scheduler?.waitsForExtension) return scheduler.waitsForExtension(item);
+      const name = signalName(item);
+      return EXTENSION_HOST.active && item.event === 'message' && name.startsWith('拡張:') && !!EXTENSION_HOST.describe(name.slice(3), 'events');
+    }
     function restartHint() {
-      const items = compiled?.items || [], inputs = items.filter(item => ['click', 'keyDown', 'valueChanged'].includes(item.event));
+      const items = compiled?.items || [],
+        inputs = items.filter(item => ['click', 'keyDown', 'valueChanged'].includes(item.event) || waitsForExtension(item));
       if (!inputs.length || items.some(item => ['conditionTrue', 'interval'].includes(item.event))) return '';
       const order = id => id === 'stage' ? -1 : project.components.findIndex(c => c.id === id),
         item = inputs.reduce((first, next) => order(next.targetId) < order(first.targetId) ? next : first),
@@ -5091,6 +5199,7 @@
       // The stage is 画面 here, as on はじめて's 「画面が おされたとき」 (F-23).
       if (item.event === 'click') return item.targetId === 'stage' ? '画面を おすと 動くよ' : `「${name}」を おすと 動くよ`;
       if (item.event === 'valueChanged') return `「${name}」に 入れると 動くよ`;
+      if (item.event === 'message') return `「${signalName(item)}」の 合図を 受けると 動くよ`;
       const key = item.filter?.key;
       return key ? `「${RUN_HINT_KEYS[key] || key}」キーを おすと 動くよ` : 'キーを おすと 動くよ';
     }
@@ -5100,10 +5209,133 @@
       setStatus(text || '動いているよ');
     }
 
+    // 作品チェックの知らせ at every level (p2 Q5 (d)): they are worked out for the whole work after a change, in a timer and
+    // never on the input path, and shown where their sentence is: 「ⓘ 知らせ」 on the block (the block view draws it from
+    // session.notices), the line number in blue and 「ⓘ N行目：…」 under the code. A mistake comes first: a body with a
+    // mistake or with an edit not yet decided shows no notice. Until the work is checked again, a body whose text has not
+    // changed keeps its notices and a changed body shows none. 作品チェック (くわしく・名人) keeps its list.
+    let noticeKey = null, noticeWanted = null, noticeList = [], noticeTimer = 0, noticeSources = new Map(), pointedNotices = '';
+    function noticeSourceOf(owner) {
+      return scriptBySourceKey(project, owner)?.source ?? project.actions.find(a => owner === 'action:' + a.id)?.source
+        ?? project.functions.find(f => owner === 'function:' + f.id)?.source ?? null;
+    }
+    function cachedNotices() {
+      // Each change starts the wait again, so the work is checked once the child stops for a moment.
+      const key = JSON.stringify(project);
+      if (key !== noticeKey && key !== noticeWanted) {
+        noticeWanted = key;
+        clearTimeout(noticeTimer);
+        noticeTimer = setTimeout(checkNotices, 150);
+      }
+      return noticeList.filter(d => noticeSources.get(d.owner) === noticeSourceOf(d.owner));
+    }
+    function checkNotices() {
+      noticeTimer = 0;
+      // Not while the work runs (its text does not change), and not while the child is in the middle of something in a
+      // body (a field, a word being typed, a block carried): a little later.
+      const busy = modelLocked() || [mainEditor, draftEditor].some(b => b.session?.pendingEdit || b.session?.blockDraft)
+        || composingEditors.has(el.editor) || composingEditors.has(draftEditor.textarea) || document.querySelector('.blockui-dragging');
+      if (busy) { noticeTimer = setTimeout(checkNotices, 400); return; }
+      noticeWanted = null;
+      const key = JSON.stringify(project);
+      if (key !== noticeKey) {
+        let checked = { items: [], notes: [] };
+        try { checked = compileProject(project); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+        // A 名人 text's flows are items of their own: a notice belongs to the body (the document) its item comes from.
+        const owner = where => checked.items?.find(item => item.key === where)?.documentKey || where;
+        noticeList = (checked.notes || []).map(d => ({ ...d, owner: owner(d.where) }));
+        noticeSources = new Map(noticeList.map(d => [d.owner, noticeSourceOf(d.owner)]));
+        noticeKey = key;
+      }
+      const shown = b => (b.session?.notices || []).map(d => d.line + ':' + d.code).join();
+      for (const binding of [mainEditor, draftEditor]) {
+        if (!binding.view || !binding.session) continue;
+        if (shown(binding) === bodyNotices(binding.session).map(d => d.line + ':' + d.code).join()) continue;
+        if (binding === mainEditor) refreshEditor(); else renderEditorBinding(binding);
+      }
+    }
+    function bodyNotices(session) {
+      // The run screen shows no notice (its marks are edit-screen controls), so a running work is not looked at for them.
+      if (modelLocked() || !session || session.pendingEdit || session.blockDraft || session.diagnostics?.length || !session.syntaxAst) return [];
+      return cachedNotices().filter(d => d.owner === session.ownerKey && noticeSources.get(d.owner) === session.sourceText)
+        .sort((a, b) => (a.line || 0) - (b.line || 0) || (a.column || 0) - (b.column || 0));
+    }
+    // ■ 止める points to the notices of the run once: the same notices after the next run say only 止まっているよ. A
+    // notice in a body that is not shown names that body.
+    function stopStatusWithNotices() {
+      const notes = compiled?.notes || [], key = notes.map(d => d.where + '|' + d.line + '|' + d.code).join(',');
+      const before = pointedNotices;
+      pointedNotices = key;
+      if (!notes.length || key === before) return '止まっているよ';
+      const owner = d => compiled.items?.find(item => item.key === d.where)?.documentKey || d.where;
+      const shown = d => sourceOverviewOpen ? scriptBySourceKey(project, owner(d))?.targetId === selectedId : owner(d) === bindingOwner(mainEditor);
+      if (notes.some(shown)) return '止まっているよ。ⓘ が ついた ところに 知らせが あるよ';
+      const { key: where, script, definition } = diagnosticOwner({ where: owner(notes[0]) });
+      const place = definition ? (where.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
+        : meijinTextLabel(script) || `「${targetById(script?.targetId)?.name || project.stage.name}」の ${eventText(script?.event, script?.filter)}の 本文`;
+      return `止まっているよ。${place}に ⓘ の 知らせが あるよ`;
+    }
+    // What the code view says about a body (FM2-04, FM2-10, FCM-19, FCM-25): a reading error that a 名人 text would read
+    // says S317, as 作品チェック and ▶ do, and a body with its own heading that the code view holds until ▶ (or the block
+    // view) is checked for its names and meanings before the line under the code calls it fine. Both checks compile a
+    // trial work, so they run after a short wait, never on the keystroke; the line under the code follows when they are
+    // done. Returns the errors to show, or null while the heading body is still being checked.
+    const editorChecks = new Map();
+    let editorCheckTimer = 0;
+    function genericReadingError(d) {
+      return ['P201', 'P205', 'S301'].includes(d?.code) && !d.proposals?.length && GENERIC_READING_ERRORS.some(re => re.test(d.message));
+    }
+    function checkedEditorErrors(binding, source, errs, headingAst = null) {
+      if (!headingAst && !genericReadingError(errs[0])) return errs;
+      const owner = bindingOwner(binding), key = owner + '\n' + (headingAst ? 'heading\n' : '') + source;
+      if (editorChecks.has(key)) return editorChecks.get(key);
+      clearTimeout(editorCheckTimer);
+      editorCheckTimer = setTimeout(() => {
+        editorCheckTimer = 0;
+        if (modelLocked() || bindingOwner(binding) !== owner) return;
+        let found = errs, taken = false;
+        try {
+          if (headingAst) {
+            // What ▶ would say: taking the body (its heading may change the event or the part) and then the check of the
+            // work, for this body (S317 included).
+            const next = sourceCandidate(binding, owner, source), old = scriptBySourceKey(project, owner),
+              row = old ? next.scripts[project.scripts.indexOf(old)] : next.scripts.at(-1), key = row && scriptSourceKey(row);
+            found = key ? compileProject(next).errors.filter(e => e.where === key) : [];
+            taken = true;
+          } else found = meijinFormError(owner, source, found);
+        } catch (error) { if (!(error instanceof AkariError)) throw error; found = error.diagnostics?.length ? error.diagnostics : [error]; }
+        editorChecks.set(key, found);
+        if (editorChecks.size > 40) editorChecks.delete(editorChecks.keys().next().value);
+        // The note under the code that holds the text not yet taken says the same.
+        if (!headingAst && found !== errs && binding.session?.pendingEdit?.value === source &&
+            !$(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden)
+          showEditorFailure(binding, Object.assign(new AkariError(found[0].code, found[0].message, found[0].line, found[0].column), { diagnostics: found }));
+        // The status line points to the line, as for a reading error (and says so no more once it is fixed).
+        if (headingAst && found.length && binding.session?.pendingEdit?.value === source) {
+          // As ▶ would say it: a body that could be taken has a mistake in the work (作品に), one that could not in its text.
+          editorFailureStatus = `${taken ? '作品' : '書き方'}に 直す ところが あるよ。${found[0].line ? `コードの ${found[0].line}行目を 見てね` : 'コードの 下の せつめいを 見てね'}`;
+          setStatus(editorFailureStatus);
+        }
+        if (binding === mainEditor) refreshEditor();
+      }, 250);
+      return headingAst ? null : errs;
+    }
+    // The S317 trial of meijinFormsInOrdinary for a body the code view shows (its text, taken or not).
+    function meijinFormError(owner, source, errs) {
+      const script = scriptBySourceKey(project, owner);
+      if (!script || isMeijinScript(script) || !genericReadingError(errs[0])) return errs;
+      const trial = cloneDesignProject(project), own = trial.scripts.find(x => x.id === script.id);
+      if (!own) return errs;
+      own.source = source;
+      const out = meijinFormsInOrdinary(trial, [{ ...errs[0], where: scriptSourceKey(own) }]);
+      if (out[0]?.code !== 'S317') return errs;
+      const { proposals, ...first } = errs[0];
+      return [{ ...first, code: 'S317', message: out[0].message }, ...errs.slice(1)];
+    }
     function refreshEditor() {
       if (!mainEditor.view) return;
       const session = getEditorSession(mainEditor), pending = session.pendingEdit;
-      let errs = session.diagnostics || [], notice = '';
+      let errs = session.diagnostics?.length ? checkedEditorErrors(mainEditor, session.sourceText, session.diagnostics) : [], notice = '';
       // The visible pending source can differ from the valid project baseline.
       // Never show a baseline success message over a rejected code edit.
       if (composingEditors.has(el.editor)) {
@@ -5113,25 +5345,55 @@
           key: session.ownerKey, symbols: buildSymbols(project) });
         errs = parsed.syntaxDiagnostics.length ? parsed.syntaxDiagnostics
           : staticScaleDiagnostics(parsed.ast, session.ownerKey);
-        if (!errs.length) notice = pending.reason || '入力を 決めてください';
+        // A text that reads but was refused when it was taken (its heading names no part, say) shows that mistake, with
+        // its line, as the note under the code does.
+        if (!errs.length && pending.kind === 'code' && pending.diagnostics?.length) errs = pending.diagnostics;
+        // A body with its own heading is checked for its names and meanings too before the line says it is fine.
+        const checked = pending.kind === 'source-import' ? errs
+          : checkedEditorErrors(mainEditor, pending.value, errs, pending.kind === 'heading-source' && !errs.length ? parsed.ast : null);
+        if (checked === null) notice = '書き方を たしかめています';
+        else {
+          errs = checked;
+          if (!errs.length) notice = pending.reason || '入力を 決めてください';
+        }
       } else if (session.blockDraft) {
         errs = []; notice = pending?.reason || 'あいている ところに ブロックや 数・文字を 入れてください';
       } else if (pending) {
         errs = pending.diagnostics?.length ? pending.diagnostics : [];
         if (!errs.length) notice = pending.reason || '入力を 決めてください';
       }
+      const notices = !errs.length && !notice && !pending ? bodyNotices(session) : [];
+      session.notices = notices;
       if (errs.length) {
         showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目', null, el.editor.value);
         el.issue.className = 'issue-error';
+      } else if (notices.length) {
+        // The first notice from the top, with how many more there are; one that names its fix offers it (I120).
+        const first = notices[0];
+        el.issue.textContent = 'ⓘ ' + (first.line || 1) + '行目：' + first.message + (notices.length > 1 ? `（ほかに ${notices.length - 1}つ あります）` : '');
+        for (const proposal of first.proposals || []) {
+          if (typeof proposal.source !== 'string') continue;
+          const fix = document.createElement('button');
+          fix.type = 'button'; fix.dataset.noteFix = ''; fix.textContent = proposal.label || proposal.source; fix.title = proposal.source;
+          fix.onclick = () => applyNoteProposal(first, proposal);
+          el.issue.append(' ', fix);
+        }
+        el.issue.className = 'issue-notice';
+        if (editorFailureStatus !== null) {
+          if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を 直せたよ');
+          editorFailureStatus = null;
+        }
       } else {
         el.issue.textContent = notice || '✓ このコードの 書き方は だいじょうぶです';
         el.issue.className = '';
-        if (!notice && editorFailureStatus !== null) {
+        // The mistake the status line pointed to is gone: say so (a body with its own heading is fine once its check is
+        // done), so the line never asks to fix a line that is fine (E2E-R2-11).
+        if ((!notice || (pending?.kind === 'heading-source' && notice === pending.reason)) && editorFailureStatus !== null) {
           if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を 直せたよ');
           editorFailureStatus = null;
         }
       }
-      updateGutter(errs);
+      updateGutter(errs, notices);
       renderEditorBinding(mainEditor);
       if (session.mode === 'code') renderHints();
     }
@@ -5139,8 +5401,31 @@
     let hintPage = 0,
       callableHintPage = 0;
     const composingEditors = new WeakSet();
+    // A WeakSet has no size: whether a word is still being typed (IME) in either editor.
+    function composingAny() { return composingEditors.has(el.editor) || composingEditors.has(draftEditor.textarea); }
+    // 書ける ことば names a value by its group in the block list (FCB-13): しらべる for a reading of the screen, へんすう・リスト
+    // for a value written as it is (［1、2、3］, 条件の答え（あてはまる）), 計算 for a calculation and the ready-made ones. A
+    // calculation for くわしく only (2＾3, 平方根, 正弦 …) is not offered below くわしく, as in the block list (F-21).
+    const hintGroups = new Map(), HINT_SENSE_KINDS = new Set(['SensorRead', 'TimerReset', 'InputValueRead']),
+      HINT_DATA_KINDS = new Set(['BooleanLiteral', 'ListLiteral', 'StringLiteral', 'NumberLiteral', 'QuantityLiteral', 'VariableRead', 'ListRead']);
+    function hintGroup(h, symbols) {
+      if (h.mode !== 'expression') return null;
+      const key = h.category + '|' + h.text;
+      if (hintGroups.has(key)) return hintGroups.get(key);
+      let group = { label: h.category === 'はじめから ある 計算' ? '計算' : h.category || '計算', advanced: false };
+      if (h.category !== 'しらべる') try {
+        const node = parseExpression(h.text, symbols, {});
+        group = { label: HINT_SENSE_KINDS.has(node?.kind) || node?.kind === 'SensorRead' ? 'しらべる' : HINT_DATA_KINDS.has(node?.kind) ? 'へんすう・リスト' : '計算',
+          advanced: ADVANCED_ONLY_SCHEMA_IDS.has(node?.kind + ':' + (node?.kind === 'BuiltinCall' ? node.name : node?.op)) };
+      } catch (error) { if (!(error instanceof AkariError)) throw error; }
+      if (hintGroups.size > 2000) hintGroups.clear();
+      hintGroups.set(key, group);
+      return group;
+    }
     function drawHints(root, candidates, search, offset, insert) {
       root.textContent = '';
+      const symbols = buildSymbols(project), advanced = document.body.dataset.uiLevel === 'advanced';
+      candidates = candidates.filter(h => advanced || !hintGroup(h, symbols)?.advanced);
       const query = search.trim().toLocaleLowerCase(),
         filtered = searchHintCandidates(candidates, query, project),
         page = Math.min(offset, Math.max(0, Math.ceil(filtered.length / 24) - 1)),
@@ -5150,7 +5435,7 @@
         b.className = 'hint-button';
         b.textContent =
           // A value is named by its group in the block list (しらべる, 計算, …): 計算 is only for calculations (F-26).
-          (h.mode === 'expression' ? (h.category || '計算') + ' · ' : '') +
+          (h.mode === 'expression' ? hintGroup(h, symbols).label + ' · ' : '') +
           h.text +
           (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
@@ -5319,12 +5604,17 @@
         afterStatement: () => requestRuntimePaint(6),
         runtimeError: (task, err) => {
           if(tutorialTrace&&tutorialRunEpoch===tutorial?.epoch&&bridgeGeneration===generationToken)tutorialTrace.failed=true;
+          runFailed = true;
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, null, err);
           requestRuntimePaint(7);
-          const stack = task.errorCallStack?.length
+          // The order of the calls names the part (たくどん), not its inner id, below くわしく (F-28).
+          const owner = task.targetId === 'stage' ? project.stage.name : task.targetId === MEIJIN_OWNER ? '名人の本文' : componentById(task.targetId)?.name,
+            calls = (task.errorCallStack || []).map((entry, i) => i === 0 && owner && document.body.dataset.uiLevel !== 'advanced'
+              ? entry.replace('きっかけ ' + task.targetId + ' /', 'きっかけ ' + owner + ' /') : entry);
+          const stack = calls.length
             ? `
-使った じゅんばん：${task.errorCallStack.join(' → ')}`
+使った じゅんばん：${calls.join(' → ')}`
             : '';
           // 出力 is the teacher's surface: one polite voice per line (F-18).
           log(`${err.code} 動きが うまく いきませんでした：${err.message}${stack}`, 'error');
@@ -5341,7 +5631,8 @@
       if (!tutorialAllows(tutorial,'run')) return;
       if (modelLocked()) return;
       // A refused run always tells the child why nothing moved.
-      const refuse = (reason) => setStatus('まだ 動かせないよ。' + reason);
+      // Every refusal is said the same way: まだ 動かせないよ。, the reason, and 。 at the end (FM2-13).
+      const refuse = (reason) => setStatus('まだ 動かせないよ。' + sentence(reason));
       if (!flushActiveEditor()) {
         refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
@@ -5378,8 +5669,11 @@
       if (!(compiled.items || []).some(item => !item.definitionKind &&
         (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
           (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
-        setStatus(shownEditorMode() === 'blocks' ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
-          : '本文が まだ ないよ。コードに 文を 書いてね');
+        // A body that holds only a メモ has something on the screen, but nothing that moves (E2E-R2-14).
+        const memo = (compiled.items || []).some(item => (item.ast?.body || []).length || (item.ast?.units || []).some(unit => unit.body?.length));
+        setStatus(shownEditorMode() === 'blocks'
+          ? memo ? 'メモは 動かないよ。メモの ほかに、動く ブロックを 入れてね' : 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
+          : memo ? 'メモは 動かないよ。メモの ほかに、動く 文を 書いてね' : '本文が まだ ないよ。コードに 文を 書いてね');
         return;
       }
       try {
@@ -5406,6 +5700,7 @@
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
         runFinished = false;
+        runFailed = false;
         runHint = '';
         keptFail = null;
         setStatus('絵や音を じゅんびしているよ');
@@ -5467,13 +5762,14 @@
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
       runFinished = false;
+      runFailed = false;
       runHint = '';
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
       confirmTutorialOperation('stop');
       renderAll();
       loadEditor();
       paintRunStrip();
-      setStatus('止まっているよ');
+      setStatus(stopStatusWithNotices());
       if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
       else if (mainEditor.session?.mode === 'blocks') {
@@ -5484,12 +5780,13 @@
       else el.editor.focus({ preventScroll: true });
     }
     // The words of the run: the same in the status line and on the right (動いているよ, いったん 止めたよ, おわったよ,
-    // 止まっているよ), and in 動きのようす.
+    // 止まっているよ), and in 動きのようす. A run stopped at a mistake cannot go on: it says とちゅうで 止まったよ on the right
+    // as the status line does (「動きが とちゅうで 止まったよ」), not いったん 止めたよ.
     function runStateText() {
       if (appState === 'PREPARING') return 'じゅんびしているよ';
       if (appState === 'IMPORTING') return '読みこんでいるよ';
       if (runFinished) return 'おわったよ';
-      if (scheduler?.running) return scheduler.paused ? 'いったん 止めたよ' : '動いているよ';
+      if (scheduler?.running) return runFailed ? 'とちゅうで 止まったよ' : scheduler.paused ? 'いったん 止めたよ' : '動いているよ';
       return '止まっているよ';
     }
     // A pause and the continue after it change the status line too, when it only said that the work runs (an error or a
@@ -5505,10 +5802,27 @@
         else if (words === '動いているよ' && el.status.textContent === PAUSED_STATUS) setStatus(runHint || '動いているよ');
       }
       el.runState.className = 'runstate ' + (running ? 'run-on' : 'run-off');
-      $('#pauseBtn').disabled = !running || scheduler.paused;
-      $('#continueBtn').disabled = !running || !scheduler.paused;
-      $('#stepBtn').disabled = !running;
-      $('#runtimeInspectBtn').hidden = !running;
+      // The run screen never shows a button that cannot be pressed (the exported player's rule too). ⏸ いったん止める and
+      // ▶ つづける take turns in one place: ⏸ while the work runs, ▶ つづける while it is paused. 1つずつ 動かす and 本文を見て
+      // たしかめる show while it runs or is paused. While getting ready, once the run has ended, and after a mistake
+      // stopped it (nothing can go on past the failed sentence: ■ 止める only), a button that cannot be pressed is not
+      // shown, but its place stays (data-inactive hides it), so the stage and the other buttons do not move.
+      const focused = document.activeElement, failed = running && runFailed,
+        inactive = {
+          pauseBtn: !running || scheduler.paused || failed,
+          continueBtn: !running || !scheduler.paused || failed,
+          stepBtn: !running || failed,
+          runtimeInspectBtn: !running,
+        };
+      for (const [id, off] of Object.entries(inactive)) {
+        const button = $('#' + id);
+        button.disabled = off;
+        button.dataset.inactive = String(off);
+      }
+      $('#runtimeInspectBtn').hidden = !['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
+      // A button that went away does not take the focus with it to the page: it goes to the stage (⏸ and ▶ つづける move
+      // it on themselves).
+      if (focused?.dataset?.inactive === 'true' && Object.hasOwn(inactive, focused.id)) el.form.focus({ preventScroll: true });
       $('#runBtn').disabled = appState !== 'DESIGN';
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
@@ -5674,7 +5988,7 @@
         for (const d of c.errors) {
           const p = document.createElement('div');
           p.className = 'diagnosis-issue';
-          showDiagnosticMessage(p, d, diagnosticLocation(d), null, diagnosticSource(d));
+          showDiagnosticMessage(p, d, diagnosticLocation(d), null, diagnosticSource(d), { listItem: true });
           body.appendChild(p);
         }
       // Notices do not stop anything; they say how a correct sentence will run.
@@ -5685,7 +5999,7 @@
         for (const d of c.notes) {
           const p = document.createElement('div');
           p.className = 'diagnosis-note';
-          p.textContent = diagnosticLocation(d) + '：' + d.message;
+          p.textContent = diagnosticLocation(d) + '：' + sentence(d.message);
           // A notice that names its fix offers it, as a code proposal does (the fix changes the body it is in).
           for (const proposal of d.proposals || []) {
             if (typeof proposal.source !== 'string') continue;
@@ -5825,7 +6139,7 @@
     function saveProject() {
       if (!tutorialAllows(tutorial,'save')) return false;
       if (appState === 'IMPORTING' || appState === 'PREPARING') return false;
-      if(composingEditors.size){setStatus('日本語の 入力を 決めてから、ほぞんしてね');return false;}
+      if(composingAny()){setStatus('日本語の 入力を 決めてから、ほぞんしてね');return false;}
       flushActiveEditor();
       try {
         const editorState=captureEditorState(),unfinished=editorState.pendingEditors.length||editorState.callableDraft||compileProject(project).errors.length;
@@ -6043,7 +6357,7 @@
     }
 
     function writeAutosave() {
-      if (composingEditors.size || activeDragCleanup || colorEdit) {
+      if (composingAny() || activeDragCleanup || colorEdit) {
         scheduleAutosave();
         return Promise.resolve(false);
       }
@@ -6241,6 +6555,9 @@
       }
     }
     function renderDataModal() {
+      // The choice names what is chosen, as the part tools do (F-23): えらんだ キャラクター, えらんだ 部品.
+      const chosen = componentById(selectedId);
+      $('#dataScope option[value="self"]').textContent = 'えらんだ ' + (chosen && chosen.type !== 'sprite' ? '部品' : 'キャラクター');
       updateDataForm();
       const body = $('#dataBody');
       body.textContent = '';
@@ -6253,7 +6570,7 @@
       } else {
         const c = componentById(selectedId);
         if (!c) {
-          body.textContent = 'へんすう・リストを かえる 部品を 先に えらんでください。';
+          body.textContent = 'へんすう・リストを かえる キャラクターや 部品を 先に えらんでください。';
           return;
         }
         vars = c.localData.variables;
@@ -7418,8 +7735,28 @@
       if (event.timeStamp - runPressedAt < 500) return;
       stopRun();
     });
-    $('#pauseBtn').onclick = () => scheduler?.pause();
-    $('#continueBtn').onclick = () => scheduler?.resume();
+    // ⏸ いったん止める and ▶ つづける share one place: a press within 0.5 s of the last one there is the second press of a
+    // double press and does nothing (it would pause and go on at once). After ⏸ the focus goes to ▶ つづける in the same
+    // place; after ▶ つづける to the stage, as after ▶ 動かす, so keys reach the work (いっしょに作る keeps its own place).
+    let pauseSlotPressedAt = -Infinity;
+    const pauseSlotPress = (event) => {
+      if (event.timeStamp - pauseSlotPressedAt < 500) return false;
+      pauseSlotPressedAt = event.timeStamp;
+      return true;
+    };
+    $('#pauseBtn').onclick = (event) => {
+      if (!pauseSlotPress(event) || !scheduler) return;
+      scheduler.pause();
+      if ($('#continueBtn').dataset.inactive !== 'true') $('#continueBtn').focus({ preventScroll: true });
+    };
+    $('#continueBtn').onclick = (event) => {
+      if (!pauseSlotPress(event) || !scheduler) return;
+      scheduler.resume();
+      if (tutorial) focusTutorialTarget();
+      // In 本文と動きのようす the stage is behind the dialog: the focus stays in the same place, on ⏸.
+      else if (event.currentTarget.closest('#runtimeInspector')) $('#pauseBtn').focus({ preventScroll: true });
+      else el.form.focus({ preventScroll: true });
+    };
     $('#stepBtn').onclick = () => scheduler?.stepOne();
     $('#formatBtn').onclick = formatCurrent;
     $('#diagnoseBtn').onclick = showDiagnosis;
@@ -7681,12 +8018,12 @@
       // 名人: the selected body becomes a 名人 text after the confirm (an empty one when there is no body to move).
       if($('#uiLevel').value==='meijin'){
         $('#uiLevel').value=baseUiLevel;
-        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、レベルを かえてね。'); return; }
+        if (tutorial || composingAny() || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、レベルを かえてね。'); return; }
         if(!workIsMeijin())startMeijin();
         applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);mainEditor.view.render({force:true});
         return;
       }
-      if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
+      if (tutorial || composingAny() || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
         applyUiLevel();
         setStatus('入力を 決めるか やめてから、レベルを かえてね。');
         return;
@@ -7696,6 +8033,11 @@
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
+      // はじめて shows the start and click bodies only, with a button for each: a body of another きっかけ chosen before gives
+      // way to the start body (the click body for a part with no start), so the body shown is the one a pressed button
+      // names (F-05, F2-04).
+      if (document.body.dataset.uiLevel === 'entry' && !['start', 'click'].includes(currentEvent))
+        selectEntryEvent(eventsFor(selectedId).includes('start') ? 'start' : 'click');
       renderHints();
       renderEntrySurface();
       renderEditorBinding(mainEditor);
@@ -7833,6 +8175,8 @@
       const draft = binding.kind === 'draft',
         p = draft ? 'callable' : 'editor';
       binding.view = createBlockEditorView({
+        // A notice's rewrite by the block (I120, p2 Q5 (d)) is the same as the one under the code and in 作品チェック.
+        onNoticeFix: (note, proposal) => applyNoteProposal(note, proposal),
         onExpand:
           binding.kind === 'script'
             ? () => {
@@ -7846,7 +8190,7 @@
             : null,
         root: $(draft ? '#callableBlocks' : '#blockEditor'),
         // The free middle of the row above the workspace, between すべての本文… and もとにもどす…: the floating
-        // 「とちゅうで やめる」 goes there while a place is chosen, so it covers no block (E-12).
+        // The cancel control (「入れるのを やめる」) goes there while a place is chosen, so it covers no block (E-12).
         controlsSpace: draft ? null : () => {
           const nav = $('.codewin > .source-nav'), bar = $('.codewin > .debugbar');
           if (!nav?.getClientRects().length || !bar?.getClientRects().length) return null;
@@ -7966,9 +8310,10 @@
           event.stopImmediatePropagation();
           event.key.toLowerCase() === 'y' || event.shiftKey ? redoDo() : undo();
         }
-        // Delete stays inside the block editor; on a selected sentence the editor itself deletes the block (E-05).
+        // Delete stays inside the block editor; on a selected sentence the editor itself deletes the block (E-05), and on a
+        // selected value it says what to do instead (FCB-20), as Backspace does.
         if (event.key === 'Delete' && event.target.closest('#blockEditor,#callableBlocks') &&
-            !event.target.matches('.blockui-world .blockui-node.blockui-statement'))
+            !event.target.matches('.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression)'))
           event.stopPropagation();
       },
       true,
@@ -7981,7 +8326,8 @@
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
+          // The note under the code holds the way out of a pending edit (its rewrites and 書いた文のまま考える).
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker,#editorPending,#callablePending') ||
           // ▶ 動かす closes the input itself and says why it does not run (startRun).
           target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn')
         )
@@ -8037,6 +8383,8 @@
         if (
           root.contains(event.target) ||
           event.target === binding.textarea ||
+          // The focus may go to the note's rewrites (Tab from the code): they decide the pending edit themselves.
+          event.target.closest('#editorPending,#callablePending') ||
           event.target.matches('#callableName,#callableArgs,#callablePhrase')
         )
           return;
