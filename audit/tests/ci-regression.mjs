@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
+import cp from 'node:child_process';
 import {createRequire} from 'node:module';
 import {selectBundleDirectory,verifyBundle,sealBundle} from '../lib/evidence-bundle.mjs';
 import {sha,pageFor,snapshot} from '../lib/product-test-host.mjs';
@@ -273,4 +274,25 @@ for(const [id,mutate]of [
  ['nonfinite',r=>r[0].viewport.w=NaN],['changed-dimensions',r=>r[0].frame.h--],
  ['scroll-outside-range',r=>r[0].scroll.y=999],['forged-hit',r=>r[0].hitPoint.x=0]
 ]){const raw=cornerFixture(80,184);mutate(raw);assert.throws(()=>verifyRunStageCorners(raw,[80,184]));pass('stage-reach/reject-'+id);}
+// A real timed-out child must retain both output streams and the original error.
+const browserRunnerSource=fs.readFileSync('audit/browser/run-full-browser-audit.mjs','utf8');
+const childRunStart=browserRunnerSource.indexOf('const run=(cmd,a,opts={})=>{'),childRunEnd=browserRunnerSource.indexOf('\nif(fs.existsSync(evidence))',childRunStart);
+assert.ok(childRunStart>0&&childRunEnd>childRunStart);
+const childRunSource=browserRunnerSource.slice(childRunStart,childRunEnd)+'\nrun;';
+const childErrorDir=fs.mkdtempSync(path.join(evidenceRoot,'child-error-'));
+try{
+ const actualRun=vm.runInNewContext(childRunSource,{cp,fs,path,root:process.cwd(),evidence:childErrorDir,process});
+ assert.throws(()=>actualRun(process.execPath,['-e',"process.stdout.write('child-out-marker\\n');process.stderr.write('child-err-marker\\n');setInterval(()=>{},1000);"],{timeout:1000}),error=>error.code==='ETIMEDOUT');
+ const captured=fs.readFileSync(path.join(childErrorDir,'child-execution-error.log'),'utf8'),record=JSON.parse(fs.readFileSync(path.join(childErrorDir,'child-execution-error.json'),'utf8'));
+ assert.match(captured,/child-out-marker/);assert.match(captured,/child-err-marker/);assert.match(captured,/ETIMEDOUT/);assert.equal(record.error.code,'ETIMEDOUT');assert.equal(record.timeoutMs,1000);assert.notEqual(record.status,0);
+ const nonzero=actualRun(process.execPath,['-e','process.exit(7)'],{timeout:1000});assert.equal(nonzero.status,7,'ordinary child failure is still returned to the existing verifier');
+ pass('child-diagnostics/timeout-output-preserved');
+ const original=new Error('controlled child timeout');original.code='ETIMEDOUT';const messages=[];
+ const failingCapture=vm.runInNewContext(childRunSource,{cp:{spawnSync:()=>({error:original,status:null,signal:'SIGTERM',stdout:'out',stderr:'err'})},fs:{writeFileSync(){throw Error('controlled evidence write failure');}},path,root:process.cwd(),evidence:childErrorDir,process:{stderr:{write:text=>messages.push(text)}}});
+ assert.throws(()=>failingCapture('node',['fixture'],{timeout:1000}),error=>error===original);assert.ok(messages.some(text=>text.includes('controlled evidence write failure')));
+ pass('child-diagnostics/capture-failure-keeps-original');
+}finally{
+ const relative=path.relative(evidenceRoot,childErrorDir);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative));fs.rmSync(childErrorDir,{recursive:true});
+}
+console.log('Child diagnostics: actual timeout output persisted; original failures and limits preserved');
 writeCaseReport(output,'ci-regression',results);

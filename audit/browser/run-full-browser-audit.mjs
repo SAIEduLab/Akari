@@ -26,7 +26,16 @@ for(const p of [product,audit,manifestPath])if(!fs.existsSync(path.resolve(root,
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const run=(cmd,a,opts={})=>{
   const r=cp.spawnSync(cmd,a,{cwd:root,encoding:'utf8',maxBuffer:64*1024*1024,...opts});
-  if(r.error)throw r.error;
+  if(r.error){
+    // Preserve the child's output before propagating the original execution error.
+    // A timeout remains a failure with exactly the same command and limit.
+    try{
+      fs.writeFileSync(path.join(evidence,'child-execution-error.log'),(r.stdout||'')+'\n'+(r.stderr||'')+'\n'+r.error.stack+'\n');
+      fs.writeFileSync(path.join(evidence,'child-execution-error.json'),JSON.stringify({command:cmd,args:a,timeoutMs:opts.timeout,
+        status:r.status,signal:r.signal,error:{name:r.error.name,code:r.error.code,message:r.error.message,stack:r.error.stack}},null,2)+'\n');
+    }catch(captureError){process.stderr.write('Child error evidence could not be written: '+captureError.message+'\n');}
+    throw r.error;
+  }
   return r;
 };
 if(fs.existsSync(evidence))throw new Error('Evidence directory already exists; choose a fresh output path: '+evidence);
