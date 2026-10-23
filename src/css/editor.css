@@ -6018,7 +6018,7 @@ body.runtime .menutool > .mode-blocked-note { display: none !important; }
    The row count follows the strip's width only. */
 .run-strip { display: none; }
 body.runtime .run-strip { container: run-strip / inline-size; display: flex; flex: none; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 21px; color: var(--dark, #283e50); }
-.run-strip > .exec-location { flex: 0 1 auto; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.run-strip > .exec-location { flex: 0 0 40%; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .exec-sentence { flex: 1 1 0; box-sizing: border-box; min-width: 0; height: 29px; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; line-height: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* The empty box keeps its place: this wins over the page-wide [hidden] { display: none !important }. */
 .run-strip > .exec-sentence[hidden] { display: block !important; visibility: hidden; }
@@ -6466,10 +6466,11 @@ body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] 
   background: #ffffffee; font-size: 13px; line-height: 1.2; white-space: normal; box-shadow: 0 2px 6px #12324d26;
 }
 #designRatioLock[aria-pressed="true"] { background: #dcebf7; border-color: #1f56b4; font-weight: 700; }
-#designRatioLock[hidden] { display: block; visibility: hidden; pointer-events: none; }
+#designRatioLock[hidden] { visibility: hidden; pointer-events: none; }
 body.runtime #designRatioLock { display: none; }
 @media not (pointer: coarse) { #designRatioLock { display: none; } }
 @media (pointer: coarse) {
+  body:not(.runtime) #designRatioLock[hidden] { display: block !important; }
   #stageEnlarge, #designRatioLock, #stageThumbnail { min-height: 40px; }
   #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; flex-wrap: wrap; gap: 1px; }
   #stageEnlarge { padding-inline: 2px; margin-left: 0; }
@@ -6573,3 +6574,9 @@ body.runtime .blockui-world .blockui-node.blockui-notice > .blockui-node-content
 
 /* A sideways swipe at the edge of the editor keeps the child in the work. */
 html { overscroll-behavior-x: none; }
+
+/* Missing values stay in the pending note until explicitly confirmed. */
+.intent-choices [data-intent-input] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.intent-choices [data-intent-input] > strong { flex-basis: 100%; }
+.intent-choices [data-intent-input] label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.intent-choices [data-intent-input] input { width: 8em; min-width: 0; max-width: 100%; }

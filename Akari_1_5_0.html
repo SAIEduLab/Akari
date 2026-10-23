@@ -6030,7 +6030,7 @@ body.runtime .menutool > .mode-blocked-note { display: none !important; }
    The row count follows the strip's width only. */
 .run-strip { display: none; }
 body.runtime .run-strip { container: run-strip / inline-size; display: flex; flex: none; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 21px; color: var(--dark, #283e50); }
-.run-strip > .exec-location { flex: 0 1 auto; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.run-strip > .exec-location { flex: 0 0 40%; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .exec-sentence { flex: 1 1 0; box-sizing: border-box; min-width: 0; height: 29px; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; line-height: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* The empty box keeps its place: this wins over the page-wide [hidden] { display: none !important }. */
 .run-strip > .exec-sentence[hidden] { display: block !important; visibility: hidden; }
@@ -6478,10 +6478,11 @@ body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] 
   background: #ffffffee; font-size: 13px; line-height: 1.2; white-space: normal; box-shadow: 0 2px 6px #12324d26;
 }
 #designRatioLock[aria-pressed="true"] { background: #dcebf7; border-color: #1f56b4; font-weight: 700; }
-#designRatioLock[hidden] { display: block; visibility: hidden; pointer-events: none; }
+#designRatioLock[hidden] { visibility: hidden; pointer-events: none; }
 body.runtime #designRatioLock { display: none; }
 @media not (pointer: coarse) { #designRatioLock { display: none; } }
 @media (pointer: coarse) {
+  body:not(.runtime) #designRatioLock[hidden] { display: block !important; }
   #stageEnlarge, #designRatioLock, #stageThumbnail { min-height: 40px; }
   #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; flex-wrap: wrap; gap: 1px; }
   #stageEnlarge { padding-inline: 2px; margin-left: 0; }
@@ -6585,6 +6586,12 @@ body.runtime .blockui-world .blockui-node.blockui-notice > .blockui-node-content
 
 /* A sideways swipe at the edge of the editor keeps the child in the work. */
 html { overscroll-behavior-x: none; }
+
+/* Missing values stay in the pending note until explicitly confirmed. */
+.intent-choices [data-intent-input] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.intent-choices [data-intent-input] > strong { flex-basis: 100%; }
+.intent-choices [data-intent-input] label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.intent-choices [data-intent-input] input { width: 8em; min-width: 0; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -18878,6 +18885,15 @@ function createAkariExtensionHost(options) {
     return node;
   }
   // Syntax errors never expose a partial tree. Semantic diagnostics belong to analyzeAst/analyzeProject.
+  function sentenceProposalInput(proposal, role) {
+    const spec = role?.kind === 'RepeatCount' && role.missing?.includes('angle')
+      ? {kind:'angle', marker:'〔角度をえらぶ〕', label:'回る 角度（度）', probe:'0'}
+      : role?.kind === 'ListMutation' && role.missing?.includes('indexIfReplace')
+        ? {kind:'index', marker:'〔番号を入れる〕', label:'入れかえる 番号', probe:'1'} : null;
+    if (!spec) return null;
+    const mask=surfaceMask(proposal.source), offset=mask.indexOf(spec.marker);
+    return offset>=0 && mask.indexOf(spec.marker,offset+spec.marker.length)<0 ? {...spec,offset} : null;
+  }
   let checkingSentenceProposals = false;
   function parseSyntax(source, context = {}) {
     try {
@@ -18894,11 +18910,13 @@ function createAkariExtensionHost(options) {
             for(const raw of following){if(!raw.trim())continue;const lead=raw.match(/^[ 　]*/u)[0],width=indentWidth(lead);if(width>indent)continue;
               if(width===indent&&/^(?:そうでなければ|でなければ)/.test(raw.slice(lead.length))&&!/^もし/.test(p.source))return false;break;}
           }
-          const next=parseSyntax(source.slice(0,p.start)+p.source+source.slice(p.end),context);
-          if(next.ast)return true;
+          const input=sentenceProposalInput(p,error.draftRole), replacement=input
+            ? p.source.slice(0,input.offset)+input.probe+p.source.slice(input.offset+input.marker.length) : p.source;
+          const next=parseSyntax(source.slice(0,p.start)+replacement+source.slice(p.end),context);
+          if(next.ast){if(input)p.input=input;return true;}
           const from=source.slice(0,p.start).split('\n').length,to=from+p.source.split('\n').length-1,line=next.syntaxDiagnostics[0]?.line;
           // A different malformed line must not hide a useful correction here.
-          return !line||line<from||line>to;
+          const useful=!line||line<from||line>to;if(useful&&input)p.input=input;return useful;
         }); }
         finally { checkingSentenceProposals = false; }
       }
@@ -19478,6 +19496,12 @@ function createAkariExtensionHost(options) {
     const mask = surfaceMask(text), splits = [], firstComma = mask.indexOf('、'), lastComma = mask.lastIndexOf('、');
     for (let i = 0; i < mask.length; i++) if (mask[i] === '、') splits.push([i, i + 1]);
     for (let i = 1; i < mask.length; i++) if (mask[i - 1] === '歩' && /^(?:右|左|上|下)(?:へ|に)/.test(mask.slice(i))) splits.push([i, i]);
+    // Either leg can put its steps before its direction. Keep the original candidates first; add the same
+    // source offsets for 歩→steps and direction→steps/direction, without rewriting the child's source.
+    for (const match of mask.matchAll(/歩|(?:右|左|上|下)(?:へ|に)/g)) {
+      const end = match.index + match[0].length;
+      if (end < mask.length) splits.push([end, end]);
+    }
     let firstError = null;
     for (const [a, b] of splits) {
       // A leg has no 、 of its own (readMoveLeg reads none), so a side with a 、 is no leg; skipping it keeps a long
@@ -20839,11 +20863,15 @@ function createAkariExtensionHost(options) {
         }
       }
     }
+    // Connected sentences have already been diagnosed one clause at a time above. Directions in separate
+    // moves do not count as repeated axes of a single move, even when a later clause is unreadable.
+    if(!SENTENCE_TE_FORMS.some(([te])=>mask.includes(te+'、')||mask.includes(te+'から'))&&
+      (mask.match(/(?:右|左|上|下)(?:へ|に)[^、]*?歩/g)||[]).length>2)
+      throw sentenceDiagnostic('「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：'+MOVE_EXAMPLE_HERE,line,[],{kind:'MotionCommand'});
     if(/^(?:[^、。\u0001]+?は、?)?(?:いま|今)の(?:ばしょ|場所)から/.test(mask)&&/ゆっくり/.test(mask)&&!/秒(?:間)?(?:かけて|で)/.test(mask)){
       const plain=code.replace(/ゆっくり(?:と)?、?/,''),who=/^(?:[^、。\u0001]+?は、?)/.exec(surfaceMask(plain))?.[0]||'',slow=plain.slice(0,who.length)+'1秒かけて、'+plain.slice(who.length);
       if(reads(slow))throw fixed('ゆっくり 動くときは、「'+canonicalStatementSource(slow,symbols)+'」のように かける 時間を 書きます',slow,'時間を かけて 動く','MotionCommand');
     }
-    if((mask.match(/(?:右|左|上|下)(?:へ|に)[^、]*?歩/g)||[]).length>2)throw sentenceDiagnostic('「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：'+MOVE_EXAMPLE_HERE,line,[],{kind:'MotionCommand'});
     // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左|上|下)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左|上|下)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく|歩く|あるく)$/d,code,mask))){
       const way=p[1]?.text||p[2]?.text||'前',facing=['前','後ろ'].includes(way),slow=`${p[0].text}1秒かけて、${facing?'':'いまのばしょから、'}${way}へ${p[3].text}歩${way==='前'?'進む':'動く'}`;
@@ -20974,7 +21002,7 @@ function createAkariExtensionHost(options) {
         if(at===undefined)continue;
         // The physical line the place is on (a 「 」 may go on over lines).
         const where=physical.findLast(item=>item.lineNo>=line.lineNo&&item.start<=at)||line;
-        error.line=where.lineNo;error.column=at-where.start+1;throw error;
+        error.line=where.lineNo;error.column=surfaceColumn(where,at-where.start)+1;throw error;
       }
     }
     let previousHeading=null,headingError=null;
@@ -37240,30 +37268,36 @@ function createAkariExtensionHost(options) {
         choices.setAttribute('role', 'group');
         choices.setAttribute('aria-label', 'どの 動きに しますか');
         // A mouse press keeps the focus in the code, so the note is not drawn again (taking its button away) before the click.
-        choices.addEventListener('mousedown', (event) => event.preventDefault());
+        choices.addEventListener('mousedown', (event) => {if(!event.target.closest('[data-intent-input] label'))event.preventDefault();});
         for (const proposal of proposals) {
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
           button.type = 'button'; button.dataset.intentChoice = '';
           button.textContent = proposal.label || proposal.source;
           button.title = proposal.description || proposal.source;
+          const ownerKey=bindingOwner(binding), contextRevision=editorContextRevision;
           button.onclick = () => {
-            if (modelLocked() || binding.textarea.value !== original) return;
-            const source = Number.isInteger(proposal.start) && Number.isInteger(proposal.end)
-              ? original.slice(0, proposal.start) + proposal.source + original.slice(proposal.end)
-              : proposal.source;
-            try {
-              commitSource(binding, source, { atomic: true });
-              binding.textarea.value = source; n.hidden = true;
-              renderEditorBinding(binding); refreshEditor();
-            } catch (nextError) {
-              binding.textarea.value = source;
-              if (binding.session) binding.session.pendingEdit = {
-                ownerKey: bindingOwner(binding), kind: 'code', value: source,
-                originalSource: original, reason: nextError.message,
-              };
-              scheduleAutosave(); showEditorFailure(binding, nextError);
-            }
+            const current=()=>!modelLocked()&&bindingOwner(binding)===ownerKey&&editorContextRevision===contextRevision&&binding.textarea.value===original;
+            if(!current())return;
+            const apply=replacement=>{
+              if(!current())return;
+              const source=Number.isInteger(proposal.start)&&Number.isInteger(proposal.end)
+                ? original.slice(0,proposal.start)+replacement+original.slice(proposal.end) : replacement;
+              try {commitSource(binding,source,{atomic:true});binding.textarea.value=source;n.hidden=true;renderEditorBinding(binding);refreshEditor();}
+              catch(nextError){binding.textarea.value=source;if(binding.session)binding.session.pendingEdit={ownerKey:bindingOwner(binding),kind:'code',value:source,originalSource:original,reason:nextError.message};scheduleAutosave();showEditorFailure(binding,nextError);}
+            };
+            const input=proposal.input;
+            if(!input){apply(proposal.source);return;}
+            const normalized=value=>normalizeCharsOutsideString(value).replace(/[－−]/g,'-').replace(/＋/g,'+');
+            const valid=value=>/^[+-]?[0-9]+(?:\.[0-9]+)?$/.test(normalized(value))&&Number.isFinite(Number(normalized(value)))&&(input.kind!=='index'||(/^[+]?[0-9]+(?:\.0+)?$/.test(normalized(value))&&Number.isSafeInteger(Number(normalized(value)))&&Number(normalized(value))>=1));
+            const filled=value=>{const number=Number(normalized(value)),literal={kind:'NumberLiteral',value:Math.abs(number)},node=number<0?{kind:'UnaryExpression',op:'NEG',value:literal}:literal;return proposal.source.slice(0,input.offset)+formatExpression(node)+proposal.source.slice(input.offset+input.marker.length);};
+            choices.querySelector('[data-intent-input]')?.remove();
+            const guide=document.createElement('span');guide.dataset.intentInput='';guide.setAttribute('role','group');guide.setAttribute('aria-label',proposal.label+'：'+input.label);const selected=document.createElement('strong');selected.textContent=proposal.label;guide.append(selected);
+            const label=document.createElement('label');label.textContent=input.label+'：';
+            const field=document.createElement('input');field.type='text';field.inputMode='decimal';field.setAttribute('aria-label',input.label);field.required=true;label.append(field);guide.append(label);
+            const confirm=document.createElement('button');confirm.type='button';confirm.textContent='この 数で なおす';confirm.dataset.intentApply='';confirm.disabled=true;
+            field.oninput=()=>{confirm.disabled=!valid(field.value);};confirm.onclick=()=>{if(guide.isConnected&&valid(field.value))apply(filled(field.value));};guide.append(confirm);
+            const cancel=document.createElement('button');cancel.type='button';cancel.dataset.intentInputCancel='';cancel.textContent='数を 入れるのを やめる';cancel.onclick=()=>{guide.remove();button.focus();};guide.append(cancel);choices.append(guide);field.focus();
           };
           choices.append(button);
         }
@@ -41760,11 +41794,12 @@ function createAkariExtensionHost(options) {
       for (const h of filtered.slice(begin, begin + 24)) {
         const b = document.createElement('button');
         b.className = 'hint-button';
-        b.textContent =
-          // A value is named by its group in the block list (しらべる, 計算, …): 計算 is only for calculations (F-26).
-          (h.mode === 'expression' ? hintGroup(h, symbols).label + ' · ' : '') +
-          h.text +
-          (h.reason ? '\n' + h.reason : '');
+        if (h.mode === 'expression') {
+          b.append(document.createTextNode(hintGroup(h, symbols).label + ' · '));
+          const code = document.createElement('code');
+          code.style.font = 'inherit'; code.textContent = h.text; b.append(code);
+          if (h.reason) b.append(document.createTextNode('\n' + h.reason));
+        } else b.textContent = h.text + (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
         b.dataset.unavailable = String(!h.enabled);
         b.disabled = !h.enabled || modelLocked();
@@ -44615,6 +44650,10 @@ function createAkariExtensionHost(options) {
       });
       for (const mode of ['code', 'blocks'])
         $(`#${p}Mode${mode}`).onclick = (event) => {
+          // Input commits precede the delayed repaint. Decide this press from the current body, so a repaired
+          // sentence does not inherit the previous keystroke's refusal (and a new error cannot use an old permit).
+          getEditorSession(binding);
+          paintBindingModeToggle(binding);
           if (event.currentTarget.dataset.refused) showModeBlockedNote(binding);
           else switchEditorMode(binding, mode);
         };
@@ -44737,7 +44776,7 @@ function createAkariExtensionHost(options) {
       (event) => {
         if (
           modelLocked() ||
-          event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal') ||
+          event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal,[data-intent-input]') ||
           (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
           event.target.matches('#uiLevel,#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )

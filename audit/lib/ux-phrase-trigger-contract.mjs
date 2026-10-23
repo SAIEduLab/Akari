@@ -23,7 +23,7 @@ export function verifyTriggerObserved(id,o){
   assert.equal(o.cancelled.pending,null);assert.equal(o.opened.detailsOpen,false);assert.match(o.opened.scope,/あかり/);assert.match(o.opened.scope,/この 本文の きっかけだけを かえるよ。ほかの 本文は そのままだよ。/);// plain register (LANGUAGE.md 1042, F-18; 1fcafaa)
  }else if(id==='trigger/start-click-start'){
   assert.equal(o.before.project.scripts[0].source,triggerSources.plain);
-  for(const [state,event,delta]of [[o.clicked,'click',1],[o.restored,'start',2]]){const expected=structuredClone(o.before.project);expected.scripts[0].event=event;unchanged(expected,state.project);assert.equal(state.history,o.before.history+delta);assert.equal(state.selector,event);assert.match(state.hat,new RegExp(event==='click'?'おされたとき':'「動かす」を おしたとき'));assert.equal(state.detailsOpen,false);}
+  for(const [state,event,delta]of [[o.clicked,'click',1],[o.restored,'start',2]]){const expected=structuredClone(o.before.project);expected.scripts[0].event=event;unchanged(expected,state.project);assert.equal(state.history,o.before.history+delta);assert.equal(state.selector,event);assert.match(state.hat,new RegExp(event==='click'?'おされた とき':'「動かす」を おしたとき'));assert.equal(state.detailsOpen,false);}
   unchanged(o.before.project,o.undo.project);unchanged(o.restored.project,o.redo.project);
   assert.deepEqual(o.runtime,{clickBefore:[],clickAfter:[['sprite-1','やあ  🌟']],start:[['sprite-1','やあ  🌟']]});
  }else if(id==='trigger/body-selection'){
@@ -41,7 +41,7 @@ export function verifyTriggerObserved(id,o){
   assert.equal(o.after.project.scripts[0].targetId,'sprite-1');assert.equal(o.after.project.scripts[0].event,key==='linkedSecond'?'start':'click');
   assert.equal(o.after.history,o.before.history+1);unchanged(o.before.project,o.undo.project);unchanged(o.after.project,o.redo.project);
   assert.deepEqual(o.runtime.before,key==='headed'?[]:key==='linkedFirst'?[['dango','青']]:[['sprite-1','赤']]);assert.deepEqual(o.runtime.after,key==='headed'?[['sprite-1','赤']]:[['dango','青'],['sprite-1','赤']]);
-  if(key!=='headed')assert.deepEqual(o.after.headings,key==='linkedFirst'?['あかり・おされたとき','だんご・「動かす」を おしたとき']:['あかり・「動かす」を おしたとき','だんご・おされたとき']);
+  if(key!=='headed')assert.deepEqual(o.after.headings,key==='linkedFirst'?['あかり・おされた とき','だんご・「動かす」を おしたとき']:['あかり・「動かす」を おしたとき','だんご・おされた とき']);
  }else if(id==='trigger/multiple-actors'){
   assert.match(o.scope,/あかり・だんご/);assert.equal(o.after.source,triggerSources.twoActors);assert.equal(o.after.project.scripts[0].event,'click');assert.deepEqual(o.runtime.before,[]);assert.deepEqual(o.runtime.after,[['dango','青'],['sprite-1','赤']]);
  }else if(id.startsWith('trigger/details-')){

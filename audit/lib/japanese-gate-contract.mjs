@@ -10,7 +10,7 @@ import {corpusPath,capabilityInputPaths,capabilityNegativeIds} from './capabilit
 
 // The on-screen label of each oracle meaning word in the ambiguity choices. 1.5.0 writes the labels in school Japanese
 // with spaces between word groups and kana-first words (theme F: ぜんぶ, いま).
-export const visibleChoices=Object.freeze({'AMB-SOUND/台詞':'そのままの文字を話す','AMB-EDGE/状態':'いま そうなっていたら する','AMB-EDGE/変化':'そうなるのを 待ってから する',
+export const visibleChoices=Object.freeze({'AMB-SOUND/台詞':'そのままの文字を話す','AMB-EDGE/状態':'いま そう なって いたら する','AMB-EDGE/変化':'そう なるのを 待ってから する',
  'AMB-SPEED/全部で10歩':'ぜんぶで 10歩','AMB-SPEED/1秒に10歩':'1秒に 10歩',
  'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと 入れかえる（何番目かを えらぶ）'});
 export const contractInputPaths = [

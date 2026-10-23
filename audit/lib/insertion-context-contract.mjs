@@ -62,7 +62,7 @@ export function verifyInsertionContextObservation(id,o){
     assert.match(o.chosen.message,/「ブロックの しゅるい」を「すべてのブロック」に/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
     assert.equal(o.after.history,o.before.history+1);clean(o.after);travel(o,1);
   }else if(id==='selection/value-unavailable'){
-    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/に 入れる ブロックを えらんでいるよ/);assert.match(o.selected.destination,/ここに入れる/);
+    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/に 入れる ブロックを えらんで いるよ/);assert.match(o.selected.destination,/ここに入れる/);
     assert.equal(o.disabled.ariaDisabled,'true');assert.equal(o.disabled.reasonVisible,true);assert.match(o.disabled.reason,/ここに入れる/);
     sameDocument(o.selected,o.before);sameDocument(o.after,o.before);assert.match(o.after.message,/ここに入れる/);
     assert.deepEqual(o.commandChosen.chosen,[{parentId:o.before.rootId,body:'body',index:1}]);assert.deepEqual(o.commandChosen.category,['basic']);

@@ -12,6 +12,7 @@ import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/br
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 import {caseRecorder,writeCaseReport} from '../lib/gate-case-contract.mjs';
 import {browserContract,verifyBrowserReport} from '../lib/verify-browser-results.mjs';
+import {eventReportFixture,eventReportMutations} from '../fixtures/event-traces.mjs';
 import {boundaryCases,boundarySource,boundaryTimeoutMs,verifyLanguageBoundaries,checkLanguageBoundaryNegatives} from '../lib/language-boundaries-contract.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
 const [output]=process.argv.slice(2);assert.ok(output,'usage: ci-regression.mjs <result.json>');
@@ -136,7 +137,7 @@ assert.equal(buttonResults[1].pass,false);assert.ok(buttonResults.slice(2).every
 pass('ui-buttons/failures-retained-without-retry');
 assert.ok(budgets.every((n,i)=>n>0&&n<=360000&&(i===0||n<budgets[i-1])));pass('ui-buttons/decreasing-budget');
 checkUiButtonValidatorNegatives();pass('ui-buttons/validator-negatives');
-console.log('UI buttons: fixture/cleanup and assertion failures retained; all cases isolated without retry; 360s budget and 10 validator negatives PASS');
+console.log('UI buttons: fixture/cleanup and assertion failures retained; all cases isolated without retry; 360s budget and validator negatives PASS');
 
 // A partial rerun may use an unchanged earlier job, but never hide a newer failure.
 const evidenceRoot=path.resolve('audit-evidence');fs.mkdirSync(evidenceRoot,{recursive:true});
@@ -228,6 +229,11 @@ for(const [name,mutate]of [
   ['nonfinite',r=>r.inputMs=Infinity],['negative',r=>r.switchMs=-1],['total-deadline',r=>{r.inputMs=16000;r.switchMs=16000;}],
   ['false-pass',r=>r.pass=false],['wrong-source',r=>r.sha256='0'.repeat(64)],['invalid-dom',r=>r.state.dom=-1],
 ]){const bad=structuredClone(perfReport);mutate(bad);assert.throws(()=>verifyBrowserReport(bad,perfSpec,perfInputs),name);pass('perf-report/reject-'+name);}
+const eventSpec=browserContract().entries.find(row=>row.task==='browser-event-traces');
+const eventFixture=eventReportFixture(eventSpec,perfInputs);
+const verifyEventFixture=fixture=>verifyBrowserReport(fixture.report,eventSpec,perfInputs,{readArtifact:name=>{assert.ok(fixture.files[name],'missing event artifact');return fixture.files[name];}});
+verifyEventFixture(eventFixture);pass('event-report/accepted');
+for(const [name,mutate]of eventReportMutations){const bad=structuredClone(eventFixture);mutate(bad);assert.throws(()=>verifyEventFixture(bad),name);pass('event-report/reject-'+name);}
 const boundaryReport={status:'PASS',snapshot:perfInputs,timeoutMs:boundaryTimeoutMs,featureContract:'audit/manifests/features.json',results:boundaryCases.map(c=>({name:c.name,count:c.count,chars:[...boundarySource(c.name,c.count)].length,ms:1,heapDelta:0,accepted:c.accepted,...(c.accepted?{}:{diagnostic:'P205'})}))};
 verifyLanguageBoundaries(boundaryReport,perfInputs);pass('language-boundaries/accepted');
 for(const row of checkLanguageBoundaryNegatives(boundaryReport,perfInputs)){assert.equal(row.rejected,true);pass('language-boundaries/reject-'+row.id);}

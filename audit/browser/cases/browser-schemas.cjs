@@ -31,7 +31,15 @@ const byId=async id=>{let hit=null;walkTree((await session()).blockView,n=>{if(n
 const at=(tree,path)=>path.reduce((n,k)=>n?.[k],tree);
 const ownerName=async()=>draft?'たくどん':p.evaluate(()=>{const id=document.querySelector('#objectSelect').value;return Akari.app.project.components.find(c=>c.id===id)?.name||Akari.app.project.stage.name;});
 const settle=async()=>{for(let i=0;i<20&&(await session()).pendingEdit;i++)await p.waitForTimeout(100);};
-const paletteButton=async(schema,category)=>{await (await reveal(root().locator('[data-blockui-palette-mode]'))).selectOption(category==='expression'?'expression':'statement');const options=root().locator('.blockui-palette-options');if(await options.getAttribute('open')!==null)await options.locator(':scope > summary').click();await (await reveal(root().locator('[data-blockui-search]'))).fill(schema);const button=root().locator('[data-blockui-schema="'+schema+'"]');
+const CALL_NAMES={UserActionCall:'検査動作',UserFunctionCall:'検査計算'};
+const ensureCallDefinition=async schema=>{
+ if(!CALL_NAMES[schema]||await p.evaluate(name=>[...Akari.app.project.actions,...Akari.app.project.functions].some(d=>d.name===name),CALL_NAMES[schema]))return;
+ await (await reveal(p.locator('#procBtn'))).click();await p.locator(schema==='UserActionCall'?'#callableNewAction':'#callableNewFunction').click();
+ await p.locator('#callableName').fill(CALL_NAMES[schema]);await p.locator('#callableArgs').fill(ARGUMENT_NAMES.join('、'));
+ await chooseView(p,'code',{prefix:'callable'});await p.locator('#callableCode').fill(schema==='UserActionCall'?'「動作」と言う。':'1を答えとして返す。');await p.locator('#callableSave').click();
+ await p.waitForFunction(name=>[...Akari.app.project.actions,...Akari.app.project.functions].some(d=>d.name===name),CALL_NAMES[schema]);await p.locator('#procClose').click();
+};
+const paletteButton=async(schema,category)=>{await (await reveal(root().locator('[data-blockui-palette-mode]'))).selectOption(category==='expression'?'expression':'statement');const options=root().locator('.blockui-palette-options');if(await options.getAttribute('open')!==null)await options.locator(':scope > summary').click();await (await reveal(root().locator('[data-blockui-search]'))).fill(CALL_NAMES[schema]||schema);const button=root().locator('[data-blockui-schema="'+schema+'"]');
  if(await button.count()===0){await U.showUnavailable(root());await (await reveal(root().locator('[data-blockui-search]'))).fill(schema);const hidden=root().locator('[data-blockui-schema="'+schema+'"]');const reason=await hidden.count()?await hidden.getAttribute('title'):'not listed';throw Error('Palette refuses '+schema+' here: '+reason);}
  assert.equal(await button.count(),1,'palette '+schema);if(await button.isDisabled()||await button.getAttribute('aria-disabled')==='true')throw Error('Disabled palette '+schema+': '+await button.getAttribute('title'));return button;};
 const categoryOf=schema=>schemas.find(s=>s.id===schema)?.category;
@@ -200,8 +208,9 @@ const semanticStep=async(s,id)=>{const row=semanticRows[s.id],edits=row.edits||{
  if(edits.actorRef&&categoryOf(s.id)!=='expression')result.restored=await restoreSelf(s.id,edits.actorRef);return result;};
 const SEMANTIC_GENERIC=new Set(['QuantityLiteral','UnitlessRead','ActorQualifiedRead','MotionCommand:MOVE_BY']);
 const fieldChoice=(s,f)=>semanticRows[s.id]?.edits?.[f.key];
-const numberChoice=(s,input,index)=>{const edits=semanticRows[s.id]?.edits||{};if(input.key==='args'&&Array.isArray(edits.args))return edits.args[index];return typeof edits[input.key]==='number'?edits[input.key]:undefined;};
+const numberChoice=(s,input,index)=>{const edits=semanticRows[s.id]?.edits||{};if(input.key==='args'&&index===0&&['SoundCommand:TONE','SoundCommand:TONE_WAIT'].includes(s.id))return 441;if(input.key==='args'&&Array.isArray(edits.args))return edits.args[index];return typeof edits[input.key]==='number'?edits[input.key]:undefined;};
 const genericRow=async(s,evidence)=>{
+ await ensureCallDefinition(s.id);
  await reset(s);let id;if(s.id==='Script'){id=(await session()).blockView.id;await add('NoOperation');evidence.creation='Implicit root with palette-created body';}else if(s.category==='target'){await add('Assignment');id=(await locate(s.id))[0].id;evidence.creation='Assignment target slot';}else if(s.category==='expression'){const holder=s.kind==='EventCount'?{statement:'WaitUntil',input:'condition'}:{statement:'Say',input:'value'};await add(holder.statement);const owner=(await locate(holder.statement))[0];await selectSlot(root().locator('[data-blockui-input="'+holder.input+'"][data-parent-id="'+owner.id+'"]').first());await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Expression palette into '+holder.statement+'.'+holder.input;}else{if(['Break','Continue'].includes(s.id)){await add('Forever');const owner=(await locate('Forever'))[0];await root().locator('[data-blockui-body="body"][data-parent-id="'+owner.id+'"]').last().click();}await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Statement palette';}
  assert.ok(await node(id).count()||s.id==='Script','Created node visible '+s.id);
  for(const f of s.fields.filter(f=>f.type!=='argument-names')){evidence.fields.push(await editField(id,f,false,fieldChoice(s,f)));id=(await locate(s.id))[0].id;}
@@ -216,7 +225,11 @@ const genericRow=async(s,evidence)=>{
    if(s.id==='Say'&&input.key==='seconds'){await (await reveal(node(id).locator('[data-blockui-action="speech-timed"]').first())).click();created=(await locate(s.id))[0];assert.ok(created.inputs.seconds,'timed speech adds its time');}
    else{evidence.inputs.push({key:input.key,optional:true,absentAfterCreation:true});continue;}}
   let children=input.multiple?created.inputs[input.key]:[created.inputs[input.key]];const slotResult={key:input.key,multiple:input.multiple,count:children.length,edited:[]};for(let i=0;i<children.length;i++){let child=children[i];if(child.schemaId==='QuantityLiteral'){const expectedUnit=roleUnit(s.id,input.key,i);assert.ok(expectedUnit,'declared quantity role '+s.id+'.'+input.key+'['+i+']');assert.equal(child.fields.unit,expectedUnit,'exact role unit while retaining the original numeric operand edit');slotResult.unit=child.fields.unit;child=child.inputs.value;}const childSchema=schemas.find(x=>x.id===child.schemaId);for(const f of childSchema.fields){slotResult.edited.push({index:i,schema:child.schemaId,...await editField(child.id,f,false,f.type==='number'?numberChoice(s,input,i):undefined)});}if(!childSchema.fields.length&&input.type==='expression'){const slotControl=root().locator('[data-blockui-input="'+input.key+'"][data-parent-id="'+id+'"]'+(input.multiple?'[data-slot-index="'+i+'"]':''));await selectSlot(slotControl.first());await add('NumberLiteral');slotResult.edited.push({index:i,replacedBy:'NumberLiteral'});}}
-  if(input.variadic){const before=children.length;await node(id).locator('[data-blockui-action="variadic-add"]').first().click();created=(await locate(s.id))[0];assert.equal(created.inputs[input.key].length,before+1);slotResult.variadicAdded=true;}
+  if(input.variadic&&input.semanticArity==='definition'){
+   assert.equal(children.length,ARGUMENT_NAMES.length,'call arguments retain the prepared definition arity');
+   assert.equal(await node(id).locator('[data-blockui-action="variadic-add"]').count(),0,'a definition fixes its call argument count');
+   slotResult.definitionArity=ARGUMENT_NAMES.length;slotResult.arityAddControlAbsent=true;
+  }else if(input.variadic){const before=children.length;await node(id).locator('[data-blockui-action="variadic-add"]').first().click();created=(await locate(s.id))[0];assert.equal(created.inputs[input.key].length,before+1);slotResult.variadicAdded=true;}
   evidence.inputs.push(slotResult);}
  // Named arguments need the passed values, so they are chosen after the slots.
  for(const f of s.fields.filter(f=>f.type==='argument-names')){evidence.fields.push(await editArgumentNames(id,f));id=(await locate(s.id))[0].id;}

@@ -70,6 +70,7 @@ export const gateCaseIds=Object.freeze({
     'asset-diagnostics/errors-persisted-before-stalled-screenshots','asset-diagnostics/later-cases-run-once','asset-diagnostics/decreasing-budget',
     'fixture-readiness/offline-viewport-context','fixture-readiness/unfinished-import-rejected',
     'perf-report/accepted',...['error','input-missing','switch-missing','nonfinite','negative','total-deadline','false-pass','wrong-source','invalid-dom'].map(name=>'perf-report/reject-'+name),
+    'event-report/accepted',...['negative-missing','negative-false','negative-owner','gui-false','seed-wrong','files-missing','files-duplicate','path-escape','artifact-missing','artifact-snapshot','artifact-fault','source-changed','cleanup-incomplete','body-edit-missing','input-unordered','random-missing','wait-missing','explicit-stop-missing','midpoint-wrong','terminal-missing','failure-code','record-task','record-source','post-error-command','frozen-child-false','frozen-child-missing','control-enabled','deadline-not-advanced','deadline-progress','mutation-not-applied','record-mutated','record-after-stop','mode-diverged'].map(name=>'event-report/reject-'+name),
     'language-boundaries/accepted',...boundaryRejectionIds.map(name=>'language-boundaries/reject-'+name),
     'diagnostic-guidance/list-and-scoped-scalar','diagnostic-guidance/typed-comparison'],
   'dom-regression':['normal-observation','latest-tree-defense-without-render-guards','reentrant-mutant-rejected'],

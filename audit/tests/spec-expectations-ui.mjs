@@ -342,10 +342,10 @@ const checks={
     const body=(await s.scripts()).find(x=>x.targetId==='w-neko'&&x.event==='start');
     const gone=['entryProjectMenu','undoBtn','redoBtn','tutorialStart','uiLevel','editorModecode'];
     const edit=await s.toolbar();await p.click('#runBtn');await p.waitForTimeout(600);
-    // The place of ⏸／▶ つづける is in the screen's window, right under the screen and its 「いま 動いている 文：」 band.
+    // The approved row puts ⏸／▶ at the right of the current-sentence strip, directly beneath the stage.
     const under=await p.evaluate(()=>{const r=q=>document.querySelector(q).getBoundingClientRect(),view=r('.stage-viewport'),strip=r('#runStrip'),slot=r('#pauseBtn'),win=r('#designerWindow');
       const between=[...document.querySelectorAll('#designerWindow *')].filter(e=>(e.matches('button,input,select,label,a')||[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))&&e.getClientRects().length&&getComputedStyle(e).visibility==='visible').filter(e=>{const b=e.getBoundingClientRect();return b.top>=view.bottom-1&&b.bottom<=strip.top+1;}).map(e=>e.id||e.className);
-      return {between,gap:slot.top-strip.bottom,inWindow:slot.left>=win.left&&slot.right<=win.right&&slot.bottom<=win.bottom,overlapsX:slot.left<view.right&&slot.right>view.left};});
+      return {between,sharedRow:Math.abs(slot.top+slot.height/2-strip.top-strip.height/2)<1&&slot.left-strip.right>=-1&&slot.left-strip.right<12,inWindow:slot.left>=win.left&&slot.right<=win.right&&slot.bottom<=win.bottom,overlapsX:slot.left<view.right&&slot.right>view.left};});
     const run=await s.toolbar(),nameIsText=await s.nameIsText(),band=bare(await p.locator('#execLocation').innerText()),sentence=bare(await p.locator('#execSentence').innerText().catch(()=>''));
     await p.click('#pauseBtn');const pausedAt=await p.evaluate(()=>performance.now());await p.waitForTimeout(300);const paused=await s.toolbar();await p.waitForTimeout(1200);
     // The three waits take 3 s of run time; paused after about 0.5 s, the rest is under 3 s once ▶ つづける is pressed (more
@@ -357,7 +357,7 @@ const checks={
     return {expect:{threeWaits:!!body&&body.source.trim()==='1秒待つ。\n1秒待つ。\n1秒待つ。',
       stopAndName:run.stopBtn.shown&&s.samePlace(edit.runBtn,run.stopBtn)&&s.samePlace(edit.projectName,run.projectName)&&nameIsText,
       hiddenKeepingPlace:gone.every(id=>edit[id].shown&&!run[id].shown&&s.samePlace(edit[id],run[id]))&&s.unmoved(edit,run,['runBtn','stopBtn']),
-      runControls:run.pauseBtn.shown&&!run.continueBtn.shown&&!run.stepBtn.shown&&!run.runtimeInspectBtn.shown&&!under.between.length&&under.gap>=-1&&under.gap<12&&under.inWindow&&under.overlapsX,
+      runControls:run.pauseBtn.shown&&!run.continueBtn.shown&&!run.stepBtn.shown&&!run.runtimeInspectBtn.shown&&!under.between.length&&under.sharedRow&&under.inWindow&&under.overlapsX,
       band:band==='いま動いている文：ねこ'&&sentence==='1秒待つ',
       pausedControls:paused.continueBtn.shown&&paused.continueBtn.pressable&&!paused.pauseBtn.shown&&s.samePlace(run.pauseBtn,paused.continueBtn)&&Math.abs(run.pauseBtn.w-paused.continueBtn.w)<1&&!paused.stepBtn.shown&&!paused.runtimeInspectBtn.shown,
       continues:doneAfter!==null&&doneAfter>1500&&doneAfter<2800&&resumed.pauseBtn.shown&&!resumed.continueBtn.shown&&s.samePlace(paused.continueBtn,resumed.pauseBtn),
@@ -479,14 +479,16 @@ const checks={
   // is not on the run screen, and at 600 px the bottom line keeps room for two lines.
   'CC-396':async s=>{const p=s.page,rows={};await s.select('w-neko');await s.write('1秒待つ。\n「やあ」と言う。\n1秒待つ。');
     const look=()=>p.evaluate(()=>{const r=q=>{const e=document.querySelector(q),b=e?.getBoundingClientRect();return b?[b.x,b.y,b.width,b.height].map(v=>Math.round(v)).join(','):null;};
-      const status=document.querySelector('.status'),line=parseFloat(getComputedStyle(document.querySelector('#statusText')).lineHeight)||20;
-      return {stage:r('#formFrame'),stop:r('#stopBtn'),slot:r('#runPauseSlot'),sentence:r('#execSentence'),strip:r('#runStrip'),saveShown:!!document.querySelector('#saveState').getClientRects().length&&getComputedStyle(document.querySelector('#saveState')).visibility!=='hidden',statusHeight:status.getBoundingClientRect().height,line};});
+      const status=document.querySelector('.status'),text=document.querySelector('#statusText'),proxy=document.createElement('span');proxy.style.cssText='display:block;position:absolute;visibility:hidden;height:1lh;';text.append(proxy);const line=proxy.getBoundingClientRect().height;proxy.remove();if(!(line>0))throw Error('actual status line height is missing');
+      const style=getComputedStyle(text),statusTextHeight=text.getBoundingClientRect().height-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom)-parseFloat(style.borderTopWidth)-parseFloat(style.borderBottomWidth);
+      return {stage:r('#formFrame'),stop:r('#stopBtn'),slot:r('#runPauseSlot'),sentence:r('#execSentence'),strip:r('#runStrip'),saveShown:!!document.querySelector('#saveState').getClientRects().length&&getComputedStyle(document.querySelector('#saveState')).visibility!=='hidden',statusHeight:status.getBoundingClientRect().height,statusTextHeight,line,oneLineControl:line};});
     for(const width of [1366,600]){await p.setViewportSize({width,height:900});await p.waitForTimeout(300);
       await s.run();await p.waitForTimeout(500);const start=await look();await p.click('#pauseBtn');await p.waitForTimeout(500);const paused=await look();
       await p.click('#continueBtn');await p.waitForTimeout(500);const resumed=await look();await p.waitForTimeout(3000);const finished=await look();await p.click('#stopBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
       rows[width]={start,paused,resumed,finished};}
     const same=r=>['paused','resumed','finished'].every(k=>['stage','stop','slot','sentence','strip'].every(f=>r[k][f]===r.start[f]));
-    return {expect:{unmoved1366:same(rows[1366]),noSaveLine:Object.values(rows).every(r=>Object.values(r).every(v=>!v.saveShown)),unmoved600:same(rows[600]),twoLines600:Object.values(rows[600]).every(v=>v.statusHeight>=2*v.line-1)},info:rows};},
+    const hasTwoLines=(height,line)=>height>=2*line-1;
+    return {expect:{unmoved1366:same(rows[1366]),noSaveLine:Object.values(rows).every(r=>Object.values(r).every(v=>!v.saveShown)),unmoved600:same(rows[600]),twoLines600:Object.values(rows[600]).every(v=>hasTwoLines(v.statusTextHeight,v.line)&&!hasTwoLines(v.oneLineControl,v.line))},info:rows};},
   // When every body has ended: ■ 止める only; the places of ⏸／▶ つづける, 1つずつ 動かす and 本文を見て たしかめる stay empty.
   'CC-397':async s=>{const p=s.page;await s.select('w-neko');await s.write('1秒待つ。');await s.run();await p.waitForTimeout(500);const running=await s.toolbar();await p.waitForTimeout(1500);const done=await s.toolbar();
     const kept=['pauseBtn','stepBtn','runtimeInspectBtn'];await s.stop();
@@ -651,7 +653,7 @@ const checks={
     const r=await p.evaluate(()=>({issue:document.querySelector('#codeIssue').innerText.trim(),kind:document.querySelector('#codeIssue').className,notice:document.querySelectorAll('.gutter-line.notice').length,error:[...document.querySelectorAll('.gutter-line.error')].map(n=>Number(n.textContent))}));
     return {expect:{mistakeFirst:r.kind.includes('issue-error')&&r.error.includes(3)&&r.issue.includes('3行目'),noNotice:!r.issue.includes('ⓘ')&&r.notice===0},info:r};},
   // The run screen shows no notice; ■ says once that there is one, names the body when it is another one, and says
-  // only 止まっているよ when the same notice comes again.
+  // only 止まって いるよ when the same notice comes again.
   'CC-414':async s=>{const p=s.page,two='「あ」と言う。\n「い」と言う。';await s.select('w-neko');await s.write(two);
     const marks=()=>p.evaluate(()=>{const seen=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility==='visible';return {issue:seen(document.querySelector('#codeIssue'))&&document.querySelector('#codeIssue').innerText.includes('ⓘ'),
       outlines:[...document.querySelectorAll('.blockui-node-main')].filter(e=>seen(e)&&getComputedStyle(e).outlineStyle==='dashed').length,marks:[...document.querySelectorAll('[data-blockui-action="notices"],.blockui-node-notices')].filter(seen).length,fixes:[...document.querySelectorAll('[data-note-fix]')].filter(seen).length,blue:[...document.querySelectorAll('.gutter-line.notice')].filter(seen).length};});
@@ -659,8 +661,8 @@ const checks={
     await s.run();await p.waitForTimeout(300);const running=await marks();await p.waitForTimeout(700);await s.stop();const first=await line(),back=await marks();
     await s.run();await p.waitForTimeout(1000);await s.stop();const again=await line();
     await s.write('');await s.select('w-dango');await s.write(two);await s.select('w-neko');await s.run();await p.waitForTimeout(1000);await s.stop();const other=await line();
-    return {expect:{noneWhileRunning:!running.issue&&running.outlines===0&&running.marks===0&&running.fixes===0&&running.blue===0,onceAfterStop:first==='止まっているよ。ⓘ が ついた ところに 知らせが あるよ'&&back.issue,
-      sameAgain:again==='止まっているよ',namesOther:other==='止まっているよ。「だんご」の 「動かす」を おしたときの 本文に ⓘ の 知らせが あるよ'},info:{running,first,back,again,other}};},
+    return {expect:{noneWhileRunning:!running.issue&&running.outlines===0&&running.marks===0&&running.fixes===0&&running.blue===0,onceAfterStop:first==='止まって いるよ。ⓘ が ついた ところに 知らせが あるよ'&&back.issue,
+      sameAgain:again==='止まって いるよ',namesOther:other==='止まって いるよ。「だんご」の 「動かす」を おしたときの 本文に ⓘ の 知らせが あるよ'},info:{running,first,back,again,other}};},
   // A rewrite button right under the code works with the mouse and with Tab and Enter.
   'CC-415':async s=>{const p=s.page;await s.select('w-neko');
     // The rewrite button names its sentence in its title; it is the one right under the code.

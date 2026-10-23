@@ -28,9 +28,9 @@ const requiredMeaning={
   ],
   'ux-phrase-list.json':[
     'wrong-answer','source-reformatted','silent-conversion','runtime-write','data-reordered',
-    'selection-commits','undo-lost','scope-leak','stale-overwrite','old-record-other-body',
+    'selection-commits','undo-lost','scope-leak','stale-overwrite','old-record-wrong-visible-options','old-record-wrong-initial-selection','old-record-misclassified-native','old-record-other-body',
     'cancel-mutates','discard-pending','clipped-control','isolated-exception',
-    'isolated-wrong-owner','player-lost-error','missing-result','duplicate-result',
+    'isolated-wrong-owner','player-child-reason-lost','player-lost-error','missing-result','duplicate-result',
   ],
 };
 

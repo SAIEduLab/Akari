@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "cb3b92d32db01ec815ebb2ce9f7274bf254f14ad06893b70df63870b4e3ab0fe",
+  "fixedIdSha256": "a2221951cd4d43e0748cbb3f94c623ab0e5afb3f9277c9cbd4549f388a43b191",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -181,7 +181,10 @@
         "TEST-CONTRACT touch wait guidance is conditional and excludes unresolved or compound conditions",
         "TEST-CONTRACT scoped scalar expressions and quoted list names execute",
         "TEST-CONTRACT connected rotations preserve sequence and genuine repeat choices",
-        "TEST-CONTRACT touch event advice preserves explicit toucher identity"
+        "TEST-CONTRACT touch event advice preserves explicit toucher identity",
+        "TEST-CONTRACT motion comma omission preserves both leg spellings and axis order",
+        "TEST-CONTRACT delimiter diagnostics count Unicode characters on physical lines",
+        "TEST-CONTRACT unfinished meaning choices require explicit angle or list index"
       ],
       "environments": [
         "chromium"

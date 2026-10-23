@@ -100,9 +100,10 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
     await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] > .blockui-node-content > .blockui-node-main > .blockui-extra > summary').click();
     await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] .blockui-extra [data-blockui-action="slot-select"]').first().click();const selected=await read(p);
     await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えないブロックも見せる"]').check();
+    await p.locator('#blockEditor [data-blockui-category=""]').click();
     const disabled=await candidate(p,'Say').evaluate(e=>{const reason=e.parentElement.querySelector('.blockui-unavailable');return{ariaDisabled:e.getAttribute('aria-disabled'),reason:reason?.textContent,reasonVisible:!!reason?.getClientRects().length};});
     await candidate(p,'Say').scrollIntoViewIfNeeded();const bounds=await candidate(p,'Say').boundingBox();await p.mouse.click(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
-    const after=await read(p);await plus(p,before.rootId).click();const commandChosen=await read(p);return{before,selected,disabled,after,commandChosen};
+    const after=await read(p);await p.locator('#blockEditor [data-blockui-category="basic"]').click();await plus(p,before.rootId).click();const commandChosen=await read(p);return{before,selected,disabled,after,commandChosen};
   });
   await run(browser,'input/composition-cancel',insertionSources.tail,async p=>{
     const before=await read(p),input=field(p,before.shape[0].valueId);await input.click();await input.dispatchEvent('compositionstart',{data:''});await input.press('ControlOrMeta+A');await p.keyboard.insertText('へんかん');

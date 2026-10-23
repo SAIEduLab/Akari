@@ -117,7 +117,7 @@ async function stageSpeechReview(browser){
     assert.equal(await page.locator('#runtimeInspector #uiLevel').count(),0);
     await page.locator('#pauseBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');
-    await page.locator('#continueBtn').click();
+    await page.waitForTimeout(510);await page.locator('#continueBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
     await page.locator('#runtimeInspectorStop').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');

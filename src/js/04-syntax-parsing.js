@@ -1153,6 +1153,15 @@
     return node;
   }
   // Syntax errors never expose a partial tree. Semantic diagnostics belong to analyzeAst/analyzeProject.
+  function sentenceProposalInput(proposal, role) {
+    const spec = role?.kind === 'RepeatCount' && role.missing?.includes('angle')
+      ? {kind:'angle', marker:'〔角度をえらぶ〕', label:'回る 角度（度）', probe:'0'}
+      : role?.kind === 'ListMutation' && role.missing?.includes('indexIfReplace')
+        ? {kind:'index', marker:'〔番号を入れる〕', label:'入れかえる 番号', probe:'1'} : null;
+    if (!spec) return null;
+    const mask=surfaceMask(proposal.source), offset=mask.indexOf(spec.marker);
+    return offset>=0 && mask.indexOf(spec.marker,offset+spec.marker.length)<0 ? {...spec,offset} : null;
+  }
   let checkingSentenceProposals = false;
   function parseSyntax(source, context = {}) {
     try {
@@ -1169,11 +1178,13 @@
             for(const raw of following){if(!raw.trim())continue;const lead=raw.match(/^[ 　]*/u)[0],width=indentWidth(lead);if(width>indent)continue;
               if(width===indent&&/^(?:そうでなければ|でなければ)/.test(raw.slice(lead.length))&&!/^もし/.test(p.source))return false;break;}
           }
-          const next=parseSyntax(source.slice(0,p.start)+p.source+source.slice(p.end),context);
-          if(next.ast)return true;
+          const input=sentenceProposalInput(p,error.draftRole), replacement=input
+            ? p.source.slice(0,input.offset)+input.probe+p.source.slice(input.offset+input.marker.length) : p.source;
+          const next=parseSyntax(source.slice(0,p.start)+replacement+source.slice(p.end),context);
+          if(next.ast){if(input)p.input=input;return true;}
           const from=source.slice(0,p.start).split('\n').length,to=from+p.source.split('\n').length-1,line=next.syntaxDiagnostics[0]?.line;
           // A different malformed line must not hide a useful correction here.
-          return !line||line<from||line>to;
+          const useful=!line||line<from||line>to;if(useful&&input)p.input=input;return useful;
         }); }
         finally { checkingSentenceProposals = false; }
       }
@@ -1753,6 +1764,12 @@
     const mask = surfaceMask(text), splits = [], firstComma = mask.indexOf('、'), lastComma = mask.lastIndexOf('、');
     for (let i = 0; i < mask.length; i++) if (mask[i] === '、') splits.push([i, i + 1]);
     for (let i = 1; i < mask.length; i++) if (mask[i - 1] === '歩' && /^(?:右|左|上|下)(?:へ|に)/.test(mask.slice(i))) splits.push([i, i]);
+    // Either leg can put its steps before its direction. Keep the original candidates first; add the same
+    // source offsets for 歩→steps and direction→steps/direction, without rewriting the child's source.
+    for (const match of mask.matchAll(/歩|(?:右|左|上|下)(?:へ|に)/g)) {
+      const end = match.index + match[0].length;
+      if (end < mask.length) splits.push([end, end]);
+    }
     let firstError = null;
     for (const [a, b] of splits) {
       // A leg has no 、 of its own (readMoveLeg reads none), so a side with a 、 is no leg; skipping it keeps a long
@@ -3114,11 +3131,15 @@
         }
       }
     }
+    // Connected sentences have already been diagnosed one clause at a time above. Directions in separate
+    // moves do not count as repeated axes of a single move, even when a later clause is unreadable.
+    if(!SENTENCE_TE_FORMS.some(([te])=>mask.includes(te+'、')||mask.includes(te+'から'))&&
+      (mask.match(/(?:右|左|上|下)(?:へ|に)[^、]*?歩/g)||[]).length>2)
+      throw sentenceDiagnostic('「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：'+MOVE_EXAMPLE_HERE,line,[],{kind:'MotionCommand'});
     if(/^(?:[^、。\u0001]+?は、?)?(?:いま|今)の(?:ばしょ|場所)から/.test(mask)&&/ゆっくり/.test(mask)&&!/秒(?:間)?(?:かけて|で)/.test(mask)){
       const plain=code.replace(/ゆっくり(?:と)?、?/,''),who=/^(?:[^、。\u0001]+?は、?)/.exec(surfaceMask(plain))?.[0]||'',slow=plain.slice(0,who.length)+'1秒かけて、'+plain.slice(who.length);
       if(reads(slow))throw fixed('ゆっくり 動くときは、「'+canonicalStatementSource(slow,symbols)+'」のように かける 時間を 書きます',slow,'時間を かけて 動く','MotionCommand');
     }
-    if((mask.match(/(?:右|左|上|下)(?:へ|に)[^、]*?歩/g)||[]).length>2)throw sentenceDiagnostic('「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：'+MOVE_EXAMPLE_HERE,line,[],{kind:'MotionCommand'});
     // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左|上|下)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左|上|下)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく|歩く|あるく)$/d,code,mask))){
       const way=p[1]?.text||p[2]?.text||'前',facing=['前','後ろ'].includes(way),slow=`${p[0].text}1秒かけて、${facing?'':'いまのばしょから、'}${way}へ${p[3].text}歩${way==='前'?'進む':'動く'}`;
@@ -3249,7 +3270,7 @@
         if(at===undefined)continue;
         // The physical line the place is on (a 「 」 may go on over lines).
         const where=physical.findLast(item=>item.lineNo>=line.lineNo&&item.start<=at)||line;
-        error.line=where.lineNo;error.column=at-where.start+1;throw error;
+        error.line=where.lineNo;error.column=surfaceColumn(where,at-where.start)+1;throw error;
       }
     }
     let previousHeading=null,headingError=null;

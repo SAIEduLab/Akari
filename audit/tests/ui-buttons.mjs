@@ -8,8 +8,9 @@ import {snapshot, withBrowser, pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {chooseView} from '../browser/cases/view-toggle.cjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
-export const uiButtonIds = ['UI-BUTTON-SOURCE-NAV','UI-BUTTON-BASIC-HISTORY','UI-BUTTON-SIDE-ACTIONS','UI-BUTTON-LEVELS','UI-BUTTON-PENDING','UI-BUTTON-BLOCK-DESTINATION','UI-BUTTON-BLOCK-INSERTION','UI-BUTTON-BLOCK-COMMANDS','UI-BUTTON-RESPONSIVE'];
+export const uiButtonIds = ['UI-BUTTON-CURRENT-MODE-REFUSAL','UI-BUTTON-GUIDED-CHOICES','UI-BUTTON-SOURCE-NAV','UI-BUTTON-BASIC-HISTORY','UI-BUTTON-SIDE-ACTIONS','UI-BUTTON-LEVELS','UI-BUTTON-PENDING','UI-BUTTON-BLOCK-DESTINATION','UI-BUTTON-BLOCK-INSERTION','UI-BUTTON-BLOCK-COMMANDS','UI-BUTTON-RESPONSIVE'];
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh button evidence required');
 const inputs = snapshot(currentProductFile()), results = [];
@@ -55,6 +56,59 @@ async function hiddenObservationControls(p) {
   return controls;
 }
 const cases = {
+  async 'UI-BUTTON-CURRENT-MODE-REFUSAL'(p) {
+    await mode(p,'code');const editor=p.locator('#codeEditor'),toggle=p.locator('#editorModeblocks'),initial=await fingerprint(p);
+    await editor.fill('「');await p.waitForFunction(()=>document.querySelector('#editorModeblocks').dataset.refused==='error');await p.waitForTimeout(400);
+    await p.evaluate(()=>{window.modePresses=[];document.querySelector('#editorModeblocks').addEventListener('pointerdown',e=>modePresses.push(e.currentTarget.dataset.refused||null),true);});
+    const press=async()=>{const r=await toggle.boundingBox();await p.mouse.click(r.x+r.width/2,r.y+r.height/2);};
+    await editor.fill('「直せた」と言う。');const valid=await fingerprint(p);await press();await p.waitForFunction(()=>Akari.app.editorState.main.mode==='blocks');const committed=await fingerprint(p);assert.deepEqual(committed,{...valid,history:valid.history+1},'leaving typing commits that single source edit');await p.waitForTimeout(400);assert.deepEqual(await fingerprint(p),committed,'the delayed repaint adds no history');
+    await p.locator('#undoBtn').click();assert.equal((await fingerprint(p)).source,initial.source,'undo returns to the previous confirmed source');await p.locator('#redoBtn').click();assert.equal((await fingerprint(p)).source,valid.source);
+    await mode(p,'code');await editor.fill('「');const invalid=await fingerprint(p);await press();assert.equal(await p.evaluate(()=>Akari.app.editorState.main.mode),'code');assert.equal(await p.locator('#modeBlockedNote').isVisible(),true);assert.deepEqual(await fingerprint(p),invalid);
+    const previousRefusals=await p.evaluate(()=>modePresses);assert.equal(previousRefusals.length,2);assert.equal(previousRefusals[0],'error','the repaired body is pressed while the old refusal is still painted');assert.ok(previousRefusals[1]===null||previousRefusals[1]==='error','the malformed control may already be painted');
+    return {previousRefusals,immediateRepairSwitch:true,newErrorRefused:true,sourceAndHistoryPreserved:true};
+  },
+  async 'UI-BUTTON-GUIDED-CHOICES'(p) {
+    const variants=[];
+    await p.removeLocatorHandler(p.locator('#loseConfirmModal.show'));
+    await p.evaluate(()=>{window.choiceStarts=0;const start=Akari.EventScheduler.prototype.start;Akari.EventScheduler.prototype.start=function(...args){choiceStarts++;window.choiceScheduler=this;return start.apply(this,args);};});
+    const scenarios=[
+      {id:'repeat-both',source:'10歩進む。右に曲がる。4回くり返す。',choice:0,value:'９０',expected:'4回くり返す。\n  10歩進む。\n  右に90度回る。',position:[0,0]},
+      {id:'repeat-turn',source:'10歩進む。右に曲がる。4回くり返す。',choice:1,value:'90',expected:'10歩進む。\n4回くり返す。\n  右に90度回る。',position:[10,0]},
+      {id:'list-append',source:'持ち物に「かさ」を入れる。',choice:0,expected:'持ち物の最後に「かさ」を入れる。',list:['本','ぼうし','かさ']},
+      {id:'list-replace',source:'持ち物に「かさ」を入れる。',choice:1,value:'２',expected:'持ち物の2番目を「かさ」にかえる。',list:['本','かさ']},
+    ];
+    for(const c of scenarios){
+      const file=await p.evaluate(id=>{const q=Akari.makeDefaultProject();q.name='意味の入力 '+id;Object.assign(q.components[0],{x:0,y:0,direction:0});q.projectData.lists=[{id:'guided-list',name:'持ち物',initialValue:['本','ぼうし']}];q.scripts=[{id:'guided-main',targetId:'sprite-1',event:'start',source:'10歩進む。'}];return Akari.serializeProject(q,Akari.makeDefaultAssetStore());},c.id);
+      await p.locator('#fileInput').setInputFiles({name:'guided.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
+      await p.waitForFunction(id=>document.querySelector('#loseConfirmModal.show')||Akari.app.project.name==='意味の入力 '+id,c.id);
+      if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();
+      await p.waitForFunction(id=>Akari.app.project.name==='意味の入力 '+id&&Akari.app.editorState.state==='DESIGN'&&!document.querySelector('#fileInput').value,c.id);
+      await p.locator('#uiLevel').selectOption('advanced');await select(p,'sprite-1');await mode(p,'code');await p.evaluate(()=>window.choiceStarts=0);
+      await p.locator('#codeEditor').fill(c.source);await p.waitForTimeout(400);await p.locator('#runBtn').click();
+      const pending=await fingerprint(p),choices=p.locator('[data-intent-choice]'),labels=await choices.allTextContents();assert.equal(labels.length,2);assert.equal(await p.evaluate(()=>choiceStarts),0);
+      const chosen=choices.nth(c.choice);await chosen.click();let cancelled=false,detachedRefused=false,invalidRejected=[];
+      if(c.value){
+        const field=p.locator('[data-intent-input] input'),apply=p.locator('[data-intent-apply]');
+        assert.equal(await field.inputValue(),'');assert.equal(await apply.isDisabled(),true);assert.deepEqual(await fingerprint(p),pending);
+        assert.equal(await p.locator('[data-intent-input] strong').innerText(),labels[c.choice]);
+        assert.ok((await p.locator('[data-intent-input]').getAttribute('aria-label')).includes(labels[c.choice]));
+        for(const value of ['', 'Infinity','1e2','0/0',...(c.id==='list-replace'?['0','-1','1.5','2.0000000000000001','9007199254740993']:[])]){await field.fill(value);assert.equal(await apply.isDisabled(),true);invalidRejected.push(value);}
+        await field.fill(c.value);await p.evaluate(()=>window.cancelledChoiceApply=document.querySelector('[data-intent-apply]').onclick);
+        await p.locator('[data-intent-input-cancel]').click();await p.evaluate(()=>cancelledChoiceApply());assert.deepEqual(await fingerprint(p),pending);assert.equal(await p.locator('#codeEditor').inputValue(),c.source);cancelled=detachedRefused=true;
+        await chosen.click();await field.fill(c.value);await chosen.focus();await field.click();assert.equal(await field.evaluate(e=>document.activeElement===e),true);await field.press('Home');assert.equal(await field.evaluate(e=>e.selectionStart),0);await apply.click();
+      }
+      const after=await fingerprint(p);assert.equal(after.source,c.expected,c.id+' confirmed meaning source');assert.equal(after.history,pending.history+1);assert.equal(await p.evaluate(()=>choiceStarts),0);
+      const expectedProject=JSON.parse(pending.project);expectedProject.scripts[0].source=c.expected;assert.deepEqual(JSON.parse(after.project),expectedProject);
+      await p.locator('#undoBtn').click();assert.equal((await fingerprint(p)).project,pending.project);await p.locator('#redoBtn').click();assert.equal((await fingerprint(p)).project,after.project);
+      await mode(p,'blocks');await mode(p,'code');assert.equal((await fingerprint(p)).project,after.project);
+      await p.locator('#runBtn').click();await p.waitForFunction(()=>choiceStarts===1&&window.choiceScheduler&&choiceScheduler.tasks.size===0);
+      const runtime=await p.evaluate(()=>{const r=choiceScheduler.runtime,a=r.actor('sprite-1');return {position:[a.x,a.y],list:structuredClone(r.projectLists.get('持ち物'))};});
+      if(c.position)c.position.forEach((v,i)=>assert.ok(Math.abs(runtime.position[i]-v)<1e-7));if(c.list)assert.deepEqual(runtime.list,c.list);
+      await pressStop(await reveal(p.locator('#stopBtn')));assert.equal((await fingerprint(p)).project,after.project);
+      variants.push({id:c.id,labels,choice:c.choice,source:c.expected,beforeProject:JSON.parse(pending.project),afterProject:JSON.parse(after.project),noAutomaticExecution:true,cancelled,detachedRefused,invalidRejected,undoRedo:true,modeRoundtrip:true,runtime});
+    }
+    return {variants};
+  },
   async 'UI-BUTTON-SOURCE-NAV'(p) {
     for(const m of ['code','blocks']) {
       await mode(p,m); await select(p,'stage');

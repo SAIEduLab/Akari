@@ -120,7 +120,7 @@ try{await withBrowser(chrome,async browser=>{
   // The full-text dialog opened on the speech stays open over the ended run; it is closed before ■ 止める.
   await p.waitForFunction(()=>document.querySelector('#runState').textContent==='おわったよ');const afterFinish=await stopped(p);
   if(afterFinish.open)await p.keyboard.press('Escape');await pressStop(p.locator('#stopBtn'));
-  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっているよ'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
+  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='止まって いるよ'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
   await start(p);const rerun=await open(p,'dango');await p.keyboard.press('Escape');await pressStop(p.locator('#stopBtn'));return{initial,afterFinish,afterStop,rerun,afterUiStop:await stopped(p)};
  });
  await run('speech/clone-identity',async p=>{

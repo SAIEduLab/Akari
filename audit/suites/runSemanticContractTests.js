@@ -693,6 +693,34 @@ function runSemanticContractTests() {
         try{q.start();q.pollWatches();r.actor('cat').x=300;clock+=17;q.pollWatches();while(q.ready.length)q.runTurn();eq(said,[]);r.actor('dog').x=300;clock+=17;q.pollWatches();while(q.ready.length)q.runTurn();eq(said,[['dog','接触']]);}finally{q.stop();}
       }
     });
+    test('motion comma omission preserves both leg spellings and axis order',()=>{
+      for(const prefix of ['いまのばしょから','画面の左下のはしから'])for(const x of ['右へ10歩','10歩右へ'])for(const y of ['上へ5歩','5歩上へ'])for(const legs of [[x,y],[y,x]]){
+        const end=prefix.startsWith('画面')?'のばしょへ行く。':'動く。',canonical=parseSyntax(prefix+'右へ10歩、上へ5歩'+end).ast;
+        for(const comma of ['', '、']){const source=prefix+legs.join(comma)+end,parsed=parseSyntax(source);ok(parsed.ast,source);ok(astEquivalent(parsed.ast,canonical),source);ok(astEquivalent(blockDecode(blockEncode(parsed.ast).tree),canonical),source);}
+      }
+      for(const legs of ['10歩右へ5歩左へ','右へ10歩5歩左へ'])ok(parseSyntax('いまのばしょから'+legs+'動く。').syntaxDiagnostics.some(d=>d.code==='P205'));
+      const chain='いまのばしょから、右へ10歩動いて、いまのばしょから、左へ10歩動いて、いまのばしょから、上へ10歩動く。';
+      const connected=parseSyntax(chain);ok(connected.ast);eq(connected.ast.body.length,3);
+      ok(astEquivalent(connected.ast,parseSyntax(chain.replaceAll('動いて、','動く。\n')).ast));
+      const late=parseSyntax(chain.replace('動く。','動いて、1秒休む。')).syntaxDiagnostics;ok(late.length);ok(!late[0].message.includes('1つずつ'));
+      for(const prefix of ['','いまのばしょから、']){const d=parseSyntax(prefix+'右へ1歩、上へ2歩、左へ3歩動く。').syntaxDiagnostics;ok(d.length&&d[0].code==='P205');ok(d[0].message.includes('1つずつ'));}
+    });
+    test('unfinished meaning choices require explicit angle or list index',()=>{
+      const project=makeDefaultProject();project.projectData.lists=[{id:'meaning-list',name:'持ち物',initialValue:['本','ぼうし']}];
+      const context={symbols:buildSymbols(project),targetId:'sprite-1',event:'start'};
+      for(const extra of ['', '\n1秒休む。']){
+        const repeat=parseSyntax('10歩進む。右に曲がる。4回くり返す。'+extra,context);eq(repeat.ast,null);eq(repeat.syntaxDiagnostics[0].proposals.length,2);
+        for(const proposal of repeat.syntaxDiagnostics[0].proposals){eq(proposal.input.kind,'angle');eq(proposal.source.slice(proposal.input.offset,proposal.input.offset+proposal.input.marker.length),'〔角度をえらぶ〕');eq(parseSyntax(proposal.source,context).ast,null);}
+        const list=parseSyntax('持ち物に「〔番号を入れる〕」を入れる。'+extra,context);eq(list.ast,null);eq(list.syntaxDiagnostics[0].proposals.length,2);
+        const [append,replace]=list.syntaxDiagnostics[0].proposals;eq(append.input,undefined);eq(replace.input.kind,'index');eq(replace.source.slice(replace.input.offset,replace.input.offset+replace.input.marker.length+2),'〔番号を入れる〕番目');eq(parseSyntax(replace.source,context).ast,null);
+      }
+    });
+    test('delimiter diagnostics count Unicode characters on physical lines',()=>{
+      for(const prefix of ['「字」と言う。','「😀」と言う。','「😀😀」と言う。'])for(const newline of ['', '\r\n']){
+        const source=newline?prefix+newline+'（1＋2を言う。':prefix+'（1＋2を言う。',d=parseSyntax(source).syntaxDiagnostics[0];
+        eq(d.code,'P207');eq(d.line,newline?2:1);eq(d.column,newline?1:[...prefix].length+1);
+      }
+    });
     return {
       total: results.length,
       passed: results.filter((x) => x.pass).length,

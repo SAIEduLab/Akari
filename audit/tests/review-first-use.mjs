@@ -232,7 +232,7 @@ async function reviewBlockDiscoverability(page) {
     assert.equal(hint.overflow,false,'the explanation wraps within the candidate');
     const second=root.locator('.blockui-node[data-schema-id="Say"]').nth(1);
     const more=second.locator(':scope > .blockui-node-head [data-blockui-action="more"]');
-    assert.equal(await more.innerText(),'ほかのそうさ','selected block actions use the requested child-readable label');
+    assert.equal(await more.innerText(),'ほかの そうさ','selected block actions use the requested child-readable label');
     const before=await page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,history:Akari.app.editorState.history}));
     await U.clickNode(second);
     const up=second.locator('[data-blockui-action="move-up"]').first();
@@ -244,7 +244,7 @@ async function reviewBlockDiscoverability(page) {
     await page.locator('#undoBtn').click();assert.equal(await sourceFromModel(page),original);
     await page.locator('#redoBtn').click();assert.equal(await sourceFromModel(page),moved);
     await page.locator('#undoBtn').click();assert.equal(await sourceFromModel(page),original);
-    observations.push({width,height,hint,label:'ほかのそうさ',activationClicks:2,dragGestures:0,
+    observations.push({width,height,hint,label:'ほかの そうさ',activationClicks:2,dragGestures:0,
       before:original,after:moved,undoRedo:true});
   }
   return {humanChildTesting:'NOT_RUN',observations};

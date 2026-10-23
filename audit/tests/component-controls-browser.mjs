@@ -105,7 +105,12 @@ async function reach(p,selector) {
   for(let i=0;i<16;i++){
     const o=await measure(p,selector); if(visible(o))return o;
     const delta=o.rect.y<o.clip.y?o.rect.y-o.clip.y-4:o.rect.y+o.rect.height-o.clip.y-o.clip.height+4;
-    await wheel(p,Math.sign(delta)*Math.max(12,Math.ceil(Math.abs(delta))));
+    try { await wheel(p,Math.sign(delta)*Math.max(12,Math.ceil(Math.abs(delta)))); }
+    catch (error) {
+      const geometry=await p.evaluate(()=>{const s=document.querySelector('.side'),r=s.getBoundingClientRect();return{side:{x:r.x,y:r.y,width:r.width,height:r.height},viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},scrollingElement:document.scrollingElement.tagName};});
+      error.stack=(error.stack||error.message)+'\nNative reach failure: '+JSON.stringify({selector,attempt:i,delta,measurement:o,scroll:await scrollerState(p),geometry});
+      throw error;
+    }
   }
   const o=await measure(p,selector);
   throw Error('Native wheel could not reveal '+JSON.stringify({selector,rect:o.rect,clip:o.clip,hit:o.hit}));

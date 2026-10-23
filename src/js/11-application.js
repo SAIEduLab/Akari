@@ -1051,30 +1051,36 @@
         choices.setAttribute('role', 'group');
         choices.setAttribute('aria-label', 'どの 動きに しますか');
         // A mouse press keeps the focus in the code, so the note is not drawn again (taking its button away) before the click.
-        choices.addEventListener('mousedown', (event) => event.preventDefault());
+        choices.addEventListener('mousedown', (event) => {if(!event.target.closest('[data-intent-input] label'))event.preventDefault();});
         for (const proposal of proposals) {
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
           button.type = 'button'; button.dataset.intentChoice = '';
           button.textContent = proposal.label || proposal.source;
           button.title = proposal.description || proposal.source;
+          const ownerKey=bindingOwner(binding), contextRevision=editorContextRevision;
           button.onclick = () => {
-            if (modelLocked() || binding.textarea.value !== original) return;
-            const source = Number.isInteger(proposal.start) && Number.isInteger(proposal.end)
-              ? original.slice(0, proposal.start) + proposal.source + original.slice(proposal.end)
-              : proposal.source;
-            try {
-              commitSource(binding, source, { atomic: true });
-              binding.textarea.value = source; n.hidden = true;
-              renderEditorBinding(binding); refreshEditor();
-            } catch (nextError) {
-              binding.textarea.value = source;
-              if (binding.session) binding.session.pendingEdit = {
-                ownerKey: bindingOwner(binding), kind: 'code', value: source,
-                originalSource: original, reason: nextError.message,
-              };
-              scheduleAutosave(); showEditorFailure(binding, nextError);
-            }
+            const current=()=>!modelLocked()&&bindingOwner(binding)===ownerKey&&editorContextRevision===contextRevision&&binding.textarea.value===original;
+            if(!current())return;
+            const apply=replacement=>{
+              if(!current())return;
+              const source=Number.isInteger(proposal.start)&&Number.isInteger(proposal.end)
+                ? original.slice(0,proposal.start)+replacement+original.slice(proposal.end) : replacement;
+              try {commitSource(binding,source,{atomic:true});binding.textarea.value=source;n.hidden=true;renderEditorBinding(binding);refreshEditor();}
+              catch(nextError){binding.textarea.value=source;if(binding.session)binding.session.pendingEdit={ownerKey:bindingOwner(binding),kind:'code',value:source,originalSource:original,reason:nextError.message};scheduleAutosave();showEditorFailure(binding,nextError);}
+            };
+            const input=proposal.input;
+            if(!input){apply(proposal.source);return;}
+            const normalized=value=>normalizeCharsOutsideString(value).replace(/[－−]/g,'-').replace(/＋/g,'+');
+            const valid=value=>/^[+-]?[0-9]+(?:\.[0-9]+)?$/.test(normalized(value))&&Number.isFinite(Number(normalized(value)))&&(input.kind!=='index'||(/^[+]?[0-9]+(?:\.0+)?$/.test(normalized(value))&&Number.isSafeInteger(Number(normalized(value)))&&Number(normalized(value))>=1));
+            const filled=value=>{const number=Number(normalized(value)),literal={kind:'NumberLiteral',value:Math.abs(number)},node=number<0?{kind:'UnaryExpression',op:'NEG',value:literal}:literal;return proposal.source.slice(0,input.offset)+formatExpression(node)+proposal.source.slice(input.offset+input.marker.length);};
+            choices.querySelector('[data-intent-input]')?.remove();
+            const guide=document.createElement('span');guide.dataset.intentInput='';guide.setAttribute('role','group');guide.setAttribute('aria-label',proposal.label+'：'+input.label);const selected=document.createElement('strong');selected.textContent=proposal.label;guide.append(selected);
+            const label=document.createElement('label');label.textContent=input.label+'：';
+            const field=document.createElement('input');field.type='text';field.inputMode='decimal';field.setAttribute('aria-label',input.label);field.required=true;label.append(field);guide.append(label);
+            const confirm=document.createElement('button');confirm.type='button';confirm.textContent='この 数で なおす';confirm.dataset.intentApply='';confirm.disabled=true;
+            field.oninput=()=>{confirm.disabled=!valid(field.value);};confirm.onclick=()=>{if(guide.isConnected&&valid(field.value))apply(filled(field.value));};guide.append(confirm);
+            const cancel=document.createElement('button');cancel.type='button';cancel.dataset.intentInputCancel='';cancel.textContent='数を 入れるのを やめる';cancel.onclick=()=>{guide.remove();button.focus();};guide.append(cancel);choices.append(guide);field.focus();
           };
           choices.append(button);
         }
@@ -5571,11 +5577,12 @@
       for (const h of filtered.slice(begin, begin + 24)) {
         const b = document.createElement('button');
         b.className = 'hint-button';
-        b.textContent =
-          // A value is named by its group in the block list (しらべる, 計算, …): 計算 is only for calculations (F-26).
-          (h.mode === 'expression' ? hintGroup(h, symbols).label + ' · ' : '') +
-          h.text +
-          (h.reason ? '\n' + h.reason : '');
+        if (h.mode === 'expression') {
+          b.append(document.createTextNode(hintGroup(h, symbols).label + ' · '));
+          const code = document.createElement('code');
+          code.style.font = 'inherit'; code.textContent = h.text; b.append(code);
+          if (h.reason) b.append(document.createTextNode('\n' + h.reason));
+        } else b.textContent = h.text + (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
         b.dataset.unavailable = String(!h.enabled);
         b.disabled = !h.enabled || modelLocked();
@@ -8426,6 +8433,10 @@
       });
       for (const mode of ['code', 'blocks'])
         $(`#${p}Mode${mode}`).onclick = (event) => {
+          // Input commits precede the delayed repaint. Decide this press from the current body, so a repaired
+          // sentence does not inherit the previous keystroke's refusal (and a new error cannot use an old permit).
+          getEditorSession(binding);
+          paintBindingModeToggle(binding);
           if (event.currentTarget.dataset.refused) showModeBlockedNote(binding);
           else switchEditorMode(binding, mode);
         };
@@ -8548,7 +8559,7 @@
       (event) => {
         if (
           modelLocked() ||
-          event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal') ||
+          event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal,[data-intent-input]') ||
           (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
           event.target.matches('#uiLevel,#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )

@@ -32,7 +32,7 @@ export const listRepairCases=[
 ];
 export const listRepairIds=[...['1180x757','1188x848'].map(v=>'gui/'+v),...listRepairCases.map(c=>c.id),
  'cancel/close','cancel/panel','boundary/missing-name','boundary/empty-string','boundary/no-lists','boundary/ordinary-string','boundary/plain-evaluator',
- 'stale/source-changed','stale/new-run','stale/new-project','stale/detached-handler','stale/older-record',
+ 'stale/source-changed','stale/new-run','stale/new-project','stale/detached-handler','stale/older-record','stale/inspected-other-body','stale/reused-record-id',
  'compat/explicit-list','compat/legacy-name','compat/block-picker',
  'boundary/isolated-runtime','boundary/generated-player-r411','boundary/generated-player-r404'];
 const stateSource=o=>o.project.scripts[0].source;
@@ -82,13 +82,24 @@ export function verifyListRepairReport(report){
  {const o=at('stale/source-changed');const next=structuredClone(o.before.project);next.scripts[0].source=sourceFor(3);assert.deepEqual(o.after.project,next);assert.equal(o.applyDisabled,true);assert.match(o.notice,/本文.*かわりました/);}
  for(const id of ['stale/new-run','stale/new-project']){const o=at(id);assert.equal(o.panelCount,0);assert.equal(o.applyCount,0);assert.deepEqual(o.after.project,o.expectedProject);}
  {const o=at('stale/detached-handler');assert.equal(o.classification,'synthetic stale callback after pointer stop / pending keyboard input');assert.equal(o.inputBefore,'「未確定');assert.equal(o.inputAfter,o.inputBefore);assert.deepEqual(o.after,o.before);assert.equal(o.panelCount,0);}
- {const o=at('stale/older-record');assert.equal(o.recordCount,2);assert.equal(o.selectedRecord,'1');const next=structuredClone(o.before.project);next.scripts[0].source=fixedFor(1);assert.deepEqual(o.after.project,next);assert.equal(o.after.project.scripts[1].source,'「買うもの」の3番目を2秒話します。');}
+ for(const kind of ['older-record','inspected-other-body','reused-record-id']){
+  const o=at('stale/'+kind),synthetic=kind==='older-record',second=kind==='reused-record-id',owner=second?'script:clicked':'script:main';
+  assert.equal(o.kind,kind);assert.equal(o.classification,synthetic?'synthetic paused-task setup / real snapshots / native older-record selection and repair':'native terminal UI after serialized fixture');
+  assert.equal(o.recordCount,synthetic?2:1);assert.deepEqual(o.recordOptions,synthetic?['2','1']:['1']);assert.equal(o.initialRecord,synthetic?'2':'1');assert.equal(o.selectedRecord,'1');
+  assert.deepEqual(o.records.map(r=>[r.id,r.key,r.source,r.code]),synthetic?[[1,'script:main',sourceFor(1),'R411'],[2,'script:clicked','「買うもの」の3番目を2秒話します。','R411']]:[[1,owner,o.before.project.scripts[second?1:0].source,'R411']]);
+  assert.ok(o.selectedSummary.includes(owner));assert.ok(o.selectedSummary.includes(o.before.project.scripts[second?1:0].source));
+  assert.deepEqual(o.terminalControls,['pauseBtn','continueBtn','stepBtn'].map(id=>({id,visible:false,disabled:true})));
+  if(kind==='inspected-other-body')assert.deepEqual(o.inspected,{source:o.before.project.scripts[1].source,readOnly:true});
+  if(second){assert.equal(o.oldPanelRemoved,true);assert.equal(o.before.project.scripts[0].source,'「準備」と言う。');}
+  const next=structuredClone(o.before.project);next.scripts[second?1:0].source=second?'作品の【買うもの】の3番目を2秒話します。':fixedFor(1);
+  assert.deepEqual(o.after.project,next);assert.equal(o.after.state,'DESIGN');assert.deepEqual(o.undo.project,o.before.project);assert.deepEqual(o.redo.project,next);
+ }
  for(const [id,source] of [['compat/explicit-list','始めると、あかりはリスト「買うもの」の2番目を2秒話します。'],['compat/legacy-name','始めると、あかりは【買うもの】の2番目を2秒話します。']]){const o=at(id);assert.equal(o.after.project.scripts[0].source,source);assert.deepEqual(o.runtime.speech,['パン']);assert.equal(o.runtime.error,null);assert.equal(o.repairCount,0);}
  {const o=at('compat/block-picker');assert.equal(o.kind,'VariableRead');assert.equal(o.index,2);assert.deepEqual(o.runtime.speech,['パン']);sameData(o.before.project,o.after.project);}
  {const o=at('boundary/isolated-runtime');assert.equal(o.classification,'factory reconstructed with Function / no editor lexical scope');assert.deepEqual(o.runs.map(r=>r.variant),isolatedListCases.map(c=>c.variant));
   for(const [i,r]of o.runs.entries()){const c=isolatedListCases[i];assert.deepEqual(r.compileErrors,[]);assert.equal(r.thrown,null);assert.deepEqual(r.errors,[{code:'R411',message:'「N番目」はリストに使います'}]);assert.equal(r.paused,true);assert.deepEqual(r.records,[{key:c.key,source:c.source,ownerKey:c.ownerKey}]);assert.deepEqual(r.after,r.before);}
  }
- for(const [id,code,message,source]of [['boundary/generated-player-r411','R411','「N番目」はリストに使います',sourceFor(2)],['boundary/generated-player-r404','R404','その 番号の ものは リストに ありません。番号を たしかめてください',fixedFor(4)]]){const o=at(id);assert.equal(o.classification,'generated HTML API / actual offline file player / pointer controls');assert.equal(o.source,source);assert.match(o.file,/\.html$/);assert.deepEqual(o.before,o.after);assert.deepEqual(o.executions,[0,1].map(()=>({state:'FAILED',output:code+' '+message,bubbles:[],stopDisabled:false})));assert.deepEqual(o.stopped,['STOPPED','STOPPED']);}
+ for(const [id,code,message,source]of [['boundary/generated-player-r411','R411','「N番目」はリストに使います',sourceFor(2)],['boundary/generated-player-r404','R404','その 番号の ものは リストに ありません。番号を たしかめて ください',fixedFor(4)]]){const o=at(id);assert.equal(o.classification,'generated HTML API / actual offline file player / pointer controls');assert.equal(o.source,source);assert.match(o.file,/\.html$/);assert.deepEqual(o.before,o.after);assert.deepEqual(o.executions,[0,1].map(()=>({state:'FAILED',output:code+' '+message,childReason:message,detailsClosed:true,bubbles:[],stopDisabled:false})));assert.deepEqual(o.stopped,['STOPPED','STOPPED']);}
  return n;
 }
 export const listRepairWrongMeaning=[
@@ -101,12 +112,16 @@ export const listRepairWrongMeaning=[
  ['undo-lost',r=>r.results[0].observed.undo.project.scripts[0].source=fixedFor(2)],
  ['scope-leak',r=>r.results.find(x=>x.id==='scope/stage').observed.opened.options.push('あかりのリスト「買うもの」')],
  ['stale-overwrite',r=>r.results.find(x=>x.id==='stale/source-changed').observed.after.project.scripts[0].source=fixedFor(2)],
+ ['old-record-wrong-visible-options',r=>r.results.find(x=>x.id==='stale/older-record').observed.recordOptions=['1']],
+ ['old-record-wrong-initial-selection',r=>r.results.find(x=>x.id==='stale/older-record').observed.initialRecord='1'],
+ ['old-record-misclassified-native',r=>r.results.find(x=>x.id==='stale/older-record').observed.classification='native terminal UI after serialized fixture'],
  ['old-record-other-body',r=>r.results.find(x=>x.id==='stale/older-record').observed.after.project.scripts[1].source=fixedFor(3)],
  ['cancel-mutates',r=>r.results.find(x=>x.id==='cancel/panel').observed.after.project.scripts[0].source=fixedFor(2)],
  ['discard-pending',r=>r.results.find(x=>x.id==='stale/detached-handler').observed.inputAfter=sourceFor(2)],
  ['clipped-control',r=>r.results[0].observed.geometry.controls[0].right=2000],
  ['isolated-exception',r=>r.results.find(x=>x.id==='boundary/isolated-runtime').observed.runs[0].thrown={name:'ReferenceError',message:'external helper missing'}],
  ['isolated-wrong-owner',r=>r.results.find(x=>x.id==='boundary/isolated-runtime').observed.runs[2].records[0].ownerKey='script:wrong'],
+ ['player-child-reason-lost',r=>r.results.find(x=>x.id==='boundary/generated-player-r411').observed.executions[0].childReason=''],
  ['player-lost-error',r=>r.results.find(x=>x.id==='boundary/generated-player-r411').observed.executions[1].output=''],
  ['missing-result',r=>r.results.pop()],['duplicate-result',r=>r.results.push(structuredClone(r.results[0]))],
 ];
