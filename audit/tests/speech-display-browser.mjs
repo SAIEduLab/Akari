@@ -1,3 +1,4 @@
+import {observePauseCycle} from '../lib/run-preview-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -6,11 +7,13 @@ import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import productDialogs from '../lib/product-dialogs.cjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const {answerProductConfirms}=productDialogs;
 import {install} from '../lib/ux-normal-ui.mjs';
-import {observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector} from '../lib/run-preview-contract.mjs';
+import {observeRunPreview,verifyRunPreview,verifyRunScreen,observePaletteFold,observeInspector,observeMeijinInspector} from '../lib/run-preview-contract.mjs';
 import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2),product=currentProductFile();
 assert.ok(chrome&&output);const dir=path.resolve(output+'.artifacts');assert.ok(!fs.existsSync(output)&&!fs.existsSync(dir),'fresh output required');fs.mkdirSync(dir,{recursive:true});
@@ -23,7 +26,7 @@ const hookedPages=new WeakSet();
 const pageAtWidth=(browser,width,fn)=>pageFor({newContext:options=>browser.newContext({...options,viewport:{width,height:848}})},product,fn);
 function hooks(p){if(hookedPages.has(p))return;hookedPages.add(p);p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());answerProductConfirms(p,true);p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});}
 async function showProperty(p,label){const field=p.locator('#properties input[aria-label="'+label+'"]');if(!await field.isVisible())await p.locator('.properties-window .blockui-side-toggle').click();await field.scrollIntoViewIfNeeded();return field;}
-async function setNames(p,show){await p.locator('#objectSelect').selectOption('stage');await (await showProperty(p,'名前を見せる')).setChecked(show);await p.locator('#objectSelect').selectOption('sprite-1');}
+async function setNames(p,show){await p.locator('#objectSelect').selectOption('stage');await (await showProperty(p,'名前の ひょうじ')).setChecked(show);await p.locator('#objectSelect').selectOption('sprite-1');}
 async function fixture(p,{show=true,kind='short',mode='code',level='advanced',untimed=false}={}){
   hooks(p);const texts=displayTexts[kind],seconds=kind==='short'?2:10;
   await install(p,untimed?'「一」と言う。\n1秒待つ。\n「二」と言う。\n3秒待つ。':'「'+texts[0]+'」と'+seconds+'秒話す。',
@@ -57,31 +60,56 @@ try{
  await withBrowser(chrome,async browser=>{
   report.browser=browser.version();
   await run('DISPLAY-SETTINGS',async()=>{
-   const initial=await pageFor(browser,product,async p=>{hooks(p);const model=await p.evaluate(()=>Akari.makeEmptyProject().stage.showSpeechNames);await p.locator('#objectSelect').selectOption('stage');return{model,checkbox:await (await showProperty(p,'名前を見せる')).isChecked()};});
+   const initial=await pageFor(browser,product,async p=>{hooks(p);const model=await p.evaluate(()=>Akari.makeEmptyProject().stage.showSpeechNames);await p.locator('#objectSelect').selectOption('stage');return{model,checkbox:await (await showProperty(p,'名前の ひょうじ')).isChecked()};});
    const rows=[];for(const mode of ['code','blocks'])for(const level of ['basic','advanced'])rows.push(await pageAtWidth(browser,1180,async p=>{
     await fixture(p,{mode,level});await scale(p,100);const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),history=[];
     await setNames(p,false);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));await p.locator('#undoBtn').click();history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));await p.locator('#redoBtn').click();history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));
     const off=await speech(p),preview=await observeRunPreview(p);await shot(p,'preview-'+mode+'-'+level+'.png');preview.inspector=await observeInspector(p,mode);await shot(p,'inspector-'+mode+'-'+level+'.png');
-    await p.locator('#pauseBtn').click();preview.paused=await p.evaluate(()=>Akari.app.editorState.state);
-    await p.locator('#stepBtn').click();preview.afterStep=await p.evaluate(()=>Akari.app.editorState.state);
-    await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);
-    await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);preview.inspector.modeControlsReturned=await p.locator('.menutool #editorModecode').isVisible();
-    await p.locator('#stopBtn').click();preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null;await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await p.locator('#stopBtn').click();return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
-   }));return{initial,rows};
+    await observePauseCycle(p,preview);
+    await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);// The toggle goes back to its toolbar place, where the run screen does not show it (it changes nothing there).
+    preview.inspector.modeControlsReturned=await p.locator('.menutool > .editor-modes').locator('#editorModecode, #editorModeblocks').count()===2;preview.inspector.modeControlsShownWhileRunning=await p.locator('.menutool').locator('#editorModecode:not([hidden]), #editorModeblocks:not([hidden])').isVisible();
+    await pressStop(p.locator('#stopBtn'));preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null;await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await pressStop(p.locator('#stopBtn'));return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
+   }));
+   // The other two of the six run-screen combinations (AUDIT.md): blocks at はじめて, and code with a 名人 text. The same two
+   // speaking bodies are made at かんたん in code; はじめて is then chosen in blocks, or the open body becomes a 名人 text.
+   const runScreens=[];for(const [mode,level] of [['blocks','entry'],['code','meijin']])runScreens.push(await pageAtWidth(browser,1180,async p=>{
+    await fixture(p,{mode:'code',level:'basic'});
+    if(level==='entry'){await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry'&&document.body.dataset.editorMode==='blocks');}
+    else{await p.locator('#uiLevel').selectOption('meijin');await p.waitForFunction(()=>document.querySelector('#uiLevel').value==='meijin'&&Akari.app.project.scripts.some(s=>s.mode==='meijin'));}
+    const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),picker=await p.evaluate(()=>[...document.querySelectorAll('#uiLevel option')].filter(o=>!o.hidden).map(o=>o.value));
+    const shown=await speech(p),preview=await observeRunPreview(p);await shot(p,'preview-'+mode+'-'+level+'.png');preview.inspector=null;
+    if(level==='entry')await observePauseCycle(p,preview,{stepping:false});
+    if(level==='meijin'){preview.inspector=await observeMeijinInspector(p);await shot(p,'inspector-code-meijin.png');
+     await observePauseCycle(p,preview);
+     await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);}
+    await pressStop(p.locator('#stopBtn'));preview.stopped=await observeRunPreview(p);verifyRunScreen(preview,mode,level);
+    return{mode,level,picker,speakers:shown.bubbles.length,preview,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
+   }));
+   // D1-01: a work with many parts (the maze sample, 45 parts) at はじめて still shows the screen big while it runs (D-19,
+   // F-14), at 1366x768 and at 1366x650; the parts list does not take the stage's room.
+   const entryManyParts=[];for(const height of [768,650])entryManyParts.push(await pageFor({newContext:options=>browser.newContext({...options,viewport:{width:1366,height}})},product,async p=>{hooks(p);
+    await p.locator('#uiLevel').selectOption('basic');await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();
+    await p.locator('#samplePicker [data-sample-id="maze"]').click();await p.waitForFunction(()=>Akari.app.project.components.length>=40);
+    await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry');
+    await frame(p);const editStage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON());
+    await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await frame(p);
+    const preview=await observeRunPreview(p),stage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON()),parts=await p.evaluate(()=>Akari.app.project.components.length);
+    await shot(p,'preview-entry-maze-'+height+'.png');await pressStop(p.locator('#stopBtn'));return{height,parts,editStage,stage,preview};}));
+   return{initial,rows,runScreens,entryManyParts};
   });
   await run('DISPLAY-PERSISTENCE',async()=>{
    const rows=[];for(const show of [false,true])rows.push(await pageFor(browser,product,async p=>{
     await fixture(p,{show});const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),suffix=show?'on':'off',saved=await download(p,'#saveBtn','saved-'+suffix+'.md');
     await p.locator('#newBtn').click();await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(()=>Akari.app.project.name==='操作契約02');const loaded=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames);
     const html=await download(p,'#exportBtn','player-'+suffix+'.html'),context=await browser.newContext({offline:true});let player;
-    try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await context.newPage();hooks(p);await p.goto(pathToFileURL(html).href);await p.locator('#playerStart:not([disabled])').click();await p.waitForFunction(()=>document.querySelectorAll('.sprite-bubble').length===2);player=await readBubbles(p);await shot(p,'player-'+suffix+'.png');await p.locator('#playerStop').click();}finally{await context.close();}
-    await setNames(p,!show);await setNames(p,show);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:12000});await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));const restored=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames),recovered=await speech(p);await p.locator('#stopBtn').click();return{show,loaded,restored,player,recovered,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
+    try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await context.newPage();hooks(p);await p.goto(pathToFileURL(html).href);await p.locator('#playerStart:not([disabled])').click();await p.waitForFunction(()=>document.querySelectorAll('.sprite-bubble').length===2);player=await readBubbles(p);await shot(p,'player-'+suffix+'.png');await pressStop(p.locator('#playerStop'));}finally{await context.close();}
+    await setNames(p,!show);await setNames(p,show);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:12000});await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));const restored=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames),recovered=await speech(p);await pressStop(p.locator('#stopBtn'));return{show,loaded,restored,player,recovered,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
    }));return rows;
   });
-  await run('DISPLAY-BUBBLES',async()=>{const rows=[];for(const [i,c]of bubbleCases.entries())rows.push(await pageAtWidth(browser,c.width,async p=>{await fixture(p,c);await scale(p,c.scale);const geometry=await speech(p,c.kind);await shot(p,'bubbles-'+i+'.png');await p.locator('#stopBtn').click();return{id:c.id,geometry};}));return rows;});
+  await run('DISPLAY-BUBBLES',async()=>{const rows=[];for(const [i,c]of bubbleCases.entries())rows.push(await pageAtWidth(browser,c.width,async p=>{await fixture(p,c);await scale(p,c.scale);const geometry=await speech(p,c.kind);await shot(p,'bubbles-'+i+'.png');await pressStop(p.locator('#stopBtn'));return{id:c.id,geometry};}));return rows;});
   await run('DISPLAY-DURATION',async()=>{const rows=[];for(const show of [false,true])rows.push(await pageFor(browser,product,async p=>{
-   await fixture(p,{show});await p.evaluate(()=>{globalThis.displayEvents=[];globalThis.displayObserver=new MutationObserver(rs=>{for(const r of rs)for(const[kind,nodes]of[['add',r.addedNodes],['remove',r.removedNodes]])for(const n of nodes)if(n.matches?.('.sprite-bubble'))displayEvents.push({kind,id:n.dataset.runtimeId,at:performance.now()});});displayObserver.observe(document.querySelector('#formSurface'),{childList:true});});await p.locator('#runBtn').click();await p.waitForFunction(()=>displayEvents.filter(e=>e.kind==='remove').length===2);const events=await p.evaluate(()=>{displayObserver.disconnect();return displayEvents;});await p.locator('#stopBtn').click();
-   await fixture(p,{show,untimed:true});await p.locator('#runBtn').click();await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='一');const untimedFirst=await p.locator('.sprite-bubble-text').textContent();await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='二');const untimedSecond=await p.locator('.sprite-bubble-text').textContent();await p.waitForTimeout(250);const untimedLater=await p.locator('.sprite-bubble-text').textContent();await p.locator('#stopBtn').click();return{show,events,untimedFirst,untimedSecond,untimedLater,afterStop:await p.locator('.sprite-bubble').count()};
+   await fixture(p,{show});await p.evaluate(()=>{globalThis.displayEvents=[];globalThis.displayObserver=new MutationObserver(rs=>{for(const r of rs)for(const[kind,nodes]of[['add',r.addedNodes],['remove',r.removedNodes]])for(const n of nodes)if(n.matches?.('.sprite-bubble'))displayEvents.push({kind,id:n.dataset.runtimeId,at:performance.now()});});displayObserver.observe(document.querySelector('#formSurface'),{childList:true});});await p.locator('#runBtn').click();await p.waitForFunction(()=>displayEvents.filter(e=>e.kind==='remove').length===2);const events=await p.evaluate(()=>{displayObserver.disconnect();return displayEvents;});await pressStop(p.locator('#stopBtn'));
+   await fixture(p,{show,untimed:true});await p.locator('#runBtn').click();await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='一');const untimedFirst=await p.locator('.sprite-bubble-text').textContent();await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='二');const untimedSecond=await p.locator('.sprite-bubble-text').textContent();await p.waitForTimeout(250);const untimedLater=await p.locator('.sprite-bubble-text').textContent();await pressStop(p.locator('#stopBtn'));return{show,events,untimedFirst,untimedSecond,untimedLater,afterStop:await p.locator('.sprite-bubble').count()};
   }));return rows;});
   await run('DISPLAY-OBJECT-NAMES',async()=>{const rows=[];for(const [i,c]of actionCases.entries())rows.push(await pageAtWidth(browser,c.width,async p=>{await fixture(p,c);await rename(p,c.name);const geometry=await actions(p);await shot(p,'objects-'+i+'.png');return{id:c.id,geometry};}));return rows;});
  },600000);

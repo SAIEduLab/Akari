@@ -20,7 +20,7 @@ function fixture(){
  const box={...structuredClone(input),id:'q-box',name:'赤四角',type:'box',x:100,y:100,w:100,h:100,bg:'#ff3b30'};
  p.components=[cat,star,input,box];p.stage.backdrops=['空色','夜','森'].map((name,i)=>({id:'q-bg-'+i,name,kind:'color',value:'#ffffff'}));p.stage.backdropId='q-bg-1';
  p.projectData={variables:[{id:'q-score',name:'点数',initialValue:10}],lists:[{id:'q-list',name:'名前一覧',initialValue:['本','ぼうし']}]};
- p.actions=[{id:'q-jump',ownerId:'stage',name:'ジャンプ',args:[],source:'画面の上へ10歩動く。'}];p.functions=[{id:'q-double',ownerId:'stage',name:'倍',args:['n'],source:'n×2を答えとして返す。'}];p.scripts=[];
+ p.actions=[{id:'q-jump',ownerId:'stage',name:'ジャンプ',args:[],source:'いまのばしょから、上へ10歩動く。'}];p.functions=[{id:'q-double',ownerId:'stage',name:'倍',args:['n'],source:'n×2を答えとして返す。'}];p.scripts=[];
  const runtime=new A.RuntimeModel(p,{}),actor=runtime.actor('sprite-1');actor.scalePercent=120;actor.volume=50;actor.pitch=1;
  runtime.mouseX=300;runtime.mouseY=200;runtime.mouseDown=true;runtime.pressedKeys.add('a');runtime.startTime=0;runtime.now=()=>500;
  const compiled=A.compileProject(p);assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors));

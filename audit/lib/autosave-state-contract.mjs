@@ -24,7 +24,7 @@ export const autosaveStateIds=[
   'storage/quota-retains-current-and-draft','restored/pending-draft','restored/callable-clone-pause',
 ];
 const saved=s=>assert.equal(s,'このパソコンに のこしたよ');
-const pending=s=>{assert.doesNotMatch(s,/のこしたよ|のこせなかったよ|使えません/);assert.match(s,/まだ のこしていないよ/);};
+const pending=s=>{assert.doesNotMatch(s,/のこしたよ|のこせなかったよ|使えません/);assert.match(s,/まだ のこして いないよ/);};
 const source=s=>s.project.scripts[0].source;
 function owner(s,key='script:main'){assert.equal(s.selectedScriptId,'main');assert.equal(s.owner,key);}
 function timeline(events){

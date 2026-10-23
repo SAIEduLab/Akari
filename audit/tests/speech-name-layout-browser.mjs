@@ -9,6 +9,7 @@ import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {install} from '../lib/ux-normal-ui.mjs';
 import {speechNameLayoutCases,speechNameLongTexts,speechNameSource,speechNamePositions} from '../fixtures/speech-name-layout.mjs';
 import {verifySpeechNameLayoutObserved,verifySpeechNameLayoutReport} from '../lib/speech-name-layout-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,out='audit-evidence/speech-name-layout.json']=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output+'.artifacts';
 fs.mkdirSync(dir,{recursive:true});
 const inputs=snapshot(product),report={schema:'akari-speech-name-layout-v1',status:'RUNNING',snapshot:inputs,environment:{browser:null,playwright:require('playwright/package.json').version,os:process.platform},classification:'automated UI evidence; no child comprehension or independent UX acceptance claim',pageErrors:[],networkRequests:[],results:[]};
@@ -66,7 +67,7 @@ async function observe(p,c,row,nativeZoom=null){
  if(c.kind==='short'){o.reachability=await reachShortBubbles(p);await p.waitForFunction(()=>document.querySelectorAll('.sprite-bubble').length===0,null,{timeout:4000});o.events=await p.evaluate(()=>speechNameEvents);}
  else{o.lengths=speechNameLongTexts.map(t=>Array.from(t).length);o.readingFixtureSeconds=10;o.openings=[];for(const[i,id]of['sprite-1','dango'].entries()){const selector=`.sprite-bubble[data-runtime-id="${id}"] [data-speech-full]`,input=i===0?'pointer':'keyboard';if(input==='pointer')await p.locator(selector).click();else{await tabTo(p,selector);await p.keyboard.press('Enter');}await p.locator('#valueModal.show').waitFor();const d={input,...await dialog(p)};await p.screenshot({path:path.join(dir,c.id.replaceAll('/','-')+'-'+id+'.png')});await p.keyboard.press('Escape');d.closed=!(await p.locator('#valueModal').isVisible());o.openings.push(d);}}
  if(nativeZoom)o.nativeZoom={...nativeZoom,after:await metrics(p)};
- verifySpeechNameLayoutObserved(c.id,o);await p.locator('#stopBtn').click();return o;
+ verifySpeechNameLayoutObserved(c.id,o);await pressStop(p.locator('#stopBtn'));return o;
 }
 async function run(c,operation){const row={id:c.id,status:'RUNNING'};report.results.push(row);try{row.observed=await operation(row);row.status='PASS';}catch(e){row.status='FAIL';row.error=e.stack;}save();console.log(row.status+' '+c.id);}
 try{

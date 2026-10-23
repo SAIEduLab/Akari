@@ -5,6 +5,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {sha} from './product-test-host.mjs';
 import schemaContract from './block-schema-contract.cjs';
+import {verifyEventTraces} from './event-traces-contract.mjs';
 const read=p=>JSON.parse(fs.readFileSync(p));
 export const browserContract=()=>read('audit/manifests/browser-results.json');
 // A browser case is executed by exactly one task; a second task re-running the same case keys is duplicate execution.
@@ -16,7 +17,8 @@ export function assertSingleBrowserOwner(entries){
   }
   return owner.size;
 }
-export function verifyBrowserReport(report,spec,expectedSnapshot) {
+export function verifyBrowserReport(report,spec,expectedSnapshot,options={}) {
+  assert.ok(!report.error,spec.task+': '+report.error);
   for(const key of ['pageErrors','networkRequests','errors','network'])if(key in report)assert.deepEqual(report[key],[],spec.task+'/'+key);
   for(const key of ['failed'])if(key in report)assert.equal(report[key],0);
   for(const key of ['sourceUnchanged','sourceFileUnchanged','environmentPass','complete'])if(key in report)assert.equal(report[key],true);
@@ -25,7 +27,10 @@ export function verifyBrowserReport(report,spec,expectedSnapshot) {
   if(spec.task!=='schema-shards')assert.ok(typeof report.browser==='string'&&report.browser.length>0,'missing browser '+spec.task);
   if(spec.key==='single'){
     assert.equal(report.pass,true);assert.equal(report.method,spec.keys[0]);assert.equal(report.lines,16666);
-    assert.equal(report.sourceUnchanged,true);assert.equal(report.state.mode,'blocks');assert.equal(report.state.chars,99995);assert.ok(report.state.dom<=5000);
+    assert.equal(report.sourceUnchanged,true);assert.equal(report.state.mode,'blocks');assert.equal(report.state.chars,99995);assert.ok(Number.isInteger(report.state.dom)&&report.state.dom>0&&report.state.dom<=5000);
+    // perf-input's existing deadline covers input and switching together, not each independently.
+    for(const key of ['inputMs','switchMs'])assert.ok(Number.isFinite(report[key])&&report[key]>=0,'missing/invalid '+key);
+    assert.ok(report.inputMs+report.switchMs<=30000,'perf-input exceeded its 30-second deadline');
     return;
   }
   assert.ok(Array.isArray(report.results));
@@ -42,6 +47,7 @@ export function verifyBrowserReport(report,spec,expectedSnapshot) {
     if('status' in r)assert.equal(r.status,'PASS');
     assert.ok(!r.error,spec.task+': '+r.error);
   }
+  if(spec.task==='browser-event-traces')verifyEventTraces(report,spec,expectedSnapshot,options);
   if(spec.task==='ui-stage-gesture'){
     const e=report.results.find(r=>r.id==='stage-gesture:window-blur-cleans-up').evidence;
     assert.equal(e.environment.phase,'gesture');assert.equal(e.environment.headless,false);
@@ -81,7 +87,7 @@ export function verifyBrowserGroup(dir,group,expectedSnapshot) {
   for(const f of media.files){const bytes=fs.readFileSync(path.join(dir,'candidate/media',f.path));assert.equal(bytes.length,f.bytes);assert.equal(sha(bytes),f.sha256);}
   const specs=contract.entries.filter(e=>group==='all'||e.group===group);
   assert.deepEqual(specs.map(s=>s.task).sort(),[...tasks].sort());
-  for(const spec of specs)verifyBrowserReport(read(path.join(dir,spec.report)),spec,expectedSnapshot);
+  for(const spec of specs)verifyBrowserReport(read(path.join(dir,spec.report)),spec,expectedSnapshot,{artifactDir:path.dirname(path.join(dir,spec.report))});
   if(group==='schemas'||group==='all')for(let i=0;i<2;i++){
     const r=read(path.join(dir,'candidate/schema-shard-'+i+'/browser-schemas-selected.json'));
     assert.ok(typeof r.browser==='string'&&r.browser.length>0);assert.deepEqual(r.pageErrors,[]);assert.deepEqual(r.networkRequests,[]);

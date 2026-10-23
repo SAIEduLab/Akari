@@ -122,8 +122,9 @@ function verifyCaseShape(c, area, where, fail) {
     if (typeof c.expect?.stops !== 'boolean') fail(where, 'check.expect.stops');
     if (c.polarity === 'negative' && c.expect?.stops !== true && !(c.expect?.notices?.length)) fail(where, 'a negative check must stop or give a notice');
     for (const n of c.expect?.notices ?? []) if (typeof n.contains !== 'string' || !n.contains) fail(where, 'notice contains');
+    if (c.expect?.errorCode !== undefined && (!c.expect.stops || !/^[PSRFXE]\d{3}$/.test(c.expect.errorCode))) fail(where, 'check.expect.errorCode requires a stopping diagnostic code');
     const word = w => (typeof w === 'string' && w) || (Array.isArray(w) && w.length && w.every(x => typeof x === 'string' && x));
-    for (const key of ['guidanceContains', 'guidanceAbsent']) for (const w of c.expect?.[key] ?? []) if (!word(w)) fail(where, key + ' entries are words or lists of spellings');
+    for (const key of ['guidanceContains', 'guidanceAbsent', 'fixContains']) for (const w of c.expect?.[key] ?? []) if (!word(w)) fail(where, key + ' entries are words or lists of spellings');
   } else if (c.kind === 'run') {
     verifyWorld(c.world, area, where, fail);
     const until = c.run?.untilMs;
@@ -171,6 +172,7 @@ export function expectationNegatives(files) {
     ['run-without-expectation', f => { const c = f.common.cases.cases.find(x => x.kind === 'run'); c.expect = {}; }],
     ['meijin-case-is-formatted', f => { f.meijin.cases.cases.find(x => x.kind === 'check').kind = 'format'; }],
     ['meijin-owner-in-common', f => { const c = f.common.cases.cases.find(x => x.kind === 'check'); c.world.scripts[0].owner = 'meijin'; }],
+    ['invalid-check-error-code', f => { f.common.cases.cases.find(c => c.kind === 'check').expect.errorCode='bad'; }],
     ['basis-is-missing', f => { f.meijin.cases.cases[0].basis = []; }],
   ].map(([id, mutate]) => ({ id, mutate }));
 }

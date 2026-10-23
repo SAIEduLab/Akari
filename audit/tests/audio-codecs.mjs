@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -7,6 +8,7 @@ import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {audioFixtures,audioIds,codecBrowser,verifyAudio} from '../lib/feature-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const require=createRequire(import.meta.url);
 const [browserPath,output]=process.argv.slice(2);
@@ -47,7 +49,8 @@ async function player(browser,file,expected,invalid=false){
       await p.waitForFunction(expected=>document.querySelector('#playerOutput').textContent.includes(expected),expected);
       assert.equal(await p.evaluate(()=>typeof globalThis.Akari),'undefined');
       assert.ok(!(await p.locator('#playerOutput').textContent()).includes('R415'));
-      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isDisabled(),true);
+      // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+      await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
     }
   }finally{await context.close();}
 }
@@ -79,10 +82,10 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   const marker='音声検証完了-'+name,source='「検証音」を鳴らす。\n「'+marker+'」と言う。';
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);
-  await click(p,'#editorModeblocks');await click(p,'#editorModecode');
+  await chooseView(p,'blocks',{reveal});await chooseView(p,'code',{reveal});
   assert.equal(await p.evaluate(()=>Akari.compileProject(Akari.app.project).errors.length),0);
   await click(p,'#runBtn');await p.waitForFunction(marker=>document.querySelector('#console').textContent.includes(marker),marker);
-  await click(p,'#stopBtn');
+  await pressStop(await reveal(p.locator('#stopBtn')));
   const saved=path.join(dir,name+'.akari.md');let pending=p.waitForEvent('download');
   await click(p,'#saveBtn');await(await pending).saveAs(saved);
   assert.ok(fs.readFileSync(saved,'utf8').startsWith(("# あかり "+currentProductVersion()+" の作品")));
@@ -171,7 +174,7 @@ cases['audio-runtime-mime-rejection']=async(p,browser)=>{
   await (await reveal(p.locator('#eventSelect'))).selectOption('start');
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「検証音」を鳴らし始める。');})();
   await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「検証音」を鳴らし始める。');
-  await click(p,'#editorModeblocks');await click(p,'#editorModecode');
+  await chooseView(p,'blocks',{reveal});await chooseView(p,'code',{reveal});
   const html=await p.evaluate(()=>Akari.generateStandaloneHtml(Akari.app.project,Akari.app.assetStore));
   assert.equal(html.split('"mime":"audio/mp4"').length,2);
   const file=path.join(dir,'invalid-mime-player.html');fs.writeFileSync(file,html.replace('"mime":"audio/mp4"','"mime":"audio/unknown"'));
@@ -199,5 +202,5 @@ console.log(("Audio "+currentProductVersion()+": all ")+results.length+' cases P
 async function openBodyForTest(page) {
   await (await reveal(page.locator('#uiLevel'))).selectOption('advanced');
   if (await page.locator('#sourceOverview').isVisible()) await click(page,'#sourceEditBtn');
-  await click(page,'#editorModecode');
+  await chooseView(page,'code',{reveal});
 }

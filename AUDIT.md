@@ -26,7 +26,7 @@
 - `format-compatibility.mjs`の固定9件は、製品のリリース表示値だけを変更した候補から作品を作り、同じ契約の別製品による読込み・実保存・自動復元・生成HTMLのオフライン実行を検査します。未保存内容とclean/dirtyの保持、作成元だけを除く指紋、未知の契約と不正データの拒否を含めます。結果の欠落・重複・失敗・別snapshotは独立したvalidatorで拒否します。
 - SEMANTICでは、製品版を動作判定へ戻す間接参照や動的プロパティ名、静的検査の許可用途の拡張も差分レビューします。静的検査だけで任意の間接参照の不存在を証明したとは扱いません。HYBRIDではUI経由の読込み・復元と未保存保護を実ブラウザーで確認します。
 
-保存の受入基準は、データの構造・意味を識別する契約の一致です。製品版の完全一致ではありません。この基準を`FORMAT-EXECUTABLE-CONTRACT`と`FORMAT-PROJECT-METADATA-001 作成元と保存契約`で固定します。現行の保存形式（項目形式3）以外のファイル、破損、契約不一致は、理由を示して拒否します。作成元だけが異なる作品は受け入れ、内容を保持します。
+保存の受入基準は、データの構造・意味を識別する契約の一致です。製品版の完全一致ではありません。この基準を`FORMAT-EXECUTABLE-CONTRACT`と`FORMAT-PROJECT-METADATA-001 作成元と保存契約`で固定します。現行の作品形式（番号はLANGUAGE.mdの「保存・実行データの契約と検証」）以外のファイル、破損、契約不一致は、理由を示して拒否します。作成元だけが異なる作品は受け入れ、内容を保持します。
 
 ## 製品ソースとビルド
 
@@ -38,7 +38,7 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 
 1. 全イベント本文に実在する画面・部品の `targetId` が必要です。共通動作・計算・定義下書きには画面を示す `ownerId: "stage"` が必要です。
 2. 所属なし、存在しない対象、対象外イベント、重複識別子を読込み・保存・コンパイル・書出しで拒否します。無視・切り捨て・暗黙の所属補完で通しません。
-3. 起動・新規作成・作品読込みと、部品の選択では、コード／ブロックの本文を追加の編集ボタン操作なしで編集できます。別の部品では現在のできごとに本文があれば維持し、空なら対応イベント順で最初の本文があるものを開きます。すべて空なら現在の有効イベントを、同じ部品の再選択では明示選択した空の本文も維持します。開始が空でクリックに処理があるボタンを実ポインターで選び、直接編集・Undo・Redoを検査します。「すべてのコード」から全本文一覧を開けることも検査します。
+3. 起動・新規作成・作品読込みと、部品の選択では、コード／ブロックの本文を追加の編集ボタン操作なしで編集できます。別の部品では現在のできごとに本文があれば維持し、空なら対応イベント順で最初の本文があるものを開きます。すべて空なら現在の有効イベントを、同じ部品の再選択では明示選択した空の本文も維持します。開始が空でクリックに処理があるボタンを実ポインターで選び、直接編集・Undo・Redoを検査します。「すべての本文」から全本文一覧を開けることも検査します。
 4. 複数イベント、式内の計算呼出し、共通動作から別の共通処理への呼出し、未使用定義、非表示部品、未完成・書き方エラーの本文を含めます。再帰は一度だけ表示してリンクで辿れることを検査します。
 5. 参照表示は登録本文を複製しません。表示・編集・構文コンパイルが同じ本文識別子を使い、保存前後で所有者と本文が一致することを検査します。
 6. ソースの所有者を実行対象と混同しません。画面所属の共通動作が呼出し元の部品で実行され、引数、局所値、再帰、求値の意味を保持することを検査します。
@@ -50,7 +50,7 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 - 書き方エラーを含む途中の本文を保存・再読込できます。意味エラーだけでASTやブロックを消しません。保存・書出し・実行可否はそれぞれの契約で判定します。
 - 編集は原子的です。IME、未確定入力、古い文脈、上限超過、取消で別の本文を上書きしません。Undo/Redoはコード、ブロック、部品、素材、定義下書きで共通に働きます。
 - ブロックは命令・値・条件の形と接続を持ちます。入れ子の空間、空スロット、移動先、選択、注釈、無効理由、キーボード操作、ズーム、長大本文の段階表示を実ブラウザーで検査します。
-- 実行と設計は分離します。停止・一時停止・単一ステップ・失敗記録・呼出し元・実行行・質問・音声・クローン・入力の終了処理を検査します。
+- 実行と設計は分離します。停止・一時停止・単一ステップ・失敗記録・呼出し元・実行行・質問・音声・コピー・入力の終了処理を検査します。
 - 自動保存は作品・素材・定義下書きを保存します。復元は利用者の選択後に行い、破損・未対応形式・書込み失敗は現在作品を壊しません。保存したことと永続化できたことを混同しません。
 - 部品複製、透明なお絵かき、画像・背景・衣装、MP3/WAV(PCM)/M4A(AAC-LC)/FLAC/Ogg Opus、全上限、破損・不正素材の拒否を維持します。
 - 作品画面のズーム・自動フィット・スクロール・ポインター座標・タッチ・狭い画面・ウィンドウのフォーカス喪失を検査します。必要なネイティブイベントを合成イベントで代用しません。
@@ -58,36 +58,36 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 
 ## UIとボタンの整合性
 
-`audit/tests/ui-buttons.mjs`を実ブラウザーで実行します。次の安定IDを必須とし、GA-EXECで操作・表示・本文・履歴の期待値を検証します。HYBRIDではコード／ブロックと動作・計算の本文、かんたん／くわしく、狭い画面・マウス・キーボード・タッチを確認し、不要な有効ボタンや到達できない操作がないことをレビューします。代替操作の存在だけで、見えるボタンの不動作を合格にしません。
+`audit/tests/ui-buttons.mjs`を実ブラウザーで実行します。次の安定IDを必須とし、GA-EXECで操作・表示・本文・履歴の期待値を検証します。HYBRIDではコード／ブロックと動作・計算の本文、ブロックの「はじめて」「かんたん」「くわしく」とコードの「かんたん」「くわしく」「名人」、狭い画面・マウス・キーボード・タッチを確認し、不要な有効ボタンや到達できない操作がないことをレビューします。代替操作の存在だけで、見えるボタンの不動作を合格にしません。
 
 | 安定ID | 期待値 |
 |---|---|
-| UI-BUTTON-SOURCE-NAV | 「すべてのコード」で一覧を開く。「本文を なおす ところへ もどる」は一覧表示中だけ表示。「画面のコード」は部品選択時だけ表示し、画面の一覧へ進む。 |
-| UI-BUTTON-BASIC-HISTORY | かんたんでもUndo/Redoを表示し、履歴なし・編集lock時は無効。本文と部品編集の履歴を共通に戻し、やり直せる。 |
+| UI-BUTTON-SOURCE-NAV | 「すべての本文」で一覧を開く。「本文を なおす ところへ もどる」は一覧表示中だけ表示。「画面の本文」は部品選択時だけ表示し、画面の一覧へ進む。 |
+| UI-BUTTON-BASIC-HISTORY | 作る画面では、かんたんでもUndo/Redoを表示し、履歴なし・素材の取込み中は無効。動かす画面には出さない（「はじめて」のツールバーのものも、場所をあけたまま出さない）。本文と部品編集の履歴を共通に戻し、やり直せる。 |
 | UI-BUTTON-SIDE-ACTIONS | コードのせってい／動きのようすは通常の見出し。ブロックの折り畳みは維持し、部品一覧直下の複製／削除は設定欄を開かず使える。コードでは設定欄に同じ操作を置く。 |
-| UI-BUTTON-LEVELS | 表示設定ははじめて／かんたん／くわしくの3段階。初回のみはじめて。保存済みallはadvanced扱い。変更によって本文と履歴を変えない。 |
+| UI-BUTTON-LEVELS | レベルの選択欄はブロックで「はじめて」「かんたん」「くわしく」、コードで「かんたん」「くわしく」「名人」だけを出し、選べない選択肢は出さない。名人の本文がある作品では「名人」だけ。レベルを選んでもコード／ブロックは切りかわらない。見せ方は一つの切りかえボタンが「ブロックモード ⇄」「コードモード ⇄」と示し、押すともう一方に切りかわる。「はじめて」、名人の本文がある作品、コードに書き方のまちがいがあるとき、絵や音や作品を読みこんでいるあいだ（「読みこみが おわるまで、まってね」）は、押しても切りかわらず、ボタンの下にLANGUAGE.mdの知らせ（role=status）を出し、次の押下かキーで消す。どの場合もボタンをかくさず、押せない形（うすい色）にもしない。設定がないときは「はじめて」、`entry`・`basic`・`advanced`以外の残った値（`all`を含む）は「かんたん」。変更によって本文と履歴を変えない。 |
 | UI-BUTTON-PENDING | 動作・計算の「入力を やめる」は未確定／失敗入力時だけ表示し、反映済みの下書き全体は捨てない。入力確定は未確定入力があるときだけ表示する。定義保存と閉じる際の破棄確認を維持。 |
 | UI-BUTTON-BLOCK-DESTINATION | 命令／式の追加先選択を取消とEscapeで解除し、本文と履歴を変えない。移動・複製・移動元の式の置換を取り消せる。 |
-| UI-BUTTON-BLOCK-INSERTION | 命令の途中と末尾の追加先ボタンを可視の高さ28pxで表示し、マウス／タッチで選べる。ドラッグ／キーボードの代替も維持。 |
-| UI-BUTTON-BLOCK-COMMANDS | 主本文と動作・計算で、追加・移動・複製・削除・式置換・可変入力操作、パレットの分類／検索／ページ／フィルター、作業台の拡大率／道具箱／表示範囲へ到達でき、必須入力と境界の制限を守る。 |
+| UI-BUTTON-BLOCK-INSERTION | 本文と囲いの末尾の「＋ ここに入れる」を高さ28px（指で操作する画面では40px）で表示し、命令の間は高さ8pxの線にする。運んでいる間と追加先を選んでいる間は間の線も追加先の大きさに広げ、マウス／タッチで選べる。指で操作する画面では、選んだブロックのすぐ下の線を、そのブロックの欄に入力しているときも40pxの押せる場所にし、入力中の「決める」「入力を やめる」にはかけない。この場所に接する欄（選んだブロックと次のブロックの欄）だけは押せる高さが33px以上でよく、ほかの欄は40px以上（LANGUAGE.md「コードとブロックで同じ本文を編集する」の例外）。ドラッグ／キーボードの代替も維持。 |
+| UI-BUTTON-BLOCK-COMMANDS | 主本文と動作・計算で、追加・移動・複製・削除・式置換・可変入力操作、ブロックの一覧のなかま（常に全部表示し、ページに分けない）／検索／「ブロックの しゅるい」、作業台の拡大率／見わたす／表示範囲へ到達でき、必須入力と境界の制限を守る。 |
 | UI-BUTTON-RESPONSIVE | 狭い画面でも本文・部品操作・未確定入力の確定／取消へ到達できる。表示幅だけで本文や履歴を変えない。 |
 
 ## ブロック入力欄の表示
 
 短い入力値は実際のフォント、文字間隔、padding、border、候補リスト矢印を含む幅を確保します。入力・フォント読込み・ズーム・動作と計算の編集にも同じ処理を適用します。長い値は幅上限と入力中のスクロールを保ち、titleを全文へ更新します。
 
-`audit/tests/block-field-width.mjs` の8件を必須とします。日本語、英字・数字・絵文字・結合文字、入力による拡縮、フォント変更、ズーム、長い値、定義モーダルを実ブラウザーで検査し、独立したDOM文字幅測定で見切れを判定します。幅を故意に狭くした拒否試験も維持します。LinuxとWindowsの証拠を必須bundleへ含め、結果欠落・重複・失敗・例外をPASSにしません。
+`audit/tests/block-field-width.mjs` の8件を必須とします。日本語、英字・数字・絵文字・結合文字、入力による拡縮、フォント変更、ズーム、長い値、定義モーダルを実ブラウザーで検査し、独立したDOM文字幅測定で見切れを判定します。幅を故意に狭くした拒否試験も維持します。Windowsの実行証拠を必須bundleへ含め、結果欠落・重複・失敗・例外をPASSにしません。
 
 ## 実行区分と合格条件
 
 | 区分 | 検証 |
 |---|---|
 | GA-STATIC | 現行製品HTMLの単一性・版付きpathと製品版の一致・旧製品混入の拒否、JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合、自作識別子と製品版参照のAST検査・拒否能力 |
-| GA-EXEC | 製品試験、言語表面試験、編集試験、編集GUI試験、ブラウザー試験（全ブロックschemaのGUI行を含む）、素材編集試験、音声試験、画面ズーム試験、コード所属試験、形式互換試験、UIボタン整合性試験、ブロック入力欄表示試験（LinuxとWindows）、保存・生成HTML・マニュアル。件数は現行のmanifestとcontractが正本で、本書には書かない |
+| GA-EXEC | 製品試験、言語表面試験、編集試験、編集GUI試験、ブラウザー試験（全ブロックschemaのGUI行を含む）、素材編集試験、音声試験、画面ズーム試験、コード所属試験、形式互換試験、UIボタン整合性試験、ブロック入力欄表示試験（Windows）、保存・生成HTML・マニュアル。件数は現行のmanifestとcontractが正本で、本書には書かない |
 | SEMANTIC | 仕様と実装の一致、主要処理の可読性、命令・求値の機能保持、監査の非弱体化、教材操作の妥当性 |
 | HYBRID | 所属と全本文への到達性、表示と実行対象の分離、エラー本文と下書きの保持、UIの読みやすさ、UIとボタンの整合性 |
 
-Node実行は決定的な検査を補助します。DOM、pointer、IME、focus、drag、resize、touch、音声デコード、download、IndexedDB、生成HTMLには実ブラウザーが必要です。音声はLinuxとWindowsを対象にします。複数の表示幅・入力方法の試験を代表1件で代用しません。
+Node実行は決定的な検査を補助します。DOM、pointer、IME、focus、drag、resize、touch、音声デコード、download、IndexedDB、生成HTMLには実ブラウザーが必要です。公開CIの実行環境はWindowsです。音声の全形式・負例をWindowsで検査し、Linuxの実行済み証拠として扱いません。複数の表示幅・入力方法の試験を代表1件で代用しません。
 
 性能試験は本文100,000文字、長大本文16,666行、構文の遅い失敗、式深さ、DOMの段階表示、選択・スクロールを扱います。タイムアウトや上限を緩めてPASSにしません。
 
@@ -106,8 +106,8 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 - **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。
 - **結果の形式**: 終了コードだけで判定していた段も、case IDを持つ結果（`akari-gate-cases-v1`）を書き、validatorが全case PASSの集合を確認します。
 - **文の形の網羅**（`sentence-form-coverage`）: 製品の有限な文型表（`SENTENCE_FORMS`、`CONDITION_FORMS`、`SENTENCE_TE_FORMS`等）の全項目に、独立した入力と期待値を持つ事例が必要です。到達できない項目は網羅の不足としてFAILになり、製品の表から消します。項目を外しても結果が変わらないことで、各項目が必要なことを確かめます。
-- **仕様の例文**（`spec-examples`）: LANGUAGE.mdとEXTENSIONS.mdの`text`ブロックは、製品の構文解析器で読めます。読めない例は`<!-- akari-example: rejected -->`で明示し、拒否されることを確かめます。名人モードの例は`<!-- akari-example: meijin -->`（一つの名人の本文として読め、作品チェックが誤りを出さない）と`<!-- akari-example: meijin-rejected -->`（一文ずつ、作品チェックが止める）で明示します。名人の例を読む作品は、例が名前を挙げる部品・データ・音・すがたを持ちます（`audit/lib/meijin-example-world.mjs`）。
-- **仕様の期待値**（`spec-expectations-static`、`spec-expectations`）: `audit/fixtures/spec-expectations/`は、LANGUAGE.mdの文だけから手で書いた、共通の文法と名人モードの期待値（整形、作品チェック、実行の経過、保存、名前の変更、画面の操作）です。形式は`audit/fixtures/spec-expectations/SCHEMA.md`に定めます。静的な検査は、各事例が仕様の文を一字違わず引用すること、項目が事例か理由でおおわれること、壊したデータを検査自身が拒否することを確かめ、製品を読み込みません。実行の検査は、製品の実体で全事例を動かします。画面の操作の事例は、ブラウザーで製品の画面を事例の手順どおりに操作して確かめます（`spec-expectations-ui`）。期待値を製品の出力から作りません。仕様が決めていないことは`specGaps`に残し、推測で期待値にしません。
+- **仕様の例文**（`spec-examples`）: LANGUAGE.mdとEXTENSIONS.mdの`text`ブロックは、製品の構文解析器で読めます。読めない例は`<!-- akari-example: rejected -->`で明示し、拒否されることを確かめます。名人の本文の例は`<!-- akari-example: meijin -->`（一つの名人の本文として読め、作品チェックが誤りを出さない）と`<!-- akari-example: meijin-rejected -->`（一文ずつ、作品チェックが止める）で明示します。名人の例を読む作品は、例が名前を挙げる部品・データ・音・すがたを持ちます（`audit/lib/meijin-example-world.mjs`）。
+- **仕様の期待値**（`spec-expectations-static`、`spec-expectations`）: `audit/fixtures/spec-expectations/`は、LANGUAGE.mdの文だけから手で書いた、共通の文法と名人の期待値（整形、作品チェック、実行の経過、保存、名前の変更、画面の操作）です。形式は`audit/fixtures/spec-expectations/SCHEMA.md`に定めます。静的な検査は、各事例が仕様の文を一字違わず引用すること、項目が事例か理由でおおわれること、壊したデータを検査自身が拒否することを確かめ、製品を読み込みません。実行の検査は、製品の実体で全事例を動かします。画面の操作の事例は、ブラウザーで製品の画面を事例の手順どおりに操作して確かめます（`spec-expectations-ui`）。期待値を製品の出力から作りません。仕様が決めていないことは`specGaps`に残し、推測で期待値にしません。
 - **現行schemaの網羅**: `audit/fixtures/block-schemas.json`は、現行のブロックschemaをLANGUAGE.mdから手で書いた独立の期待値です。ブラウザー群`schemas`は、`features.json`のschema全件にGUI行を持ちます。
 - **命名**: 関数・ID・ファイル名・gate段に、版番号や過去の作業名を使いません。`static-contract`が拒否します。
 
@@ -123,7 +123,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 ### 製品内の保存確認
 
-未保存の作業があるときに「新しく作る」「いっしょに作る」「ファイルを開く」を押すと、製品は自前の確認画面（`#loseConfirmModal`、ボタンは「すてて つづける」「やめる」）で尋ねます。ブラウザー標準の確認は使いません。標準の確認に自動で答えるテストは、`audit/lib/product-dialogs.cjs`で製品の確認画面にも答えます。確認そのものを検査するテストは、ボタンを押して文面と結果を確かめます。
+未保存の作業があるときに「新しく作る」「お手本を開く」「いっしょに作る」「開く」を押すと、製品は自前の確認画面（`#loseConfirmModal`）で尋ねます。文は「「〔作品名〕」には まだ ほぞんして いない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。」、ボタンは「やめる」「ほぞんしてから つづける」「すてて つづける」で、開いたときは「やめる」にフォーカスがあります。ブラウザー標準の確認は使いません。標準の確認に自動で答えるテストは、`audit/lib/product-dialogs.cjs`で製品の確認画面にも答えます。確認そのものを検査するテストは、ボタンを押して文面と結果を確かめます。
 
 ## 能力台帳
 
@@ -147,16 +147,15 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | command:WaitTime | 0.1秒待つ | 求値では禁止; 値の型・待機条件・範囲は既存runtime | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:WaitUntil | 点数が100以上になるまで待つ | 求値では禁止; 値の型・待機条件・範囲は既存runtime | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:ForEach | リストの各要素の反復 | 項目名衝突S312は意味診断。項目readonly・複製したリストを順次反復 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:MOVE | 10歩動く | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:GOTO | 横100、縦50の位置へ行く | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:GLIDE | 1秒で横200、縦100の位置へ滑る | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:TURN_RIGHT | 右に15度回る | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:TURN_LEFT | 左に15度回る | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:MOVE | 前へ10歩進む（「1秒かけて、」で時間をかけて進む） | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:MOVE_BY | いまのばしょから、右へ10歩、上へ5歩動く（一つの向きだけ、「2秒かけて、」も書ける） | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:GOTO | 画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く（「1秒かけて、」も書ける） | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:GOTO_PART | 「ロケット」のところへ行く／マウスのところへ行く（「1秒かけて、」も書ける） | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:TURN_RIGHT | 右に15度回る（「1秒かけて、」で時間をかけて回る） | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:TURN_LEFT | 左に15度回る（「1秒かけて、」で時間をかけて回る） | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:MotionCommand:SET_DIRECTION | 方向を90度にする | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:SET_X | 横位置を100にする | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:SET_Y | 縦位置を50にする | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:MotionCommand:POINT_TO | 「マウス」の方向を向く | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:MotionCommand:BOUNCE | 端に触れていれば跳ね返る | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:MotionCommand:BOUNCE | 画面の端に触れていれば跳ね返る | 部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:LooksCommand:SET_SCALE | 大きさを120％にする | 部品のみ; 値・色・範囲を検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:LooksCommand:SET_COLOR | 表示色を「赤」にする | 部品のみ; 値・色・範囲を検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:LooksCommand:HIDE | 隠れる | 部品のみ; 値・色・範囲を検査 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
@@ -189,10 +188,11 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | command:Ask | 「名前は？」とたずねる | 求値では禁止; 値の型・待機条件・範囲は既存runtime | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:LocalVariableDeclaration | 合計という変数を作り、初期値を0にする | 動作/求値の本文先頭のみS313; 引数/宣言衝突と使用前宣言 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:ReturnStatement | 合計を返す | 求値最上位末尾に1個; action/scriptではS307 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:CloneCommand:CREATE_SELF | 自分のクローンを作る | 自分の対象はsprite。削除はcloneに限る | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:CloneCommand:CREATE_TARGET | 「星」のクローンを作る | 指定対象はsprite。呼出し元は全対象 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
-| command:CloneCommand:DELETE_SELF | このクローンを削除する | 自分の対象はsprite。削除はcloneに限る | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:CloneCommand:CREATE_SELF | 自分のコピーを作る | 自分の対象はsprite。削除はcloneに限る | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:CloneCommand:CREATE_TARGET | 「星」のコピーを作る | 指定対象はsprite。呼出し元は全対象 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:CloneCommand:DELETE_SELF | このコピーだけを消す | 自分の対象はsprite。削除はcloneに限る | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:StopCommand:THIS | このスクリプトを止める | 求値では禁止; 値の型・待機条件・範囲は既存runtime | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:StopCommand:OWN_OTHERS | 自分のほかの動きを止める | 求値では禁止; その部品のほかの本文と継続ルールだけを止め、この本文と他の部品は止めない | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:StopCommand:OTHERS | ほかのスクリプトを止める | 求値では禁止; 値の型・待機条件・範囲は既存runtime | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:StopCommand:ALL | すべてを止める | 求値では禁止; 値の型・待機条件・範囲は既存runtime | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:LooksCommand:SET_SELF_TEXT | 文字を「文字」にする | label/button/boxのみ | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
@@ -266,20 +266,20 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | builtin:STRING_LENGTH | 文字数（引数 1） | string; Unicode code point | 後置構文を通常builtinと別に網羅。全fieldのGUI往復はschema suiteで別検査; GUI-SCHEMA |
 | builtin:STRING_CHAR | 文字目（引数 2） | string; 1-based範囲; Unicode | 後置構文を通常builtinと別に網羅。全fieldのGUI往復はschema suiteで別検査; GUI-SCHEMA |
 | state:マウスが押されている | マウスが押されている | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
-| state:マウスの横位置 | マウスの横位置 | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
-| state:マウスの縦位置 | マウスの縦位置 | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
+| state:マウスの横位置 | マウスのよこのばしょ | 既存対象/時計/個別task文脈。画面の左下のはしから右が正。画面に入る前は0 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
+| state:マウスの縦位置 | マウスのたてのばしょ | 既存対象/時計/個別task文脈。画面の左下のはしから上が正。画面に入る前は0 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:以前の背景名 | 以前の背景名 | event backdropChanged専用; 定義内の直接参照S311 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:新しい背景名 | 新しい背景名 | event backdropChanged専用; 定義内の直接参照S311 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:受け取った知らせ | 受け取った知らせ | event message専用; 定義内の直接参照S311 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:押されたキー | 押されたキー | event keyDown専用; 定義内の直接参照S311 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
-| state:クローンである | クローンである | 部品のみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
+| state:クローンである | 自分がコピーである | 部品のみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:背景番号 | 背景番号 | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:背景名 | 背景名 | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:衣装番号 | 衣装番号 | spriteのみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:衣装名 | 衣装名 | spriteのみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
-| state:横位置 | 横位置 | 部品のみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
-| state:縦位置 | 縦位置 | 部品のみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
-| state:方向 | 方向 | 部品のみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
+| state:横位置 | よこのばしょ | 部品のみ。部品のまん中を画面の左下のはしから右が正で読む | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
+| state:縦位置 | たてのばしょ | 部品のみ。部品のまん中を画面の左下のはしから上が正で読む | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
+| state:方向 | 方向 | 部品のみ。右0・上90の左回りで0以上360未満 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:大きさ | 大きさ | 部品のみ | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:タイマー | タイマー | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
 | state:答え | 答え | 既存対象/時計/個別task文脈 | sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA |
@@ -291,7 +291,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | sensor:DISTANCE_TO | 対象/マウスまでの中心距離 | 部品のみ; 対象文字列; マウス可 | 引数付きsensorの代表値をself-testで検査。動的引数とGUI全slotはschema suiteで別検査; GUI-SCHEMA |
 | sensor:KEY_DOWN | 指定キーの現在押下状態 | キー文字列 | 引数付きsensorの代表値をself-testで検査。動的引数とGUI全slotはschema suiteで別検査; GUI-SCHEMA |
 | sensor:TOUCHING_COLOR | 設定色と外接長方形による接触 | 部品のみ; 色の検査; 画像画素/penは対象外 | 引数付きsensorの代表値をself-testで検査。動的引数とGUI全slotはschema suiteで別検査; GUI-SCHEMA |
-| sensor:TOUCHING | 対象/マウス/端との接触 | 部品のみ; 対象文字列; マウス/端可 | 引数付きsensorの代表値をself-testで検査。動的引数とGUI全slotはschema suiteで別検査; GUI-SCHEMA |
+| sensor:TOUCHING | 対象/マウス/画面のはし（上・下・右・左のはしも）との接触。絵の部品は見えている画素、文字の部品とすがたが文字の部品は外接長方形 | 部品のみ; 対象文字列; マウス/端/端:上・端:下・端:右・端:左可。マウスは画面に入るまでふれず、絵の部品には見えている画素の上だけでふれる。はしは絵の見えているところを囲む長方形でくらべる | 引数付きsensorの代表値をself-testで検査。動的引数とGUI全slotはschema suiteで別検査; GUI-SCHEMA |
 
 ### イベントと利用対象
 
@@ -307,28 +307,33 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | event:label:keyDown | labelのkeyDown | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:label:message | labelのmessage | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:label:backdropChanged | labelのbackdropChanged | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
+| event:label:touchStart | labelのtouchStart（「星」にふれたとき、／画面のはしにふれたとき、） | EVENT_BY_TYPEで許可; filter.targetは部品名・端・端:上・端:下・端:右・端:左; ふれていない状態からふれた状態に変わるたびに開始 | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:button:start | buttonのstart | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:button:click | buttonのclick | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:button:keyDown | buttonのkeyDown | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:button:message | buttonのmessage | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:button:backdropChanged | buttonのbackdropChanged | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
+| event:button:touchStart | buttonのtouchStart（「星」にふれたとき、／画面のはしにふれたとき、） | EVENT_BY_TYPEで許可; filter.targetは部品名・端・端:上・端:下・端:右・端:左; ふれていない状態からふれた状態に変わるたびに開始 | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:box:start | boxのstart | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:box:click | boxのclick | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:box:keyDown | boxのkeyDown | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:box:message | boxのmessage | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:box:backdropChanged | boxのbackdropChanged | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
+| event:box:touchStart | boxのtouchStart（「星」にふれたとき、／画面のはしにふれたとき、） | EVENT_BY_TYPEで許可; filter.targetは部品名・端・端:上・端:下・端:右・端:左; ふれていない状態からふれた状態に変わるたびに開始 | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:input:start | inputのstart | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:input:click | inputのclick | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:input:keyDown | inputのkeyDown | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:input:message | inputのmessage | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:input:backdropChanged | inputのbackdropChanged | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:input:valueChanged | inputのvalueChanged | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
+| event:input:touchStart | inputのtouchStart（「星」にふれたとき、／画面のはしにふれたとき、） | EVENT_BY_TYPEで許可; filter.targetは部品名・端・端:上・端:下・端:右・端:左; ふれていない状態からふれた状態に変わるたびに開始 | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:sprite:start | spriteのstart | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:sprite:click | spriteのclick | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:sprite:keyDown | spriteのkeyDown | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:sprite:message | spriteのmessage | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:sprite:backdropChanged | spriteのbackdropChanged | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 | event:sprite:cloneStart | spriteのcloneStart | EVENT_BY_TYPEで許可; event-specific valueは同じcontext | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
+| event:sprite:touchStart | spriteのtouchStart（「星」にふれたとき、／画面のはしにふれたとき、） | EVENT_BY_TYPEで許可; filter.targetは部品名・端・端:上・端:下・端:右・端:左; ふれていない状態からふれた状態に変わるたびに開始 | self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査 |
 
 ### スコープ・実行・保存・製品・編集の継承
 
@@ -340,11 +345,11 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | scope:local | 局所変数・局所リストの先頭宣言と使用前検査 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 先頭・途中・入れ子宣言、自己/後続局所の初期化前使用、重複、コメント間宣言を検査。GUIの位置制約表示はBROWSER-PRODUCTで別検査 |
 | scope:purity | 求値の外部副作用禁止 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 副作用54kind/opと外部更新8文型のS305を検査し、拒否されたASTの保持も確認。GUI候補と診断表示はBROWSER-PRODUCTで別検査 |
 | runtime:fairness | 複数処理を命令単位で公平に進める | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | A1/B1/A2/B2順序 |
-| runtime:time | 論理時計による待機 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | deadline境界の待機 |
+| runtime:time | 論理時計による待機と、待たずに画面が変わったくり返しの回を次のこまから始めること | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | deadline境界の待機 |
 | runtime:condition | 条件待機の再評価・失敗時停止 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 条件更新とエラー停止の順序 |
 | runtime:notify | 直接起動した受け手だけの完了待ち | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 入れ子通知の待つ/待たない両方について、999/1000msの出力順・待機group・残taskを検査。実イベント起動はbrowser suiteで別検査 |
 | runtime:question | 質問の直列化とtask別の答え | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 古い回答callbackを無視し次の質問を保護 |
-| runtime:glide | 滑走と他taskの並行実行 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 499/500/999/1000msで途中/完了座標と並行taskの観測順を比較し、CUI/codec往復で一致を確認。実schedulerの中間座標と並行taskはbrowser-event-tracesで別検査 |
+| runtime:glide | 「〇秒かけて、」の移動・回転と他taskの並行実行 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 499/500/999/1000msで途中/完了座標と並行taskの観測順を比較し、CUI/codec往復で一致を確認。実schedulerの中間座標と並行taskはbrowser-event-tracesで別検査 |
 | runtime:audio-wait | 開始した音のhandleだけを待つ | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | simulate handleの個別完了はself-test、実decode/再生はstorage-media suiteで別検査 |
 | runtime:stop | 停止後のtask/待機/質問/物理入力解放 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 停止後の後始末 |
 | runtime:pause-step | pause/resume/1命令実行で時計を早送りしない | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | step と時計の意味は既存 self-test、Switch と readonly は browser-session で別に検査する |
@@ -442,7 +447,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 C74/Q76/E32/L38、別40能力、schemaの現在必要な意味と実動作を試験へ対応付ける。登録だけで実行成功とせず、独立した値・単位・型、source/block/generated source、命令・scheduler・入力と結果を確認する。対応表の正本は現行manifestであり、別の移行台帳を必須にしない。
 
-I07〜I12原作文とI10補助定義は独立期待値として保持し、制作の受理・意味・本文選択・実行を要求する。安全拒否や途中保存を制作成功の代替にしない。自然な役割、符号・小数・距離、文字結合、計算・手順・分身・継続移動の意味を検証する。
+I07〜I12原作文とI10補助定義は独立期待値として保持し、制作の受理・意味・本文選択・実行を要求する。安全拒否や途中保存を制作成功の代替にしない。自然な役割、符号・小数・距離、文字結合、計算・手順・コピー・継続移動の意味を検証する。
 
 Akari auditと固定受入の必要結果を最終集約する。同じproducerを両入口で二重実行する必要はなく、同じ入力・環境の有効結果を共有できる。別の保証を単に片方のgreenで代用しない。合成negative controlsは検査器の拒否試験であり、製品成功に数えない。
 
@@ -463,7 +468,7 @@ GA-STATICはPNG実寸・metadata・byte数・固定SHAを検査する。GA-EXEC�
 
 `ux-normal-language`（28件）、`ux-normal-browser`（12件）、`ux-normal-matrix`（48件）、`ux-normal-layout`（100件）、`ux-normal-speech`（100件）を既存の追加受入へ必須接続する。原文・実行結果・回答・対象・時刻・取消・幅を `ux-normal-contract.mjs` で別に検証する。自己申告のPASSだけでは受け入れない。欠落、重複、FAIL、異なるsnapshot、意味を壊した結果、結果ファイルの欠落を拒否する。独立集約の拒否試験は既存141件を保持し42件を追加した183件である。
 
-GUI三群は独立したbrowser processで並列実行する。ジョブの時間上限（`workflow-contract`が検査）、個別入力の12,000ms境界、現行の意味・期待値・観測境界を維持する。ホスト・子実行の例外やtimeoutはFAILであり、機械PASSから実児童UXや実IMEの完了を主張しない。Windowsローカルの成功はLinuxのCI実行に読み替えない。
+GUI三群は独立したbrowser processで並列実行する。ジョブの時間上限（`workflow-contract`が検査）、個別入力の12,000ms境界、現行の意味・期待値・観測境界を維持する。ホスト・子実行の例外やtimeoutはFAILであり、機械PASSから実児童UXや実IMEの完了を主張しない。Windowsローカルの成功を本番CIの成功に読み替えず、対象SHAのWindows Actionsで確認する。
 
 現在の意味契約はLANGUAGE.mdの自然文・編集・発話の各節、現在の文型はaudit/LANGUAGE_FORMS.mdを参照する。過去の文書移管mapや旧文書を通常監査の必須入力にしない。
 
@@ -473,7 +478,7 @@ GUI制作後の実作品も独立時計で検査する。B02/B11の再実行、B
 
 `audit/run-ux-phrase-gui.mjs` は `ux-phrase-trigger`（16件）、`ux-phrase-speech`（19件）、`ux-phrase-list`（35件）の計70件を実行する。各群は独立した固定IDと期待値を持ち、実ブラウザーの1180×757と1188×848を区別する。リスト群には製品から分離したruntimeと書き出しHTMLの失敗処理も含める。既存の必須群と183件の集約拒否試験を維持し、`actions-transfer-verify.mjs` が新しい3群の完全な結果と同じ製品・監査入力snapshotを必須とする。
 
-きっかけは本文選択と基本変更の区別、開くだけ・取消の無変更、開始とクリックの往復、対象・本文・他のまとまりの保持、詳細条件、実イベント、Undo/Redoを検査する。発話全文は二体の78字、話者と原文の同時点保持、更新・消去・停止・再実行、狭い舞台と通常倍率、長名・Unicode・クローン、本文だけのコピー対象、一般値・リストを検査する。引用リストは原文の型エラー拒否、失敗から編集への復帰、明示選択による式範囲だけの修復、所属、添字・時間・データの保持、履歴、古い記録・候補なし・特殊文字を検査する。
+きっかけは本文選択と基本変更の区別、開くだけ・取消の無変更、開始とクリックの往復、対象・本文・他のまとまりの保持、詳細条件、実イベント、Undo/Redoを検査する。発話全文は二体の78字、話者と原文の同時点保持、更新・消去・停止・再実行、狭い舞台と通常倍率、長名・Unicode・コピー、本文だけのコピー対象、一般値・リストを検査する。引用リストは原文の型エラー拒否、失敗から編集への復帰、明示選択による式範囲だけの修復、所属、添字・時間・データの保持、履歴、古い記録・候補なし・特殊文字を検査する。
 
 `audit/lib/ux-phrase-contract.mjs` は各群の独立validatorへ接続し、欠落・重複・失敗・別snapshot・別環境・例外・外部通信・結果の意味の改変とレポート欠落を追加75条件で拒否する。拒否検査で改変した証拠を製品の実行成功数へ加えない。局所の再検証入口は `node audit/tests/ux-phrase-verify.mjs <証拠ディレクトリ>` とする。機械検査・実ブラウザーでの操作結果から、独立UX監査や実児童による理解、実IME調査の完了を主張しない。
 
@@ -491,7 +496,7 @@ GUI制作後の実作品も独立時計で検査する。B02/B11の再実行、B
 | storage/stale-completion | 保存中に追加編集した場合、古い完了通知で新しい編集を済みにしない。最後の本文が永続化・復元される。 |
 | storage/quota-retains-current-and-draft | IndexedDBと代替保存の容量不足で失敗とファイル保存の案内を示し、以前の保存記録、現在本文、未完の入力を保持する。 |
 | restored/pending-draft | 未完の入力を保存・復元し、Undo/Redoでも本文と下書きを取り違えない。 |
-| restored/callable-clone-pause | 復元した分身開始本文から手順内で停止しても、有効な呼出元本文を保存し、手順のデバッグ表示とファイル保存を保持する。 |
+| restored/callable-clone-pause | 復元したコピーの開始本文から手順内で停止しても、有効な呼出元本文を保存し、手順のデバッグ表示とファイル保存を保持する。 |
 
 記録は固定Chrome / Playwrightの実ブラウザーで採取し、テスト側だけで保存要求・transaction完了・状態表示の時系列を観測する。製品に診断fixtureや送信処理を入れない。`audit/lib/autosave-state-contract.mjs` が固定ID、独立期待値、実保存内容、時系列、環境、当該snapshotを検証する。固定受入の集約は既存183件・追加75件の拒否検査を維持し、この9件の意味改変・欠落・別snapshot等とレポート欠落を19条件で拒否する。未実施OS、実IME、実児童UXをこの機械検査の合格へ含めない。
 
@@ -501,7 +506,7 @@ GUI制作後の実作品も独立時計で検査する。B02/B11の再実行、B
 
 常時可視の「ブロックを探す」、13px以上の入力文字、通常語と検索欄の消去操作を収める実測幅、候補表示・分類案内の折返しと非重複、候補設定を開いた際の幅内配置を、実画面とDOM寸法で検査する。検索で本文を変更しないこと、検索語保持、分類切替・消去、Tab/Enterによる候補表示と追加、0.1秒待つ命令の意味、Undo/Redo、作業台の主要操作への到達を別に確認する。
 
-手順本文の390px幅では、道具箱の行が高さ0にならず、検索欄・分類・候補へ実際に入力・クリックできることを確認する。候補から追加した標準の1秒待つ命令を数欄で0.1秒へ編集し、追加と編集それぞれのUndo/Redoを確認する。未完の数入力では取消操作へ到達でき、確定済み本文へ戻ることも検査する。
+手順本文の390px幅では、ブロックの一覧の行が高さ0にならず、検索欄・分類・候補へ実際に入力・クリックできることを確認する。候補から追加した標準の1秒待つ命令を数欄で0.1秒へ編集し、追加と編集それぞれのUndo/Redoを確認する。未完の数入力では取消操作へ到達でき、確定済み本文へ戻ることも検査する。
 
 拡大検査は新しいテスト専用のローカル拡張から実ブラウザーの倍率を125%に設定し、実際の倍率、同じウィンドウ外寸、CSS表示幅の減少、DPR変化を記録する。CSS zoomやviewportだけの変更をブラウザー拡大の証拠にしない。拡張や観測処理は製品へ含めない。
 
@@ -536,7 +541,7 @@ GUI制作後の実作品も独立時計で検査する。B02/B11の再実行、B
 
 言語支援はG3-R（読む手掛かり）、G3-M（意味と具体例）、G3-A（対象/操作/結果）、G3-S（説明への到達）、G3-V（まとまり/折返し/密度）を製品側で確認する。保存/書き出しの違い、見た目のコピーにコードが含まれないこと、数・文字・条件の答えの区別、変数/リスト/手順、透明ます目、表示語と受理構文の別表記、原診断/内部IDの詳細を維持する。画面確認していない分岐、実児童理解率、実IME、学習効果は合格と主張しない。
 
-`.github/workflows/akari-acceptance.yml` の追加 `ux-editing` job は既存の acceptance job と別に実行する。固定 Chrome 140.0.7339.207・Playwright 1.55.0を使い、LinuxではNoto CJKを導入する。既存jobの15分上限を変更せず、追加jobも15分とし、独立した項目と validator を `always()` で最後まで実施して証拠を保存する。ローカルWindowsでLinux条件と両OS集約が未実施なら、その状態を報告に残す。
+`.github/workflows/akari-acceptance.yml` の追加 `ux-editing` job は既存の acceptance job と別に実行する。固定 Chrome 140.0.7339.207・Playwright 1.55.0をWindowsで使い、実際のフォントの有無とhashを記録する。各jobの現行時間上限を保ち、独立した項目と validator を最後まで実施して証拠を保存する。未実施・別環境・timeoutをPASSにせず、Windowsの結果をLinux実施済みとは扱わない。
 
 表示と原文・操作・履歴の保持を現行の期待値で照合する。「台詞」の意味は画面上の「そのままの文字を話す」と、音を鳴らす候補の原文を別々に照合する。日本語 gate の従来68負例を保持し、表示と原文の混線を拒否する2負例を加える。DOM描画の負例では従来の正常判定を保ち、最新ノードを読む保護も外した不正状態を同じ正常判定が拒否することを検査する。
 
@@ -575,6 +580,8 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.0の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。
 
@@ -595,15 +602,15 @@ LICENSE、製品、書き出しHTML、派生editor/playerがMIT SPDX、同じMIT
 
 ## 吹き出し設定と部品名の表示
 
-追加監査の入口は `audit/tests/speech-display-browser.mjs <固定ブラウザー> <新しい出力JSON>`、独立検証は `audit/tests/speech-display-verify.mjs <出力JSON> <検証結果JSON>` とする。local gateとActionsのselftest・証拠集約に両方を必須追加し、既存42段・能力台帳260行・全ブラウザー群・既存の負例を保持する。
+追加監査の入口は `audit/tests/speech-display-browser.mjs <固定ブラウザー> <新しい出力JSON>`、独立検証は `audit/tests/speech-display-verify.mjs <出力JSON> <検証結果JSON>` とする。local gateとActionsのselftest・証拠集約に両方を必須追加し、既存のgate段・能力台帳の全行・全ブラウザー群・既存の負例を保持する。
 
 | 安定ID | GA-EXECの期待値 |
 | --- | --- |
-| DISPLAY-SETTINGS | 新規作品の表示あり、コード／ブロックと基本／詳細の4組合せでオン・オフ・Undo／Redo、名前行の余白除去と本文保持 |
+| DISPLAY-SETTINGS | 新規作品の表示あり、コード／ブロックと「かんたん」「くわしく」の4組合せでオン・オフ・Undo／Redo、名前行の余白除去と本文保持。再生画面は6組合せ（「再生画面への切替の修正と監査」） |
 | DISPLAY-PERSISTENCE | 両設定の実ダウンロード、再読込み、自動保存復元、書き出したHTMLのオフライン実行 |
 | DISPLAY-BUBBLES | 両設定・短文／長文・1180／390px・舞台10／30／100／200％の32条件、舞台内包含・非重複・短文の全文字・長文の全文への実操作 |
 | DISPLAY-DURATION | 両設定の同時2秒発話の実時刻と、時間指定なしの次の発話までの保持・停止時の消去 |
-| DISPLAY-OBJECT-NAMES | コード／ブロック・基本／詳細・1366／390／320px・短名／長名の24条件、名前の折返し・上段配置と実コピー／削除、元の名前と本文の保持 |
+| DISPLAY-OBJECT-NAMES | コード／ブロック・「かんたん」／「くわしく」・1366／390／320px・短名／長名の24条件、名前の折返し・上段配置と実コピー／削除、元の名前と本文の保持 |
 | DISPLAY-NATIVE-ZOOM | 両モードでChrome自身の125／200％拡大の4条件、実倍率・viewport・DPR、長名と操作ボタンの表示と操作 |
 | DISPLAY-INVALID | 6種類の不正設定値とnull／undefinedの画面データを、作品／実行データ境界でF503／X602として拒否 |
 
@@ -612,29 +619,39 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 検証器は順序付き7群、32＋24＋4条件、公開snapshot、固定Chrome／Playwright、保存作品・生成HTML・画像と候補製品の実hashを要求する。欠落・重複・失敗・別snapshot・環境・通信・名前や本文の欠け・復元設定・偽拡大・artifact改変を13拒否対照で検査する。期待本文を観測結果へ代入せず、全文ボタンを操作した場合は実際のdialog本文を記録する。実行したOSに結果を限定し、実児童UX・実IME・未実施OSをPASSとしない。
 
 
+## 子ども向けの文の検査
+
+子ども向けの文（LANGUAGE.md「子ども向けの文」）は、次の三つで検査する。
+
+- 言葉（F-23）：製品の表示と文字列と6つのマニュアルに、LANGUAGE.mdの用語のほかの言葉（「できごと」「なおす動き」「作業欄」「組み立てる ばしょ」「作る ばしょ」「自動で のこす」「自動保存」「キャラ」「命令一覧」「使うブロック」「名人モード」、やめるボタンの「とちゅうで やめる」）がないことを、selftestの `product-source` の CHILD-GLOSSARY-ONE-WORD で調べる。
+- 言い方（F-18）：確認の窓は、操作をたずねる窓として「〜よ」の言い方で書く。本文がどこへうつるかを説明する名人の確認だけを、名前をつけた例外として「です・ます」で書く。製品の確認の窓をすべて数え、一覧にない窓、例外のほかの窓の「です・ます」、例外の窓の「〜よ」、一つの窓の中で二つの言い方がまざることを不合格にする。
+- 文節の空白（F-19）：子ども向けの文に、ひらがなが6文字以上続くところがあれば不合格にする。コードの例、名前、「 」の中の文字は数えない。一つの文節で6文字以上になることば（「もどせません」など）は、人がたしかめた一覧の文字列だけを外す。文節を自動で区切る仕組みは使わない。selftestの `product-source` の CHILD-SPACING-RUNS で調べ、外す文字列の一覧は `audit/fixtures/child-spacing-allowlist.json` に置く。
+
 ## 児童目線UX監査の追加契約
 
 [再現可能な児童目線UX監査](audit/CHILD_UX.md)と `audit/fixtures/child-ux-plan.json` を追加契約とする。既存の必須保証、固定baseline・oracle、LANGUAGE、製品をこの追加の都合で変えない。技術検証・Actionsの機械合格・児童目線の独立最終評価を別々に扱い、実児童・実OS IME・Scratch比較の未実施をPASSへ含めない。既存48枠の両方向の実UI往復と既存8枠の実画面語彙観測を利用し、同run／attempt／snapshotの2ジョブの証拠を厳格に集約する。失敗・欠落・skip・cancel・timeoutを拒否し、再試行前の結果を履歴として保持する。
 
 ## 再生画面への切替の修正と監査
 
-別途指示された製品不具合修正として、再生時の大きなプレビューをコード／ブロック・かんたん／くわしくの4組合せへ適用する。舞台と動きのようすを表示し、停止・一時停止・再開・1命令ずつの操作を残す。停止後は本文を変えず編集へ戻る。言語の意味・保存形式・実行形式・書き出しruntimeを変更しない。
+再生画面の監査は、ブロックの「はじめて」「かんたん」「くわしく」と、コードの「かんたん」「くわしく」「名人」の6つの組み合わせで行います。再生画面のツールバーに見えるのは「■ 止める」と作品名だけで、動いているあいだに使えない「新しく作る」「お手本を開く」「▶ ヒント」「開く」「保存」「うごく作品を ファイルにする」（「はじめて」では「作品」と「↶ もとに もどす」「↷ やり直す」「いっしょに作る」）とレベルの選択欄・見せ方の切りかえボタンが見えず、その場所があいたままで「■ 止める」が「▶ 動かす」の場所にあり、作品名が書きかえられない文字であることを、6つの組み合わせと、ツールバーが折り返す画面幅で確かめます。どの組み合わせでも、編集画面には「▶ 動かす」だけがあり、再生画面には「■ 止める」があって「▶ 動かす」はありません。名人の本文がある作品では、再生中もブロックを選べません。
 
-既存selftestのDISPLAY-SETTINGSへ4組合せの実ブラウザー操作を追加する。`run-preview-contract.mjs` が画面に対する舞台の領域、編集欄の非表示、フォーカス、実際のクリック対象、操作と停止後の状態・本文を独立検証する。4画像の実在・hashと独立した拒否対照を必須とし、既存7群・全条件・13拒否対照・8秒制限を維持する。事前の失敗を残し、Linuxの修正結果は当該SHAのActionsで確認する。
+再生時の大きなプレビューは6組合せのすべてに適用する。舞台と動きのようす、「■ 止める」を6組合せのすべてで表示し、「⏸ いったん止める」と「▶ つづける」は同じ場所に同じはばで、押せるほうだけをかわりばんこに出す（動いているあいだは「⏸ いったん止める」、いったん止めたあいだは「▶ つづける」。じゅんび中・おわったあと・まちがいの知らせで止まったあとはどちらも出さず、場所をあけておく）。どちらかを押してから0.5秒のあいだの二度押しは何もしない。「かんたん」「くわしく」「名人」では「1つずつ 動かす」「本文を見て たしかめる」も残す（「はじめて」には出さない。まちがいで止まったあとは「1つずつ 動かす」を出さない）。再生画面には押せないボタンを出さない。「はじめて」ではブロックの一覧、きっかけのボタン、「＋ だんご」などのボタン、えらんだブロックの道具、「＋ ここに入れる」をしまい、作品画面を大きい側の列に置く。「キャラクター・部品」は組み立てたブロックの下に移し、「⏸ いったん止める」「▶ つづける」は「いま 動いている 文：」の帯と同じ行の右はしに置く。二つの列のとき、動かす画面の作品画面が作る画面の作品画面より小さくないことを、部品の多いお手本（めいろ）で、1366×768、1366×650、1280×690、1093×614、1093×530の画面と二つの字体で確かめる（はば650ピクセル以下は作品画面と部品の一列）。「▶ 動かす」から「■ 止める」まで、いったん止めたときも、つづけたときも、おわったときも、舞台とボタンの場所と大きさをかえない。再生画面の下の行にはほぞんのようすを出さない。再生画面では作品チェックの知らせの印（「ⓘ 知らせ」と書きかえるボタン）を出さない。いっしょに作るのあいだも「■ 止める」「⏸ いったん止める」「▶ つづける」「いっしょに 作るのを やめる」は押せる。再生画面ではレベルの選択欄と見せ方の切りかえボタンをツールバーに出さない（場所はあけたままにする）。作品画面の10歩ごとの点は、作る画面と再生画面に出し、書き出した作品には出さない。停止後は本文を変えず編集へ戻る。言語の意味・保存形式・実行形式・書き出しruntimeを変更しない。
+
+既存selftestのDISPLAY-SETTINGSへ6組合せの実ブラウザー操作を置く。`run-preview-contract.mjs` が画面に対する舞台の領域、編集欄の非表示、フォーカス、実際のクリック対象、操作と停止後の状態・本文を独立検証する。組合せごとの画像の実在・hashと独立した拒否対照を必須とし、既存7群・全条件・13拒否対照・8秒制限を維持する。事前の失敗を残し、修正結果は当該SHAのWindows Actionsで確認する。
 
 児童監査のscope原本とpinは変更しない。承認された製品CSS・仕様の追記・既存表示試験への追加だけを `approved-run-preview-fix.json` に固定する。全文hashと、追加を正確に戻した元のhashをともに要求する。4対象ファイルの巻き戻し・余分な変更を8負例で拒否し、元のbaseline・oracle・期待値・既存workflowを保護する。
 
 新しい吹き出し試験の固定幅はcontext生成時に指定し、読込み後の準備resizeを行わない。同じ画面条件・実操作・期待・8秒制限を維持する。児童UXのscope原本は保持し、この準備差分だけを変更後全文hashと逆変換後の元hashで限定する。元の28静的拒否対照にtimeout変更・余分な変更を拒否する2対照を追加し、最初の失敗を記録する。
 
 
-命令一覧の「探す・作るをたたむ／ひらく」は検索・データ作成・ヒントの領域を開閉する。初期は開状態。DISPLAY-SETTINGSの両ブロック条件で実クリックとEnterによる再表示、命令一覧の高さ増加、検索・分類・作品・Undo／Redoの保持、変数・リストダイアログへの再到達を追加検査する。既存機能・期待値・試験件数を縮小しない。
+ブロックの一覧の「さがす・作るを たたむ」／「さがす・作るを ひらく」は検索・「ブロックの しゅるい」・データ作成・ヒントの領域を開閉する。初期は折り畳んだ状態。DISPLAY-SETTINGSの両ブロック条件で実クリックとEnterによる再表示、ブロックの一覧の高さ増加、検索・分類・作品・Undo／Redoの保持、変数・リストダイアログへの再到達を追加検査する。既存機能・期待値・試験件数を縮小しない。
 
-本文の検証では元のコード／ブロックと動きのようすを同じDOMのまま専用の検証画面へ開き、実行中の編集ロック、表示切替、実行位置、一時停止・再開・1命令ずつを保持する。質問・実行エラーは検証画面を閉じて通常の案内を操作できるようにする。通常画面4枚、検証画面4枚、折り畳み2枚の画像と、実操作・領域・本文保持を同じselftestへ必須追加する。
+本文の検証では元のコード／ブロックと動きのようすを同じDOMのまま専用の検証画面へ開き、実行中の編集ロック、表示切替、実行位置、一時停止・再開・1命令ずつを保持する。質問・実行エラーは検証画面を閉じて通常の案内を操作できるようにする。通常画面の組合せごとの画像、「本文を見て たしかめる」がある組合せの検証画面の画像、折り畳み2枚の画像と、実操作・領域・本文保持を同じselftestへ必須追加する。
 
 
 再生画面の出力欄と200％でのスクロールは `numeric-display-browser` と `speech-name-layout-browser` の既存検査で確認する。数値の実値表示は本文検証画面からも操作し、モーダルに妨げられず読めて閉じられることを要求する。`paint-runtime-lock` は編集時に操作へ到達してから再生中の無効化と停止後の復帰を検証し、`browser-session` と `review-readable` は明示された本文検証画面を開いて既存のロック・表示切替・デバッグ・所有者の保証を確認する。`ux/browser-bubble-1366-fit` は大きなfitを確認した後、40％の操作で従来の39–43％縮小条件を再現し、元の境界・文字サイズ・非重複・全文一致を両方で維持する。独立validatorと合成正例は両方の観測を要求し、元の183負例を保持する。製品CSSと操作経路の承認差分は正確な逆変換と全文hashで限定する。
 
-本文検証画面では元の「表示：かんたん／くわしく」の選択部品も移動し、実行中の表示段階切替を保持する。閉じた際に元の場所へ戻し、コード／ブロック・一時停止・再開・停止の経路とともに `review-readable` で確認する。
+本文検証画面には見せ方の切りかえボタン（「ブロックモード ⇄」／「コードモード ⇄」）、「■ 止める」、「作品画面に もどる」を出し、レベルの選択欄は出さない。レベルは作品をなおす画面でだけ変えられる。名人の本文がある作品では、検証画面でもブロックを選べない。コード／ブロック・一時停止・再開・停止の経路とともに `review-readable` で確認する。
 
 再生画面と編集画面の現行操作・状態・履歴を直接検証する。旧試験sourceへの逆変換や承認hunkの恒久保持は不要。現行の結果validatorと必要な拒否対照で検査の欠落・改変を拒否する。
 
@@ -657,7 +674,7 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 
 `audit/tests/export-open-browser.cjs` と `audit/lib/export-open-contract.cjs` は追加の31件を固定IDで検査します。現行のlocal gateと必要な追加検査の対応を確認し、`node audit/tests/export-open-browser.cjs <Chrome実行ファイル> <新しい証拠ディレクトリ>` を実行します。現行公開snapshot、結果集合・順序・重複、個別PASS、ページ例外と外部通信を検証し、欠落・失敗・別snapshotを合格にしません。既存検査の削除・免除・期待値の緩和は行いません。
 
-書き出し選択の静止見本・取消・フォーカス・狭い表示・連打と、従来API引数の既定形式・開始／再開始／一時停止／再開／停止を確認します。作品だけの形式は左上・設定サイズ・作品内ボタン／キー／質問／画像／ペン／停止、iframeと戻る操作、初期化と不正素材の拒否を確認します。音声なし／開始許可／ブラウザーによる開始待ち、待機中の無進行、native mouse／keyboard／touchの一度だけの開始と入力の二重伝播防止を確認します。音声decode失敗と操作後の権限制限はfault injectionを明記し、実環境の制限確認と混同しません。音声出力先の障害は無効なsinkIdを指定し、nativeのresumeとerrorイベントによる安全停止・詳細表示を確認します。既定の出力先で自然発生した観測とは区別します。
+書き出し選択の静止見本・取消・フォーカス・狭い表示・連打と、従来API引数の既定形式・開始／再開始／一時停止／再開／停止を確認します。作品だけの形式は左上・設定サイズ・作品内ボタン／キー／質問／画像／ペン／停止、iframeと戻る操作、初期化と不正素材の拒否を確認します。音声なし／開始許可／ブラウザーによる開始待ち、待機中の無進行、native mouse／keyboard／touchの一度だけの開始と入力の二重伝播防止を確認します。作品だけの形式で動いている作品の画面では、一本の指がどこから動かし始めてもマウスのままで（pointercancelなし）、二本の指でページを広げ・せばめ・動かせることを、画面に入りきらない作品（はば1000）とせまい窓で確かめます（LANGUAGE.md「移動量と座標の意味」）。これは合成タッチの検査で、実際のタッチ機器での確認は別に行います。音声decode失敗と操作後の権限制限はfault injectionを明記し、実環境の制限確認と混同しません。音声出力先の障害は無効なsinkIdを指定し、nativeのresumeとerrorイベントによる安全停止・詳細表示を確認します。既定の出力先で自然発生した観測とは区別します。
 
 開く前の確認は、保存・自動保存・編集・Undo/Redo、取消、同じ作品の再選択、破損読込み、別経路、承諾後の編集、書きかけと自動復旧を対象にします。承諾だけで作品・素材・履歴・自動保存を消さず、読込み検証が成功してから置き換える保証を確認します。自動保存失敗の注入でも確認条件は未保存状態のままです。
 
@@ -671,6 +688,10 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 
 ## 編集時の構文再利用の回帰検査
 
+長文の境界検査では、単独の数値列と、移動・待機・回転を連結した正しい文と末尾が誤った文を、同じ5秒のworker期限で確認する。集約側は結果の入力名・個数・文字数・受理と拒否・有限の計測値・期限・snapshotを独立に検証し、欠落・重複・例外・timeoutを拒否する。上限超過を拒否する既存入力と、上限内の末尾誤りの入力を保持する。
+
+診断の案内は、リストだけの作品、部品の変数と同名の局所リスト、引用が必要な部品名でも、表示した例を実際に読み実行して確認する。接触見出しの案内は通常の部品・画面・名人の本文で接触主体と相手を検証し、定義の本文へ見出しを挿入する案内を出さない。作品だけの書出しでは、全面を部品が覆う作品の1本指操作、2本指の拡大・移動・縮小、pointercancel後の押下解除、画面外のボタンへの1回のタップと入力欄の編集を実ブラウザーで確認する。
+
 編集診断で共有本文を繰り返し解析する負荷を対象とする。構文だけを再利用し、候補ごとの所属解決と意味検査は現在の作品に対して再実行する。キャッシュは保存対象外で、本文・解析文脈・宣言・部品／舞台・拡張操作の変化に追従し、最大256文書・本文合計100万UTF-16単位に制限する。実行器のcompile経路と外部形式は変更しない。
 
 `audit/tests/editor-syntax-reuse.mjs` の非キャッシュ比較・無効化・非変更・解析回数・上限検査を `node-product` の追加検査として実行する。既存の安定ID、独立期待値、全ブラウザー検査を置き換えず、原本を使った実画面の改善確認とは別の証拠として扱う。
@@ -680,8 +701,8 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 保存・編集・実行の失敗から、同じ作品と編集場所へ戻れることを検査する。現行のlocal gateと書出し／読込みの保証を保持し、次の観測を既存の該当ケースに追加する。現行の独立期待値を候補出力で追認しない。
 
 - GA-EXEC／HYBRID：`editor-browser` の検索欄・全文編集の文字Undo/Redo、本文選択2経路と手順／答えの選択後のUndo/Redo。作品の本文、選択先、履歴数、Redoを照合する。
-- GA-EXEC：`review-first-use` の `REVIEW-DEFAULTS-FIRST-RUN` に、1188／390／320pxで候補の説明全文と「ならべかえ」→「上へ」の実クリック、元に戻す／やり直すを追加する。並べ替えは2クリック・ドラッグ0回の操作成立を測り、初見の発見性を合格と推定しない。
-- GA-EXEC：`UI-BUTTON-RESPONSIVE` に760／390／320pxの文字編集後の道具箱再表示を追加する。一度だけの確定と、変換中・確定失敗時の入力保持、通常開閉、作品と履歴の保護を確認する。合成IMEは実OS IMEと区別する。
+- GA-EXEC：`review-first-use` の `REVIEW-DEFAULTS-FIRST-RUN` に、1188／390／320pxで候補の説明全文と「↑ まえへ」の実クリック、元に戻す／やり直すを追加する。並べ替えは2クリック・ドラッグ0回の操作成立を測り、初見の発見性を合格と推定しない。
+- GA-EXEC：`UI-BUTTON-RESPONSIVE` に760／390／320pxの文字編集後の「ブロックを 出す」によるブロックの一覧の再表示を追加する。一度だけの確定と、変換中・確定失敗時の入力保持、通常開閉、作品と履歴の保護を確認する。合成IMEは実OS IMEと区別する。
 - GA-STATIC／GA-EXEC：`draft/selection-belongs-to-target-and-event` で本文IDと対象／できごとの一致を検査し、同じできごとの複数本文を保持する。`OPEN-APPROVED-CORRUPT-RETAINED` は元の破損ケースに加え、選択不一致と復元時例外の注入で作品・素材・下書き・Undo/Redo・dirty・自動保存の非破壊を検査する。`OPEN-RECOVERY-SAVED-DRAFT-CLEAN` は保存済みのコード／ブロック／定義下書きと、その後の変更を区別する。
 - GA-EXEC：`browser-session` の既存実行／停止・失敗場所ケースで、現在表示中の編集先へのフォーカスと正しい復帰案内を確認する。
 - GA-EXEC／HYBRID：`browser-runtime-limits` に新ID `limit:continuous-number-overflow` を追加する（既存9 IDを維持して10 ID）。有限の速度でも時間積分で位置が溢れる4方向、停止境界での溢れ、通常速度の正確な停止位置を独立に計算する。コード／ブロックの実画面でR403の一時停止、日本語の対象・理由・復帰案内、停止成功、作品・履歴保持を検査する。受理する数値や既存の資源上限を狭めない。
@@ -692,6 +713,6 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 
 R06の文書上の操作名と現行UIの一致を直接検証する。旧文書の節hashや移管件数の再構成は要求せず、現在の操作と維持する意味を確認する。
 
-児童向けブロック用語の案内は、折り畳まれた初期道具箱の「探す・作るをひらく」へ通常操作で進んでから、従来のEnter開閉・全文・領域・本文履歴保持を検査する。8件の必須ID・assertion・時間制限を保持する。
+児童向けブロック用語の案内は、折り畳まれた初期のブロックの一覧の「さがす・作るを ひらく」へ通常操作で進んでから、従来のEnter開閉・全文・領域・本文履歴保持を検査する。8件の必須ID・assertion・時間制限を保持する。
 
 保存・読込み診断の既存4ケースには、code/blocksと1180×757・1366×768・1188×848の「出力」到達を追加する。実wheelと通常クリック、全領域・中心hit・詳細表示、作品・本文・履歴の保持を必須とし、Tabによる自動スクロールをwheelの代替にしない。診断23件と旧17拒否対照を保持し、wheel証拠欠落と入口の切れを拒否する2件を追加する。閉じたblocksの枠は従来の折り畳みを維持する。

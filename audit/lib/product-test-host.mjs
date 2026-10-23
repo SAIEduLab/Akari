@@ -47,7 +47,10 @@ export function suiteExpression(name) {
   const fixture=fs.readFileSync(path.join(root,'audit/fixtures/regression-project.cjs'),'utf8');
   const bindings=fs.readFileSync(path.join(root,'audit/suites/bindings.js'),'utf8');
   const body=fs.readFileSync(path.join(root,'audit/suites',name+'.js'),'utf8');
-  return `(async () => {\n${fixture}\n${bindings}\n${body}\nreturn await ${name}();\n})()`;
+  // The suites compare the product's contract numbers with the release record in features.json, not with copies.
+  const contract=JSON.parse(fs.readFileSync(path.join(root,'audit/manifests/features.json'),'utf8')).EXECUTABLE_CONTRACT;
+  if(!contract||!['languageContractId','runtimeContractId','programFormatVersion','projectFormatVersion'].every(k=>Number.isInteger(contract[k])))throw Error('features.json EXECUTABLE_CONTRACT missing');
+  return `(async () => {\nconst AUDIT_EXECUTABLE_CONTRACT = Object.freeze(${JSON.stringify(contract)});\n${fixture}\n${bindings}\n${body}\nreturn await ${name}();\n})()`;
 }
 export async function externalReports(browser, product, names) {
   if(!names.length || new Set(names).size!==names.length) throw Error('Empty or duplicate suite registration');

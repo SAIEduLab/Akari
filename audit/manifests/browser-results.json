@@ -49,7 +49,11 @@
       "keys": [
         "runtime-fixed-seed-mode-switch-trace",
         "preparing-importing-lock-and-decode-failure-rollback",
-        "question-answer-and-question-stop-both-modes"
+        "question-answer-and-question-stop-both-modes",
+        "runtime-loop-pacing-real-time",
+        "runtime-picture-outline-touch",
+        "runtime-picture-outline-thin-strip",
+        "runtime-touch-drag-mouse-within-screen"
       ]
     },
     {
@@ -121,28 +125,33 @@
         "event:button:keyDown",
         "event:button:message",
         "event:button:backdropChanged",
+        "event:button:touchStart",
         "event:sprite:start",
         "event:sprite:click",
         "event:sprite:keyDown",
         "event:sprite:message",
         "event:sprite:backdropChanged",
         "event:sprite:cloneStart",
+        "event:sprite:touchStart",
         "event:label:start",
         "event:label:click",
         "event:label:keyDown",
         "event:label:message",
         "event:label:backdropChanged",
+        "event:label:touchStart",
         "event:box:start",
         "event:box:click",
         "event:box:keyDown",
         "event:box:message",
         "event:box:backdropChanged",
+        "event:box:touchStart",
         "event:input:start",
         "event:input:click",
         "event:input:keyDown",
         "event:input:message",
         "event:input:backdropChanged",
-        "event:input:valueChanged"
+        "event:input:valueChanged",
+        "event:input:touchStart"
       ]
     },
     {
@@ -162,28 +171,33 @@
         "event-trace:button:keyDown",
         "event-trace:button:message",
         "event-trace:button:backdropChanged",
+        "event-trace:button:touchStart",
         "event-trace:sprite:start",
         "event-trace:sprite:click",
         "event-trace:sprite:keyDown",
         "event-trace:sprite:message",
         "event-trace:sprite:backdropChanged",
         "event-trace:sprite:cloneStart",
+        "event-trace:sprite:touchStart",
         "event-trace:label:start",
         "event-trace:label:click",
         "event-trace:label:keyDown",
         "event-trace:label:message",
         "event-trace:label:backdropChanged",
+        "event-trace:label:touchStart",
         "event-trace:box:start",
         "event-trace:box:click",
         "event-trace:box:keyDown",
         "event-trace:box:message",
         "event-trace:box:backdropChanged",
+        "event-trace:box:touchStart",
         "event-trace:input:start",
         "event-trace:input:click",
         "event-trace:input:keyDown",
         "event-trace:input:message",
         "event-trace:input:backdropChanged",
-        "event-trace:input:valueChanged"
+        "event-trace:input:valueChanged",
+        "event-trace:input:touchStart"
       ]
     },
     {
@@ -208,6 +222,13 @@
         "UI-else-branch-focus-nested-comments",
         "UI-else-selection-follows-formatting",
         "UI-outside-drop-preserves-state",
+        "UI-move-by-directions-legs-time-undo",
+        "UI-press-move-release-in-place-keeps-source",
+        "UI-when-button-refused-with-code-error",
+        "UI-entry-places-offer-no-calculation",
+        "UI-entry-loop-draft-no-hidden-notice",
+        "UI-carry-over-a-value-not-refused",
+        "UI-carry-from-a-value-with-mouse",
         "UI-keyboard-only-create-move-delete-history",
         "UI-touch-pointer-drag",
         "UI-pen-pointer-drag",
@@ -241,7 +262,8 @@
         "mock-desktop-code-layout",
         "mock-block-layout-source-invariant",
         "disclosure-discoverability-source-invariant",
-        "six-width-layout"
+        "six-width-layout",
+        "entry-wide-workbench"
       ]
     },
     {
@@ -398,8 +420,6 @@
         "EventCount:action",
         "EventCount:click",
         "ContinuousRule",
-        "MotionCommand:MOVE_DIRECTION",
-        "MotionCommand:GLIDE_DIRECTION",
         "WaitBroadcastGroup",
         "TargetReference",
         "CommentLine",
@@ -436,12 +456,9 @@
         "StopCommand:ALL",
         "MotionCommand:MOVE",
         "MotionCommand:GOTO",
-        "MotionCommand:GLIDE",
         "MotionCommand:SET_DIRECTION",
         "MotionCommand:TURN_RIGHT",
         "MotionCommand:TURN_LEFT",
-        "MotionCommand:SET_X",
-        "MotionCommand:SET_Y",
         "MotionCommand:POINT_TO",
         "MotionCommand:BOUNCE",
         "LooksCommand:FRONT",
@@ -553,7 +570,10 @@
         "SensorRead:DISTANCE_TO",
         "SensorRead:KEY_DOWN",
         "SensorRead:TOUCHING_COLOR",
-        "SensorRead:TOUCHING"
+        "SensorRead:TOUCHING",
+        "MotionCommand:MOVE_BY",
+        "MotionCommand:GOTO_PART",
+        "StopCommand:OWN_OTHERS"
       ]
     },
     {

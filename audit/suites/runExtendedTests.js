@@ -428,7 +428,15 @@ async function runExtendedTests() {
         for (const h of A.hintCandidates(p, targetId).filter(
           (x) => x.enabled && x.mode === 'expression',
         )) {
-          p.scripts[0].source = '（' + h.text + '）の値を言う';
+          // A list read (名前一覧) is a whole list: saying it as it is stops, at the check as when running (R411,
+          // FCM-17), so it is used where a list belongs, and the bare say must be the S304 refusal.
+          const wholeList = h.id.startsWith('read:') && h.binding?.kind === 'list';
+          if (wholeList) {
+            p.scripts[0].source = '（' + h.text + '）の値を言う';
+            const said = A.compileProject(p).errors.map((e) => e.code);
+            ok(JSON.stringify(said) === '["S304"]', h.text + ' said as it is: ' + JSON.stringify(said));
+          }
+          p.scripts[0].source = '（' + h.text + '）' + (wholeList ? 'の長さを言う' : 'の値を言う');
           const c = A.compileProject(p);
           ok(!c.errors.length, h.text + ': ' + JSON.stringify(c.errors));
         }
@@ -646,7 +654,7 @@ async function runExtendedTests() {
       const p = make(say('\u300c\u4fdd\u5b58\u8a66\u9a13\u300d')),
         s = A.serializeProject(p);
       ok(s.startsWith('# '));
-      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI-PROJECT-F4-DATA-BEGIN'])
+      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI-PROJECT-F' + AUDIT_EXECUTABLE_CONTRACT.projectFormatVersion + '-DATA-BEGIN'])
         ok(s.includes(part) || (part === 'SHA-256' && !p.sounds.length));
       const r = await A.parseProjectFile(s);
       eq(r.project, p);

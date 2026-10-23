@@ -22,7 +22,7 @@
     <button id="openBtn">開く</button>
     <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
     <button id="exportBtn" aria-label="うごく作品を ファイルにする" aria-describedby="exportActionHelp">うごく作品を ファイルにする</button>
-    <button id="undoBtn">↶ もとにもどす</button>
+    <button id="undoBtn">↶ もとに もどす</button>
     <button id="redoBtn">↷ やり直す</button>
     <span class="sep"></span>
     <button id="runBtn">▶ 動かす</button>
@@ -32,23 +32,28 @@
     <button id="imageObjectAdd" title="絵の ファイルを キャラクターにして 画面に おく">🖼 絵を おく</button>
     <button id="paintAdd" title="絵を かいて キャラクターにして 画面に おく">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="音の ファイルを 入れる">🔊 音を 入れる</button>
-    <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp">絵や音をまとめる</button>
+    <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp">絵や音を まとめる</button>
     <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
     <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
+    <details id="entryProjectMenu" class="toolbar-menu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
     <button id="tutorialStart" type="button">いっしょに作る</button>
-    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option><option value="meijin">名人</option></select></label>
-    <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
+    <label class="ui-level-label"><select id="uiLevel" aria-label="レベル"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="basicActionGuide" class="child-help toolbar-menu"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの 中を 指で 上に なぞると 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
-      <p id="assetActionHelp"><strong>絵や音をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
+      <p id="assetActionHelp"><strong>絵や音を まとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたり します。</p>
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
-      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ ものを 動かす、やることの まとまりです。「なおす動き」で えらびます。「いつ動く？」で 動く きっかけを かえます。</p>
-      <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。コードは コピーしません。</p>
-      <p><strong>もとにもどす・やり直す</strong>：決めた ことを 1つ もとにもどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけている 入力を やめます。</p>
+      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ キャラクターが する ことを ならべた ものです。「きっかけ」で <span class="child-word">えらびます</span>。「いつ動く？」で きっかけを かえます。</p>
+      <p><strong>見た目のコピー</strong>：見た目と せっていが 同じ キャラクターや 部品を もう1つ 作ります。本文は もちません。動かしている ときに 本文で 作る「コピー」とは べつの ものです。</p>
+      <p id="addActionHelp"><strong>絵を おく・お絵かき・音を 入れる</strong>：絵の ファイルや かいた 絵を キャラクターにして 画面に おきます。「音を 入れる」は 音の ファイルを 入れます。</p>
+      <p id="stageSizeHelp"><strong>画面の 大きさ</strong>：画面の 見出しの「41%」のような 数を おすと、100%で 見られます。「全体」で 画面 全体が 入る 大きさに もどります。「大きく見る」は 画面を 100%で 重ねて 見せます。「もどる」か Escキーで もどります。</p>
+      <p id="resizeHelp"><strong>部品の 大きさ</strong>：えらんだ キャラクターや 部品の まわりの 青い 丸を おしたまま ひっぱると、大きさが かわります。Shiftキーを おしながら 角の 丸を ひっぱるか、指で そうさする ときは「たて・よこを そろえる」を おしてから ひっぱると、形を かえずに 大きさだけ かわります。</p>
+      <p id="workspaceSizeHelp"><strong>作業台の 大きさ</strong>：作業台の 下の「100%」のような 数を おすと、100%に <span class="child-word">もどります</span>。「−」「＋」では 50%から 200%まで かわります。2本の 指を 広げたり せばめたり しても かわります。</p>
+      <p><strong>もとに もどす・やり直す</strong>：決めた ことを 1つ もとに もどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけて いる 入力を やめます。</p>
     </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
+    <span id="projectNameText" class="project-name-text" hidden></span>
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
   </div>
 
@@ -146,7 +151,7 @@
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="skull" draggable="true" title="どくろ" aria-label="どくろを おく"><span class="ico">☠</span><span>どくろ</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="medical" draggable="true" title="お医者さんの しるし" aria-label="お医者さんの しるしを おく"><span class="ico">⚕</span><span class="child-material-name">お医者さんの しるし<small class="child-material-note">へびとつえ</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="recycle" draggable="true" title="リサイクル" aria-label="リサイクルを おく"><span class="ico">♻</span><span>リサイクル</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="ほうしゃせん" aria-label="ほうしゃせんを おく"><span class="ico">☢</span><span class="child-material-name">ほうしゃせん<small class="child-material-note">三つの羽の しるし</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="ほうしゃせん" aria-label="ほうしゃせん を おく"><span class="ico">☢</span><span class="child-material-name">ほうしゃせん<small class="child-material-note">三つの羽の しるし</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="biohazard" draggable="true" title="バイオハザード" aria-label="バイオハザードを おく"><span class="ico">☣</span><span class="child-material-name">バイオ<wbr>ハザード<small class="child-material-note">三つの わっかの しるし</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="question" draggable="true" title="はてな" aria-label="はてなを おく"><span class="ico">❓</span><span>はてな</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="exclamation" draggable="true" title="びっくり" aria-label="びっくりを おく"><span class="ico">❗</span><span>びっくり</span></button>
@@ -246,12 +251,13 @@
     </section>
 
     <section class="window active designer" id="designerWindow">
-      <div class="win-title"><span id="designerHeading">画面づくり</span><div class="stage-zoom-controls" role="group" aria-label="作品画面の 大きさ">
+      <div class="win-title"><span id="designerHeading">画面</span><div class="stage-zoom-controls" role="group" aria-label="作品画面の 大きさ">
         <button id="stageZoomOut" type="button" aria-label="作品画面を 小さく">−</button>
         <button id="stageZoomReset" type="button" aria-label="作品画面を100%で見る" title="100%で見る">100%</button>
         <button id="stageZoomIn" type="button" aria-label="作品画面を 大きく">＋</button>
         <button id="stageZoomFit" type="button" aria-label="作品画面の 全体を見る" aria-pressed="true">全体</button>
-      </div></div>
+      </div><button id="stageEnlarge" type="button" aria-pressed="false">大きく見る</button><button id="designRatioLock" type="button" aria-pressed="false" hidden>たて・よこを そろえる</button></div>
+      <button id="stageThumbnail" type="button" aria-label="画面も見る" hidden></button>
       <div class="designer-wrap">
         <div id="formFrame">
           <div class="form-title" id="formTitle">はじめてのあかり</div>
@@ -260,11 +266,14 @@
           </div>
         </div>
       </div>
+      <p id="designHelp" class="child-help design-help" hidden></p>
+      <div class="run-strip" id="runStrip"><span class="exec-location" id="execLocation">いま 動いている 文：―</span><span class="exec-sentence" id="execSentence" hidden></span></div>
+      <div id="entryRunControls" class="entry-run-controls" role="group" aria-label="動きを いったん 止める・つづける"></div>
     </section>
 
     <div class="side">
       <section class="window active">
-        <div class="win-title">作品</div>
+        <div class="win-title">キャラクター・部品</div>
         <div class="tree" id="projectTree"></div>
       </section>
       <section class="window active">
@@ -273,42 +282,40 @@
       </section>
       <section class="window active monitor-window">
         <div class="win-title">動きのようす</div>
-        <div class="runtime-monitor" id="runtimeMonitor"><div class="monitor-empty">止まっています</div></div>
+        <div class="runtime-monitor" id="runtimeMonitor"><div class="monitor-empty">止まって いるよ</div></div>
       </section>
     </div>
 
-    <section class="window active codewin">
-      <div class="win-title">コード</div>
+    <section class="window active codewin" aria-labelledby="codeHeading">
+      <div class="win-title" id="codeHeading">本文</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>なおす動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
-        <button id="scriptAdd" type="button">同じできごとの本文を ふやす</button>
+        <label>きっかけ <select id="eventSelect" aria-describedby="bodyActionHelp" title="どの きっかけの 本文を なおすかを えらびます"></select></label>
+        <button id="scriptAdd" type="button">同じ きっかけの 本文を ふやす</button>
         <button id="meijinDelete" type="button" hidden>この 名人の本文を けす</button>
       </div>
-      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
-      <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックも あるよ。そのまま のこっています。かえるときは 見せ方を「かんたん」か「くわしく」に しよう。</p>
-      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
-      <div id="sourceOverview" aria-label="えらんだものの すべてのコード" hidden></div>
+      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">「たくどん」が おされた とき</button></div>
+      <p id="entryOutside" role="status" hidden>この 作品には、「はじめて」では 見えない 動きも あるよ。けさずに のこして あるよ。見るときは、ブロックで「かんたん」を えらんでね。</p>
+      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんして おわる</button><button id="tutorialExit" type="button">いっしょに 作るのを やめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした 作品を たしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべての本文</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面の本文</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
+      <div id="sourceOverview" aria-label="えらんだ ものの すべての本文" hidden></div>
       <div class="debugbar">
-        <button id="pauseBtn">⏸ いったん止める</button>
-        <button id="continueBtn">▶ つづける</button>
+        <span id="runPauseSlot" class="run-pause-slot"><button id="pauseBtn">⏸ いったん止める</button><button id="continueBtn">▶ つづける</button></span>
         <button id="stepBtn">1つずつ 動かす</button>
         <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て たしかめる</button>
         <button id="formatBtn">コードを整える</button>
-        <span class="exec-location" id="execLocation">いまの ばしょ：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" hidden>ブロックモード ⇄</button><button id="editorModeblocks" type="button" aria-label="コードモード">コードモード ⇄</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>
       </div>
-      <div class="code-assist"><div id="codeIssue">✓ 書き方をチェック中</div><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="書ける ことばを さがす" placeholder="やること・中身・名前を さがす"><label><input id="hintUnavailable" type="checkbox">使えないものも 見せる</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
+      <div class="code-assist"><div id="codeIssue">✓ 書き方をチェック中</div><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="書ける ことばを さがす" placeholder="やること・中身・名前を さがす"><label><input id="hintUnavailable" type="checkbox">使えない ものも 見せる</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
       <div class="console" id="console"></div>
     </section>
   </div>
 
-  <div class="status"><span id="statusText">じゅんび できました</span><span class="save-state" id="autosaveState">このパソコンには まだ のこしていないよ</span><span class="dirty-state" id="dirtyState">かえた ところは ないよ</span><span class="runstate run-off" id="runState">止まっています</span></div>
+  <div class="status"><span id="statusText"></span><span class="save-line" id="saveState"><span class="save-state save-quiet" id="autosaveState">このパソコンには まだ のこして いないよ</span><span class="dirty-state" id="dirtyState">かえた ところは ないよ</span></span><span class="runstate run-off" id="runState">止まって いるよ</span><span id="statusLive" class="color-sr" role="status" aria-live="polite"></span></div>
 </div>
 
 <div class="modal" id="paintModal" role="dialog" aria-modal="true" aria-labelledby="paintTitle">
@@ -327,12 +334,12 @@
         <label>色 <input id="paintColor" type="color" value="#111111"></label>
         <label>線の太さ <input id="paintWidth" type="range" min="1" max="40" value="4"><output id="paintWidthValue">4</output></label>
         <label>図形 <select id="paintShape"><option value="outline">ふちだけ</option><option value="filled">ぬりつぶし</option></select></label>
-        <button type="button" id="paintUndo">↶ もとにもどす</button>
+        <button type="button" id="paintUndo">↶ もとに もどす</button>
         <button type="button" id="paintRedo">↷ やり直す</button>
       </div>
       <div class="paint-colors" id="paintColors" role="group" aria-label="色見本"></div>
       <div class="paint-canvas-wrap"><canvas id="paintCanvas" width="500" height="500" aria-label="お絵かきの 紙（よこ500、たて500）"></canvas></div>
-      <p id="paintStatus" role="status" aria-live="polite">ます目は、色が ついていない すきとおった ところの しるしです。絵として ほぞんされません。</p>
+      <p id="paintStatus" role="status" aria-live="polite">ます目は、色が ついて いない すきとおった ところの しるしです。絵として ほぞんされません。</p>
     </div>
     <div class="dialog-foot"><button type="button" id="paintCancel">お絵かきを やめる</button><button type="button" id="paintCommit" disabled>決めて おく</button></div>
   </div>
@@ -345,7 +352,7 @@
       <div class="asset-import-guide" aria-label="絵や音を 入れる">
         <div class="asset-import-card primary">
           <strong>絵を そのまま 使う</strong>
-          <small>絵を キャラクターとして 画面の まん中に おきます。おいたら すぐに 動かしたり、おされたときの 動きを 作ったり できます。</small>
+          <small>絵を キャラクターとして 画面の まん中に おきます。おいたら すぐに 動かしたり、おされた ときの 動きを 作ったり できます。</small>
           <button id="imageObjectAddModal">🖼 絵を キャラクターとして おく</button>
         </div>
         <div class="asset-import-card">
@@ -400,28 +407,29 @@
         <div class="proc-edit">
           <div id="meijinProcPanel" class="meijin-proc-panel" hidden>
             <div id="meijinProcTitle" class="asset-target"></div>
-            <p>この てじゅんは、名人の本文の 中で 作りました。中身を なおすときは、名人の本文を なおします。</p>
+            <p>この てじゅんは、名人の本文の 中で 作りました。中身を なおす ときは、名人の本文を なおします。</p>
             <pre id="meijinProcBody" aria-label="てじゅんの 中身"></pre>
             <label>名前 <input id="meijinProcName"></label>
             <button id="meijinProcRename" type="button">名前を かえる</button>
             <button id="meijinProcOpen" type="button">名人の本文で ひらく</button>
             <p id="meijinProcError" class="field-error" role="alert" hidden></p>
           </div>
-          <details id="callableConceptHelp" class="child-help"><summary>自分で作ったブロックの ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
+          <details id="callableConceptHelp" class="child-help"><summary>自分で作ったブロックの ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの 中を 指で 上に なぞると 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
             <p>てじゅんは、いくつかの 動きを まとめて、名前で 使うものです。れい：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
             <p>「答えを もとめる」は、中で 使った 数や 文字から 答えを 出します。れい：点数を 2倍にして、その 答えを 返します。</p>
-            <p>名前と 入れるものを 決めて、下に 動きを 書きます。「自分で作ったブロックを 決める」を おすと、ほかの 動きから その 名前で 使えます。</p>
+            <p>名前と 入れるものを 決めて、下に 本文を 書きます。「自分で作ったブロックを 決める」を おすと、ほかの 本文から その 名前で 使えます。</p>
           </div></details>
           <input id="callableEditingId" type="hidden">
           <label>しゅるい <select id="callableType"><option value="action">てじゅん</option><option value="function">答えを もとめる</option></select></label>
           <label>名前 <input id="callableName"></label>
           <label id="callablePhraseRow">短い よび方（書かなくても いい） <input id="callablePhrase" maxlength="80" placeholder="れい：ジャンプする" aria-describedby="callablePhraseHelp"></label>
           <small id="callablePhraseHelp">この文を 書くだけで、この てじゅんを 使えます。書かなくても、名前で よべます。</small>
-          <label>入れるもの <input id="callableArgs" placeholder="れい：歩数、あいさつ（いらないときは 書かない）" aria-describedby="callableArgsHelp"></label>
+          <label>入れるもの <input id="callableArgs" placeholder="れい：歩数、あいさつ（いらない ときは 書かない）" aria-describedby="callableArgsHelp"></label>
           <small id="callableArgsHelp">この てじゅんを 使うときに 決めて 入れる 中身です。れい：点数として 10、名前として「あかり」を 入れて、てじゅんの 中で 使います。ここには「点数、名前」のように 名前を 書きます。名前が いくつか あるときは「、」で 分けます。</small>
           <div id="callableHeader" class="asset-target">新しい てじゅん</div>
-          <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="callableModecode" type="button" aria-pressed="true">コード</button><button id="callableModeblocks" type="button" aria-pressed="false">ブロック</button><button id="callableCancel" type="button">入力を やめる</button></div><div id="callablePending" class="editor-pending" role="status" hidden></div><div id="callableBlocks" hidden></div>
+          <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="callableModecode" type="button" hidden>ブロックモード ⇄</button><button id="callableModeblocks" type="button" aria-label="コードモード">コードモード ⇄</button><button id="callableCancel" type="button">入力を やめる</button></div><div id="callablePending" class="editor-pending" role="status" hidden></div><div id="callableBlocks" hidden></div>
           <textarea id="callableCode" spellcheck="false"></textarea>
+          <div id="callableIssue" class="issue-notice" role="status" hidden></div>
           <div class="hint-panel"><div class="hint-controls"><input id="callableHintSearch" type="search" aria-label="自分で作ったブロックの中で 書ける ことばを さがす" placeholder="やること・中身・名前を さがす"><button id="callableHintPrev">前</button><span id="callableHintCount"></span><button id="callableHintNext">次</button></div><div class="code-hints" id="callableHints" aria-label="自分で作ったブロックの中で 書ける ことば"></div></div>
         </div>
       </div>
@@ -432,10 +440,10 @@
 
 <div class="modal" id="dataModal" role="dialog" aria-modal="true" aria-label="へんすう・リスト">
   <div class="dialog" style="height:min(620px,88vh)">
-    <div class="win-title">へんすう・リスト（作品の もの・部品ごとの もの）</div>
+    <div class="win-title">へんすう・リスト（作品の もの・キャラクターや 部品ごとの もの）</div>
     <div class="dialog-body">
       <div class="asset-toolbar">
-        <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">えらんだ部品</option></select></label>
+        <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">えらんだ キャラクター</option></select></label>
         <label>しゅるい <select id="dataKind"><option value="variable">へんすう：1つ おぼえる はこ</option><option value="list">リスト：じゅんばんに ならべる</option></select></label>
         <input id="dataName" placeholder="名前" aria-label="へんすう・リストの 名前" aria-describedby="dataConceptHelp dataFormError" style="width:150px;padding:6px">
         <input id="dataInitial" aria-label="はじめの 中身" aria-describedby="dataConceptHelp dataFormError" style="width:280px;padding:6px">
@@ -447,8 +455,8 @@
       <p id="dataFormError" role="alert" hidden></p>
       <div id="dataConceptHelp" class="child-help">
         <p><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby></strong>は、中身を 1つ おぼえる はこです。れい：「点数」に 10、「名前」に「あかり」を 入れます。<strong>リスト</strong>は、中身を じゅんばんに ならべて おぼえる ものです。れい：「持ち物」に 本、かさ、ぼうしを ならべます。</p>
-        <p>中身は、へんすうや リストに 入っている 数や 文字の ことです。「しゅるい」で 入れものを えらび、「はじめの 中身」で 動き始める前の 中身を 決めます。「作品」は みんなで、「えらんだ部品」は その部品で 使います。</p>
-        <p>動かすと「はじめの中身」から 始まり、動いている間の 中身は「動きのようす」で 見られます。はじめの 中身と へんすう・リストの 作り方は、作品と いっしょに ほぞんされます。</p>
+        <p>中身は、へんすうや リストに 入っている 数や 文字の ことです。「しゅるい」で 入れものを えらび、「はじめの 中身」で 動き始める前の 中身を 決めます。「作品」は みんなで、「えらんだ キャラクター」や「えらんだ 部品」は、えらんだ ものだけで 使います。</p>
+        <p>動かすと「はじめの 中身」から 始まり、動いている間の 中身は「動きのようす」で 見られます。はじめの 中身と へんすう・リストの 作り方は、作品と いっしょに ほぞんされます。</p>
       </div>
       <div id="dataBody"></div>
     </div>
@@ -465,15 +473,16 @@
 </div>
 
 <dialog id="runtimeInspector" aria-labelledby="runtimeInspectorTitle">
-  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">止める</button><button id="runtimeInspectorClose" type="button">作品画面に もどる</button></div>
+  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">■ 止める</button><button id="runtimeInspectorClose" type="button">作品画面に もどる</button></div>
+  <div id="runtimeInspectorStrip"></div>
   <div id="runtimeInspectorBody"></div>
 </dialog>
 
-<div class="modal" id="recoveryModal" role="dialog" aria-modal="true" aria-label="自動で のこした作品から もどす">
+<div class="modal" id="recoveryModal" role="dialog" aria-modal="true" aria-labelledby="recoveryTitle" aria-describedby="recoveryText">
   <div class="dialog" style="width:min(560px,92vw);height:auto;max-height:80vh">
-    <div class="win-title">自動で のこした作品</div>
-    <div class="dialog-body"><p id="recoveryText">前回の自動保存があります。</p></div>
-    <div class="dialog-foot"><button id="recoveryDiscard">使わない</button> <button id="recoveryRestore">もどす</button></div>
+    <div class="win-title" id="recoveryTitle">このパソコンに のこした 作品</div>
+    <div class="dialog-body"><p id="recoveryText">とちゅうまでの 作品を このパソコンに のこして あるよ。つづきから 作る？ けすと、もう もどせないよ。</p></div>
+    <div class="dialog-foot"><button id="recoveryRestore">つづきから 作る</button> <button id="recoveryDiscard">のこした 作品を けす</button></div>
   </div>
 </div>
 
@@ -482,10 +491,10 @@
   <div class="dialog">
     <div class="win-title">あかりからの しつもん</div>
     <div class="dialog-body"><div id="questionText"></div><input id="questionAnswer" autocomplete="off"></div>
-    <div class="dialog-foot"><button id="questionStop">動きを止める</button> <button id="questionSubmit">答える</button></div>
+    <div class="dialog-foot"><button id="questionStop">■ 止める</button> <button id="questionSubmit">答える</button></div>
   </div>
 </div>
-<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="動きが止まった きろく"><div class="dialog"><div class="win-title">動きが 止まった きろく</div><div class="record-controls"><label for="failureSelect">きろく</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">とじる</button></div></div></div>
+<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="動きが 止まった きろく"><div class="dialog"><div class="win-title">動きが 止まった きろく</div><div class="record-controls"><label for="failureSelect">きろく</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">とじる</button></div></div></div>
 <div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-labelledby="valueTitle"><div class="dialog"><div class="win-title" id="valueTitle">中身の 全部</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の 中身</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の 中身</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">とじる</button></div></div></div>
 
 
@@ -493,7 +502,7 @@
  <div class="dialog">
   <div class="win-title"><h2 id="colorTitle"></h2></div>
   <div class="dialog-body">
-   <p class="color-dialog-help" id="colorHelp">円の中を おしたまま 動かして、色を えらびます。明るさも かえられます。</p>
+   <p class="color-dialog-help" id="colorHelp">円の 中を おしたまま なぞって、色を えらびます。明るさも かえられます。</p>
    <div id="colorWheel" class="color-wheel" tabindex="0" role="group" aria-label="色の円" aria-describedby="colorWheelHelp colorState">
     <canvas id="colorCanvas" width="256" height="256" aria-hidden="true"></canvas><span id="colorMarker" class="color-wheel-marker"></span>
    </div>
@@ -515,38 +524,39 @@
 
 <div class="modal" id="exportChoiceModal" role="dialog" aria-modal="true" aria-labelledby="exportChoiceTitle" aria-describedby="exportChoiceDescription">
  <div class="project-choice-dialog export-choice-dialog">
-  <h2 id="exportChoiceTitle">作品のはじめ方をえらぼう</h2>
-  <p id="exportChoiceDescription">ファイルにした うごく作品を 開いたときの、はじめ方を えらびます。</p>
+  <h2 id="exportChoiceTitle">作品の はじめ方を えらぼう</h2>
+  <p id="exportChoiceDescription">ファイルにした うごく作品を 開いたときの、はじめ方を えらんでね。</p>
   <div class="export-choices">
    <button id="exportControls" class="export-choice" type="button" aria-labelledby="exportControlsTitle" aria-describedby="exportControlsDescription">
-    <span class="export-choice-title" id="exportControlsTitle">▶ はじめるボタンをつける</span>
-    <span id="exportControlsDescription">ボタンをおすと、作品がはじまります。動きをいったん止めたり、終わらせたりできます。</span>
-    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ はじめる</span><span>いったん止める</span><span>止める</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
+    <span class="export-choice-title" id="exportControlsTitle">「▶ 動かす」の ボタンを つける</span>
+    <span id="exportControlsDescription">「▶ 動かす」を おすと、作品が 動くよ。動いている あいだは、「■ 止める」と「⏸ いったん止める」が 出るよ。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ 動かす</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
    </button>
    <button id="exportArtwork" class="export-choice" type="button" aria-labelledby="exportArtworkTitle" aria-describedby="exportArtworkDescription exportArtworkNote">
-    <span class="export-choice-title" id="exportArtworkTitle">作品をすぐにはじめる</span>
-    <span id="exportArtworkDescription">開くと、作品がはじまります。作品のまわりにボタンやわくはつきません。</span>
-    <span id="exportArtworkNote">音が出る作品は、ボタンをおすとはじまることがあります。</span>
+    <span class="export-choice-title" id="exportArtworkTitle">開いたら すぐに 動かす</span>
+    <span id="exportArtworkDescription">開くと、作品が すぐに 動くよ。作品の まわりに ボタンや わくは つかないよ。</span>
+    <span id="exportArtworkNote">音が 出る 作品は、「ここを おして はじめる」を おしてから 動くことが あるよ。</span>
     <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span>
    </button>
   </div>
   <div class="project-choice-footer"><button id="exportChoiceCancel" type="button">やめる</button></div>
  </div>
 </div>
-<div class="modal" id="openConfirmModal" role="dialog" aria-modal="true" aria-labelledby="openConfirmMessage">
+<div class="modal" id="openRefusalModal" role="alertdialog" aria-modal="true" aria-labelledby="openRefusalTitle" aria-describedby="openRefusalMessage">
  <div class="project-choice-dialog">
-  <p id="openConfirmMessage">まだほぞんしていない作品があります。ほぞんせずに、ほかの作品を開きますか？</p>
-  <div class="project-choice-footer"><button id="openConfirmCancel" type="button">やめる</button><button id="openConfirmProceed" type="button">ほぞんせずに開く</button></div>
+  <h2 id="openRefusalTitle">この ファイルは 開けなかったよ</h2>
+  <p id="openRefusalMessage"></p>
+  <div class="project-choice-footer"><button id="openRefusalClose" type="button">とじる</button></div>
  </div>
 </div>
 <div class="modal" id="loseConfirmModal" role="dialog" aria-modal="true" aria-labelledby="loseConfirmMessage">
  <div class="project-choice-dialog">
-  <p id="loseConfirmMessage">まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。</p>
-  <div class="project-choice-footer"><button id="loseConfirmCancel" type="button">やめる</button><button id="loseConfirmProceed" type="button">すてて つづける</button></div>
+  <p id="loseConfirmMessage">まだ ほぞんして いない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。</p>
+  <div class="project-choice-footer"><button id="loseConfirmCancel" type="button">やめる</button><button id="loseConfirmSave" type="button">ほぞんしてから つづける</button><button id="loseConfirmProceed" type="button">すてて つづける</button></div>
  </div>
 </div>
 <dialog id="samplePicker" class="sample-picker" aria-labelledby="samplePickerTitle">
- <header><h2 id="samplePickerTitle">どのお手本を開く？</h2><button id="samplePickerClose" type="button" autofocus>とじる ×</button></header>
+ <header><h2 id="samplePickerTitle">どの お手本を 開く？</h2><button id="samplePickerClose" type="button" autofocus>とじる ×</button></header>
  <div id="sampleGrid" class="sample-grid"></div>
 </dialog>
 <script>

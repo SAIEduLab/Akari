@@ -45,6 +45,9 @@
     COLOR_NAMES,
     COLOR_LABELS,
     EVENT_LABELS,
+    EDGE_TARGETS,
+    isEdgeTarget,
+    eventText,
     BUILTIN_META,
     AkariError,
     ScriptSignal,
@@ -104,6 +107,7 @@
     execFunctionNodes,
     execListMutation,
     EventScheduler,
+    namesStage,
   } = AKARI_RUNTIME;
   const LANGUAGE_CONTRACT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.languageContractId;
   const PROJECT_FORMAT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.projectFormatVersion;
@@ -117,18 +121,19 @@
   // 名人: scripts that belong to no part. In memory they carry this pseudo owner so the editor can select them.
   const MEIJIN_OWNER = 'meijin';
   const isMeijinScript = script => script?.mode === 'meijin';
+  // ふれたとき (touchStart) belongs to every part; the stage touches nothing.
   const EVENT_BY_TYPE = {
     stage: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    label: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    button: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    box: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged'],
-    sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart'],
+    label: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    button: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    box: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged', 'touchStart'],
+    sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart', 'touchStart'],
   };
 
-  // 名人のできごと: written only as headings of a 名人 script (ふれたとき for a part, the others for the script itself).
-  const MEIJIN_EVENTS = Object.freeze(['touchStart', 'conditionTrue', 'interval']);
-  const meijinEventOwner = (event, type) => event === 'touchStart' ? !!type && type !== 'stage' : MEIJIN_EVENTS.includes(event) && type === 'stage';
+  // 名人のできごと: written only as headings of a 名人 script, for the script itself (〜になったとき, 〜秒ごとに).
+  const MEIJIN_EVENTS = Object.freeze(['conditionTrue', 'interval']);
+  const meijinEventOwner = (event, type) => MEIJIN_EVENTS.includes(event) && type === 'stage';
 
   const COMMAND_CATALOG = Object.freeze(
     [
@@ -142,19 +147,19 @@
         id: 'NumericUpdate:ADD',
         kind: 'NumericUpdate',
         op: 'ADD',
-        source: '点数を1増やす',
+        source: '点数を1ふやす',
       },
       {
         id: 'NumericUpdate:SUB',
         kind: 'NumericUpdate',
         op: 'SUB',
-        source: '点数を1減らす',
+        source: '点数を1へらす',
       },
       {
         id: 'ListAppend',
         kind: 'ListAppend',
         op: '',
-        source: '名前一覧の最後に「あかり」を入れる',
+        source: '名前一覧のさいごに「あかり」を入れる',
       },
       {
         id: 'ListReplace',
@@ -208,7 +213,7 @@
         id: 'RepeatUntil',
         kind: 'RepeatUntil',
         op: '',
-        source: '「空白」キーがおされるまで、くり返す。\n  何もしない',
+        source: '「スペース」キーがおされるまで、くり返す。\n  何もしない',
       },
       {
         id: 'WaitTime',
@@ -226,7 +231,7 @@
         id: 'ForEach',
         kind: 'ForEach',
         op: '',
-        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】と呼ぶ。\n  何もしない',
+        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】とよぶ。\n  何もしない',
       },
       {
         id: 'MotionCommand:MOVE',
@@ -235,16 +240,22 @@
         source: '前へ10歩進む',
       },
       {
+        id: 'MotionCommand:MOVE_BY',
+        kind: 'MotionCommand',
+        op: 'MOVE_BY',
+        source: 'いまのばしょから、右へ10歩動く',
+      },
+      {
         id: 'MotionCommand:GOTO',
         kind: 'MotionCommand',
         op: 'GOTO',
-        source: 'よこ100歩、たて50歩のばしょへ行く',
+        source: '画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く',
       },
       {
-        id: 'MotionCommand:GLIDE',
+        id: 'MotionCommand:GOTO_PART',
         kind: 'MotionCommand',
-        op: 'GLIDE',
-        source: 'よこ200歩、たて100歩のばしょへ1秒かけて動く',
+        op: 'GOTO_PART',
+        source: 'マウスのところへ行く',
       },
       {
         id: 'MotionCommand:TURN_RIGHT',
@@ -263,18 +274,6 @@
         kind: 'MotionCommand',
         op: 'SET_DIRECTION',
         source: '向きを45度にする',
-      },
-      {
-        id: 'MotionCommand:SET_X',
-        kind: 'MotionCommand',
-        op: 'SET_X',
-        source: 'よこのばしょを100にする',
-      },
-      {
-        id: 'MotionCommand:SET_Y',
-        kind: 'MotionCommand',
-        op: 'SET_Y',
-        source: 'たてのばしょを50にする',
       },
       {
         id: 'MotionCommand:POINT_TO',
@@ -298,7 +297,7 @@
         id: 'LooksCommand:SET_COLOR',
         kind: 'LooksCommand',
         op: 'SET_COLOR',
-        source: '表示色を「赤」にする',
+        source: '色を「赤」にする',
       },
       {
         id: 'LooksCommand:HIDE',
@@ -511,6 +510,12 @@
         source: 'ほかの動きを全部止める',
       },
       {
+        id: 'StopCommand:OWN_OTHERS',
+        kind: 'StopCommand',
+        op: 'OWN_OTHERS',
+        source: '自分のほかの動きを止める',
+      },
+      {
         id: 'StopCommand:ALL',
         kind: 'StopCommand',
         op: 'ALL',
@@ -568,7 +573,7 @@
         id: 'UserActionCall',
         kind: 'UserActionCall',
         op: '',
-        source: '3をわたして、【増やす】という手順を行う',
+        source: '3をわたして、【増やす】というてじゅんを行う',
       },
       {
         id: 'NoOperation',
@@ -610,9 +615,10 @@
     let executable = false;
     for (const l of lines) {
       if (!l.code) continue;
-      const indent=l.raw.match(/^ */)[0].length,s=compactOutsideString(l.code);
+      // A full-width space at the start of a line counts as two small spaces, as the parser reads it (F-24).
+      const indent=indentWidth(l.raw.match(/^[ \u3000]*/)[0]),s=compactOutsideString(l.code);
       while(stack.length&&stack.at(-1).indent>=indent)stack.pop();
-      const binding=s.match(/^この中では、今見ているものを(.+?)と呼ぶ$/);
+      const binding=s.match(/^この中では、今見ているものを(.+?)と(?:よぶ|呼ぶ)$/);
       if(binding&&stack.at(-1)?.kind==='ForEach'){stack.at(-1).binder=declarationName(binding[1]);continue;}
       if(!/^(?:この中だけで使う変数.+?を作り、最初は.+?にする|この中だけで使うリスト.+?を空で作る|.+?という変数を作り、初期値を.+?にする|.+?というリストを作る)$/.test(s))executable=true;
       let header=null;
@@ -623,8 +629,8 @@
       }
     }
     const selected = source.slice(start, end),
-      indentText = head.match(/^ */)[0] || (!head && selected ? selected.match(/^ */)[0] : '');
-    const indent = indentText.length;
+      indentText = head.match(/^[ \u3000]*/)[0] || (!head && selected ? selected.match(/^[ \u3000]*/)[0] : '');
+    const indent = indentWidth(indentText);
     while (stack.length && stack.at(-1).indent >= indent) stack.pop();
     const suffix = normalizeSource(after).lines.filter((x) => x.code);
     return {
@@ -657,13 +663,22 @@
     if (!c.statementSlot)
       throw new AkariError(
         'P201',
-        'ここには やることを 入れられません。あいている 行か、1行 全部を えらんでから 入れてね',
+        'ここには やる ことを 入れられないよ。あいて いる 行か、1行 全部を えらんでから 入れてね',
       );
     const indent = c.indentText,
       body = (c.head ? '' : indent) + text.split('\n').join('\n' + indent),
       suffix = c.after && !c.after.startsWith('\n') ? '\n' : '';
     const pos = c.before.length + body.length;
     return { source: c.before + body + suffix + c.after, start: pos, end: pos };
+  }
+  function definitionHintArguments(definition,project){
+    if(!definition.args.length)return [];
+    const result=definition.args.map(()=> '1'),ast=parseSyntax(definition.source,{symbols:buildSymbols(project),definition:true,definitionKind:project.functions.includes(definition)?'function':'action',args:definition.args}).ast,found=new Set();
+    const visit=node=>{if(!node||typeof node!=='object')return;if(node.kind==='CompareExpression'&&node.op==='EQ'){
+      for(const [name,value]of [[node.left,node.right],[node.right,node.left]])if(name?.kind==='VariableRead'&&value?.kind==='StringLiteral'&&!found.has(name.name)){
+        const i=definition.args.indexOf(name.name);if(i>=0){result[i]=formatExpression(value);found.add(name.name);}
+      }
+    }for(const child of Object.values(node))if(child&&typeof child==='object')visit(child);};visit(ast);return result;
   }
   function hintCandidates(project, targetId, options = {}) {
     const source = options.source ?? '',
@@ -673,10 +688,14 @@
       kind = options.definitionKind || null,
       pure = kind === 'function',
       component = project.components.find((c) => c.id === targetId),
-      type = kind ? 'any' : component?.type || 'stage',
+      // A 名人 text belongs to no part, and every part acts in it (each action names who does it, below).
+      type = kind || targetId === MEIJIN_OWNER ? 'any' : component?.type || 'stage',
       event = options.event || 'start',
       out = [],
       seen = new Set();
+    // A control example contains executable lines: no existing local declaration may follow it.
+    const followingLocals = pure ? localDeclarationNames(place.after) : null,
+      pureControlSlot = pure && place.declarationSlot && !followingLocals.vars.length && !followingLocals.lists.length;
     const labels = {
       MotionCommand: '\u52d5\u304d',
       LooksCommand: '\u898b\u305f\u76ee',
@@ -758,11 +777,44 @@
       for (const a of c.localData.lists) bind(a.name, 'self', a.initialValue, 'list');
     }
     const n = bindings.find((x) => x.kind !== 'list' && typeof x.value === 'number'),
-      v = n?.text || '0',
+      // A condition example reads a number of the work, or よこのばしょ, which every part has (the stage: タイマー), so it
+      // means something as it is (F-25).
+      v = n?.text || (type === 'stage' ? 'タイマー' : 'よこのばしょ'),
       usedNames = new Set(bindings.map((x) => x.name)),
       binder = initialBlockName('これ', usedNames);
     // 名人 text also lists the extension commands only 名人 text may use.
     const catalog = targetId === MEIJIN_OWNER ? [...COMMAND_CATALOG, ...extensionCommandEntries('meijin').map(x => ({ ...x, source: x.source + '。' }))] : COMMAND_CATALOG;
+    // In 名人 text every action names who does it (E2E-R1-06): the examples use the work's first character, as the
+    // check's own example does (れい：ねこは前へ10歩進む).
+    const meijinActor = targetId === MEIJIN_OWNER ? (project.components.find((c) => c.type === 'sprite') || project.components[0])?.name : null,
+      meijinWho = meijinActor ? nameSource(meijinActor) : null;
+    const meijinHint = (x, text) => {
+      if (['IfStatement', 'RepeatWhile', 'RepeatUntil', 'RepeatCount', 'Forever'].includes(x.kind))
+        return text.replace(/よこのばしょ/g, meijinWho + 'のよこのばしょ').split('\n').map((line) => /^\s+(?:「|前へ|右に)/.test(line) ? line.replace(/^(\s+)/, '$1' + meijinWho + 'は') : line).join('\n');
+      if (!['Say', 'Ask', 'MotionCommand', 'LooksCommand', 'PenCommand', 'SoundCommand', 'CloneCommand'].includes(x.kind) || /^「[^」]+」の(?:文字|コピー)|^はいけい|^「[^」]+」に「/.test(text)) return text;
+      if (/^自分の/.test(text)) return text.replace(/^自分の/, meijinWho + 'の');
+      // 色を「赤」にする is the form (F-25); written out without symbols it would become 表示色 (F2-15).
+      if (x.id === 'LooksCommand:SET_COLOR' && !usedNames.has('色')) return meijinWho + 'は' + text.replace(/。$/, '') + '。';
+      return canonicalStatementSource(meijinWho + 'は' + text.replace(/。$/, ''), null) + '。';
+    };
+    // 名人: a value of a part names whose it is (E2E-R2-01): ねこのよこのばしょ, ねこが「赤」の色にふれている.
+    const MEIJIN_OF_SENSORS = new Set(['横位置', '縦位置', '方向', '大きさ', '衣装番号', '衣装名']);
+    const meijinValue = (text, sensor = null) => !meijinWho ? text
+      : sensor && MEIJIN_OF_SENSORS.has(sensor) ? meijinWho + 'の' + text
+      : sensor === 'クローンである' ? meijinWho + 'がコピー'
+      : /^(?:画面のはしにふれている|「[^」]+」の色にふれている)$/.test(text) ? meijinWho + 'が' + text
+      : /^「[^」]+」までのきょり$/.test(text) ? meijinWho + 'の' + text : text;
+    // A value hint is listed under the palette group of its block (F2-08), and the post-primary ones only at くわしく.
+    const valueGroups = { operator: '計算', sense: 'しらべる', data: 'へんすう・リスト', action: '自分で作ったブロック' };
+    const advancedOnly = options.level === 'entry' || options.level === 'basic';
+    let hintSymbols = null;
+    // The group is that of the value as written for a part's own body; in 名人 text the shown text names whose it is.
+    const valueHint = (id, text, shown = text) => {
+      let schema = null;
+      try { schema = syntaxSchema(parseExpression(text, hintSymbols ||= buildSymbols(project))); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+      if (schema && advancedOnly && ADVANCED_ONLY_SCHEMA_IDS.has(schema.id)) return;
+      add(id, (schema && valueGroups[blockPaletteGroup(schema)]) || '計算', shown, 'expression');
+    };
     for (const x of catalog) {
       let text = x.source,
         reason = '';
@@ -790,6 +842,7 @@
         'BroadcastAndWait',
         'WaitTime',
         'WaitUntil',
+        'TimerReset',
         'MotionCommand',
         'LooksCommand',
         'PenCommand',
@@ -799,14 +852,38 @@
       ].includes(x.kind);
       if (pure && effect) continue;
       if (['Break', 'Continue'].includes(x.kind) && !place.insideLoop) continue;
+      // The examples of もし and くり返す do something that is seen, and a loop on a number ends (F-25): a number of the
+      // work counts up, よこのばしょ grows as the part goes right, and the stage waits. Only a calculation (pure) has no
+      // action to put inside.
+      const counter = pure ? nameSource(initialBlockName('数えた回数', usedNames)) : n && !n.readonly ? n.text : null, body = pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '前へ10歩進む。';
+      // In 答えを もとめる (pure) a loop changes its own number, so it ends and means something (F2-07); a loop that
+      // never ends there (ずっと, a key that is never pressed in a calculation) is not offered.
+      if (pure && (x.kind === 'Forever' || x.kind === 'RepeatUntil')) continue;
       if (x.kind === 'IfStatement')
-        text = `もし${v}が10以上なら、\n  何もしない。\nそうでなければ、\n  何もしない。`;
+        text = pure ? `もし${counter}が10より大きければ、\n  ${counter}を10にする。` : n ? `もし${v}が10以上なら、\n  「やったね」と言う。`
+          : type === 'stage' ? 'もしタイマーが10以上なら、\n  「10秒 たったよ」と言う。'
+          : 'もしよこのばしょが300より大きければ、\n  「右の ほうだよ」と言う。\nそうでなければ、\n  「左の ほうだよ」と言う。';
       if (x.kind === 'RepeatWhile')
-        text = `${v}が10より小さいあいだ、くり返す。\n  何もしない。`;
+        text = counter ? `${counter}が10より小さいあいだ、くり返す。\n  ${counter}を1ふやす。`
+          : type === 'stage' ? 'タイマーが3より小さいあいだ、くり返す。\n  1秒待つ。' : 'よこのばしょが300より小さいあいだ、くり返す。\n  前へ10歩進む。';
       if (x.kind === 'RepeatUntil')
-        text = `「空白」キーがおされるまで、くり返す。\n  何もしない。`;
+        text = `「スペース」キーがおされるまで、くり返す。\n  ${body}`;
+      if (x.kind === 'RepeatCount')
+        text = `3回くり返す。\n  ${pure ? counter + 'を1ふやす。' : body}`;
+      if (pure && ['IfStatement', 'RepeatWhile', 'RepeatCount'].includes(x.kind)) {
+        text = `この中だけで使う変数${counter}を作り、最初は${x.kind === 'IfStatement' ? 11 : 0}にする。\n` + text;
+        if (!pureControlSlot) reason = 'この 例は、この中だけの へんすうを 作るので、本文の はじめ（へんすう・リストを 作る 行の あと）で えらびます';
+      }
+      if (x.kind === 'Forever')
+        text = `ずっとくり返す。\n  ${type === 'stage' ? '1秒待つ。' : '右に15度回る。'}`;
+      // A character's line is said in its own voice (F-18: no です・ます in what a part says).
+      if (x.id === 'Say')
+        text = '「やったね」と言う';
       if (x.kind === 'WaitUntil')
-        text = '\u300c\u7a7a\u767d\u300dキーがおされるまで\u5f85\u3064';
+        text = '「スペース」キーがおされるまで待つ';
+      // With data named 色, 色を「赤」にする would change that data: the character's colour is then 表示色 (F-25).
+      if (x.id === 'LooksCommand:SET_COLOR' && usedNames.has('色'))
+        text = '表示色を「赤」にする';
       const actorRequired =
         ['MotionCommand', 'PenCommand'].includes(x.kind) ||
         (x.kind === 'LooksCommand' &&
@@ -822,7 +899,7 @@
       if (x.kind === 'LooksCommand' && x.op.includes('COSTUME')) {
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
-          const co = component?.costumes?.[0];
+          const co = (component || project.components.find((c) => c.name === meijinActor))?.costumes?.[0];
           text = `すがたを「${co?.name || 'たくどん'}」にかえる`;
           if (!co)
             reason =
@@ -835,7 +912,7 @@
       if (
         x.kind === 'LooksCommand' &&
         x.op === 'SET_SELF_TEXT' &&
-        !['label', 'button', 'box', 'any'].includes(type)
+        (!['label', 'button', 'box', 'any'].includes(type) || (meijinActor && !['label', 'button', 'box'].includes(project.components.find((c) => c.name === meijinActor)?.type)))
       )
         reason = '文字・ボタン・四角だけで 使えます';
       if (x.op === 'SET_INPUT') {
@@ -850,6 +927,12 @@
           reason =
             '\u6587\u5b57\u30fb\u30dc\u30bf\u30f3\u30fb\u56db\u89d2\u3092\u5148\u306b\u4f5c\u308a\u307e\u3059';
       }
+      // 〜のところへ行く names another part of the work (the first one), or the mouse when there is none. In 名人 text the
+      // part that goes is the example's subject, so it goes elsewhere (E2E-R2-05).
+      if (x.op === 'GOTO_PART') {
+        const other = project.components.find((c) => c.id !== targetId && c.name !== meijinActor);
+        text = other ? `「${other.name}」のところへ行く` : 'マウスのところへ行く';
+      }
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
@@ -857,34 +940,39 @@
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
-          reason = 'コピーが できたときの 動きで 使います';
+          reason = 'コピーが できた ときの 動きで 使います';
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
         text = `「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
         if (!snd) reason = '音を 先に 入れます';
       }
+      if (meijinWho && !reason) text = meijinHint(x, text);
       add(x.id, labels[x.kind] || 'もし・くり返し', text, 'statement', reason);
     }
-    if (!pure) add('MotionCommand:MOVE_DIRECTION', '動き', '画面の右へ10歩動く。', 'statement',
+    // The timed move is the same block with its time (〇秒かけて、); it is shown as a second example.
+    if (!pure) add('MotionCommand:MOVE_BY:timed', '動き', meijinWho ? `${meijinWho}は1秒かけて、いまのばしょから、右へ10歩動く。` : '1秒かけて、いまのばしょから、右へ10歩動く。', 'statement',
       type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
+    // Holding a key to move is one sentence, the continuous rule (B-09, C-16); it is written in an event's body.
+    add('ContinuousRule', '動き', meijinWho ? `「右」キーがおされているあいだ、${meijinWho}は右へ1秒に200歩の速さで動き続ける。` : '「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。', 'statement',
+      kind ? 'きっかけの ある 本文で 使えます' : type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;
       add('read:' + name, 'へんすう・リストの 中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
-          // A variable that starts with text is offered text, not 1増やす.
+          // A variable that starts with text is offered text, not 1ふやす.
           if (typeof b.value === 'string' && !/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(b.value)) add('set:' + name, 'へんすう', `${name}を「こんにちは」にする`);
           else {
             add('set:' + name, 'へんすう', `${name}を0にする`);
-            add('add:' + name, 'へんすう', `${name}を1増やす`);
-            add('subtract:' + name, 'へんすう', `${name}を1減らす`);
+            add('add:' + name, 'へんすう', `${name}を1ふやす`);
+            add('subtract:' + name, 'へんすう', `${name}を1へらす`);
           }
         }
         if (b.kind !== 'scalar') {
           for (const [id, suffix] of [
-            ['append', '\u306e\u6700\u5f8c\u306b1\u3092\u5165\u308c\u308b'],
+            ['append', '\u306e\u3055\u3044\u3054\u306b1\u3092\u5165\u308c\u308b'],
             ['insert', 'の1番目に1を入れる'],
             ['replace', 'の1番目を1にかえる'],
             ['delete', '\u306e1\u756a\u76ee\u3092\u6d88\u3059'],
@@ -902,7 +990,7 @@
         add(
           'each:' + name,
           '\u30ea\u30b9\u30c8',
-          blockSource('ForEach',{list:name,binder:nameSource(binder)})+'。\n  何もしない。',
+          blockSource('ForEach',{list:name,binder:nameSource(binder)})+(pure ? '。\n  何もしない。' : `。\n  ${meijinWho ? meijinWho + 'は' : ''}${nameSource(binder)}を1秒話す。`),
         );
         for (const suffix of [
           '\u306e\u9577\u3055',
@@ -937,21 +1025,25 @@
       for (const b of bindings)
         add('return:' + b.text, '\u8fd4\u3059', b.text + 'を答えとして返す');
     }
-    for (const d of project.actions)
+    for (const d of project.actions) {
+      const examples=definitionHintArguments(d,project);
       if (!pure)
         add(
           'action:' + d.id,
           'てじゅん',
-          `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
+          `${d.args.length ? d.args.map((arg,i) => `${nameSource(arg)}を${examples[i]}`).join('、') + 'として、' : ''}【${d.name}】というてじゅんを行う`,
           'statement', '', {kind:'action', id:d.id, name:d.name},
         );
-    for (const d of project.functions)
+    }
+    for (const d of project.functions) {
+      const examples=definitionHintArguments(d,project);
       add(
         'function:' + d.id,
         '答えを もとめる',
-        `（${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
+        `（${d.args.length ? d.args.map((arg,i) => `${nameSource(arg)}を${examples[i]}`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
         'expression', '', {kind:'function', id:d.id, name:d.name},
       );
+    }
     const exclusive = {
       '\u62bc\u3055\u308c\u305f\u30ad\u30fc': 'keyDown',
       '\u53d7\u3051\u53d6\u3063\u305f\u77e5\u3089\u305b': 'message',
@@ -979,7 +1071,7 @@
       )
         continue;
       // The candidate is the written word (SENSOR_SURFACES), not the internal sensor name.
-      add('sensor:' + sensor, 'しらべる', SENSOR_SURFACES[sensor] || sensor, 'expression');
+      add('sensor:' + sensor, 'しらべる', meijinValue(SENSOR_SURFACES[sensor] || sensor, sensor), 'expression');
     }
     const exprs = [
       '2\uff0b3\u00d74',
@@ -1001,7 +1093,7 @@
       '\u300c\u3042\u304b\u308a\u300d\u306e1\u6587\u5b57\u76ee',
       '「あかり」の中で「か」がはじめて出てくる番号',
       '\uff3b1\u30012\u30013\uff3d',
-      '「空白」キーがおされている',
+      '「スペース」キーがおされている',
     ];
     if (type !== 'stage')
       exprs.push(
@@ -1013,18 +1105,16 @@
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
     for (const operation of EXTENSION_HOST.operations('calculations').filter(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
     if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push('拡張「できごとの値」');
-    for (const text of exprs) add('expr:' + text, '計算', text, 'expression');
+    for (const text of exprs) valueHint('expr:' + text, text, meijinValue(text));
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =
         b.name === '\u6570'
           ? ['\u300c12\u300d']
           : Array.from({ length: Math.max(b.minArgs, ['最小', '最大'].includes(b.name) ? 2 : 0) }, (_, i) => String(i + 1));
       // The written form, as the formatter writes it (1から2のどれか, 1÷2のあまり, （1と2をつなげた文字）).
-      add(
+      valueHint(
         'builtin:' + b.name,
-        'はじめから ある 計算',
         b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : b.name === '余り' ? `${args[0]}÷${args[1]}のあまり` : b.name === 'つなぐ' ? `（${args.join('と')}をつなげた文字）` : `${BUILTIN_SURFACES[b.name] || b.name}（${args.join('、')}）`,
-        'expression',
       );
     }
     return out;
@@ -1135,18 +1225,26 @@
     '押されたキー': 'おされたキー', '以前の値': '前の中身', '新しい値': '新しい中身', '音程': '音の高さ', '音量': '音の大きさ',
     '方向': '向き',
   });
-  // Internal names that are no longer read in code (the owner cut them); the others stay readable.
-  const SENSOR_CUT_WORDS = Object.freeze(['クローンである']);
+  // Internal names that are no longer read in code (the owner cut them); the others stay readable. 位置 is not read
+  // anywhere (B-11): 横位置 is written よこのばしょ.
+  const SENSOR_CUT_WORDS = Object.freeze(['クローンである', '横位置', '縦位置', 'マウスの横位置', 'マウスの縦位置']);
+  // Other spellings read as the same state (場所 and 横・縦 are school kanji); the formatter writes the SENSOR_SURFACES word.
+  const SENSOR_ALIASES = Object.freeze({
+    'よこの場所': '横位置', '横のばしょ': '横位置', '横の場所': '横位置',
+    'たての場所': '縦位置', '縦のばしょ': '縦位置', '縦の場所': '縦位置',
+    'マウスのよこの場所': 'マウスの横位置', 'マウスの横のばしょ': 'マウスの横位置', 'マウスの横の場所': 'マウスの横位置',
+    'マウスのたての場所': 'マウスの縦位置', 'マウスの縦のばしょ': 'マウスの縦位置', 'マウスの縦の場所': 'マウスの縦位置',
+  });
   // Block names: the written word, with spaces where a child reads them in pieces.
   const SENSOR_LABELS = Object.freeze({
-    'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされている',
+    'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされて いる',
     '以前の背景名': '前の はいけいの名前', '新しい背景名': '新しい はいけいの名前',
   });
   // Builtin calculations whose written word differs from the internal name.
   const BUILTIN_SURFACES = Object.freeze({ '余り': 'あまり' });
   const BUILTIN_LABELS = Object.freeze({ '数': '数に直す', '文字': '文字に直す', '乱数': 'AからBのどれか', '余り': 'あまり' });
   // Every written sensor word is reserved like the internal one, so a same-named datum is written 【name】.
-  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors, ...Object.values(SENSOR_SURFACES)]);
+  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors, ...Object.values(SENSOR_SURFACES), ...Object.keys(SENSOR_ALIASES)]);
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.
@@ -1163,7 +1261,7 @@
         protectedAt[i] = 1;
         if (['」','』'].includes(quote) && ch === '\\') {
           if (!['\\', quote === '』' ? '『' : '「', quote].includes(text[i + 1]))
-            throw new AkariError('N103', '「」の 中で \\ を 使うときは、\\「、\\」、\\\\ の どれかに してね', 0, i + 1);
+            throw new AkariError('N103', '「」の 中で \\ を 使う ときは、\\「、\\」、\\\\ の どれかに します', 0, i + 1);
           protectedAt[++i] = 1;
         } else if (ch === quote) quote = '';
         continue;
@@ -1190,7 +1288,7 @@
     startLine: line.lineNo,
     startColumn: line.startColumn || 1,
     endLine: line.lineNo,
-    endColumn: Math.max(1, cpLen(line.raw) + 1),
+    endColumn: Math.max(1, surfaceLineInfo(line).columns.count + 1),
   });
 
   function splitComment(raw) {
@@ -1199,7 +1297,7 @@
       const ch = raw[i];
       if (quote) {
         if (['」','』'].includes(quote) && ch === '\\') {
-          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','「」の 中の \\ の 使い方が ちがいます。\\「、\\」、\\\\ の どれかに してね');
+          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','「」の 中の \\ の 使い方が ちがいます。\\「、\\」、\\\\ の どれかに します');
           i++;
         } else if (ch === quote) quote = '';
       } else if (ch === '「' || ch === '『' || ch === '【') quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
@@ -1250,7 +1348,7 @@
     if (typeof name !== 'string' || cpLen(name) < 1 || cpLen(name) > 32)
       throw new AkariError(
         'F503',
-        '名前は 1〜32文字で つけてね',
+        '名前は 1〜32文字で つけます',
       );
     if (
       /[\p{Cc}\p{Zl}\p{Zp}\s\u300c\u300d\u3010\u3011\uff08\uff09\uff3b\uff3d\u3001\u203b]/u.test(
@@ -1259,10 +1357,10 @@
     )
       throw new AkariError(
         'F503',
-        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてね`,
+        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けして ください`,
       );
     if (callable && (BUILTIN_NAMES.has(name) || Object.values(BUILTIN_SURFACES).includes(name)))
-      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に してね`);
+      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に して ください`);
     return name;
   }
 

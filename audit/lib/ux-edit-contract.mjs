@@ -9,7 +9,7 @@ const originals=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-edit-expectat
 export const uxLanguageIds=[...originals.map(c=>c.id+'/original-acceptance-meaning-result'),
  ...[[9,2],[12,5],[1,7]].map(([a,b])=>`variants/arithmetic/${a}/${b}`),'timed/same-actor-overlap','source/edit-second-event-preserves-first',
  ...['「ほし」と。※始めると、だんご','全角１２３＋と空 白','一行目\n  二行目'].map(v=>'quotes/'+v),
- ...['「値」と－1秒話す。','「値」と1歩秒話す。'].map(v=>'timed/atomic-rejection/'+v),
+ ...['「値」と－1秒話す。','「値」と1歩秒話す。','「値」と（点数－1）秒話す。'].map(v=>'timed/atomic-rejection/'+v),
  ...['これを2回くり返します。','だんごも同じ合図で動き始め、1秒待ちます。','くり返しが終わると、あかりは「終」と1秒話します。'].map(v=>'refusal/'+v),
  'compatibility/actor-named-今','variants/actor-condition/こはる','variants/actor-condition/星','timed/mixed-and-stop','timed/pause-resume'];
 export const uxBrowserIds=['UX02/staged-heading','UX04/direct-count','UX11/operator-keeps-operands','UX11/condition-values-and-branches','UX01-10/else-hole-and-run-focus',
@@ -47,6 +47,10 @@ export function verifyUxBrowser(report){
  }
  const selected=get('UX13/selected-body-conflict-preserved');for(const key of ['noSilentReplace','cancelAtomic','existingBodiesUnchanged','undoRedo','existingDocumentEdit'])assert.equal(selected[key],true);assert.equal(selected.clickBodies,2);assert.deepEqual(selected.actual,[{actor:'dango',text:'だんごの既存'},{actor:'dango',text:'なあに？'}]);
  const b23=get('UX13/B23-fixed-initial-state');assert.equal(b23.original,originals.find(c=>c.id==='B23').source);assert.equal(b23.existingStartUnchanged,true);assert.equal(b23.noDuplicateStart,true);for(const key of ['draftContextUnchanged','explicitImport','sourceOwnershipMatches','undoRedo','autosaveRestored'])assert.equal(b23[key],true);assert.deepEqual(b23.actual,[{actor:'sprite-1',text:'おはよう'},{actor:'dango',text:'なあに？'}]);const cancel=get('UX13/B23-import-cancel');for(const key of ['cancelAtomic','contextPreserved','historyPreserved'])assert.equal(cancel[key],true);const conflict=get('UX13/B23-conflict-explicit-separate');for(const key of ['noSilentReplace','differenceShown','cancel','explicitSeparate','existingStartUnchanged'])assert.equal(conflict[key],true);const duplicate=get('UX13/intentional-duplicate-bodies-run');assert.equal(duplicate.scriptCount,2);assert.equal(duplicate.bothExecuted,true);const dependent=get('UX13/dependent-import-refuses-split');for(const key of ['unsafeSplitRefused','noSourceRewrite','cancelAtomic'])assert.equal(dependent[key],true);
+ const refusal=b23.refusal,guidance='本文を 入れる ところを たしかめてね。「書いた 文を 本文に 入れる」か「取りこみを やめる」を おしてね';
+ assert.equal(refusal.original,originals.find(c=>c.id==='B23').source);assert.deepEqual(refusal.context,['sprite-1','start']);
+ for(const key of ['typedByKey','projectPreserved','exportAfterConfirmation'])assert.equal(refusal[key],true);
+ assert.equal(refusal.pending,guidance);assert.equal(refusal.exported,'まだ ファイルに できないよ。'+guidance+'。');assert.equal(refusal.run,'まだ 動かせないよ。'+guidance+'。');assert.equal(refusal.confirmed,'書いた 文を 本文に 入れたよ');assert.match(refusal.error,/1行目/);assert.doesNotMatch(refusal.error,/本文を 入れる ところ/);
  return count;
 }
 export function verifyUxBubbles(report){

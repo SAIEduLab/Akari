@@ -20,6 +20,8 @@ export function basicExecution(A,draft,makeProject,mode='source'){
   if(draft.id==='T02'){key('a',true);key('a',false);key('空白',true);advance(499);advance(500);key('空白',true);advance(1000);key('空白',false);key('空白',true);advance(1500);key('空白',false);}
   if(draft.id==='T03'||draft.id==='T13'){advance(1000);key('右',true);advance(2000);key('右',false);advance(3000);}
   if(draft.id==='T05'){advance(999);advance(1000);}
+  // T06 repeats a move and a turn without waiting: each next turn starts on the next こま (1/60 s; LANGUAGE.md くり返しと画面の動き).
+  if(draft.id==='T06'){advance(17);advance(34);advance(51);}
   const expectedProject=makeProject(A,mode==='blocks'?formatted:draft.source);assert(JSON.stringify(p)===JSON.stringify(expectedProject),'runtime mutated design');
   return {source:draft.source,formatted,states,trace,errors,designUnchanged:true};
  }finally{scheduler.stop();}

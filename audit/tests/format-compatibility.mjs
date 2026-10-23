@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -6,6 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {formatCompatibilityIds,verifyFormatCompatibility,checkFormatValidatorNegatives} from '../lib/format-compatibility-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const require=createRequire(import.meta.url);
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
@@ -24,7 +26,8 @@ assert.notEqual(currentRelease,priorRelease);
 const priorSource=source.replace(producerPattern,(_all,a,_value,b)=>a+priorRelease+b);
 assert.notEqual(priorSource,source,'prior producer fixture must be a different product build');
 const api=loadApi(source),priorApi=loadApi(priorSource),plain=x=>JSON.parse(JSON.stringify(x));
-const contracts={languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4};
+// The contract numbers are the release record's (features.json), not copies in this test.
+const contracts=JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT;
 // Incompatible contract values: the previous number, the current number as text, and null.
 const incompatible=current=>[current-1,String(current),null];
 const autosaveDatabase='akari-workspace-f'+contracts.projectFormatVersion;
@@ -45,6 +48,8 @@ const fixture=()=>{
   return p;
 };
 const priorProject=fixture(),savedPrior=priorApi.serializeProject(priorProject);
+const unfinishedSources=[['LF','\n'],['CRLF','\r\n'],['CR','\r'],['LS','\u2028'],['PS','\u2029']].map(([separator,nl])=>({separator,source:'右に曲がる。'+nl+'4回くり返す。'}));
+const unfinishedProject=({separator,source})=>{const project=fixture();project.name='未完成の作品-'+separator;project.scripts=[{id:'unfinished',targetId:'button-1',event:'start',source}];return project;};
 const results=[],pageErrors=[],networkRequests=[];
 async function run(id,fn){
   try{const evidence=await fn();results.push({id,status:'PASS',pass:true,evidence});}
@@ -72,7 +77,15 @@ await run('FORMAT-PROJECT-PRODUCER-INDEPENDENT',async()=>{
   assert.ok(currentFile.startsWith(`# あかり ${currentRelease} の作品`));
   assert.equal((await api.parseProjectFile(currentFile)).project.appVersion,currentRelease);
   assert.deepEqual(plain((await api.parseProjectFile(currentFile)).project.scripts),plain(priorProject.scripts));
-  return {priorProducer:priorRelease,currentProducer:currentRelease,priorFileSha256:sha(savedPrior),savedFileSha256:sha(currentFile),sourceExact:true};
+  const unfinished=[];
+  for(const c of unfinishedSources){
+    const loaded=await api.parseProjectFile(api.serializeProject(unfinishedProject(c),api.makeDefaultAssetStore()));
+    assert.equal(loaded.project.scripts[0].source,c.source);
+    assert.equal(api.compileProject(loaded.project).errors[0].code,'P205');
+    assert.equal(reject(()=>api.packExecutable(loaded.project)),'X601');
+    unfinished.push({separator:c.separator,sourceExact:true,diagnostic:'P205',exportCode:'X601'});
+  }
+  return {priorProducer:priorRelease,currentProducer:currentRelease,priorFileSha256:sha(savedPrior),savedFileSha256:sha(currentFile),sourceExact:true,unfinished};
 });
 await run('FORMAT-PROJECT-CONTRACT-REJECTION',async()=>{
   const codes=[];
@@ -151,7 +164,7 @@ async function reveal(locator){
 async function editSource(p,sourceText){
   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
-  await (await reveal(p.locator('#editorModecode'))).click();await (await reveal(p.locator('#codeEditor'))).fill(sourceText);
+  await chooseView(p,'code',{reveal});await (await reveal(p.locator('#codeEditor'))).fill(sourceText);
   await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s&&Akari.app.editorState.dirty===true&&
     Akari.app.project.scripts.some(row=>row.targetId==='stage'&&row.event==='start'&&row.source===s),sourceText);
 }
@@ -185,7 +198,9 @@ await withBrowser(browserPath,async browser=>{
   const browserCase=(id,fn)=>run(id,()=>browserPage(id,fn));
   await browserCase('FORMAT-BROWSER-FILE-ROUNDTRIP',async p=>{
     await p.locator('#fileInput').setInputFiles({name:'prior.akari.md',mimeType:'text/markdown',buffer:Buffer.from(savedPrior)});
-    await p.waitForFunction(v=>Akari.app.project.appVersion===v,priorRelease);
+    // The model changes before asynchronous import cleanup has unlocked editing.
+    // Check the existing editable assertion after the input handler has completed.
+    await p.waitForFunction(v=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN'&&Akari.app.project.appVersion===v,priorRelease);
     assert.equal((await editorState(p)).source,priorProject.scripts[0].source);
     assert.deepEqual(await p.evaluate(()=>Akari.app.project.actions),plain(priorProject.actions));
     const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();
@@ -193,7 +208,24 @@ await withBrowser(browserPath,async browser=>{
     const saved=fs.readFileSync(file,'utf8'),loaded=await api.parseProjectFile(saved);
     assert.equal(loaded.project.appVersion,currentRelease);
     assert.equal(loaded.project.scripts[0].source,priorProject.scripts[0].source);
-    return {importedProducer:priorRelease,savedProducer:currentRelease,savedSha256:sha(saved)};
+    const unfinished=[];
+    for(const c of unfinishedSources){
+      const project=unfinishedProject(c),text=api.serializeProject(project,api.makeDefaultAssetStore());
+      await p.locator('#fileInput').setInputFiles({name:'unfinished-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(text)});
+      await p.waitForFunction(name=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN'&&Akari.app.project.name===name,project.name);
+      assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),c.source);
+      await chooseView(p,'code');assert.equal(await p.locator('#codeEditor').isEditable(),true);
+      const download=p.waitForEvent('download');await p.locator('#saveBtn').click();
+      const target=path.join(path.dirname(output),'unfinished-'+c.separator+'.akari.md');await(await download).saveAs(target);
+      const saved=fs.readFileSync(target,'utf8'),reopened=await api.parseProjectFile(saved),expected=c.source;
+      assert.equal(reopened.project.scripts[0].source,expected,'saving an unchanged unfinished body preserves its source');
+      assert.equal(api.compileProject(reopened.project).errors[0].code,'P205');assert.equal(reject(()=>api.packExecutable(reopened.project)),'X601');
+      await p.locator('#fileInput').setInputFiles({name:'resaved-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(saved)});
+      await p.waitForFunction(()=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN');
+      assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),expected);
+      unfinished.push({separator:c.separator,importedSource:c.source,savedSource:expected,reopened:true,editable:true,diagnostic:'P205',exportCode:'X601'});
+    }
+    return {importedProducer:priorRelease,savedProducer:currentRelease,savedSha256:sha(saved),unfinished};
   });
   await browserCase('FORMAT-BROWSER-IMPORT-ATOMICITY',async p=>{
     const unsaved='「未保存のまま」と言う ※ 保持  ';
@@ -242,7 +274,7 @@ await withBrowser(browserPath,async browser=>{
     for(const [label,changed] of [['format',p=>{p.formatVersion=contracts.projectFormatVersion-1;}],['language',p=>{p.languageContractId='2';}],['malformed',p=>{p.components.push(plain(p.components[0]));}]]){
       await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
         await seedAutosave(p,makeRecord('',changed));await p.reload();
-        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('もどせるか たしかめられませんでした'));
+        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('もどせるか、たしかめられなかったよ'));
         assert.equal(await p.locator('#recoveryModal.show').count(),0);
         assert.notEqual(await p.evaluate(()=>Akari.app.project.name),priorProject.name,'invalid recovery changed current project');
       });
@@ -265,7 +297,8 @@ await withBrowser(browserPath,async browser=>{
       await p.locator('#playerStart:not([disabled])').click();
       await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('形式互換')||
         document.querySelector('#formSurface').textContent.includes('形式互換'));
-      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isDisabled(),true);
+      // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+      await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
     }finally{await context.close();}
     pageErrors.push(...errors);networkRequests.push(...network);
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);

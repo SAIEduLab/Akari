@@ -351,6 +351,8 @@ button:focus-visible {
   background-color: #fff;
   background-image: radial-gradient(rgba(94, 126, 168, 0.24) 1px, transparent 1px);
   background-size: 10px 10px;
+  /* The dots are on every 10 steps from the bottom-left corner. */
+  background-position: left -5px bottom -5px;
   cursor: default;
 }
 #penCanvas {
@@ -507,6 +509,16 @@ button:focus-visible {
   width: 100%;
   height: 24px;
   border: 1px solid #aabbd0;
+}
+.prop-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 10px 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted, #5f6b7a);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 .codewin {
   grid-column: 2;
@@ -1031,12 +1043,6 @@ button:focus-visible {
   min-height: 28px;
   padding: 0 9px;
 }
-.exec-location {
-  margin-left: auto;
-  color: #536273;
-  font-size: 12px;
-  white-space: nowrap;
-}
 .editor-shell {
   position: relative;
   display: grid;
@@ -1132,7 +1138,8 @@ button:focus-visible {
   font-size: 12px;
 }
 .dirty-state.dirty {
-  color: #a56800;
+  /* 5.6:1 on the status line (the 12 px note 「ファイルに まだ ほぞんしていないよ」). */
+  color: #8f5a00;
   font-weight: 700;
 }
 .diagnosis-summary {
@@ -1221,8 +1228,7 @@ body[data-ui-level="basic"] #diagnoseBtn,
 body[data-ui-level="basic"] #pauseBtn,
 body[data-ui-level="basic"] #continueBtn,
 body[data-ui-level="basic"] #stepBtn,
-body[data-ui-level="basic"] #formatBtn,
-body[data-ui-level="basic"] #execLocation {
+body[data-ui-level="basic"] #formatBtn {
   display: none;
 }
 body[data-ui-level="basic"] .menutool .sep {
@@ -1253,12 +1259,6 @@ body {
 .editor-modes [aria-pressed="true"] {
   background: #204f87;
   color: white;
-}
-.editor-modes .mode-blocked-note {
-  align-self: center;
-  color: #8a2c0d;
-  font-size: 13px;
-  line-height: 1.3;
 }
 .editor-pending {
   padding: 6px;
@@ -2338,11 +2338,6 @@ button:focus-visible {
 .code-hints {
   min-width: 0;
 }
-#execLocation {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 42%;
-}
 
 .hint-panel {
   flex: 1;
@@ -2668,7 +2663,7 @@ body[data-editor-mode="blocks"] {
 }
 body[data-editor-mode] #app {
   height: 100dvh;
-  min-height: 720px;
+  min-height: 600px;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
 }
@@ -2712,10 +2707,15 @@ body[data-editor-mode] button:disabled {
   border-color: var(--line);
 }
 body[data-editor-mode] button:focus-visible,
-body[data-editor-mode] summary:focus-visible {
+body[data-editor-mode] summary:focus-visible,
+body[data-editor-mode] :is(select, input:not([type="checkbox"]):not([type="radio"]), textarea:not(#codeEditor):not(#callableCode)):focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+/* On the code view's orange toolbar the ring is darker, so it stands out from the whole gradient (4.5:1 or more). The
+   level and the name need the ids to outweigh the rule above (its :is() counts the ids of #codeEditor・#callableCode). */
+body[data-editor-mode="code"] .menutool :is(button, summary):focus-visible,
+body[data-editor-mode="code"] #app > .menutool :is(#uiLevel, #projectName):focus-visible { outline-color: #6b3a0f; }
 body[data-editor-mode] .menutool > button {
   height: 36px;
   border-radius: 10px;
@@ -2752,7 +2752,7 @@ body[data-editor-mode] .editor-modes button {
   font-weight: 700;
   color: var(--muted);
 }
-body[data-editor-mode] .editor-modes button[aria-pressed="true"] {
+body[data-editor-mode] .editor-modes > :is(#editorModecode, #editorModeblocks, #callableModecode, #callableModeblocks) {
   background: #fff;
   color: var(--dark);
   box-shadow: 0 2px 8px #41302019;
@@ -3016,10 +3016,6 @@ body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):focus-visible {
   flex-wrap: wrap;
   gap: 8px;
 }
-body[data-editor-mode] #execLocation {
-  font-size: 11px;
-  color: var(--muted);
-}
 body[data-editor-mode] .editor-shell {
   min-height: 70px;
   border-radius: 0 0 15px 15px;
@@ -3027,7 +3023,8 @@ body[data-editor-mode] .editor-shell {
 body[data-editor-mode] .line-gutter {
   background: #f4eadf;
   border-color: var(--line);
-  color: #ad9a84;
+  /* The line numbers are read (「3行目」 in the messages): 4.6:1 on the gutter. */
+  color: #7a6650;
 }
 body[data-editor-mode] #codeEditor {
   color: #3b332c;
@@ -3252,9 +3249,6 @@ body[data-editor-mode="blocks"] .prop-name {
   body[data-editor-mode] #projectName {
     max-width: 200px;
   }
-  body[data-editor-mode] .debugbar #execLocation {
-    max-width: 180px;
-  }
 }
 @media (max-width: 1000px) {
   body[data-editor-mode] #app {
@@ -3356,10 +3350,6 @@ body[data-editor-mode="blocks"] .prop-name {
   }
   body[data-editor-mode] .code-head select {
     max-width: 210px;
-  }
-  body[data-editor-mode] .debugbar #execLocation {
-    max-width: 100%;
-    margin-left: 0;
   }
   body[data-editor-mode="blocks"] .codewin {
     height: 780px;
@@ -4114,6 +4104,12 @@ body[data-editor-mode="blocks"] .prop-name {
   position: relative;
   z-index: 1;
 }
+/* A hat title (たくどん・「だんご」に ふれたとき) breaks only at its spaces, never inside a word. */
+.blockui-event-hat > strong,
+.blockui-world .blockui-script > .blockui-node-head > .blockui-node-title {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 .blockui-hat-owner {
   background: #fffc;
   border: 1px solid #0002;
@@ -4362,15 +4358,12 @@ body[data-editor-mode="blocks"] .designer-wrap {
 .blockui-component-picker {
   display: none;
 }
-/* Side panels may scroll rather than collapse the chooser when settings open. */
+/* The part list is no scroller of its own: the part panel takes its content height and the column on the right
+   scrolls as one, so every part tile and the tools under them are reached the same way (no hidden inner band). */
 body[data-editor-mode="blocks"] .side > .objects-window {
-  flex: 1 0 230px;
-  min-height: 230px;
-  overflow: hidden;
-}
-body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-  flex-basis: 370px;
-  min-height: 370px;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
 }
 body[data-editor-mode="blocks"] .objects-window .tree {
   display: flex;
@@ -4379,23 +4372,15 @@ body[data-editor-mode="blocks"] .objects-window .tree {
   gap: 7px;
   flex-wrap: wrap;
   padding: 10px;
-  flex: 1 1 140px;
-  min-height: 140px;
-  overflow: auto;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
 }
-/* Keep the complete action area reachable independently from the component list. */
 body[data-editor-mode="blocks"] .component-controls {
-  flex: 0 1 auto;
-  min-height: 120px;
-  max-height: 60%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-.component-controls:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
 }
 body[data-editor-mode="blocks"] .component-controls .prop-actions {
   position: static;
@@ -4466,11 +4451,6 @@ body[data-editor-mode="blocks"] .blockui-component-picker[open] > .tool-list {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   align-content: start;
-}
-body[data-editor-mode="blocks"] .objects-window:has(.blockui-component-picker[open]) > .tree {
-  flex: 1 1 auto;
-  max-height: none;
-  min-height: 58px;
 }
 body[data-editor-mode="blocks"] .project-tools {
   border-top: 1px solid #dce7ef;
@@ -4659,12 +4639,7 @@ body[data-editor-mode="code"] #componentActions,
   }
   body[data-editor-mode="blocks"] .side > .objects-window {
     flex: none;
-    height: 230px;
-  }
-  body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-    flex: none;
-    height: min(460px, 72dvh);
-    min-height: 420px;
+    height: auto;
   }
   body[data-editor-mode="blocks"] .blockui-component-picker[open] > .tool-list {
     height: 220px;
@@ -5188,7 +5163,7 @@ body.runtime #formSurface .design-resize-outline,
   position: relative;
 }
 .color-preset[aria-pressed="true"] .color-chip::after {
-  content: "\2713";
+  content: "\2713" / "";
   position: absolute;
   right: -5px;
   bottom: -5px;
@@ -5550,15 +5525,19 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 #runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }
 #runtimeInspector::backdrop { background:#24344966; }
 .runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
-#runtimeInspectorModes { margin-left:auto; }
+#runtimeInspectorModes { position:relative; margin-left:auto; }
+#runtimeInspectorModes > .mode-blocked-note { position:absolute; top:calc(100% + 6px); right:0; z-index:2; width:max-content; max-width:min(20rem, 90vw); box-shadow:0 6px 16px #18364b30; }
 #runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
-#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; }
+#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; grid-column:1; grid-row:1; }
+#runtimeInspectorBody > .monitor-window { grid-column:2; grid-row:1; }
+#runtimeInspectorStrip:empty { display:none; }
+#runtimeInspectorStrip > .run-strip { padding:0 2px; }
 #runtimeInspectorBody .debugbar { padding:6px; flex:none; }
 #runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }
 #runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }
 #runtimeInspectorBody .blockui-layout { flex:1; min-height:0; }
 #runtimeInspectorBody .monitor-window { display:flex; min-height:160px; overflow:auto; }
-@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }
+@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorBody > .monitor-window { grid-column:1; grid-row:2; } #runtimeInspectorModes { margin-left:0; } }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
@@ -5627,9 +5606,7 @@ body.runtime[data-editor-mode] .main > .codewin > .debugbar {
   display: flex; grid-column: 1 / -1; grid-row: 2;
   min-width: 0; padding: 6px; margin: 0; flex-wrap: wrap;
 }
-body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }
 body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }
-body.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleBtn,#openBtn) { display:none; }
 body.runtime[data-editor-mode] .debugbar > :is(#redoBtn,#formatBtn,#resetBtn) { display:none; }
 #runtimeInspector #runtimeInspectBtn { display:none; }
 body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
@@ -5670,12 +5647,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-wor
     min-height: 900px;
   }
 }
+/* The field keeps the box it had and the editing surface lies over the blocks, so the rest of the sentence and the
+   other blocks stay where they are (E-12). */
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field:has(> input),
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field:has(> textarea) {
   position: relative;
   z-index: 100;
+  flex: none;
+  width: var(--blockui-idle-width);
+  height: var(--blockui-idle-height);
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > input {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
   width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1))) !important;
   max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-width: 0;
@@ -5690,6 +5676,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   text-overflow: clip;
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > textarea {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1)));
   max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-height: calc(150px * var(--blockui-inverse-scale, 1));
@@ -5703,24 +5692,32 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field.blockui-editing-up > textarea { top: auto; bottom: 0; }
 .child-word { white-space: nowrap; }
 .child-word rt, .child-help rt { font-size: 0.65em; }
 .child-help { min-width: 0; color: var(--dark, #283e50); }
 .child-help > summary { cursor: pointer; min-height: 28px; padding: 5px 8px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fffaf3; line-height: 1.4; }
-.child-help p { margin: 6px 0; line-height: 1.65; white-space: normal; word-break: normal; overflow-wrap: break-word; }
+.child-help p { margin: 6px 0; line-height: 1.65; white-space: normal; overflow-wrap: break-word; }
 .child-help-panel { box-sizing: border-box; max-height: min(40dvh, 360px); overflow: auto; padding: 8px 12px; border: 1px solid var(--line, #d8e3ec); border-radius: 8px; background: #fff; font-size: 14px; }
 .child-help-panel { overscroll-behavior: contain; touch-action: pan-y; }
 .child-help-panel:focus-visible { outline: 3px solid var(--accent, #307cac); outline-offset: -3px; }
 .child-help .child-scroll-help { padding-bottom: 8px; border-bottom: 1px solid var(--line, #d8e3ec); }
 .menutool > .child-help { flex: 0 0 auto; }
-.menutool > .child-help[open] { flex: 1 0 100%; }
 .menutool > .child-help > summary { width: max-content; }
-.child-copy-help { display: block; padding: 4px 10px; font-size: 12px; line-height: 1.5; white-space: normal; }
 .child-material-name { display: block; line-height: 1.6; }
 .child-material-note { display: block; font-size: inherit; line-height: 1.5; white-space: normal; }
 .sprite-preset-grid .tool:has(.child-material-name) { min-height: 72px; }
 @media (max-width: 600px) { .child-help-panel { font-size: 14px; max-height: 38dvh; } }
 .blockui-field > .blockui-edit-text { order: 2; align-self: center; font-size: 11px; padding: 2px 5px; }
+/* 「全部見て なおす」 lies over the sentence right of the field, or right of the editing surface, so showing it moves
+   nothing (E-12). */
+.blockui-world .blockui-field:has(> .blockui-edit-text) { position: relative; }
+.blockui-world .blockui-field > .blockui-edit-text {
+  position: absolute; z-index: 101; left: calc(100% + 4px); top: 50%; translate: 0 -50%; white-space: nowrap;
+}
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > .blockui-edit-text {
+  left: calc(var(--blockui-edit-width) + 6px * var(--blockui-inverse-scale, 1));
+}
 .blockui-text-dialog { width: min(42rem, 90vw); max-width: 90vw; max-height: 85dvh; box-sizing: border-box; padding: 16px; border: 2px solid #145b8c; border-radius: 12px; background: #fff; color: #172a3b; }
 .blockui-text-dialog::backdrop { background: #18364b55; }
 .blockui-text-dialog h2 { margin: 0 0 12px; font-size: 20px; }
@@ -5762,6 +5759,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .export-example-scene{display:block;position:relative;width:210px;max-width:100%;height:118px;background:#def2ff;color:#17263b;overflow:hidden}
 .export-example-star{position:absolute;top:20px;left:30px;font-size:40px;color:#c27b00}.export-example-work-button{position:absolute;right:10px;bottom:15px;background:#fff;border:1px solid #3d6580;padding:3px 7px;font-size:11px}
 .project-choice-footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-top:16px}
+#openRefusalModal .project-choice-dialog{width:min(520px,100%)}
+#openRefusalModal p{word-break:keep-all;overflow-wrap:anywhere}
 @media(max-width:650px){.export-choices{grid-template-columns:1fr}.project-choice-dialog{padding:16px}.export-choice{padding:12px}}
 
 /* The entry layout keeps the same editor and stage; each area scrolls inside. */
@@ -5780,6 +5779,8 @@ body[data-ui-level="entry"] #componentControls { display:none; }
 body[data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
 body[data-ui-level="entry"] .menutool :is(#undoBtn,#redoBtn) svg { width:18px; height:18px; flex:none; }
 body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2),#basicActionGuide) { display:none; }
+/* はじめて chooses the event only with the two buttons above the body (F-05): no いつ動く？ and no rules in the body. */
+body[data-ui-level="entry"] :is(.blockui-heading-editor,.blockui-rules) { display:none; }
 body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
 body[data-ui-level="entry"] :is(#entryProjectMenu,#tutorialStart) { display:block; }
 body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
@@ -5789,7 +5790,10 @@ body[data-ui-level="entry"] #blockEditor { flex:1; min-height:0; overflow:hidden
 body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
 body[data-ui-level="entry"] .blockui-layout { flex:1; height:auto; min-height:0; grid-template-columns:240px minmax(0,1fr); }
 body[data-ui-level="entry"] .blockui-palette { display:flex; flex-direction:column; min-height:0; }
-body[data-ui-level="entry"] .blockui-palette::before { content:'使うブロック'; padding:8px; font-weight:bold; }
+body[data-ui-level="entry"] .blockui-palette::before { content:'ブロックの いちらん'; padding:8px; font-weight:bold; }
+/* はじめて's list shows each block by its face only: the one caption (「話す」 under 「こんにちは と 2 秒話す」) only repeated
+   the face's own word (FM2-15). */
+body[data-ui-level="entry"] .blockui-palette .blockui-bound-name { display: none; }
 body[data-ui-level="entry"] .blockui-palette-list { flex:1; min-height:0; overflow:auto; }
 body[data-ui-level="entry"] :is(.blockui-palette-controls,.blockui-categories,.blockui-palette-options,.blockui-palette-tools,.blockui-search-scope,.blockui-search-restore) { display:none; }
 body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
@@ -5844,7 +5848,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 280px; }
  body[data-ui-level="entry"] .blockui-layout { grid-template-columns:190px minmax(0,1fr); }
 }
-@media(max-width:700px) {
+/* はじめて's one-column page starts where the block view's does (760 px), so the stage never shrinks to nothing between. */
+@media(max-width:760px) {
  body[data-ui-level="entry"] #app { height:auto; min-height:100dvh; }
  body[data-ui-level="entry"] .main { display:flex; flex-direction:column; overflow:visible; }
  body[data-ui-level="entry"] .codewin { min-height:550px; }
@@ -5853,18 +5858,20 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
 }
 
-/* ── Toolbar: 表示, コード/ブロック and the work name are pinned to the top-right corner, so they
-   stay in the same place in every view, width and font. Only the action buttons on the left wrap. ── */
+/* ── Toolbar: the view toggle (ブロックモード ⇄ / コードモード ⇄), the level and the work name are pinned to the
+   top-right corner, left to right, so they stay in the same place in every view, level, width and font. Only the action
+   buttons on the left wrap. ── */
 @media (min-width: 701px) {
   body[data-editor-mode] .menutool {
     --tb-pad: 18px;
     --tb-gap: 7px;
     --tb-name: 172px;
     --tb-modes: 176px;
-    --tb-level: 114px;
-    position: relative;
+    --tb-level: 100px;
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + var(--tb-level) + 3 * var(--tb-gap));
   }
+  /* The run screen shows neither the level nor the toggle (they change nothing there), but keeps their room, so the
+     buttons wrap as on the edit screen and ■ 止める comes where ▶ 動かす was. */
   body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
     position: absolute;
     margin: 0;
@@ -5876,9 +5883,19 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     min-width: 0;
     max-width: none;
   }
-  body[data-editor-mode] .menutool > .editor-modes {
+  body[data-editor-mode] .menutool > .ui-level-label {
     top: 7px;
     right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
+    box-sizing: border-box;
+    width: var(--tb-level);
+    height: 44px;
+    padding: 0;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  body[data-editor-mode] .menutool > .editor-modes {
+    top: 7px;
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
     box-sizing: border-box;
     width: var(--tb-modes);
     height: 44px;
@@ -5886,22 +5903,19 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   body[data-editor-mode] .menutool > .editor-modes button {
     flex: 1 1 0;
     min-width: 0;
+    white-space: nowrap;
   }
-  body[data-editor-mode] .menutool > .ui-level-label {
-    top: 7px;
-    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + 2 * var(--tb-gap));
-    box-sizing: border-box;
-    width: var(--tb-level);
-    height: 44px;
-    padding: 0;
-    justify-content: flex-end;
+  body[data-editor-mode] .menutool > .mode-blocked-note {
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
 }
 @media (min-width: 701px) and (max-width: 1300px) {
   body[data-editor-mode] .menutool { --tb-pad: 10px; --tb-gap: 4px; --tb-name: 150px; --tb-modes: 140px; }
+  /* ブロック keeps clear of its pill's edge in every font (Noto Sans JP draws it 46 px wide). */
+  body[data-editor-mode] .menutool > .editor-modes button { padding-inline: 6px; }
 }
 @media (min-width: 701px) and (max-width: 1100px) {
-  body[data-editor-mode] .menutool { --tb-name: 112px; --tb-modes: 136px; }
+  body[data-editor-mode] .menutool { --tb-name: 100px; --tb-modes: 152px; --tb-level: 96px; }
   body[data-editor-mode] .menutool > .editor-modes button { padding-inline: 4px; }
 }
 
@@ -5934,3 +5948,635 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 .blockui-categories > [data-blockui-category="comment"]::before { content: "※"; }
 
 #formSurface { font-family: var(--font-stage); }
+
+/* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
+   The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
+   error, finished) shows ■ 止める only, in ▶'s place. ⏸ いったん止める and ▶ つづける take turns in one place at every
+   level, 1つずつ 動かす and 本文を見て たしかめる are for かんたん and up. The run screen never shows a button that cannot be
+   pressed: such a button (while getting ready, once the run has ended, after a mistake stopped it) is marked
+   data-inactive and is not shown, but its place stays, so the stage and the buttons keep their places and sizes from
+   ▶ 動かす to ■ 止める. */
+body:not(.runtime) #stopBtn,
+body.runtime #runBtn { display: none !important; }
+body:not(.runtime) .run-pause-slot, body:not(.runtime) .debugbar #stepBtn { display: none !important; }
+body.runtime :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn)[data-inactive="true"] { visibility: hidden !important; }
+/* One place, one width: ⏸ いったん止める and ▶ つづける lie on each other, and the wider one sets the place's width. */
+.run-pause-slot { display: inline-grid; flex: none; }
+.run-pause-slot > button { grid-area: 1 / 1; justify-content: center; }
+/* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
+body.runtime .debugbar > #undoBtn { display: none !important; }
+/* The run screen's toolbar (final call 21) shows ■ 止める in ▶ 動かす's place and the work's name as plain text. The
+   buttons that cannot be used while the work runs (新しく作る, お手本を開く, ヒント, 開く, 保存, うごく作品を ファイルにする,
+   はじめて's 作品 menu that holds three of them, and はじめて's もとにもどす・やり直す and いっしょに作る), the level and the view
+   toggle are not shown, but their room stays, so no toolbar button moves at any width. At every level the run
+   screen's toolbar shows ■ 止める and the work's name only (いっしょに作る's guide keeps its own exit). */
+body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, #undoBtn, #redoBtn, #tutorialStart, .ui-level-label, .editor-modes) { visibility: hidden !important; }
+/* The name: the box keeps its room, and the same words stand in it as plain text (not an edit field). */
+body.runtime .menutool > #projectName { visibility: hidden !important; }
+.project-name-text { position: absolute; z-index: 1; box-sizing: border-box; display: flex; align-items: center; margin: 0; padding-right: 4px; overflow: hidden; color: var(--dark, #283e50); white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
+.project-name-text[hidden] { display: none !important; }
+/* はじめて's place of ⏸ いったん止める／▶ つづける sits under the stage for the whole run screen (1つずつ 動かす and 本文を見て
+   たしかめる are for かんたん and up). */
+#entryRunControls { display: none; }
+body[data-ui-level="entry"].runtime #entryRunControls { display: flex; flex: none; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 2px 10px 8px; }
+#entryRunControls > .run-pause-slot > button { min-height: 36px; padding: 0 14px; font-weight: 700; }
+/* はじめて's run screen: what cannot be used while the work runs (the きっかけ buttons, the ＋ だんご… buttons, the tools of
+   the chosen block and the ＋ ここに入れる places) is not shown, and the stage takes the room; ■ 止める brings them back.
+   The built blocks stay, small and to read only. */
+body[data-ui-level="entry"].runtime :is(#entryEvents, #entryAddRow, #blockEditor .blockui-node.blockui-selected > .blockui-node-head, #blockEditor .blockui-insertion) { display: none !important; }
+/* The run screen keeps its rows from ▶ to ■: the saving state is not shown under it (nothing can be saved there; it
+   comes back on the edit screen), and the run-screen bar keeps its place once the run has ended. */
+body.runtime .status > .save-line { display: none !important; }
+/* The line keeps its height on the run screen too: the text and the run state share one row, and the text has the
+   room of its longest sentence there (「おわったよ。もう一度 動かすときは…」, measured in both fonts): two lines up to 700 px
+   wide, three at はじめて (15 px) up to 430 px. The box of the running sentence keeps its place while no sentence runs. */
+body.runtime .status { flex-wrap: nowrap; align-items: center; }
+body.runtime .status > #statusText { flex: 1 1 0; min-width: 0; display: flex; align-items: center; }
+body.runtime .status > .runstate { flex: none; }
+body.runtime #execSentence[hidden] { display: block !important; visibility: hidden !important; }
+@media (max-width: 760px) { body.runtime .status > #statusText { min-height: 2lh; } }
+@media (max-width: 460px) { body[data-ui-level="entry"].runtime .status > #statusText { min-height: 3lh; } }
+body.runtime .menutool > .mode-blocked-note { display: none !important; }
+.editor-modes[hidden] { display: none !important; }
+/* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */
+.editor-modes > button[hidden] { display: none !important; }
+#sourceHeadingBtn[aria-disabled="true"] { opacity: 0.5; }
+/* Why the toggle does not switch (はじめて, a 名人 work, a mistake in the code): shown under it after a press. The toggle
+   itself keeps its look. */
+.mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
+.mode-blocked-note[hidden] { display: none !important; }
+.menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
+/* The same note under いつ動く？ (its left is set to the button's when it opens). */
+.source-nav { position: relative; }
+.source-nav > .mode-blocked-note { position: absolute; top: calc(100% + 6px); z-index: 61; width: max-content; max-width: min(20rem, calc(100% - 16px)); box-shadow: 0 6px 16px #18364b30; }
+
+/* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
+   the sentence itself in a box. Its height never depends on the sentence, so the stage keeps its size from sentence
+   to sentence: each part keeps to one line (a long one ends in …; the whole text is its title and what a screen
+   reader reads), and the box keeps its place while no sentence is shown. The place and the sentence share one line;
+   in a narrow strip they have a line each (under 760 px, or 420 px at はじめて, which shows the part's name only).
+   The row count follows the strip's width only. */
+.run-strip { display: none; }
+body.runtime .run-strip { container: run-strip / inline-size; display: flex; flex: none; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 21px; color: var(--dark, #283e50); }
+.run-strip > .exec-location { flex: 0 0 40%; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exec-sentence { flex: 1 1 0; box-sizing: border-box; min-width: 0; height: 29px; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; line-height: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The empty box keeps its place: this wins over the page-wide [hidden] { display: none !important }. */
+.run-strip > .exec-sentence[hidden] { display: block !important; visibility: hidden; }
+body[data-ui-level="entry"] .run-strip > .exec-location { max-width: 45%; }
+@container run-strip (max-width: 759px) {
+  body:not([data-ui-level="entry"]) .run-strip > :is(.exec-location, .exec-sentence) { flex: 1 0 100%; max-width: none; }
+}
+@container run-strip (max-width: 420px) {
+  body[data-ui-level] .run-strip > :is(.exec-location, .exec-sentence) { flex: 1 0 100%; max-width: none; }
+}
+
+/* The toolbar (with the name Akari) stays at the top of the page when the page scrolls; it paints above the page and
+   below dialogs. Scrolling to a place keeps that place below the toolbar (its height follows its rows). */
+html { overflow-x: hidden; overflow-y: auto; scroll-padding-top: var(--toolbar-h, 0px); }
+body { overflow: visible !important; }
+.menutool { position: sticky; top: 0; z-index: 500; }
+
+/* ヒント (right of お手本を開く) and はじめて's 作品 open over the page under the toolbar: the toolbar keeps its height and
+   the other buttons keep their places. A long ヒント scrolls inside. */
+.menutool > details.toolbar-menu { position: relative; flex: 0 0 auto; }
+.menutool > details.toolbar-menu > summary { box-sizing: border-box; min-height: 36px; padding: 5px 12px; border: 1px solid #bda47a66; border-radius: 10px; background: #fffaf0d9; line-height: 24px; cursor: pointer; white-space: nowrap; }
+/* While the work runs a menu stays in its place, pale like the other toolbar buttons, and does not open. */
+.menutool > details.toolbar-menu > summary[aria-disabled="true"] { opacity: 0.5; cursor: default; }
+.menutool > #basicActionGuide > .child-help-panel,
+.menutool > #entryProjectMenu > .entry-project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
+.menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
+.menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
+/* はじめて's 作品 opens a menu: it ends with ▾ instead of the ▶ that ▶ 動かす beside it also shows. */
+.menutool > #entryProjectMenu > summary { list-style: none; }
+.menutool > #entryProjectMenu > summary::-webkit-details-marker { display: none; }
+.menutool > #entryProjectMenu > summary::after { content: " ▾" / ""; }
+body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
+
+/* Block view: the heading 本文 sits at the left of the 動かすもの row, and すべての本文・画面の本文・いつ動く？ share one row with
+   もとにもどす・やり直す, so the workspace gets the height. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: repeat(8, auto) minmax(0, 1fr);
+}
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > * { grid-column: 1 / -1; min-width: 0; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .win-title {
+  grid-row: 1; justify-self: start; align-self: start; z-index: 1; display: flex; align-items: center;
+  height: auto; min-height: 0; margin: 0; padding: 8px 0 0 12px; border: 0; background: none; font-size: 14px; font-weight: 700; line-height: 30px; pointer-events: none;
+}
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .code-head { grid-row: 1; padding-left: 58px; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row: 2; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; align-items: flex-start; }
+/* When the row wraps at a narrow width, もとにもどす・やり直す (and はじめに もどす) keep their one-line labels. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > button { flex: none; white-space: nowrap; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
+/* The two groups do not fit side by side (placeSourceRow in installEditorShell): もとにもどす… take the row under
+   すべての本文…, so neither lies under the other. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-row-wrap="true"] > .source-nav { grid-column: 1 / -1; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-row-wrap="true"] > .debugbar { grid-row: 6; grid-column: 1 / -1; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending { grid-row: 7; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceImport { grid-row: 8; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row: 9; }
+/* The editor fits the window from 600 px high; the block area may shrink to 300 px. */
+body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
+
+
+/* The ✓ of the chosen event button is for the eye: aria-pressed already says which one is chosen, so its name does
+   not read it. */
+body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content: '✓ ' / ''; }
+
+/* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
+   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). The キャラクター・部品
+   list is no higher than on the edit screen (170 px) and scrolls inside. */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
+/* 作業台を広く／画面も見る has no use while the work runs: not shown, its room kept (final call 21), so ■ 止める gives back
+   the layout the child left. */
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor [data-blockui-action="workspace-expand"] { visibility: hidden !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
+/* The stage keeps the whole height of its column (final call 34, D-19, F-14): while the work runs, the part list goes to
+   the left column under the built blocks, so a work with many parts does not take the stage's height, and ⏸ いったん止める
+   ／▶ つづける sit at the right end of the strip's row instead of a row of their own. The blocks take their row's
+   height (the edit screen's narrow-window height of 650 px would push the stage out of the window). */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > #designerWindow { grid-column: 2; grid-row: 1 / 3; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin { grid-row: 1; height: auto; min-height: 0; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { grid-column: 1; grid-row: 2; }
+body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: minmax(36px, auto) minmax(0, 1fr) auto; }
+body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > * { grid-column: 1 / -1; }
+body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > .win-title { grid-row: 1; }
+body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > .designer-wrap { grid-row: 2; min-height: 0; }
+body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > .run-strip { grid-row: 3; grid-column: 1; }
+body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > #entryRunControls { grid-row: 3; grid-column: 2; align-items: center; padding: 2px 10px 2px 0; }
+/* Overflow stays in the finite workspace. The readable body row remains above the part list on short windows. */
+body.runtime[data-editor-mode][data-run-stage-minimum] .main { overflow: auto; overscroll-behavior: contain; }
+/* The scene's explicit minimum must size its grid row, leaving the debugger in the next row. */
+body.runtime[data-editor-mode][data-run-stage-minimum]:not([data-ui-level="entry"]):not(.stage-enlarged) .main { grid-template-rows: minmax(auto, 1fr) auto; }
+@media (max-width: 650px) {
+  body.runtime[data-editor-mode][data-run-stage-minimum]:not([data-ui-level="entry"]):not(.stage-enlarged) .main { grid-template-rows: minmax(auto, 1fr) 160px auto; }
+}
+@media (max-width: 360px) {
+  body.runtime[data-editor-mode][data-run-stage-minimum]:not([data-ui-level="entry"]):not(.stage-enlarged) .main { grid-template-rows: minmax(auto, 1fr) 110px auto; }
+}
+body.runtime[data-editor-mode][data-run-stage-minimum]:not(.stage-enlarged) #designerWindow {
+  min-width: var(--run-stage-min-width, 0px); min-height: var(--run-stage-min-height, 0px);
+}
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-rows: minmax(200px, 1fr) 170px; }
+body.runtime .main:focus-visible { outline: 2px solid #2f6fd6; outline-offset: -2px; }
+/* On a narrow screen there is no room for a second column: はじめて's run screen is one column, the stage (with the
+   strip that shows the running sentence) and then the part list, as at かんたん; the blocks come back after ■ 止める.
+   The body window stays for いっしょに作る's guide. */
+@media (max-width: 650px) {
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > #designerWindow { grid-column: 1; grid-row: 1; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { grid-column: 1; grid-row: 2; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin { grid-column: 1; grid-row: 3; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin > :not(#tutorialGuide) { display: none !important; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin:not(:has(> #tutorialGuide:not([hidden]))) { display: none !important; }
+}
+
+/* Touch screens: the toolbar's controls are at least 40 px high (no wider). */
+@media (pointer: coarse) {
+  body[data-editor-mode] .menutool > button,
+  body[data-editor-mode] .menutool > details.toolbar-menu > summary,
+  body[data-editor-mode] .menutool > #projectName,
+  body[data-editor-mode] #uiLevel { height: auto; min-height: 40px; }
+  body[data-editor-mode] .menutool > :is(.editor-modes, .ui-level-label) { height: 48px; }
+  body[data-editor-mode] .menutool > .editor-modes button { min-height: 40px; }
+}
+
+/* ── 1.5.0 block view (theme E) ──────────────────────────────────────────────────────────────────────────────────────
+   Nothing a child does to select or edit a block moves the other blocks: the tools of the selected block, the slot tools
+   and 決める and its cancel (入れるのを やめる／入力を やめる) float over the workspace. */
+
+/* The block list (E-17): every category above one list that scrolls, with no pages. */
+:is(#blockEditor, #callableBlocks) .blockui-palette { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-tools { grid-column: 1; grid-row: 1; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories {
+  grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+  max-height: none; overflow: visible; padding: 6px 8px; border-right: 0; border-bottom: 1px solid #e1e8ef;
+}
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button {
+  position: relative; flex: 0 0 auto; flex-direction: row; gap: 4px; box-sizing: border-box; min-width: 0; min-height: 30px;
+  padding: 2px 8px; border-radius: 15px; font-size: 12px; line-height: 1.3; white-space: nowrap; border: 1px solid #d3dde6; background: #fff;
+}
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::before { flex: none; width: 12px; height: 12px; margin: 0; font-size: 9px; line-height: 12px; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button[aria-pressed="true"] { border-color: #6c8ca5; background: #eaf3fa; }
+:is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-list { grid-column: 1; grid-row: 3; gap: 10px; padding: 10px 8px 40px; }
+/* In 「自分で作ったブロック」 the block area keeps room for every category, the list and the workspace; when the dialog
+   is short, the form above it scrolls away instead of the list being squeezed. */
+#procModal:has(#callableBlocks:not([hidden])) .proc-edit { overflow: auto; }
+#procModal #callableBlocks:not([hidden]) { flex: 1 0 460px; min-height: 460px; }
+
+/* Thin lines between blocks (E-07): the place between two blocks is an 8 px line; the last place of a body keeps
+   「＋ ここに入れる」 (28 px). While a block is carried, while a place is being chosen and while a block is being moved,
+   every place has the size of 「＋ ここに入れる」. */
+.blockui-world .blockui-insertion:not(.blockui-insertion-end) {
+  height: 8px; min-height: 8px; line-height: 8px; color: transparent !important; font-size: 0;
+  border-color: transparent; background: transparent !important; overflow: visible;
+}
+.blockui-world .blockui-insertion:not(.blockui-insertion-end)::before { top: 2px; height: 4px; left: 12px; }
+.blockui-world .blockui-insertion:not(.blockui-insertion-end):hover::before,
+.blockui-world .blockui-insertion.blockui-implied-destination::before { background: #6c8ca5; }
+.blockui-world .blockui-insertion.blockui-insertion-end { height: 28px; min-height: 28px; line-height: 26px; }
+:is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion:not(.blockui-insertion-end) {
+  height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #47677f !important;
+  border-color: #8aa5b8; background: #f5f9fc !important;
+}
+/* A thin place keeps its height when it takes the focus (a focus never moves the blocks); its line shows the focus. */
+.blockui-world .blockui-insertion:not(.blockui-insertion-end):focus-visible::before { background: #10324f; }
+.blockui-world .blockui-body:has(> .blockui-insertion:last-child) { padding-bottom: 4px; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-body { padding-bottom: 16px; }
+
+/* The trigger block (E-07): its name is not repeated under it; いつ動く？ and 「＋ キーを おす間など、つづけて動かす」 are
+   small buttons right under it. */
+.blockui-world .blockui-script > .blockui-node-head { display: none !important; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main {
+  flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 6px; min-height: 0; padding: 4px 0 6px;
+}
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main > details > summary {
+  display: inline-flex; align-items: center; min-height: 28px; box-sizing: border-box; padding: 2px 10px;
+  border: 1px solid #c9d6e2; border-radius: 14px; background: #fff; font-size: 12px; line-height: 1.4; color: #3e5d75;
+}
+.blockui-world .blockui-script > .blockui-node-content > .blockui-node-main > details[open] { flex-basis: 100%; }
+
+/* No ▶ inside the workspace (E-14): ▶ is the mark of ▶ 動かす. What opens is shown by 「…」 or by its own words. */
+.blockui-world summary, .blockui-drag-ghost summary { list-style: none; }
+.blockui-world summary::-webkit-details-marker, .blockui-drag-ghost summary::-webkit-details-marker { display: none; }
+.blockui-world summary::marker, .blockui-drag-ghost summary::marker { content: ""; }
+.blockui-world .blockui-extra { flex: none; }
+.blockui-world .blockui-extra > summary {
+  display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 28px; min-height: 26px;
+  padding: 0 6px; border: 1px solid #0002; border-radius: 13px; background: #ffffffb3; font-weight: 700; line-height: 1; color: inherit;
+}
+.blockui-world .blockui-extra[open] > summary { background: #fff; border-color: #6c8ca5; }
+/* 「…」 opens its panel over the workspace, right under the block's face and as wide as it (where it would be in the
+   flow), as ほかのそうさ opens its list (E-12): the blocks below keep their places. While it is open, its block lies
+   above the others and the places between blocks do not take presses. */
+.blockui-world .blockui-node-main:has(> .blockui-extra[open]) { position: relative; z-index: 121; }
+.blockui-world .blockui-extra[open] { flex-basis: auto; }
+.blockui-world .blockui-extra[open] > .blockui-extra-controls {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); box-sizing: border-box; min-width: min(220px, 100%);
+  padding: 8px 10px; background: #fff; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
+}
+.blockui-world .blockui-extra-controls :is(.blockui-field, .blockui-value-row, button, input, select) { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.blockui-world .blockui-body:has(.blockui-extra[open]) { z-index: 2; }
+.blockui-world .blockui-node:has(.blockui-extra[open]) { z-index: 110; }
+
+.blockui-world .blockui-subject-text { font-weight: 700; }
+.blockui-world .blockui-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.blockui-world .blockui-value-row > .blockui-slot-label { min-width: 4em; font-size: 12px; font-weight: 500; }
+
+/* A number in a slot whose unit is fixed is a field of its own (E-02): no box around a box. */
+.blockui-world .blockui-input-slot.blockui-flat-value { display: inline-flex; align-items: center; padding: 0; background: transparent; box-shadow: none; border-radius: 15px; }
+.blockui-world .blockui-unit-text { font-weight: 700; }
+.blockui-world [data-blockui-action="unit-repair"] { min-height: 26px; padding: 1px 8px; border: 1px solid #b05a4f; border-radius: 13px; background: #fff5f2; color: #8f1d12; font-size: 12px; }
+
+/* The selected block's tools are laid over the workspace beside it (E-12): ↑ まえへ・↓ あとへ・けす・だれが・ほかのそうさ
+   right of its first row, where they cover no other block; when there is no room there, right above it. */
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected > .blockui-node-head {
+  position: absolute; left: calc(100% + 8px); right: auto; top: 6px; bottom: auto; z-index: 120; grid-row: auto; grid-column: auto;
+  width: max-content; max-width: min(640px, calc(100vw - 40px)); min-width: 0; padding: 3px 4px;
+  background: #fffffff2; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
+}
+/* Right above the block, the tools are low, so the words in the middle of the block above stay free to press. */
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected.blockui-tools-above > .blockui-node-head {
+  left: 0; top: auto; bottom: calc(100% + 1px); padding: 1px 3px;
+}
+.blockui-world .blockui-node.blockui-selected.blockui-tools-above > .blockui-node-head > .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-node.blockui-selected.blockui-tools-above > .blockui-node-head > .blockui-node-tools > :is(.blockui-who, .blockui-actions) > summary {
+  min-height: 22px; padding: 1px 6px; font-size: 11px; line-height: 1.3;
+}
+.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression).blockui-selected > .blockui-node-head > .blockui-node-tools { flex-wrap: wrap; width: auto; }
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-button,
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > :is(.blockui-who, .blockui-actions) > summary { white-space: nowrap; }
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > .blockui-node-tools > .blockui-actions > summary,
+.blockui-world .blockui-node.blockui-selected > .blockui-node-head > [data-blockui-action="diagnostics"] { min-height: 26px; padding: 2px 7px; line-height: 1.4; }
+.blockui-world .blockui-node-tools > .blockui-who { position: relative; }
+.blockui-world .blockui-node-tools > .blockui-who > summary {
+  display: inline-flex; align-items: center; box-sizing: border-box; min-height: 26px; padding: 2px 7px; border: 1px solid #0003;
+  border-radius: 6px; background: #ffffffb3; font-size: 12px; cursor: pointer;
+}
+.blockui-world .blockui-node-tools > .blockui-who[open] > .blockui-field {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 130; min-width: 220px; padding: 6px 8px;
+  background: #fff; border: 1px solid #9db3c5; border-radius: 8px; box-shadow: 0 4px 12px #12324d30;
+}
+.blockui-world .blockui-node-tools > .blockui-who .blockui-structured-field { display: flex; flex-wrap: wrap; gap: 6px; }
+/* A selected field's tools float under it (くわしく); the block keeps its size. */
+.blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head {
+  position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; width: max-content; min-width: 180px; max-width: 330px;
+}
+.blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
+/* 決める, its cancel (入れるのを やめる／入力を やめる) and the input's mistake float under the field being edited; while a place is chosen they float
+   in the free middle of the row above the workspace, or in a corner of the workspace that has no block. */
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls {
+  position: fixed; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
+  max-width: min(520px, calc(100vw - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
+  background: #eef5fbf5; box-shadow: 0 4px 12px #12324d30;
+}
+/* What the controls already say, and what a carried block shows by the pointer, is not repeated over the blocks at the
+   bottom: the live region keeps the words for a screen reader (E-04, E-12). A mistake that is not a field's still shows. */
+:is(#blockEditor, #callableBlocks).blockui-editor.blockui-interacting > .blockui-message:not(.blockui-error),
+:is(#blockEditor, #callableBlocks).blockui-editor.blockui-drag-active > .blockui-message {
+  position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; box-shadow: none;
+}
+/* In blocks, an enclosure that waits for its count says so in the floating controls; the same notice above the editor
+   would push the blocks down and up again (E-12). It shows in the code view, and a refused ▶ still shows its own. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending[data-notice="block-draft"],
+body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="block-draft"]) #editorCancel { display: none; }
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
+/* One cancel control per state (F-23): while the block view's floating 決める and its cancel is open, the editor's
+   入力を やめる is not shown next to it. */
+body[data-editor-mode="blocks"]:has(#blockEditor:not([hidden]) > .blockui-view-controls:not([hidden])) #editorCancel,
+#procModal:has(#callableBlocks:not([hidden]) > .blockui-view-controls:not([hidden])) #callableCancel { display: none !important; }
+.blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
+.blockui-view-controls > .blockui-field-error:empty { display: none; }
+:is(#blockEditor, #callableBlocks).blockui-editor > .blockui-message.blockui-message-near-field {
+  position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); box-shadow: none;
+}
+/* On a touch screen a finger that goes up or down on a block of the list moves the list (E-09). */
+:is(#blockEditor, #callableBlocks) .blockui-palette-item [data-blockui-drag] { touch-action: pan-y; }
+
+/* A long press lifts a block a little (E-09); a block put in by touch lights its empty value (E-03). */
+.blockui-world .blockui-lift { filter: drop-shadow(0 6px 6px #12324d55); translate: 0 -2px; }
+@keyframes blockui-attention { 0%, 100% { box-shadow: 0 0 0 0 #f0a63000; } 30% { box-shadow: 0 0 0 5px #f0a630aa; } }
+.blockui-world .blockui-attention { border-radius: 15px; animation: blockui-attention 0.9s ease-out 2; outline: 2px solid #e08a12; outline-offset: 2px; }
+
+/* Deleting by carrying a block to the block list (E-05): only the block list turns red. */
+.blockui-palette.blockui-delete-zone,
+body[data-editor-mode] :is(#blockEditor, #callableBlocks) .blockui-palette.blockui-delete-zone { position: relative; outline: 3px solid #c0392b; outline-offset: -3px; }
+.blockui-palette.blockui-delete-zone::after {
+  content: "ここで はなすと けす"; position: absolute; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center;
+  background: #fde3dfe6; color: #8f1d12; font-weight: 700; font-size: 16px; pointer-events: none;
+}
+/* A place that cannot take the block: the carried block is grey and says why above it (E-04). */
+.blockui-drag-ghost.blockui-ghost-invalid { opacity: 0.55; filter: grayscale(1); }
+.blockui-drag-reason {
+  position: fixed; z-index: 10001; pointer-events: none; padding: 3px 9px; border-radius: 7px; background: #fff;
+  border: 1px solid #b05a4f; color: #8f1d12; font-size: 13px; font-weight: 700; line-height: 1.5; white-space: nowrap;
+}
+.blockui-drop-note {
+  position: fixed; z-index: 10001; pointer-events: none; max-width: min(360px, calc(100vw - 24px)); padding: 5px 11px; border-radius: 8px;
+  background: #fffbe6; border: 1px solid #c8a740; box-shadow: 0 3px 10px #4a3b0a30; color: #4a3b0a; font-size: 13px; font-weight: 700;
+  transition: opacity 0.3s;
+}
+.blockui-drop-note.blockui-fading { opacity: 0; }
+.blockui-drag-ghost.blockui-returning { transition: left 0.22s ease-in, top 0.22s ease-in, opacity 0.22s ease-in; opacity: 0.4; }
+
+/* The text of the blocks, the block list and the workspace controls is not selected by a press or a drag (E-11);
+   the text in an input is. */
+#blockEditor, #callableBlocks, .blockui-drag-ghost { -webkit-user-select: none; user-select: none; }
+/* The same for the rows above the workspace (本文・動かすもの, the event buttons, すべての本文 … もとにもどす): a drag that
+   starts in their empty space selects nothing. */
+body[data-editor-mode="blocks"] .codewin > :is(.win-title, .code-head, #entryEvents, .source-nav, .debugbar) { -webkit-user-select: none; user-select: none; }
+#blockEditor :is(input, textarea), #callableBlocks :is(input, textarea) { -webkit-user-select: text; user-select: text; }
+body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
+
+/* A two-tone focus ring that shows on every block colour (L-11). */
+.blockui-world :is(.blockui-node, .blockui-insertion, button, summary, select, input):focus-visible,
+.blockui-palette :is(button, summary, select, input):focus-visible {
+  outline: 3px solid #10324f !important; outline-offset: 1px; box-shadow: 0 0 0 5px #fff !important;
+}
+
+/* Child text breaks between phrases, not inside a word (E-23). */
+:is(.child-help, .child-help-panel, .blockui-empty, .blockui-message, .blockui-unavailable, .blockui-search-scope, .blockui-drop-note,
+  .status, #statusText, .editor-pending, #entryOutside, .mode-blocked-note, .monitor-empty, .blockui-trigger-scope, .diagnostic-help) {
+  word-break: auto-phrase;
+}
+/* The notes under ブロック and いつ動く？ are one short sentence whose phrases are spaced: they break at the spaces
+   (「…ブロックに」 then 「もどれるよ」), never inside a phrase. */
+:is(#modeBlockedNote, #callableModeBlockedNote, #headingBlockedNote) { word-break: keep-all; overflow-wrap: anywhere; }
+
+/* Touch screens (E-19): what a finger presses is at least 40 × 40 px — the fields, choices and buttons in the blocks,
+   the category buttons (36 px to see, 40 px to press), the stage's size handles and zoom buttons, and the right
+   column's buttons. A place between blocks is a 40 px target while a block is carried or the block above it is
+   selected; otherwise a tap puts a block after the selected one (E-08). */
+@media (pointer: coarse) {
+  .blockui-world :is(button:not(.blockui-insertion):not(.blockui-drag-handle), select, summary, input:not([type="checkbox"]):not([type="radio"])) {
+    min-height: 40px !important; min-width: 40px; box-sizing: border-box;
+  }
+  .blockui-world .blockui-field input { height: 40px; }
+  .blockui-world .blockui-insertion.blockui-insertion-end,
+  :is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion { height: 40px !important; min-height: 40px !important; line-height: 38px; }
+  /* The place after the selected block lies above that block's face (lifted to z-index 60 while selected), so all 40 px
+     of it can be pressed (AX-03), also while one of the block's fields is being edited (final call 35, Ob2): 決める and
+     入力を やめる stay outside it. The fields of the blocks on both sides keep 33-35 px where they meet it (LANGUAGE.md's
+     exception to E-19's 40 px). */
+  .blockui-world .blockui-node + .blockui-insertion.blockui-implied-destination { position: relative; z-index: 61; }
+  .blockui-world .blockui-insertion.blockui-implied-destination::after {
+    content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 40px; z-index: 6;
+  }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories { gap: 4px; }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button { min-height: 36px; padding: 2px 8px; }
+  :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::after {
+    content: ""; position: absolute; top: -3px; bottom: -3px; left: min(0px, calc(50% - 20px)); right: min(0px, calc(50% - 20px));
+  }
+  :is(#blockEditor, #callableBlocks) .blockui-palette :is(.blockui-palette-tools .blockui-button, .blockui-palette-options > summary, input, select, .blockui-check),
+  :is(#blockEditor, #callableBlocks) .blockui-palette-list > .blockui-button { min-height: 40px !important; }
+  .blockui-navigation .blockui-button { min-height: 40px !important; min-width: 40px; }
+  .stage-zoom-controls button { min-height: 40px !important; min-width: 40px; }
+  body[data-editor-mode] .side :is(button, select, summary, .tree-item) { min-height: 40px !important; min-width: 40px; }
+  body[data-editor-mode] .side input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) { min-height: 40px !important; }
+  /* The rows above the body and はじめて's event buttons are pressed by a finger too (AX-07). */
+  body[data-editor-mode] .codewin > :is(.code-head, .source-nav, #entryEvents) :is(button, select) { min-height: 40px !important; }
+  body[data-editor-mode] .menutool > button { min-width: 40px; }
+  /* So are the bars' buttons (もとにもどす・やり直す, はじめに もどす, コードを整える, and the run screen's ⏸／▶ つづける,
+     1つずつ 動かす, 本文を見て たしかめる) and はじめて's もとにもどす・やり直す in the toolbar. */
+  body[data-editor-mode] :is(.debugbar, #entryRunControls) button,
+  body[data-editor-mode] .menutool > :is(#undoBtn, #redoBtn) { min-height: 40px !important; }
+  /* The title row of せってい and 動きのようす is as high as its 40 px toggle (▸ せってい, ▸ 動きのようす), and a folded
+     section as high as its title, so a finger can press all of the toggle. */
+  body[data-editor-mode="blocks"] .side > :is(.properties-window, .monitor-window) > .win-title:has(> .blockui-side-toggle) { height: auto; min-height: 40px; }
+  body[data-editor-mode="blocks"] .side > .blockui-side-folded { flex-basis: auto; min-height: 0; }
+}
+
+/* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
+#stageEnlarge { flex: none; min-height: 26px; height: auto; margin-left: 4px; padding: 0 8px; font-size: 12px; line-height: 1.2; white-space: nowrap; }
+.designer > .win-title { flex-wrap: nowrap; gap: 4px; }
+#designerHeading { flex: none; white-space: nowrap; }
+body.stage-enlarged::before { content: ""; position: fixed; inset: 0; z-index: 900; background: #12283acc; }
+body.stage-enlarged #designerWindow {
+  position: fixed; z-index: 901; left: 50%; top: 50%; translate: -50% -50%; box-sizing: border-box; display: flex; flex-direction: column;
+  width: auto; height: auto; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); min-height: 0; flex: none; margin: 0;
+  box-shadow: 0 12px 40px #0006;
+}
+body.stage-enlarged #designerWindow > .designer-wrap {
+  flex: 1 1 auto; width: auto; height: auto; min-height: 0; max-height: calc(100dvh - 120px); overflow: auto; padding: 12px;
+}
+body.stage-enlarged #designerWindow > .win-title .stage-zoom-controls { visibility: hidden; }
+body.stage-enlarged #stageEnlarge { visibility: visible; }
+
+/* The small stage left at the bottom right while the workspace is wide (E-21); pressing it brings the columns back. */
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side {
+  display: block; position: fixed; z-index: 400; right: 18px; bottom: 44px; width: 228px; height: auto; overflow: hidden;
+  border-radius: 12px; box-shadow: 0 6px 18px #12324d40; background: #fff;
+}
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side > :not(#designerWindow) { display: none !important; }
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side > #designerWindow {
+  position: relative; flex: none; width: 228px; height: 158px; min-height: 0; margin: 0; border-radius: 12px;
+}
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .win-title,
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .run-strip { display: none; }
+body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .designer-wrap { height: 158px; padding: 6px; overflow: hidden; }
+/* はじめて keeps the stage in the page's grid, not in the right column: it becomes the same small stage at the bottom
+   right, the part list under it is put away, and the blocks take the whole width. */
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .main > .side { display: none !important; }
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .main > #designerWindow {
+  position: fixed; z-index: 400; right: 18px; bottom: 44px; box-sizing: border-box; width: 228px; height: 158px; min-height: 0; margin: 0;
+  overflow: hidden; border-radius: 12px; box-shadow: 0 6px 18px #12324d40; background: #fff;
+}
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > #designHelp { display: none; }
+#stageThumbnail {
+  position: absolute; inset: 0; z-index: 3500; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0;
+  border: 2px solid #6c8ca5; border-radius: 12px; background: transparent; cursor: pointer;
+}
+#stageThumbnail[hidden] { display: none; }
+#stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
+/* The thumbnail stands for the small stage of wide mode in the block view only: the code view shows the whole stage. */
+body:not([data-workbench-wide="true"]) #stageThumbnail, body:not([data-editor-mode="blocks"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+/* The small stage takes the right end of the workspace: the navigation strip ends left of it and the blocks wrap
+   before it, so it covers no button and no block (E-21). */
+@media (min-width: 761px) {
+  body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #blockEditor .blockui-workspace-shell > .blockui-navigation {
+    margin-right: 252px; max-width: calc(100% - 264px);
+  }
+  body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #blockEditor .blockui-world {
+    width: max(220px, calc(var(--blockui-content-width, 560px) - 252px * var(--blockui-inverse-scale, 1)));
+  }
+}
+
+/* はじめて has no ヒント: how to change a part's size (and to see the screen at 100%) is written under the screen while a
+   part shows its handles (E-22). Its room is kept when no part is selected, so the screen never moves. */
+#designHelp { display: none; }
+body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp {
+  display: block; flex: none; box-sizing: border-box; min-height: calc(3em + 10px); margin: 0; padding: 4px 12px 6px;
+  font-size: 13px; line-height: 1.5; color: var(--muted, #536273);
+}
+body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] { visibility: hidden; }
+
+/* The touch resize control belongs to the heading, clear of every part. Keep its room when no box is selected. */
+#designerWindow { position: relative; }
+#designRatioLock {
+  position: static; flex: 0 0 84px; align-self: center; box-sizing: border-box; margin: 0; min-height: 32px; padding: 3px; border: 1px solid #6c8ca5; border-radius: 16px;
+  background: #ffffffee; font-size: 13px; line-height: 1.2; white-space: normal; box-shadow: 0 2px 6px #12324d26;
+}
+#designRatioLock[aria-pressed="true"] { background: #dcebf7; border-color: #1f56b4; font-weight: 700; }
+#designRatioLock[hidden] { visibility: hidden; pointer-events: none; }
+body.runtime #designRatioLock { display: none; }
+@media not (pointer: coarse) { #designRatioLock { display: none; } }
+@media (pointer: coarse) {
+  body:not(.runtime) #designRatioLock[hidden] { display: block !important; }
+  #stageEnlarge, #designRatioLock, #stageThumbnail { min-height: 40px; }
+  #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; flex-wrap: wrap; gap: 1px; }
+  #stageEnlarge { padding-inline: 2px; margin-left: 0; }
+  .stage-zoom-controls { gap: 0; }
+  #stageZoomReset { min-width: 40px; width: 40px; padding-inline: 0; }
+}
+
+/* A short touch screen uses the existing stacked editor layout, with room for the heading and artwork. */
+@media (pointer: coarse) and (max-height: 500px) {
+  body[data-ui-level="entry"]:not(.runtime) { height: auto; overflow: auto; }
+  body[data-ui-level="entry"]:not(.runtime) #app { height: auto; min-height: 100dvh; }
+  body[data-ui-level="entry"]:not(.runtime) .main { display: flex; flex-direction: column; overflow: visible; }
+  body[data-ui-level="entry"]:not(.runtime) .codewin { min-height: 550px; }
+  body[data-ui-level="entry"]:not(.runtime) .designer { height: 300px; flex: none; }
+  body[data-ui-level="entry"]:not(.runtime) .side { height: 170px; flex: none; }
+  body[data-ui-level="entry"]:not(.runtime) .blockui-layout { min-height: 340px; }
+}
+
+html { overscroll-behavior-x: none; }
+body:not(.runtime) #formSurface .component.ak-input { touch-action: none; }
+
+/* The place いっしょに作る points at keeps the size of 「＋ ここに入れる」, so the child can press it (E-07). */
+body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target:not(.blockui-insertion-end) {
+  height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #123b72 !important;
+}
+
+/* The status line (F-11): one saving sentence — what this computer keeps, then the file — and, with nothing changed,
+   only かえた ところは ないよ. At はじめて the line is larger (setStatus lights a new sentence for a moment). */
+.status > .save-line { display: inline-flex; flex-wrap: wrap; gap: 0 4px; min-width: 0; }
+.status > .save-line > #autosaveState.save-quiet { display: none; }
+.status > .save-line > #autosaveState:not(.save-quiet)::after { content: '。'; }
+#statusText:empty { display: none; }
+body[data-ui-level="entry"] .status,
+body[data-ui-level="entry"] .status .runstate { font-size: 15px; }
+body[data-ui-level="entry"] .status #statusText { color: #1d3448; font-weight: 700; border-radius: 6px; padding: 0 4px; }
+
+/* Child text is written with spaces between phrases; a line breaks only at a space or a punctuation mark (F-19). */
+:is(.status, #statusText, .modal p, .project-choice-dialog p, .project-choice-dialog h2, #tutorialText, #entryOutside,
+  .export-choice, .sample-card-copy, .diagnosis-issue, .diagnosis-note, #failureBody > .diagnostic-help,
+  .child-help, .child-help-panel, .blockui-empty, .blockui-local-help, .editor-pending, .monitor-empty,
+  .monitor-title, .monitor-key, .monitor-value, .failure-open, #codeIssue) {
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+/* The run-failure dialog: Akari's lines around the reason, which sits in a box with its place, as in 作品チェック. */
+#failureBody > .failure-help { white-space: normal; }
+.failure-help > p { margin: 0; }
+.failure-reason { margin: 8px 0; padding: 8px 10px; border: 1px solid #efd0d0; border-radius: 9px; background: #fff5f5; white-space: pre-wrap; }
+.failure-place { color: var(--muted, #536273); font-size: 0.92em; }
+
+/* はじめて adds a character with three buttons in キャラクター・部品 (F-13). */
+#entryAddRow { display: none; }
+body[data-ui-level="entry"] #entryAddRow { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; flex: none; }
+body[data-ui-level="entry"] #entryAddRow > .entry-add {
+  min-height: 36px; padding: 4px 12px; border: 1px solid #9aaec8; border-radius: 10px; background: #fffdf5; font-size: 14px;
+}
+@media (pointer: coarse) { body[data-ui-level="entry"] #entryAddRow > .entry-add { min-height: 40px; } }
+
+/* 作品チェック's ⚠ (F-08): a block with a mistake keeps an orange frame on its face, also while it is selected or has the
+   focus, whose rings are drawn around the whole block. */
+.blockui-world .blockui-node.blockui-diagnostic > .blockui-node-content > .blockui-node-main {
+  outline: 3px solid #d9730d; outline-offset: 0; border-radius: 6px;
+}
+
+/* The block list toggle (F-09): put away, the list gives its width to the workspace. はじめて has no toggle. */
+body[data-editor-mode="blocks"] #blockEditor .blockui-library-hidden .blockui-layout,
+body[data-editor-mode="blocks"] #blockEditor.blockui-library-hidden .blockui-layout { grid-template-columns: 0 minmax(0, 1fr); }
+body[data-ui-level="entry"] [data-blockui-action="library-toggle"] { display: none; }
+
+/* はじめて's block list fits on one page at 1366 × 768 (F-03): small gaps between the blocks, a lower face, and short
+   blocks two to a row (a wide one takes its own row). A finger still gets 40 px. */
+body[data-ui-level="entry"] .blockui-palette-list { flex-flow: row wrap; align-items: flex-start; align-content: flex-start; gap: 4px 0; padding-bottom: 8px; }
+body[data-ui-level="entry"] .blockui-palette-item { margin: 0 4px; }
+body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-height: 34px; padding-top: 5px; padding-bottom: 5px; }
+@media (pointer: coarse) { body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-height: 40px; } }
+
+/* 作品チェックの知らせ (ⓘ) where its sentence is, at every level (p2 Q5 (d)): blue, never the orange or red of a mistake.
+   Code view: the line number and 「ⓘ N行目：…」 under the code. Block view: the block is outlined with a blue dashed line
+   and carries 「ⓘ 知らせ」, which opens the notice's text under the block. */
+:root { --notice-ink: #1f5f99; --notice-edge: #3b82c4; --notice-soft: #e8f1fb; }
+.gutter-line.notice { background: var(--notice-soft); color: var(--notice-ink); border-left-color: var(--notice-edge); font-weight: 700; }
+#codeIssue.issue-notice, body[data-editor-mode] #codeIssue.issue-notice { min-width: 0; max-width: 100%; overflow: visible; color: var(--notice-ink); font-size: 13px; font-weight: 700; white-space: normal; }
+body[data-editor-mode] .code-assist:has(#codeIssue.issue-notice) { flex-direction: column; align-items: stretch; max-height: min(260px, 35vh); overflow: auto; }
+#codeIssue.issue-notice > [data-note-fix] { margin-left: 4px; }
+#callableIssue { margin: 4px 0; color: var(--notice-ink); font-size: 13px; font-weight: 700; word-break: keep-all; overflow-wrap: anywhere; }
+#callableIssue[hidden] { display: none; }
+.blockui-node-notices { grid-column: 1 / -1; display: none; margin: 5px 0; padding: 7px 10px 7px 25px; background: #eef5fc; color: #1f4f7a; font-size: 12px; overflow-wrap: anywhere; }
+.blockui-node-notices.blockui-open { display: block; }
+.blockui-world .blockui-node-notices { position: absolute; z-index: 121; box-sizing: border-box; margin: 0; max-width: 660px; white-space: normal; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26; }
+.blockui-world .blockui-node:has(> .blockui-node-notices.blockui-open) { z-index: 111; }
+.blockui-node-head > [data-blockui-action="notices"] { min-height: 26px; padding: 1px 5px; border: 0; background: transparent; box-shadow: none; color: var(--notice-ink); font-size: 12px; }
+.blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 2px dashed var(--notice-edge); outline-offset: 0; border-radius: 6px; }
+/* The notice marks are edit-screen controls: the run screen shows neither 「ⓘ 知らせ」, its list, the outline nor a
+   rewrite button (■ 止める brings them back, and the status line then points to them). */
+body.runtime :is(#blockEditor, #callableBlocks) [data-blockui-action="notices"],
+body.runtime .blockui-node-notices,
+body.runtime :is(#editorPending, #callablePending) .intent-choices { display: none !important; }
+body.runtime .blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 0; }
+/* A subject carried over from another part's sentence (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is shown on the
+   block as a pale chip in （ ）: it is not written in the code (lead decision 30). */
+.blockui-world .blockui-subject-carried { display: inline-flex; align-items: center; padding: 0 6px; border: 1px dashed #8a9bb0; border-radius: 999px; background: #ffffff99; color: #4b5b70; font-weight: 400; }
+
+/* A sideways swipe at the edge of the editor keeps the child in the work. */
+html { overscroll-behavior-x: none; }
+
+/* Missing values stay in the pending note until explicitly confirmed. */
+.intent-choices [data-intent-input] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.intent-choices [data-intent-input] > strong { flex-basis: 100%; }
+.intent-choices [data-intent-input] label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
+.intent-choices [data-intent-input] input { width: 8em; min-width: 0; max-width: 100%; }

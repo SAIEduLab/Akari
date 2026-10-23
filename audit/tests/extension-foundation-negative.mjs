@@ -27,6 +27,17 @@ const clone = () => structuredClone(control), mutations = [
   r=>r.artifacts[1].path='../escape.html', r=>r.artifacts[0].sha256='0'.repeat(64), r=>r.artifacts[2].sha256='0'.repeat(64),
   r=>r.provenance.run='other', r=>r.provenance.attempt='other',
 ];
+// These independent corruptions prove that the new EXT17/EXT18 evidence is mandatory, without adding suite IDs.
+for(const mutate of [
+  r=>r.results.find(x=>x.id==='EXTENSION-COMMAND-EVENT-STATE').observed.handlerContext.asyncSurfaces.player=false,
+  r=>r.results.find(x=>x.id==='EXTENSION-COMMAND-EVENT-STATE').observed.handlerContext.asyncSurfaces.after[0]=320,
+  r=>delete r.results.find(x=>x.id==='EXTENSION-COMMAND-EVENT-STATE').observed.handlerContext,
+  r=>r.results.find(x=>x.id==='EXTENSION-COMMAND-EVENT-STATE').observed.handlerContext.contextKeys.push('internalRuntime'),
+  r=>r.results.find(x=>x.id==='EXTENSION-COMMAND-EVENT-STATE').observed.handlerContext.writeHasNoEffect=false,
+  r=>r.results.find(x=>x.id==='EXTENSION-EVENT-LANGUAGE').observed.eventLifetime.registeredKeepsRunning=false,
+  r=>r.results.find(x=>x.id==='EXTENSION-EVENT-LANGUAGE').observed.eventLifetime.unknownEventFinishes=false,
+  r=>r.results.find(x=>x.id==='EXTENSION-EVENT-LANGUAGE').observed.eventLifetime.stageFirstStatus=false,
+]){const report=clone();mutate(report);assert.throws(()=>verifyExtensionFoundation(report,inputs,directory),'EXT17/EXT18 observation corruption must be rejected');}
 const results = mutations.map((mutate,i)=>{const report=clone();mutate(report);assert.throws(()=>verifyExtensionFoundation(report,inputs,directory),extensionNegativeIds[i]);return{id:extensionNegativeIds[i],rejected:true};});
 const output={schema:'akari-extension-foundation-negative-v1',status:'PASS',snapshot:inputs,controlKind:'validator-rejection-only',results};
 verifyExtensionFoundationNegative(output,inputs);

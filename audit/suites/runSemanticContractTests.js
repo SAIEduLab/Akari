@@ -339,15 +339,12 @@ function runSemanticContractTests() {
         "LooksCommand:SET_TARGET_TEXT",
         "LooksCommand:SHOW",
         "MotionCommand:BOUNCE",
-        "MotionCommand:GLIDE",
-        "MotionCommand:GLIDE_DIRECTION",
         "MotionCommand:GOTO",
+        "MotionCommand:GOTO_PART",
         "MotionCommand:MOVE",
-        "MotionCommand:MOVE_DIRECTION",
+        "MotionCommand:MOVE_BY",
         "MotionCommand:POINT_TO",
         "MotionCommand:SET_DIRECTION",
-        "MotionCommand:SET_X",
-        "MotionCommand:SET_Y",
         "MotionCommand:TURN_LEFT",
         "MotionCommand:TURN_RIGHT",
         "PenCommand:CLEAR",
@@ -367,6 +364,7 @@ function runSemanticContractTests() {
         "SoundCommand:TONE_WAIT",
         "StopCommand:ALL",
         "StopCommand:OTHERS",
+        "StopCommand:OWN_OTHERS",
         "StopCommand:THIS",
         "UserActionCall",
         "WaitTime",
@@ -400,7 +398,7 @@ function runSemanticContractTests() {
       // broadcast and the continuous rule is a script rule, so they are written as sentences.
       for (const [kind, source] of [
         ['WaitBroadcastGroup', 'みんなに「出発」と知らせる\nその知らせを受けて始めたことが全部終わるまで待つ\n0を返す'],
-        ['ContinuousRule', '条件（条件の答え（あてはまる））が成り立つあいだ、自分は画面の右へ1秒に20歩の速さで動き続ける\n0を返す'],
+        ['ContinuousRule', '条件（条件の答え（あてはまる））が成り立つあいだ、自分は右へ1秒に20歩の速さで動き続ける\n0を返す'],
       ]) {
         const p = base();
         p.functions = [{ ownerId: 'stage', id: 'function-effect', name: '計算', args: [], source }];
@@ -474,7 +472,7 @@ function runSemanticContractTests() {
       p.scripts.push({
         targetId: 'sprite-1',
         event: 'start',
-        source: '横0、縦0の位置へ行く\n1秒で横100、縦200の位置へ滑る\n「滑走完了」と言う',
+        source: '画面の左下のはしから、右へ0歩、上へ0歩のばしょへ行く\n1秒かけて、画面の左下のはしから、右へ100歩、上へ200歩のばしょへ行く\n「滑走完了」と言う',
       });
       const traces = [];
       for (const blocks of [false, true]) {
@@ -523,8 +521,16 @@ function runSemanticContractTests() {
       let api=Akari, compiled=api.compileProject(p);eq(compiled.errors,[]);
       if(packed){api=Akari.createAkariRuntime();const loaded=api.restoreExecutable(Akari.packExecutable(p));p=loaded.project;compiled=loaded.compiled;}
       const speech=[],r=new api.RuntimeModel(p,{}),q=new api.EventScheduler(p,compiled,r,{say:(id,text)=>speech.push([id,text])});
-      r.now=()=>0;q.schedule=()=>{};
-      try{q.start();for(let i=0;i<1000&&q.ready.length;i++)q.runTurn();eq(q.errorRecords.map(e=>e.code),expectedError?[expectedError]:[]);eq(q.tasks.size,0);
+      let clock=0;r.now=()=>clock;q.schedule=()=>{};
+      try{q.start();
+        // A loop turn that changes the screen without waiting waits for the next こま (loop pacing), so the logical
+        // clock moves to the earliest wake until every flow has ended.
+        for(let i=0;i<1000&&(q.ready.length||q.tasks.size);i++){
+          if(q.ready.length){q.runTurn();continue;}
+          const due=Math.min(...[...q.blocked].map(t=>t.blockReason?.kind==='time'?t.blockReason.deadline:Infinity));
+          if(!Number.isFinite(due))break;clock=due;q.recheckBlocked();
+        }
+        eq(q.errorRecords.map(e=>e.code),expectedError?[expectedError]:[]);eq(q.tasks.size,0);
         return{cat:r.actor('cat').x,dog:r.actor('dog').x,catValue:r.actor('cat').vars.get('個体値'),projectValues:Object.fromEntries(r.projectVars),speech};}
       finally{q.stop();}
     };
@@ -538,15 +544,15 @@ function runSemanticContractTests() {
     ];
     test('control actors survive move duplicate remove and header edits', () => {
       const examples=[
-        ['もし横位置が0より大きければ、','  右へ2歩動く。',103,102],
-        ['個体値回くり返す。','  右へ2歩動く。',121,120],
-        ['横位置が110より小さいあいだ、くり返す。','  右へ2歩動く。',111,110],
-        ['横位置が110以上になるまで、くり返す。','  右へ2歩動く。',111,110],
-        ['ずっとくり返す。','  右へ2歩動く。\n  いまのくり返しを終える。',103,102],
-        ['個体一覧の中身を先頭から一つずつ見て、次のことを行う。','  右へ2歩動く。',107,106],
+        ['もしよこのばしょが0より大きければ、','  いまのばしょから、右へ2歩動く。',103,102],
+        ['個体値回くり返す。','  いまのばしょから、右へ2歩動く。',121,120],
+        ['よこのばしょが110より小さいあいだ、くり返す。','  いまのばしょから、右へ2歩動く。',111,110],
+        ['よこのばしょが110以上になるまで、くり返す。','  いまのばしょから、右へ2歩動く。',111,110],
+        ['ずっとくり返す。','  いまのばしょから、右へ2歩動く。\n  いまのくり返しを終える。',103,102],
+        ['個体一覧の中身を先頭から一つずつ見て、次のことを行う。','  いまのばしょから、右へ2歩動く。',107,106],
       ];
       for(const [header,body,movedX,removedX] of examples){
-        const source='いぬは右へ1歩動く。\n'+header+'\n'+body,p=actorUnitFixture(source),
+        const source='いぬは、いまのばしょから、右へ1歩動く。\n'+header+'\n'+body,p=actorUnitFixture(source),
           s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),b=s.blockView.bodies.body;
         for(const remove of [false,true]){
           const e=prepareBlockEdit(s,remove?{type:'remove',id:b[0].id}:{type:'move',id:b[1].id,parentId:s.blockView.id,body:'body',index:0}),
@@ -557,7 +563,7 @@ function runSemanticContractTests() {
         }
       }
       for(const [kind,header,breaks] of actorUnitControls){
-        const body='  右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':''),source=header+'\n'+body+'\nいぬは右へ1歩動く。',p=actorUnitFixture(source),
+        const body='  いまのばしょから、右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':''),source=header+'\n'+body+'\nいぬは、いまのばしょから、右へ1歩動く。',p=actorUnitFixture(source),
           s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),b=s.blockView.bodies.body;
         eq(s.syntaxAst.body[0].kind,kind);
         for(const duplicate of [false,true]){
@@ -566,22 +572,22 @@ function runSemanticContractTests() {
           const out=actorUnitRun(actorUnitFixture(e.source));eq([out.cat,out.dog],[duplicate?4:2,101]);
         }
       }
-      const source='いぬは何もしない。\nもし横位置が0より大きければ、\n  右へ2歩動く。',p=actorUnitFixture(source),s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),
+      const source='いぬは何もしない。\nもしよこのばしょが0より大きければ、\n  いまのばしょから、右へ2歩動く。',p=actorUnitFixture(source),s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),
         e=prepareBlockEdit(s,{type:'field',id:s.blockView.bodies.body[1].id,key:'actorRef',value:{kind:'self'}});
       eq(e.syntaxAst.body[1].actorRef,{kind:'self'});eq(e.syntaxAst.body[1].thenBody[0].actorRef,{kind:'named',name:'いぬ'});
       eq(actorUnitRun(actorUnitFixture(e.source)).dog,100);
     });
     test('explicit control subjects preserve scope source and else', () => {
       for(const [kind,header,breaks] of actorUnitControls){
-        const source='いぬは、'+header+'\n  自分は右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':'')+'\n右へ3歩動く。',p=actorUnitFixture(source),ast=parseSyntax(source).ast;
+        const source='いぬは、'+header+'\n  自分は、いまのばしょから、右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':'')+'\nいまのばしょから、右へ3歩動く。',p=actorUnitFixture(source),ast=parseSyntax(source).ast;
         ok(ast,source);eq(ast.body[0].kind,kind);eq(ast.body[0].actorRef,{kind:'named',name:'いぬ'});eq(ast.body[1].actorRef,{kind:'self'});
         const text=formatScript(blockDecode(blockEncode(ast).tree));ok(astEquivalent(ast,parseSyntax(text).ast));
         const s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0);eq(prepareBlockEdit(s,{type:'noop'}).source,source);
         const out=actorUnitRun(p);eq([out.cat,out.dog],[5,100]);
       }
       for(const inline of [false,true]){
-        const source=inline?'いぬは、もし点数が1と同じなら、右へ9歩動く。\nそうでなければ、右へ2歩動く。\n右へ3歩動く。'
-          :'いぬは、もし点数が1と同じなら、\n  右へ9歩動く。\nそうでなければ、\n  右へ2歩動く。\n右へ3歩動く。';
+        const source=inline?'いぬは、もし点数が1と同じなら、いまのばしょから、右へ9歩動く。\nそうでなければ、いまのばしょから、右へ2歩動く。\nいまのばしょから、右へ3歩動く。'
+          :'いぬは、もし点数が1と同じなら、\n  いまのばしょから、右へ9歩動く。\nそうでなければ、\n  いまのばしょから、右へ2歩動く。\nいまのばしょから、右へ3歩動く。';
         const out=actorUnitRun(actorUnitFixture(source));eq([out.cat,out.dog],[3,102]);
         const ast=parseSyntax(source).ast;ok(astEquivalent(ast,parseSyntax(formatScript(ast)).ast));
       }
@@ -596,7 +602,7 @@ function runSemanticContractTests() {
           const out=actorUnitRun(p);eq(out.catValue,21);
         }
       }
-      const stage=actorUnitFixture('画面は何もしない。\nもし点数が0と同じなら、\n  自分は右へ2歩動く。');eq(actorUnitRun(stage).cat,2);
+      const stage=actorUnitFixture('画面は何もしない。\nもし点数が0と同じなら、\n  自分は、いまのばしょから、右へ2歩動く。');eq(actorUnitRun(stage).cat,2);
       const p=actorUnitFixture('いぬは何もしない。\nもし点数が0と同じなら、\n  自分は個体値を1増やす。');
       p.components[0].localData.variables=[];
       ok(compileProject(p).errors.some(d=>d.code==='S301'&&d.line===3),'reject missing self data even if dog has it');
@@ -621,7 +627,7 @@ function runSemanticContractTests() {
       const forms=['点数を1秒増やす。','点数を1秒減らす。','点数に1秒を足す。','点数から1秒を引く。','1秒を点数に足す。','1秒を点数から引く。'];
       for(const statement of forms){
         for(const individual of [false,true]){
-          const p=actorUnitFixture('右へ10歩動く。\n'+(individual?'いぬは':'')+statement),d={id:'core-unit-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'};
+          const p=actorUnitFixture('いまのばしょから、右へ10歩動く。\n'+(individual?'いぬは':'')+statement),d={id:'core-unit-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'};
           if(individual)p.components[1].localData.variables.push(d);else p.projectData.variables=[d];
           const errors=compileProject(p).errors;ok(errors.some(d=>d.code==='R417'&&d.line===2),statement);reject(()=>packExecutable(p),'X601');
           const ast=parseSyntax(p.scripts[0].source).ast;p.scripts[0].source=formatScript(blockDecode(blockEncode(ast).tree));ok(compileProject(p).errors.some(d=>d.code==='R417'));
@@ -644,6 +650,77 @@ function runSemanticContractTests() {
       }
     });
 
+    test('timer reset is an effect in value-returning definitions', () => {
+      const p=makeDefaultProject();p.functions=[{id:'timer-pure',ownerId:'stage',name:'試す',args:[],source:'タイマーを0にする。\n1を答えとして返す。'}];
+      ok(compileProject(p).errors.some(e=>e.code==='S305'));
+      ok(!hintCandidates(p,'stage',{definitionKind:'function',source:''}).some(h=>h.id==='TimerReset'&&h.enabled));
+      p.functions=[];p.scripts=[{id:'timer-main',targetId:p.components[0].id,event:'start',source:'タイマーを0にする。'}];eq(compileProject(p).errors,[]);
+    });
+    test('touch wait guidance is conditional and excludes unresolved or compound conditions', () => {
+      const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+      p.components=[['ねこ',100],['星',105]].map(([name,x],i)=>({...structuredClone(base),id:'wait-'+i,name,x,y:100,costumes:[{id:'wait-face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:'wait-face-'+i}));
+      p.projectData.variables.push({id:'wait-target',name:'相手',initialValue:'星'});
+      for(const [condition,notice]of [['「星」にふれるまで待つ。',true],['相手にふれるまで待つ。',false],['条件（「星」にふれていない）が成り立つまで待つ。',false],['条件（「星」にふれているまたは1が1と同じ）が成り立つまで待つ。',false],['条件（「星」にふれているかつ1が1と同じ）が成り立つまで待つ。',false]]){
+        p.scripts=[{id:'wait-main',targetId:'wait-0',event:'start',source:condition+'\nいまのばしょから、右へ10歩動く。'}];
+        const c=compileProject(p);eq(c.errors,[]);const notes=c.notes.filter(n=>n.code==='I134');eq(notes.length,notice?1:0);
+        if(notice){ok(notes[0].message.includes('まだ ふれて いない ときは'));ok(!notes[0].message.includes('待ちつづけます'));}
+      }
+    });
+    test('scoped scalar expressions and quoted list names execute',()=>{
+      const p=actorUnitFixture();p.projectData.variables=[];for(const c of p.components)c.localData={variables:[],lists:[]};
+      p.projectData.lists=[{id:'advice-list',name:'買うもの',initialValue:['りんご']}];
+      p.scripts[0].source='【買うもの】を言う。';const d=compileProject(p).errors.find(x=>x.code==='S304');ok(d?.message.includes('【買うもの】の1番目を言う'));
+      p.scripts[0].source='【買うもの】の1番目を言う。';eq(actorUnitRun(p).speech.map(x=>x[1]),['りんご']);
+      for(const name of ['いぬ','犬\\','犬\\内'])for(const prefix of ['', 'この中だけで使うリスト点数を空で作る。\n','［10］の各要素を点数として、次のことをくり返す。\n  ']){
+        p.components[1].name=name;p.components[1].localData.variables=[{id:'advice-scalar',name:'点数',initialValue:3}];
+        const value=formatExpression({kind:'ActorQualifiedRead',actorRef:{kind:'named',name},value:{kind:'VariableRead',name:'点数',qualifier:'self'}});
+        p.actions=[{id:'advice-action',ownerId:'stage',name:'試す',args:[],source:prefix+value+'を言う。'}];p.scripts[0].source='【試す】という手順を行う。';
+        for(const packed of [false,true])eq(actorUnitRun(p,packed).speech.map(x=>x[1]),['3']);
+      }
+    });
+    test('connected rotations preserve sequence and genuine repeat choices',()=>{
+      for(const n of [2,3,20]){const r=parseSyntax('前へ1歩進んで、右に1度回ってから、'.repeat(n)+'何もしない。');ok(r.ast,JSON.stringify(r.syntaxDiagnostics));eq(r.ast.body.length,n*2+1);for(let i=0;i<n;i++){eq(r.ast.body[i*2].op,'MOVE');eq(r.ast.body[i*2+1].op,'TURN_RIGHT');}}
+      for(const count of ['2','【回数】']){const d=parseSyntax(count+'回前へ1歩進んで、何もしない。').syntaxDiagnostics[0];ok(d.message.includes('どこまでを'));eq(d.proposals.length,2);for(const p of d.proposals)ok(parseSyntax(p.source).ast);}
+    });
+    test('touch event advice preserves explicit toucher identity',()=>{
+      for(const meijin of [false,true]){
+        const p=actorUnitFixture('いぬが「星」にふれるまで待つ。\nいぬは、いまのばしょから、右へ10歩動く。');
+        p.components.push({...structuredClone(p.components[0]),id:'advice-star',name:'星',x:300,w:10,h:10,costumes:[{id:'advice-star-face',name:'丸',kind:'text',value:'●'}],costumeId:'advice-star-face',localData:{variables:[],lists:[]}});
+        if(meijin)Object.assign(p.scripts[0],{targetId:'meijin',mode:'meijin'});
+        const c=compileProject(p);eq(c.errors,[]);const note=c.notes.find(n=>n.code==='I134');ok(note.message.includes('いぬが「星」にふれたとき、'));
+        p.scripts[0].source='いぬが「星」にふれたとき、\n  いぬは「接触」と言う。';const compiled=compileProject(p);eq(compiled.errors,[]);eq([compiled.items[0].targetId,compiled.items[0].event,compiled.items[0].filter],['dog','touchStart',{target:'星'}]);
+        const said=[],r=new RuntimeModel(p),q=new EventScheduler(p,compiled,r,{say:(id,text)=>said.push([id,text])});let clock=0;r.now=()=>clock;q.schedule=()=>{};
+        try{q.start();q.pollWatches();r.actor('cat').x=300;clock+=17;q.pollWatches();while(q.ready.length)q.runTurn();eq(said,[]);r.actor('dog').x=300;clock+=17;q.pollWatches();while(q.ready.length)q.runTurn();eq(said,[['dog','接触']]);}finally{q.stop();}
+      }
+    });
+    test('motion comma omission preserves both leg spellings and axis order',()=>{
+      for(const prefix of ['いまのばしょから','画面の左下のはしから'])for(const x of ['右へ10歩','10歩右へ'])for(const y of ['上へ5歩','5歩上へ'])for(const legs of [[x,y],[y,x]]){
+        const end=prefix.startsWith('画面')?'のばしょへ行く。':'動く。',canonical=parseSyntax(prefix+'右へ10歩、上へ5歩'+end).ast;
+        for(const comma of ['', '、']){const source=prefix+legs.join(comma)+end,parsed=parseSyntax(source);ok(parsed.ast,source);ok(astEquivalent(parsed.ast,canonical),source);ok(astEquivalent(blockDecode(blockEncode(parsed.ast).tree),canonical),source);}
+      }
+      for(const legs of ['10歩右へ5歩左へ','右へ10歩5歩左へ'])ok(parseSyntax('いまのばしょから'+legs+'動く。').syntaxDiagnostics.some(d=>d.code==='P205'));
+      const chain='いまのばしょから、右へ10歩動いて、いまのばしょから、左へ10歩動いて、いまのばしょから、上へ10歩動く。';
+      const connected=parseSyntax(chain);ok(connected.ast);eq(connected.ast.body.length,3);
+      ok(astEquivalent(connected.ast,parseSyntax(chain.replaceAll('動いて、','動く。\n')).ast));
+      const late=parseSyntax(chain.replace('動く。','動いて、1秒休む。')).syntaxDiagnostics;ok(late.length);ok(!late[0].message.includes('1つずつ'));
+      for(const prefix of ['','いまのばしょから、']){const d=parseSyntax(prefix+'右へ1歩、上へ2歩、左へ3歩動く。').syntaxDiagnostics;ok(d.length&&d[0].code==='P205');ok(d[0].message.includes('1つずつ'));}
+    });
+    test('unfinished meaning choices require explicit angle or list index',()=>{
+      const project=makeDefaultProject();project.projectData.lists=[{id:'meaning-list',name:'持ち物',initialValue:['本','ぼうし']}];
+      const context={symbols:buildSymbols(project),targetId:'sprite-1',event:'start'};
+      for(const extra of ['', '\n1秒休む。']){
+        const repeat=parseSyntax('10歩進む。右に曲がる。4回くり返す。'+extra,context);eq(repeat.ast,null);eq(repeat.syntaxDiagnostics[0].proposals.length,2);
+        for(const proposal of repeat.syntaxDiagnostics[0].proposals){eq(proposal.input.kind,'angle');eq(proposal.source.slice(proposal.input.offset,proposal.input.offset+proposal.input.marker.length),'〔角度をえらぶ〕');eq(parseSyntax(proposal.source,context).ast,null);}
+        const list=parseSyntax('持ち物に「〔番号を入れる〕」を入れる。'+extra,context);eq(list.ast,null);eq(list.syntaxDiagnostics[0].proposals.length,2);
+        const [append,replace]=list.syntaxDiagnostics[0].proposals;eq(append.input,undefined);eq(replace.input.kind,'index');eq(replace.source.slice(replace.input.offset,replace.input.offset+replace.input.marker.length+2),'〔番号を入れる〕番目');eq(parseSyntax(replace.source,context).ast,null);
+      }
+    });
+    test('delimiter diagnostics count Unicode characters on physical lines',()=>{
+      for(const prefix of ['「字」と言う。','「😀」と言う。','「😀😀」と言う。'])for(const newline of ['', '\r\n']){
+        const source=newline?prefix+newline+'（1＋2を言う。':prefix+'（1＋2を言う。',d=parseSyntax(source).syntaxDiagnostics[0];
+        eq(d.code,'P207');eq(d.line,newline?2:1);eq(d.column,newline?1:[...prefix].length+1);
+      }
+    });
     return {
       total: results.length,
       passed: results.filter((x) => x.pass).length,

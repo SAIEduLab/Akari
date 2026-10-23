@@ -10,7 +10,8 @@ export const naturalRoleIds=[
  ...['あいさつ','ジャンプ','手順3'].flatMap(name=>[0,1,3].map(count=>`action/${name}/${count}`)),
  ...[0,1,3].map(count=>'clone/'+count),...['－1','1.5','「三」','501'].map(value=>'clone/reject/'+value),
  ...['右','左'].flatMap(direction=>[1,20,30].flatMap(speed=>['動く','動き続ける'].map(ending=>`continuous/${direction}/${speed}/${ending}`))),
- ...['「a」キーを押しているあいだ、画面の右へ20歩動く。','画面の右へ画面の左へ20歩動く。','「あいさつ」という手順を2回3回行う。'].map(source=>'reject/'+source),
+ ...['「a」キーを押しているあいだ、画面の右へ20歩動く。','画面の右へ画面の左へ20歩動く。','「あいさつ」という手順を2回3回行う。',
+  '「a」キーを押しているあいだ、いまのばしょから、右へ20歩動く。','いまのばしょから、右へ左へ20歩動く。','いまのばしょから、右へ10歩、左へ5歩動く。'].map(source=>'reject/'+source),
  ...['こはる','はなを','ねこは星'].flatMap(name=>[false,true].flatMap(quoted=>[0,1].flatMap(order=>[0,1,20].map(speed=>`continuous-actor/${name}/${quoted}/${order}/${speed}`)))),
  ...['こはる','はなを','ねこは星'].flatMap(name=>[false,true].map(quoted=>`heading-actor/${name}/${quoted}`)),
 ];
@@ -61,7 +62,8 @@ export function verifyNumericBrowser(report){
  assert.deepEqual(report.results.slice(0,5).map(r=>r.observed),trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})));
  for(const [i,width]of [1366,1024,390].entries()){
   const {monitorHeight,...observed}=report.results[5+i].observed;assert.ok(Number.isFinite(monitorHeight)&&monitorHeight>=120);
-  assert.deepEqual(observed,{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width});
+  // 文字（ ） makes the same 12-digit text as the display (LANGUAGE.md 数を文字にするとき; final call 18); the もとの 数 stays exact.
+  assert.deepEqual(observed,{monitor:'0.3',text:'0.3',raw:'0.30000000000000004',savedExact:true,width});
  }
  assert.deepEqual(report.results.slice(8).map(r=>r.observed),[
   {shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}]);return count;
@@ -78,6 +80,7 @@ export function verifyResourceBrowser(report){
 export const searchBindingIds=[...['右に行きたい','小さくしたい','おおきさ','2番目に入れたい','点数','てんすう','おじぎ','代金'].map(q=>'search/required/'+q),
  ...['ひだりにすすみたい','上へ動かしたい','シタへイキタイ','画面の右へ移動したい'].map(q=>'search/direction/'+q),
  ...['５番目に入れたい','3ばんめにいれたい','10番目へ挿入'].map(q=>'search/ordinal/'+q),
+ ...['くらべる','ランダム','まわす','やめる','とまる','へる','クリック','タッチ','ひく-subtracts-first'].map(q=>'search/child-words/'+q),
  'search/scopes-remain-distinct','search/callable-arguments-and-kind','search/no-query-mutation','search/rotation-and-replacement-distinct','search/unavailable-reason','search/bound-insertion-semantic'];
 export const searchBrowserIds=[...[1366,1024,390].map(w=>'search/browser-discovery-focus-'+w),'search/browser-scope-binding-undo','search/browser-function-binding','search/browser-intent-values','search/browser-unavailable-reason'];
 export function verifySearchBrowser(report){
@@ -111,14 +114,15 @@ export const structuredOrders=[['condition','seconds','distance'],['distance','c
 export const structuredEditingIds=[...['empty','heading','body'].flatMap(k=>['keyDown','message'].map(e=>'heading/'+k+'/'+e)),...structuredOrders.map(o=>'continuous/'+o.join('-'))];
 export function verifyStructuredEditing(report){
  const count=verifySemanticExtension(report,'akari-structured-editing-browser-v1',structuredEditingIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);assert.deepEqual(report.environment,{browser:'140.0.7339.207',playwright:'1.55.0'});
- for(const[i,row]of report.results.entries()){const o=row.observed;if(i<6){const[,kind,event]=row.id.split('/');assert.deepEqual(o,{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:true});}else{const{elapsed,moved,...rest}=o;assert.deepEqual(rest,{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true});assert.ok(Number.isFinite(elapsed)&&elapsed>=1);assert.ok(Number.isFinite(moved)&&Math.abs(moved-20*elapsed)<=6);}}
+ for(const[i,row]of report.results.entries()){const o=row.observed;if(i<6){const[,kind,event]=row.id.split('/');// An empty key body is the only body of its work, which does not run (LANGUAGE.md: 空の作品で「▶ 動かす」を押すと、動かさずに「ブロックが まだ ないよ。…」と案内します).
+  const refused=kind==='empty'&&event==='keyDown';assert.deepEqual(o,{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:!refused,emptyWorkRefused:refused});}else{const{elapsed,moved,...rest}=o;assert.deepEqual(rest,{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true});assert.ok(Number.isFinite(elapsed)&&elapsed>=1);assert.ok(Number.isFinite(moved)&&Math.abs(moved-20*elapsed)<=6);}}
  return count;
 }
 export function verifyBasicBrowser(report){
  const count=verifySemanticExtension(report,'akari-basic-intents-browser-v1',basicIntentIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
  assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
- const bytes=fs.readFileSync('audit/fixtures/basic-intents.json');assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),'019a00044214a9c2bd7fcc32f4fc565d4132101d7a1653f35b82615e2647a134');const fixture=JSON.parse(bytes);
- const expected={T01:{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},T02:{jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true},T04:{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},T05:{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'}};
+ const bytes=fs.readFileSync('audit/fixtures/basic-intents.json');assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),'d2b431482b6c694edaf58a848067d8bd02fb381abe78332ea798e36ca2351ae1');const fixture=JSON.parse(bytes);
+ const expected={T01:{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},T02:{jumpY:124,returnY:100,repeatedDownIdle:true,secondPress:true},T04:{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},T05:{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'}};
  for(const [i,row]of report.results.entries()){
   const {detail,...o}=row.observed,d=fixture.cases[i];assert.deepEqual(o,{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true});
   if(expected[row.id])assert.deepEqual(detail,expected[row.id]);
@@ -129,7 +133,7 @@ export function verifyBasicBrowser(report){
 
 export const semanticNegativeIds=["N01/relative-and-screen","N02/direction-and-rotation","N03/wait-and-duration","N04/edge-and-level","N05/inclusive-and-strict","N06/insert-and-replace","N07/data-and-literal","N08/unit-refusal","N09/repeat-scope-required","N10/duplicate-rate","N11/duplicate-direction","N12/missing-rate","N13/no-foreign-data-fallback","N14/else-and-event-boundary","N15/invalid-counts-and-ordinals","N16/callable-context","N17/named-arguments","N18/broadcast-reference-required","N19/original-is-not-clone","N20/quoted-connectors","N21/draft-never-becomes-zero","N22/nested-binder-scope","N25/semantic-drafts-save-and-refuse-execution","N26/part-wait-and-flow-wait"];
 export function finiteVariantFixture(){
- const file='audit/fixtures/finite-semantic-variants.json',bytes=fs.readFileSync(file),hash=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(hash,'4d781e00a0c0a122bfc6612ef9bb733d2a8ffb8037e20349070cbbabc2143ef2');return{fixture:JSON.parse(bytes),hash};
+ const file='audit/fixtures/finite-semantic-variants.json',bytes=fs.readFileSync(file),hash=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(hash,'68f09ab40a5277ed7aef490c822283cb3ba55c4da32b2e16b9a0dda1309ed318');return{fixture:JSON.parse(bytes),hash};
 }
 export function verifyFiniteVariants(report){
  const {fixture,hash}=finiteVariantFixture();assert.equal(report.schema,'akari-finite-semantic-variants-report-v1');assert.equal(report.status,'PASS');assert.equal(report.uxAcceptance,false);assert.deepEqual(report.snapshot,snapshot(currentProductFile()));assert.equal(report.fixtureHash,hash);assert.deepEqual(report.results.map(r=>r.id),fixture.cases.map(c=>c.id));

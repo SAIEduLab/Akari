@@ -24,6 +24,7 @@ export const workflowRejectionIds=Object.freeze([
   'permissions/write-contents','permissions/job-write',
   'concurrency/cancels-main','concurrency/shared-main-group','concurrency/missing',
   'jobs/missing-job','jobs/extra-job','jobs/condition-changed','job-keys/reusable-workflow',
+  'runner/wrong-platform','runner/missing-bash',
   'needs/dropped-job','needs/without-always',
   'continue-on-error/job','continue-on-error/step',
   'timeout/missing','timeout/not-integer',
@@ -44,6 +45,7 @@ export const changeGuardCaseIds=Object.freeze([
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);
+import {boundaryRejectionIds} from './language-boundaries-contract.mjs';
 export const gateCaseIds=Object.freeze({
   'release-distribution':['current-distribution-recorded'],
   'workflow-contract':['current-workflows-accepted',...workflowRejectionIds],
@@ -60,6 +62,7 @@ export const gateCaseIds=Object.freeze({
     'candidate/accepted','candidate/release-name-function','candidate/release-compare','candidate/producer-alias','candidate/release-name-object-method','candidate/release-name-class-method',
     'producer-metadata/reused-in-fingerprint','release-read/object-alias','release-read/destructured-alias'],
   'ci-regression':[
+    'stage-reach/accepted',...['missing-corner','duplicate-corner','wrong-edge','clipped','nonfinite','changed-dimensions','scroll-outside-range','forged-hit'].map(id=>'stage-reach/reject-'+id),
     'click-guard/cancel-sets-suppression','click-guard/next-click-suppressed',
     'fresh-context/isolated-pages','fresh-context/failure-propagated-once','fresh-context/page-error-recorded','fresh-context/network-aborted','fresh-context/startup-failure-closed',
     'browser-environment/accepted',...['status','snapshot','playwright','revision','browser','launch-timeout','executable-hash','executable-path','missing-launch','launch-id','launch-browser','slow-launch','negative-launch-time','launch-script-result','launch-mp3'].map(name=>'browser-environment/reject-'+name),
@@ -67,7 +70,12 @@ export const gateCaseIds=Object.freeze({
     'ui-buttons/failures-retained-without-retry','ui-buttons/decreasing-budget','ui-buttons/validator-negatives',
     'partial-rerun/earlier-attempt-selected','partial-rerun/latest-attempt-selected',...['attempt-mismatch','snapshot-mismatch','newer-failure','unsealed-latest','different-run','missing-kind','future-attempt','noncanonical-attempt'].map(name=>'partial-rerun/reject-'+name),
     'asset-diagnostics/errors-persisted-before-stalled-screenshots','asset-diagnostics/later-cases-run-once','asset-diagnostics/decreasing-budget',
-    'fixture-readiness/offline-viewport-context','fixture-readiness/unfinished-import-rejected'],
+    'child-diagnostics/timeout-output-preserved','child-diagnostics/capture-failure-keeps-original',
+    'fixture-readiness/offline-viewport-context','fixture-readiness/unfinished-import-rejected',
+    'perf-report/accepted',...['error','input-missing','switch-missing','nonfinite','negative','total-deadline','false-pass','wrong-source','invalid-dom'].map(name=>'perf-report/reject-'+name),
+    'event-report/accepted',...['negative-missing','negative-false','negative-owner','gui-false','seed-wrong','files-missing','files-duplicate','path-escape','artifact-missing','artifact-snapshot','artifact-fault','source-changed','cleanup-incomplete','body-edit-missing','input-unordered','random-missing','wait-missing','explicit-stop-missing','midpoint-wrong','terminal-missing','failure-code','record-task','record-source','post-error-command','frozen-child-false','frozen-child-missing','control-enabled','deadline-not-advanced','deadline-progress','mutation-not-applied','record-mutated','record-after-stop','mode-diverged'].map(name=>'event-report/reject-'+name),
+    'language-boundaries/accepted',...boundaryRejectionIds.map(name=>'language-boundaries/reject-'+name),
+    'diagnostic-guidance/list-and-scoped-scalar','diagnostic-guidance/typed-comparison'],
   'dom-regression':['normal-observation','latest-tree-defense-without-render-guards','reentrant-mutant-rejected'],
   'harness-negative':['valid-report-accepted','missing-id','duplicate-id','extra-id','missing-suite','duplicate-suite','empty-suite','missing-environment','wrong-environment','exception-status','timeout-status','false-pass','contradictory-status','forged-summary','forged-aggregate','missing-snapshot','changed-product-hash','incomplete','shrunk-manifest','missing-browser-executable','empty-registration','missing-suite-file','registration-exception','registration-syntax-error','nonsettling-evaluation-timeout'],
   'language-negative':['valid-report-accepted','missing-result','duplicate-result','unknown-id','failed-status','skipped-status','total-changed','failed-count','report-status-failed','completion-flag-flipped','missing-environment','snapshot-field-added','changed-product-hash'],

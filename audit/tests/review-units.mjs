@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
+import {chooseView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
+import {cancelInput} from '../browser/cases/cancel-input.cjs';
 const [chrome,input,output]=process.argv.slice(2);
 assert.ok(chrome&&input&&output,'usage: node audit/tests/review-units.mjs <browser> <product> <output-json>');
 assert.ok(!fs.existsSync(output),'a fresh evidence path is required');
@@ -17,12 +19,12 @@ function fixture(){
   cat.name='ねこ';cat.x=0;cat.y=0;cat.localData={variables:[],lists:[]};
   p.components=[cat];p.projectData={variables:[{id:'review-score',name:'点数',initialValue:0}],lists:[]};
   p.actions=[];p.functions=[];
-  p.scripts=[{id:'review-units',targetId:cat.id,event:'start',source:'ねこは右へ10歩動く。\n点数を1秒 + 2点にする。'}];return p;
+  p.scripts=[{id:'review-units',targetId:cat.id,event:'start',source:'ねこは、いまのばしょから、右へ10歩動く。\n点数を1秒 + 2点にする。'}];return p;
 }
 async function openBody(page){
   await page.locator('#uiLevel').selectOption('advanced');
   if(await page.locator('#sourceEditBtn').isVisible())await page.locator('#sourceEditBtn').click();
-  await page.locator('#editorModecode').click();
+  await chooseView(page,'code');
   await page.locator('#codeEditor').waitFor({state:'visible'});
 }
 async function state(page){return page.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,dirty:Akari.app.editorState.dirty,owner:Akari.app.editorState.main.ownerKey,source:Akari.app.editorState.main.sourceText,state:Akari.app.editorState.state,pending:Akari.app.editorState.main.pendingEdit}));}
@@ -55,10 +57,10 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     assert.ok(analysis.exportError,'invalid program cannot become an executable');
     for(const c of analysis.controlErrors)assert.deepEqual(c.errors,[],c.source+' must remain accepted without name-based unit inference');
     const before=await state(page);
-    await page.locator('#editorModeblocks').click();await page.locator('#blockEditor').waitFor({state:'visible'});await page.locator('#editorModecode').click();
+    await chooseView(page,'blocks');await page.locator('#blockEditor').waitFor({state:'visible'});await chooseView(page,'code');
     assert.deepEqual(await state(page),before,'mode roundtrip must keep project and history');
     await page.locator('#runBtn').click();
-    await page.waitForFunction(()=>document.querySelector('#console').textContent.includes('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直してください'));
+    await page.waitForFunction(()=>document.querySelector('#console').textContent.includes('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直して ください'));
     assert.ok((await page.locator('#statusText').textContent()).startsWith('まだ 動かせないよ。'),'a refused run tells the child why nothing moved');
     const after=await state(page),observed=await page.evaluate(()=>__unitsObserved),position=await page.evaluate(()=>({x:Akari.app.project.components[0].x,y:Akari.app.project.components[0].y}));
     assert.deepEqual(after,before,'compile rejection preserves valid design history and state');
@@ -74,7 +76,9 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     assert.match(issue,/P\d+/);assert.ok(pendingMessage.length>0);
     const success=await page.locator('body').getByText('このコードの書き方は大丈夫です',{exact:false}).filter({visible:true}).count();
     assert.equal(success,0,'visible rejected code cannot show a success diagnosis');
-    const pending=await state(page);assert.equal(pending.pending.value,raw);assert.equal(await page.locator('#editorModeblocks').isDisabled(),true);
+    const pending=await state(page);assert.equal(pending.pending.value,raw);
+    // The view toggle stays in code and says why (final call 22).
+    await refusedViewPress(page,'error');assert.deepEqual(await state(page),pending,'a refused view press keeps the raw pending edit');
     for(const key of ['project','history','redo','dirty','owner','source','state'])assert.deepEqual(pending[key],before[key],key+' must survive invalid fullwidth input');
     await page.locator('#runBtn').click();
     assert.deepEqual(await state(page),pending,'rejected Run must retain the raw pending edit');
@@ -89,7 +93,7 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     await openBody(page);await observe(page);const before=await state(page);
     const sources=['大きさを0％にする。','大きさを−1％にする。','大きさを１００１％にする。','大きさを（1000 + 1）％にする。'];
     const compile=await page.evaluate(sources=>sources.map(source=>{
-      const p=structuredClone(Akari.app.project);p.scripts[0].source='右へ10歩動く。\n'+source;
+      const p=structuredClone(Akari.app.project);p.scripts[0].source='いまのばしょから、右へ10歩動く。\n'+source;
       return{source,errors:Akari.compileProject(p).errors};
     }),sources);
     for(const row of compile)assert.ok(row.errors.some(d=>d.code==='R412'&&d.line===2),row.source+' must be diagnosed statically at its position');
@@ -116,8 +120,9 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     }
     await page.locator('#codeEditor').fill('大きさを100％にする。');
     await page.waitForFunction(()=>Akari.app.editorState.main.sourceText==='大きさを100％にする。');
-    await page.locator('#editorModeblocks').click();
-    const blockBefore=await state(page),field=page.locator('#blockEditor [data-schema-id="LooksCommand:SET_SCALE"] [data-schema-id="NumberLiteral"] input[data-blockui-field="value"]');
+    await chooseView(page,'blocks');
+    // The number sits in the block face itself (no inner NumberLiteral node), as the field of the size block.
+    const blockBefore=await state(page),field=page.locator('#blockEditor [data-schema-id="LooksCommand:SET_SCALE"] input[data-blockui-field="value"]');
     assert.equal(await field.count(),1);assert.equal(await field.inputValue(),'100');
     await field.fill('0');await field.press('Enter');
     await page.waitForFunction(()=>document.querySelector('#codeIssue').textContent.includes('R412'));
@@ -126,11 +131,11 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     assert.equal(await field.inputValue(),'0','explicit invalid number remains visible');
     await page.locator('#runBtn').click();
     for(const key of ['project','history','redo','dirty','owner','source','state'])assert.deepEqual((await state(page))[key],blockBefore[key]);
-    await page.locator('#editorCancel').click();assert.deepEqual(await state(page),blockBefore);
+    await cancelInput(page);assert.deepEqual(await state(page),blockBefore);
     assert.equal(await field.inputValue(),'100');
     const observed=await page.evaluate(()=>__unitsObserved);assert.deepEqual(observed,{starts:0,motions:[],says:[]});
     const blockCancelled=await state(page);
-    await page.locator('#editorModecode').click();
+    await chooseView(page,'code');
     const largeBefore=await state(page),line='大きさを0％にする。\n';
     const maxSource=await page.evaluate(()=>Akari.LIMITS.sourceEach);
     const largeSource=line.repeat(Math.floor(maxSource/line.length)).padEnd(maxSource,' ');
@@ -158,7 +163,7 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     for(const key of ['project','dirty','owner','source','state'])assert.deepEqual(recovered[key],largeBefore[key]);
     assert.equal(recovered.history,largeBefore.history+1,'recovery retains confirmed history plus the exact unfinished frame');assert.equal(recovered.redo,largeBefore.redo);
     assert.equal(recovered.pending.diagnostics.length,1);assert.equal(recovered.pending.diagnostics[0].code,'R412');
-    assert.equal(await page.locator('#editorModeblocks').isDisabled(),true);
+    await refusedViewPress(page,'error');assert.deepEqual(await state(page),recovered,'a refused view press keeps the recovered edit');
     await page.locator('#undoBtn').click();const recoveredUndo=await state(page);
     assert.equal(recoveredUndo.pending,null);assert.equal(recoveredUndo.project,largeBefore.project);
     assert.equal(recoveredUndo.history,largeBefore.history);assert.equal(recoveredUndo.redo,1);

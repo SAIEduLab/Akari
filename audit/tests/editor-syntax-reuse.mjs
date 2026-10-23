@@ -7,8 +7,11 @@ import {currentProductFile} from '../lib/product-path.cjs';
 // Existing language/editor suites remain the independent behavior oracles.
 export function runEditorSyntaxReuseTests(html=fs.readFileSync(currentProductFile(),'utf8')) {
   const call='parseProjectSyntax(candidate, true)';
+  const validatedBody='editorCandidateProject(session, source, project, context, parsed.ast)';
   assert.equal(html.split(call).length,2,'one editor-only syntax reuse boundary');
-  const cached=loadApi(html), uncached=loadApi(html.replace(call,'parseProjectSyntax(candidate)'));
+  assert.equal(html.split(validatedBody).length,2,'one private validated-body handoff');
+  const cached=loadApi(html), uncached=loadApi(html.replace(call,'parseProjectSyntax(candidate)')
+    .replace(validatedBody,'editorCandidateProject(session, source, project, context)'));
   const plain=value=>JSON.parse(JSON.stringify(value));
   const project=plain(cached.makeDefaultProject());
   project.actions=[{id:'shared',ownerId:'stage',name:'準備',args:[],source:'「共有」と言う。'}];
@@ -22,10 +25,21 @@ export function runEditorSyntaxReuseTests(html=fs.readFileSync(currentProductFil
     assert.deepEqual(plain(actual),plain(expected),id+' session parity');
     if(actual.blockView) {
       const locate=s=>({parentId:s.blockView.id,body:'body',index:s.blockView.bodies.body.length});
-      for(const schema of ['Say','WaitTime','MotionCommand:MOVE_DIRECTION','UserActionCall','IfStatement']) {
+      for(const schema of ['Say','WaitTime','MotionCommand:MOVE_BY','UserActionCall','IfStatement']) {
         assert.deepEqual(plain(cached.blockInsertionAvailability(actual,schema,locate(actual),{project:p,context})),
           plain(uncached.blockInsertionAvailability(expected,schema,locate(expected),{project:p,context})),id+' '+schema);
       }
+      const capture=(api,session)=>{
+        let candidate=null,ownKeys=null;
+        try {
+          const result=api.prepareBlockEdit(session,{type:'insert',...locate(session),node:api.createBlock('NoOperation')},
+            {project:p,context,validateCandidate(result,project){
+              candidate=plain(project);ownKeys=project.scripts.map(row=>Object.keys(row).sort());return true;
+            }});
+          return {candidate,ownKeys,source:result.source,ast:plain(result.syntaxAst),diagnostics:plain(result.diagnostics)};
+        } catch(error) { return {candidate,ownKeys,error:{code:error.code||error.name,message:error.message}}; }
+      };
+      assert.deepEqual(capture(cached,actual),capture(uncached,expected),id+' candidate metadata/source parity');
     }
     assert.equal(JSON.stringify(p),before,id+' does not mutate project');
     results.push({id,status:'PASS'});return actual;
@@ -73,7 +87,7 @@ export function runEditorSyntaxReuseTests(html=fs.readFileSync(currentProductFil
   const create=()=>measured.createEditorSession('script:start',large.scripts[0].source,
     {targetId:'sprite-1',targetType:'sprite',event:'start',args:[]},large);
   const session=create(), point={parentId:session.blockView.id,body:'body',index:1};
-  for(const schema of ['Say','WaitTime','MotionCommand:MOVE_DIRECTION','UserActionCall'])
+  for(const schema of ['Say','WaitTime','MotionCommand:MOVE_BY','UserActionCall'])
     measured.blockInsertionAvailability(session,schema,point,{project:large,context:session.context});
   create();
   const count=()=>new Map(measured.auditSyntaxProbe().counts).get(sharedSource);

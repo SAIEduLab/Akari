@@ -1,5 +1,6 @@
 const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 // Actual keyboard/pointer regressions for owner deletion and expression movement.
 const L=require('./audit-lib.cjs'),U=require('./ui-routes.cjs'),assert=require('assert/strict');
@@ -19,7 +20,7 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
   try{
    await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);
    await (await reveal(p.locator('#objectSelect'))).selectOption('sprite-1');await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
-   await (async()=>{const control=await reveal(p.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();await p.waitForTimeout(400);
+   await chooseView(p,'blocks',{reveal:reveal,open:openBodyForTest});await p.waitForTimeout(400);
    results.push({id,pass:true,evidence:await test(p,dialogs)});
   }catch(e){results.push({id,pass:false,error:e.stack,dialogs,observed:await read(p).catch(()=>null)});await p.screenshot({path:L.path.join(dir,id+'.png'),fullPage:true}).catch(()=>{});}
   finally{await context.close();}
@@ -40,12 +41,14 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
    return{route,before,after,cancelled:true};
   });
   await run('confirmed-owner-delete-common-history','1を言う。\n2を言う。',async(p,dialogs)=>{
-   await (async()=>{const control=await reveal(p.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();const route=await outsideButton(p),before=await read(p);
+   await chooseView(p,'code',{reveal:reveal,open:openBodyForTest});const route=await outsideButton(p),before=await read(p);
+   await p.keyboard.press('Delete');const outside=await read(p);assert.deepEqual(outside,before,'Delete outside the parts controls keeps the selected part and the complete editor state');assert.deepEqual(dialogs,[],'toolbar Delete never asks to remove the part');
+   await p.locator('#formSurface').focus();assert.equal(await p.evaluate(()=>document.activeElement.id),'formSurface');
    await p.keyboard.press('Delete');const deleted=await read(p);
    assert.equal(JSON.parse(deleted.project).components.some(c=>c.id==='sprite-1'),false);assert.equal(dialogs.length,1);
    await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await read(p)).project,before.project);
    await (await reveal(p.locator('#redoBtn'))).click();assert.equal((await read(p)).project,deleted.project);
-   return{route,before,deleted,confirmationCount:dialogs.length,undoRedoExact:true};
+   return{route,before,outside,stageFocus:true,deleted,confirmationCount:dialogs.length,undoRedoExact:true};
   });
   await run('expression-move-destination-not-obscured','1を言う。\n2を言う。',async p=>{
    const root=p.locator('#blockEditor'),before=await read(p);

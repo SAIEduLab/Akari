@@ -11,12 +11,14 @@ const plain = value => {
 
 export function buildProject(api, world, { saved = false } = {}) {
   const p = api.makeEmptyProject(), base = p.components.find(c => c.type === 'sprite');
+  // world.stage sets the work screen's size; a part without x/y is at the screen's centre (SCHEMA.md world).
+  if (world.stage) Object.assign(p.stage, { width: world.stage.width ?? p.stage.width, height: world.stage.height ?? p.stage.height });
   const ids = new Map();
   p.components = (world.parts ?? []).map((part, i) => {
     const id = 'w-part-' + i;
     ids.set(part.name, id);
     return {
-      ...structuredClone(base), id, name: part.name, x: part.x ?? 0, y: part.y ?? 0, w: part.w ?? 40, h: part.h ?? 40,
+      ...structuredClone(base), id, name: part.name, x: part.x ?? p.stage.width / 2, y: part.y ?? p.stage.height / 2, w: part.w ?? 40, h: part.h ?? 40,
       direction: part.direction ?? 0, scalePercent: part.size ?? 100, visible: part.visible ?? true,
       costumes: [{ id: id + '-face', ...FACE }, { id: id + '-smile', ...SMILE }], costumeId: id + '-face',
       localData: { variables: Object.entries(part.vars ?? {}).map(([name, initialValue], j) => ({ id: id + '-v' + j, name, initialValue })), lists: [] },
@@ -46,21 +48,32 @@ export function buildProject(api, world, { saved = false } = {}) {
     id: 'w-script-' + i, event: 'start', source: '',
     ...(script.owner === 'meijin' ? { mode: 'meijin', targetId: 'meijin' } : { targetId: script.owner === 'stage' ? 'stage' : ids.get(script.owner) }),
   }));
-  p.scripts.forEach((script, i) => api.updateScriptSource(script, world.scripts[i].source, p));
-  return { project: p, ids, soundSeconds };
+  // A text the editor refuses to take (updateScriptSource throws, for example a touch heading in the stage's body)
+  // stays uncommitted there, and 作品チェック shows the reason under it: the check sees a stopping error at its line 1.
+  const refusals = [];
+  p.scripts.forEach((script, i) => {
+    try { api.updateScriptSource(script, world.scripts[i].source, p); }
+    catch (error) { if (!error?.code) throw error; refusals.push({ code: error.code, line: error.line ?? 1, message: String(error.message), script: i }); }
+  });
+  return { project: p, ids, soundSeconds, refusals };
 }
+const refusalText = x => x.code + '@' + x.line + ' ' + x.message;
 
 export function checkResult(api, c) {
-  const { project } = buildProject(api, c.world), compiled = api.compileProject(project);
-  const errors = compiled.errors ?? [], notes = compiled.notes ?? [], e = c.expect;
+  const { project, refusals } = buildProject(api, c.world), compiled = api.compileProject(project);
+  const errors = [...refusals, ...(compiled.errors ?? [])], notes = compiled.notes ?? [], e = c.expect;
   const problems = [];
   if ((errors.length > 0) !== e.stops) problems.push('stops: expected ' + e.stops + ', got ' + JSON.stringify(errors.slice(0, 2).map(x => x.code + '@' + x.line + ' ' + x.message)));
   if (e.stops && e.line !== undefined && errors[0] && errors[0].line !== e.line) problems.push('line: expected ' + e.line + ', got ' + errors[0].line);
+  if (e.errorCode !== undefined && errors[0]?.code !== e.errorCode) problems.push('errorCode: expected ' + e.errorCode + ', got ' + errors[0]?.code);
   // A word may be given with its spellings (['順', 'じゅん']); spaces between words (分かち書き) are not compared.
   const bare = text => String(text).replace(/\s+/g, ''), guidance = bare(errors.map(x => x.message).join(''));
   const has = (text, word) => [].concat(word).some(w => bare(text).includes(bare(w))), words = word => [].concat(word).join('/');
   for (const word of e.guidanceContains ?? []) if (!has(guidance, word)) problems.push('guidance lacks ' + words(word));
   for (const word of e.guidanceAbsent ?? []) if (has(guidance, word)) problems.push('guidance has ' + words(word));
+  // A 直し方 (the one-click fix) is the text a proposal writes in place of the child's sentence, from an error or a notice.
+  const fixes = [...errors, ...notes].flatMap(x => (x.proposals ?? []).map(p => String(p.source ?? '')));
+  for (const word of e.fixContains ?? []) if (!fixes.some(text => has(text, word))) problems.push('no fix writes ' + words(word) + '; fixes: ' + JSON.stringify(fixes));
   for (const n of e.notices ?? []) {
     if (!notes.some(x => has(x.message, n.contains) && (n.line === undefined || x.line === n.line))) problems.push('notice missing: ' + n.contains + (n.line === undefined ? '' : '@' + n.line));
   }
@@ -70,7 +83,7 @@ export function checkResult(api, c) {
 
 // The parts and data the format cases name. A case may carry its own world instead.
 const FORMAT_WORLD = {
-  parts: ['たくどん', 'ねこ', 'だんご', 'いぬ', '犬', '星', '鳥'].map(name => ({ name, vars: { 体力: 10 } })),
+  parts: ['たくどん', 'ねこ', 'だんご', 'いぬ', '犬', '星', '鳥', 'ロケット'].map(name => ({ name, vars: { 体力: 10 } })),
   variables: { 点数: 0, 名前: '', 合計: 0 },
   lists: { 名前一覧: [], 持ち物: [] },
   scripts: [],
@@ -114,8 +127,10 @@ function fakeAudio(now, soundSeconds) {
 }
 
 export function runResult(api, c) {
-  const { project, ids, soundSeconds } = buildProject(api, c.world), compiled = api.compileProject(project);
-  if (compiled.errors.length) return ['work check stops: ' + compiled.errors[0].code + '@' + compiled.errors[0].line + ' ' + compiled.errors[0].message];
+  const { project, ids, soundSeconds, refusals } = buildProject(api, c.world);
+  if (refusals.length) return ['work check stops: ' + refusalText(refusals[0])];
+  const compiled = api.compileProject(project);
+  if (compiled.errors.length) return ['work check stops: ' + refusalText(compiled.errors[0])];
   const nameOf = id => project.components.find(x => x.id === r.actor(id)?.baseId)?.name ?? id;
   let now = 0, answer = null;
   const speech = [];
@@ -152,7 +167,15 @@ export function runResult(api, c) {
       }
       audio.advance(now);
       while (releases.length && releases[0].atMs <= now) q.setKeyState(releases.shift().key, false);
-      while (inputs.length && inputs[0].atMs <= now) { const i = inputs.shift(); apply[['key', 'click', 'answer', 'signal'].find(k => i[k] !== undefined)](i); }
+      // The stage takes a key, a click or a signal only while the work runs and is not paused (08 allowed());
+      // after 作品を全部止める such an input is dropped, as on the screen.
+      while (inputs.length && inputs[0].atMs <= now) {
+        const i = inputs.shift(), kind = ['key', 'click', 'answer', 'signal'].find(k => i[k] !== undefined);
+        if (kind === 'answer' || (q.running && !q.paused)) apply[kind](i);
+      }
+      // A wait that ends at this time makes its task ready now, so it takes its turn at this time, as the product's loop
+      // does (it re-checks the waits and runs again at once), not one step later.
+      q.recheckBlocked();
       for (let n = 0; n < 500 && q.ready.length; n++) q.runTurn();
       q.recheckBlocked();
       while (pendingAt.length && pendingAt[0].atMs <= now) samples.push({ want: pendingAt.shift(), parts: read.parts(), variables: read.variables(), lists: read.lists() });
@@ -209,7 +232,7 @@ export async function fileResult(api, c) {
   const problems = [];
   if (c.action === 'open-declared') {
     // A work with text costumes only: opening it needs no image decoding.
-    let text = api.serializeProject(buildProject(api, { parts: [{ name: 'ねこ' }], scripts: [{ owner: 'ねこ', source: 'ねこは右へ10歩動く。' }] }, { saved: true }).project);
+    let text = api.serializeProject(buildProject(api, { parts: [{ name: 'ねこ' }], scripts: [{ owner: 'ねこ', source: 'ねこはいまのばしょから、右へ10歩動く。' }] }, { saved: true }).project);
     // The untouched file must open, so a refusal below comes from the declared number alone.
     try { await api.parseProjectFile(text); } catch (error) { return ['the control file does not open: ' + error.code]; }
     // A declared number rewrites the data marker and the numbers the file holds; any other key cannot be declared here.
@@ -224,7 +247,8 @@ export async function fileResult(api, c) {
     if (refused !== c.expect.refused) problems.push('refused: expected ' + c.expect.refused + ', got ' + refused + (code ? ' (' + code + ')' : ''));
     return problems;
   }
-  const { project } = buildProject(api, c.world, { saved: true });
+  const { project, refusals } = buildProject(api, c.world, { saved: true });
+  if (refusals.length) return ['the world text is refused: ' + refusalText(refusals[0])];
   // The saved text is what the file holds; the work opened again must read the same scripts back.
   const text = api.serializeProject(project), reopened = (await api.parseProjectFile(text)).project;
   const saved = JSON.parse(/<!-- AKARI-PROJECT-F\d+-DATA-BEGIN -->\n```json\n([\s\S]*)\n```\n<!-- AKARI-PROJECT-F\d+-DATA-END -->/.exec(text)[1]);
@@ -241,7 +265,13 @@ export async function fileResult(api, c) {
 }
 
 export function renameResult(api, c) {
-  const { project } = buildProject(api, c.world), { what, from, to } = c.rename;
+  const { project, refusals } = buildProject(api, c.world), { what, from, to } = c.rename;
+  if (refusals.length) return ['the world text is refused: ' + refusalText(refusals[0])];
+  const textOf = scripts => scripts.map(s => s.source).join('\n');
+  const sourceProblems = joined => [
+    ...(c.expect.sourceContains ?? []).filter(word => !joined.includes(word)).map(word => 'renamed text lacks ' + word),
+    ...(c.expect.sourceAbsent ?? []).filter(word => joined.includes(word)).map(word => 'renamed text still has ' + word),
+  ];
   let next;
   try {
     const resourceOf = test => { const found = api.buildProjectReferenceGraph(project).resources.find(test); if (!found) throw Error('no ' + what + ' named ' + from); return found; };
@@ -251,15 +281,12 @@ export function renameResult(api, c) {
         : api.prepareResourceRename(project, resourceOf(x => (x.kind === 'action' || x.kind === 'function') && x.name === from).key, to);
     } else next = api.prepareResourceRename(project, resourceOf(x => x.kind === (what === 'part' ? 'component' : 'data') && x.name === from).key, to);
   } catch (error) {
-    // A case may expect the rename to be refused, with the reason it gives.
-    if (c.expect.refused) return (c.expect.refusalContains ?? []).filter(word => !String(error.message).includes(word)).map(word => 'refusal lacks ' + word);
+    // A case may expect the rename to be refused, with the reason it gives and the text it leaves as it was.
+    if (c.expect.refused) return [...(c.expect.refusalContains ?? []).filter(word => !String(error.message).includes(word)).map(word => 'refusal lacks ' + word), ...sourceProblems(textOf(project.scripts))];
     return ['rename was refused: ' + (error.code || error.message)];
   }
   if (c.expect.refused) return ['rename was not refused'];
-  const joined = next.scripts.map(s => s.source).join('\n'), problems = [];
-  for (const word of c.expect.sourceContains ?? []) if (!joined.includes(word)) problems.push('renamed text lacks ' + word);
-  for (const word of c.expect.sourceAbsent ?? []) if (joined.includes(word)) problems.push('renamed text still has ' + word);
-  return problems;
+  return sourceProblems(textOf(next.scripts));
 }
 
 export async function runCase(api, c) {

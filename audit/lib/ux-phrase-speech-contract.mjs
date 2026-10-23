@@ -53,8 +53,8 @@ export function verifySpeechObserved(id,o){
   dialog(o.other,'だんごの 言うこと（全部）',multilineTexts[1]);
  }
  else if(id==='speech/stop-and-rerun'){
-  dialog(o.initial,'あかりの 言うこと（全部）',speechTexts[0]);assert.equal(o.afterStop.open,false);assert.equal(o.afterStop.bubbles,0);assert.equal(o.afterStop.runState,'止まっています');
-  dialog(o.rerun,'だんごの 言うこと（全部）',speechTexts[1]);assert.equal(o.afterUiStop.open,false);assert.equal(o.afterUiStop.bubbles,0);assert.equal(o.afterUiStop.runState,'止まっています');
+  dialog(o.initial,'あかりの 言うこと（全部）',speechTexts[0]);assert.equal(o.afterFinish.runState,'おわったよ');assert.equal(o.afterStop.open,false);assert.equal(o.afterStop.bubbles,0);assert.equal(o.afterStop.runState,'止まって いるよ');
+  dialog(o.rerun,'だんごの 言うこと（全部）',speechTexts[1]);assert.equal(o.afterUiStop.open,false);assert.equal(o.afterUiStop.bubbles,0);assert.equal(o.afterUiStop.runState,'止まって いるよ');
  }
  else if(id==='speech/clone-identity'){
   assert.deepEqual(o.bubbles.map(b=>[b.id,b.speaker,b.text]),[['sprite-1','あかり',speechTexts[0]],['sprite-1-clone-3','あかり',speechTexts[1]]]);

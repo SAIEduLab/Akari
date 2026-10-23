@@ -1,4 +1,5 @@
 // Values authored from the original fixed Q76 table before product execution; the two 1.4.0 event-count rows from LANGUAGE.md.
+// The four position states are written as よこのばしょ／たてのばしょ, since 1.5.0 no longer reads 位置 (LANGUAGE.md 読み取れる状態の一覧).
 export const fixedValues=[
  ['expression:NumberLiteral','5',5],['expression:StringLiteral','「青い空😀」','青い空😀'],
  ['expression:BooleanLiteral','条件の答え（あてはまる）',true],['expression:ListLiteral','［1、2、3］',[1,2,3]],
@@ -20,11 +21,11 @@ export const fixedValues=[
  ['builtin:最大','最大（3、－2、5）',5],['builtin:つなぐ','つなぐ（「点数：」、3）','点数：3'],
  ['builtin:CONTAINS','名前一覧に「かさ」が含まれている',true],['builtin:INDEX_OF','名前一覧で「かさ」が最初にある番号',2],
  ['builtin:LENGTH','名前一覧の長さ',2],['builtin:STRING_LENGTH','「A😀B」の文字数',3],['builtin:STRING_CHAR','「A😀B」の2文字目','😀'],
- ['state:マウスが押されている','マウスが押されている',true],['state:マウスの横位置','マウスの横位置',300,'歩'],
- ['state:マウスの縦位置','マウスの縦位置',200,'歩'],['state:以前の背景名','以前の背景名','空色'],['state:新しい背景名','新しい背景名','夜'],
+ ['state:マウスが押されている','マウスが押されている',true],['state:マウスの横位置','マウスのよこのばしょ',300,'歩'],
+ ['state:マウスの縦位置','マウスのたてのばしょ',200,'歩'],['state:以前の背景名','以前の背景名','空色'],['state:新しい背景名','新しい背景名','夜'],
  ['state:受け取った知らせ','受け取った知らせ','出発'],['state:押されたキー','押されたキー','a'],['state:クローンである','コピーである',false],
  ['state:背景番号','背景番号',2],['state:背景名','背景名','夜'],['state:衣装番号','衣装番号',2],['state:衣装名','衣装名','星'],
- ['state:横位置','横位置',100,'歩'],['state:縦位置','縦位置',100,'歩'],['state:方向','方向',90,'度'],
+ ['state:横位置','よこのばしょ',100,'歩'],['state:縦位置','たてのばしょ',100,'歩'],['state:方向','方向',90,'度'],
  ['state:大きさ','大きさ',120,'％'],['state:タイマー','タイマー',0.5,'秒'],['state:答え','答え','はる'],
  ['state:音量','音量',50,'％'],['state:音程','音程',1],['state:以前の値','以前の値','前'],['state:新しい値','新しい値','後'],
  ['sensor:INPUT_VALUE','「入力欄1」の中身','青空'],['sensor:DISTANCE_TO','「星」までの距離',100,'歩'],

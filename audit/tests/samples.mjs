@@ -7,12 +7,14 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {currentProductFile} from '../lib/product-path.cjs';
-import productDialogs from '../lib/product-dialogs.cjs';
-const {answerProductConfirms}=productDialogs;
+import {pressStop} from '../lib/stop-press.cjs';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {samplesFeature,sampleTestIds,sampleExpected,verifySamples} from '../lib/samples-contract.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {chooseView,shownView} from '../browser/cases/view-toggle.cjs';
+// The one view toggle (final call 22): a press only when the other view is on the screen, then the view asked for shows.
+const showMode=async(page,mode)=>{await chooseView(page,mode);assert.equal(await shownView(page),mode,'the '+mode+' view shows');};
 const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.slice(2),output=path.resolve(outputArg),dir=output.replace(/\.json$/,'')+'.artifacts',product=currentProductFile();
 fs.mkdirSync(dir,{recursive:true});fs.copyFileSync(product,path.join(dir,'candidate.html'));
 const inputs=snapshot(product),A=loadApi(fs.readFileSync(product,'utf8')),plain=x=>JSON.parse(JSON.stringify(x));
@@ -42,7 +44,7 @@ const fingerprint=page=>page.evaluate(()=>{
  }
  return{project:JSON.stringify(Akari.app.project),editor,source:document.querySelector('#codeEditor').value};
 });
-async function picker(page){await page.locator('#sampleBtn').click();if(await page.locator('#openConfirmModal').isVisible())await page.locator('#openConfirmProceed').click();assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);}
+async function picker(page){await page.locator('#sampleBtn').click();if(await page.locator('#loseConfirmModal.show').isVisible())await page.locator('#loseConfirmProceed').click();assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);}
 async function open(page,id){await picker(page);await page.locator('#samplePicker [data-sample-id="'+id+'"]').click();await page.waitForFunction(name=>Akari.app.project.name===name,samplesFeature.names[samplesFeature.ids.indexOf(id)]);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),false);}
 const metadata=id=>A.sampleCatalog().find(x=>x.id===id);
 async function source(page){return page.evaluate(()=>Akari.app.editorState.main.sourceText);}
@@ -50,15 +52,17 @@ async function command(page,node,action){await U.nodeAction(node,action);}
 async function checkHistory(page,before){const after=await source(page);assert.notEqual(after,before);await page.locator('#undoBtn').click();assert.equal(await source(page),before);await page.locator('#redoBtn').click();assert.equal(await source(page),after);await page.locator('#undoBtn').click();return after;}
 try{await withBrowser(chrome,async browser=>{
  report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
- const test=(id,fn)=>row(id,()=>pageFor(browser,product,async page=>{page.setDefaultTimeout(10000);page.on('dialog',d=>d.accept());await answerProductConfirms(page,true);page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});await page.setViewportSize({width:1366,height:900});try{return await fn(page);}catch(e){await page.screenshot({path:path.join(dir,'failure-'+id+'.png')}).catch(()=>{});throw e;}}));
+ // The product asks one question before unsaved work is replaced (#loseConfirmModal). The steps answer it themselves:
+ // picker() goes on, and the checks about the question press やめる; no handler answers it for them.
+ const test=(id,fn)=>row(id,()=>pageFor(browser,product,async page=>{page.setDefaultTimeout(10000);page.on('dialog',d=>d.accept());page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});await page.setViewportSize({width:1366,height:900});try{return await fn(page);}catch(e){await page.screenshot({path:path.join(dir,'failure-'+id+'.png')}).catch(()=>{});throw e;}}));
  await test('SAMPLES-CHOICE-CONFIRM',async page=>{
-  const original=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);assert.deepEqual(await fingerprint(page),original);await page.locator('#samplePickerClose').click();assert.deepEqual(await fingerprint(page),original);
+  const original=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);assert.deepEqual(await fingerprint(page),original);await page.locator('#samplePickerClose').click();assert.deepEqual(await fingerprint(page),original);
   await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),original);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),false);
-  for(const level of ['basic','advanced'])for(const mode of ['code','blocks'])for(const id of samplesFeature.ids){await page.locator('#uiLevel').selectOption(level);await page.locator('#editorMode'+mode).click();await open(page,id);assert.equal(await page.locator('#uiLevel').inputValue(),level);assert.equal(await page.locator('#editorMode'+mode).getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#objectSelect').inputValue(),metadata(id).targetId);assert.equal(await page.locator('#eventSelect').inputValue(),metadata(id).event);}
+  for(const level of ['basic','advanced'])for(const mode of ['code','blocks'])for(const id of samplesFeature.ids){await page.locator('#uiLevel').selectOption(level);await showMode(page,mode);await open(page,id);assert.equal(await page.locator('#uiLevel').inputValue(),level);assert.equal(await shownView(page),mode);assert.equal(await page.locator('#objectSelect').inputValue(),metadata(id).targetId);assert.equal(await page.locator('#eventSelect').inputValue(),metadata(id).event);}
  });
  await test('SAMPLES-CANCEL-PENDING',async page=>{
-  await open(page,'flower');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill('たくどんは書きかけの');await page.waitForTimeout(400);const code=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),code);await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),code);
-  await open(page,'flower');await page.locator('#editorModeblocks').click();
+  await open(page,'flower');await page.locator('#uiLevel').selectOption('advanced');await showMode(page,'code');await page.locator('#codeEditor').fill('たくどんは書きかけの');await page.waitForTimeout(400);const code=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),true);await page.locator('#loseConfirmCancel').click();assert.deepEqual(await fingerprint(page),code);await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),code);
+  await open(page,'flower');await showMode(page,'blocks');
   const number=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();
   const twoFrames=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
   const trace=async phase=>{
@@ -67,7 +71,7 @@ try{await withBrowser(chrome,async browser=>{
     return{scroll:{top:workspace.scrollTop,left:workspace.scrollLeft},cachedScroll:Akari.app.editorState.main.scrollState,
      workspace:workspace.getBoundingClientRect().toJSON(),outsideDiagnostic:{hidden:outside.hidden,text:outside.textContent,rect:outside.getBoundingClientRect().toJSON()},
      inlineDiagnostic:{text:inside.textContent,role:inside.getAttribute('role'),rect:inside.getBoundingClientRect().toJSON()},
-     pending:JSON.parse(JSON.stringify(pending)),focus:{id:document.activeElement?.id,field:document.activeElement?.dataset?.blockuiField},confirmation:document.querySelector('#openConfirmModal').classList.contains('show'),picker:document.querySelector('#samplePicker').open};
+     pending:JSON.parse(JSON.stringify(pending)),focus:{id:document.activeElement?.id,field:document.activeElement?.dataset?.blockuiField},confirmation:document.querySelector('#loseConfirmModal').classList.contains('show'),picker:document.querySelector('#samplePicker').open};
    });
    report.diagnostics??={};report.diagnostics.cancelPendingBlock??=[];report.diagnostics.cancelPendingBlock.push({phase,...observation});save();return observation;
   };
@@ -76,27 +80,27 @@ try{await withBrowser(chrome,async browser=>{
   await twoFrames();const baseline=await trace('after-input-four-frames');
   assert.deepEqual(baseline.scroll,settled.scroll,'input-induced scrolling settled before opening');assert.deepEqual(baseline.workspace,settled.workspace,'input-induced layout settled before opening');
   const block=await fingerprint(page);
-  await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await trace('after-open');await twoFrames();await trace('after-open-two-frames');
-  await page.locator('#openConfirmCancel').click();await trace('after-confirm-cancel');await twoFrames();await trace('after-confirm-cancel-two-frames');
+  await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),true);await trace('after-open');await twoFrames();await trace('after-open-two-frames');
+  await page.locator('#loseConfirmCancel').click();await trace('after-confirm-cancel');await twoFrames();await trace('after-confirm-cancel-two-frames');
   assert.deepEqual(await fingerprint(page),block);assert.equal(await number.inputValue(),'bad');
   await picker(page);await twoFrames();await trace('after-picker-proceed');assert.deepEqual(await fingerprint(page),block);
   await page.locator('#samplePickerClose').click();await twoFrames();await trace('after-picker-close');assert.deepEqual(await fingerprint(page),block);
   await picker(page);await page.keyboard.press('Escape');await twoFrames();await trace('after-picker-escape');assert.deepEqual(await fingerprint(page),block);
-  await open(page,'dance');await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('action');await page.locator('#callableName').fill('書きかけ');await page.locator('#callableName').press('Tab');await page.waitForTimeout(400);const draft=await fingerprint(page);await page.locator('#procClose').click();const closed=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),closed);assert.deepEqual((await fingerprint(page)).editor.callableDraft,draft.editor.callableDraft);
+  await open(page,'dance');await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('action');await page.locator('#callableName').fill('書きかけ');await page.locator('#callableName').press('Tab');await page.waitForTimeout(400);const draft=await fingerprint(page);await page.locator('#procClose').click();const closed=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),true);await page.locator('#loseConfirmCancel').click();assert.deepEqual(await fingerprint(page),closed);assert.deepEqual((await fingerprint(page)).editor.callableDraft,draft.editor.callableDraft);
  });
  await test('SAMPLES-RESET-ISOLATION',async page=>{
-  for(const from of samplesFeature.ids)for(const to of samplesFeature.ids.filter(x=>x!==from)){await open(page,from);await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill((await source(page))+'\nたくどんは「改造中」と言う。');await page.waitForTimeout(100);await open(page,to);assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project))),plain(A.makeSampleProject(to)));assert.equal(await page.locator('#undoBtn').isDisabled(),true);assert.equal(await page.locator('#redoBtn').isDisabled(),true);}
+  for(const from of samplesFeature.ids)for(const to of samplesFeature.ids.filter(x=>x!==from)){await open(page,from);await showMode(page,'code');await page.locator('#codeEditor').fill((await source(page))+'\nたくどんは「改造中」と言う。');await page.waitForTimeout(100);await open(page,to);assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project))),plain(A.makeSampleProject(to)));assert.equal(await page.locator('#undoBtn').isDisabled(),true);assert.equal(await page.locator('#redoBtn').isDisabled(),true);}
   await open(page,'dance');const original=await source(page);await page.locator('#codeEditor').fill(original+'\nたくどんは「変更」と言う。');await page.waitForTimeout(300);await open(page,'dance');assert.equal(await source(page),original);await page.waitForTimeout(1600);assert.equal(await page.evaluate(()=>Akari.app.editorState.history),1);assert.equal(await page.evaluate(()=>Akari.app.editorState.dirty),false);assert.equal(await page.evaluate(()=>Object.keys(localStorage).filter(k=>/autosave|fallback/.test(k)).some(k=>localStorage.getItem(k)?.includes('変更'))),false);await page.reload();await page.waitForFunction(()=>!!Akari.app);assert.ok(await page.evaluate(()=>Akari.app.project.scripts.every(s=>!s.source)));
  });
  await test('SAMPLES-BLOCK-EDIT',async page=>{
   await page.locator('#uiLevel').selectOption('advanced');
-  for(const id of samplesFeature.ids){await open(page,id);await page.locator('#editorModeblocks').click();const original=await source(page);const number=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();const value=await number.inputValue();await number.fill(String(Number(value)+1));await number.press('Enter');await checkHistory(page,original);
+  for(const id of samplesFeature.ids){await open(page,id);await showMode(page,'blocks');const original=await source(page);const number=page.locator('#blockEditor :is(.blockui-node[data-schema-id="NumberLiteral"], .blockui-flat-value) input[data-blockui-field="value"]').first();const value=await number.inputValue();await number.fill(String(Number(value)+1));await number.press('Enter');await checkHistory(page,original);
    const statement=()=>!['dance','flower'].includes(id)?page.locator('#blockEditor .blockui-node[data-schema-id="Assignment"]').first():page.locator('#blockEditor .blockui-script > .blockui-node-content > .blockui-body > .blockui-node').first();
    await command(page,statement(),'replace-noop');assert.ok(await page.locator('#blockEditor [data-schema-id="NoOperation"]').count());await checkHistory(page,original);
    await command(page,statement(),'move-down');await checkHistory(page,original);
    await command(page,statement(),'remove');await checkHistory(page,original);
    const insert=page.locator('#blockEditor .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action="body-insert"]').last();await insert.click();await openPaletteTools(page.locator('#blockEditor'));const search=page.locator('#blockEditor [data-blockui-search]:visible').first();await search.fill('言う');await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="Say"]:visible').first().click();const added=await checkHistory(page,original);assert.match(added,/こんにちは/);
-   assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors.map(e=>e.message)),[]);await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),original);await page.locator('#editorModeblocks').click();assert.equal(await source(page),original);
+   assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors.map(e=>e.message)),[]);await showMode(page,'code');assert.equal(await page.locator('#codeEditor').inputValue(),original);await showMode(page,'blocks');assert.equal(await source(page),original);
   }
  });
  await test('SAMPLES-SAVE-OFFLINE',async page=>{
@@ -116,8 +120,8 @@ try{await withBrowser(chrome,async browser=>{
     }));
     assert.ok(labels.length>=23);for(const label of labels)assert.ok(label.oneLine&&label.inside,'music button text must fit: '+JSON.stringify(label));
    }
-   await page.screenshot({path:path.join(dir,id+'.png')});await page.locator('#stopBtn').click();assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),initial);
-   await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill((await source(page))+'\nたくどんは「お手本の改造保存」と言う。');await page.locator('#editorModeblocks').click();const changed=await page.evaluate(()=>JSON.stringify(Akari.app.project));
+   await page.screenshot({path:path.join(dir,id+'.png')});await pressStop(page.locator('#stopBtn'));assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),initial);
+   await showMode(page,'code');await page.locator('#codeEditor').fill((await source(page))+'\nたくどんは「お手本の改造保存」と言う。');await showMode(page,'blocks');const changed=await page.evaluate(()=>JSON.stringify(Akari.app.project));
    const download=page.waitForEvent('download');await page.locator('#saveBtn').click();const saved=await download;assert.ok(saved.suggestedFilename().endsWith('.akari.md'));await saved.saveAs(path.join(dir,id+'.akari.md'));assert.equal(await saved.failure(),null);
    await page.locator('#fileInput').setInputFiles(path.join(dir,id+'.akari.md'));await page.waitForFunction(expected=>Akari.app.editorState.state==='DESIGN'&&Akari.diagnostics.stableJson(Akari.app.project)===Akari.diagnostics.stableJson(expected)&&Akari.app.editorState.main.sourceText.includes('お手本の改造保存'),JSON.parse(changed));
    // Serialization has a defined field order; authored component object key
@@ -125,15 +129,15 @@ try{await withBrowser(chrome,async browser=>{
    // position, the selected owner, and the complete edited source to survive.
    assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project))),JSON.parse(changed));assert.equal(await page.locator('#objectSelect').inputValue(),metadata(id).targetId);assert.equal(await page.locator('#eventSelect').inputValue(),metadata(id).event);assert.equal(await source(page),JSON.parse(changed).scripts.find(s=>s.targetId===(metadata(id).targetId)&&s.event===(metadata(id).event)).source);
    const exported=page.waitForEvent('download');await page.locator('#exportBtn').click();await page.locator('#exportControls').click();const player=await exported;await player.saveAs(path.join(dir,id+'-player.html'));assert.equal(await player.failure(),null);
-   const context=await browser.newContext({offline:true});await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await context.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));try{await p.goto(pathToFileURL(path.join(dir,id+'-player.html')).href);await p.locator('#playerStart:not([disabled])').click();if(metadata(id).event==='click')await p.locator('#formSurface .component[data-id="'+metadata(id).targetId+'"]').click();await p.waitForFunction(()=>document.querySelector('#formSurface')?.textContent.includes('お手本の改造保存'),null,{timeout:25000});assert.ok(await p.locator('#formSurface img').evaluateAll(imgs=>imgs.length>0&&imgs.every(i=>i.complete&&i.naturalWidth>0)));await p.locator('#playerStop').click();}finally{await context.close();}
+   const context=await browser.newContext({offline:true});await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await context.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));try{await p.goto(pathToFileURL(path.join(dir,id+'-player.html')).href);await p.locator('#playerStart:not([disabled])').click();if(metadata(id).event==='click')await p.locator('#formSurface .component[data-id="'+metadata(id).targetId+'"]').click();await p.waitForFunction(()=>document.querySelector('#formSurface')?.textContent.includes('お手本の改造保存'),null,{timeout:25000});assert.ok(await p.locator('#formSurface img').evaluateAll(imgs=>imgs.length>0&&imgs.every(i=>i.complete&&i.naturalWidth>0)));await pressStop(p.locator('#playerStop'));}finally{await context.close();}
   }
  });
- await test('SAMPLES-LOCKS',async page=>{await page.locator('#uiLevel').selectOption('advanced');await open(page,'game');await page.locator('#runBtn').click();await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');for(const control of ['sampleBtn'])assert.equal(await page.locator('#'+control).isDisabled(),true);await page.locator('#pauseBtn').click();await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');for(const control of ['sampleBtn'])assert.equal(await page.locator('#'+control).isDisabled(),true);await page.locator('#stopBtn').click();assert.equal(await page.locator('#sampleBtn').isEnabled(),true);});
+ await test('SAMPLES-LOCKS',async page=>{await page.locator('#uiLevel').selectOption('advanced');await open(page,'game');await page.locator('#runBtn').click();await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');for(const control of ['sampleBtn'])assert.equal(await page.locator('#'+control).isDisabled(),true);await page.locator('#pauseBtn').click();await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');for(const control of ['sampleBtn'])assert.equal(await page.locator('#'+control).isDisabled(),true);await pressStop(page.locator('#stopBtn'));assert.equal(await page.locator('#sampleBtn').isEnabled(),true);});
  await test('SAMPLES-RESPONSIVE-PICKER',async page=>{
   const pictureUrls=new Set();
   const imagePolicy=await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');assert.equal(imagePolicy.split(';').map(s=>s.trim()).find(s=>s.startsWith('img-src ')),'img-src blob:','sample art must preserve the original image CSP');
   for(const [width,height] of [[1280,720],[1920,1080],[390,844]])for(const level of ['basic','advanced'])for(const mode of ['code','blocks']){
-   await page.setViewportSize({width,height});await page.locator('#uiLevel').selectOption(level);await page.locator('#editorMode'+mode).click();const before=await fingerprint(page);await page.locator('#sampleBtn').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#openConfirmModal').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);
+   await page.setViewportSize({width,height});await page.locator('#uiLevel').selectOption(level);await showMode(page,mode);const before=await fingerprint(page);await page.locator('#sampleBtn').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);
    const dialog=page.locator('#samplePicker'),cards=dialog.locator('[data-sample-id]');assert.equal(await dialog.evaluate(e=>e.tagName),'DIALOG');assert.equal(await cards.count(),6);assert.equal(await page.locator('#sampleGrid').count(),1);
    const bounds=await dialog.boundingBox();assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=width+1&&bounds.y+bounds.height<=height+1);
    assert.equal(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1),true,'no horizontal dialog overflow');

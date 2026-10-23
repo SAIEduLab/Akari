@@ -132,7 +132,7 @@ function runBlockCodecTests() {
                       : field.type === 'unit'
                         ? '歩'
                         : field.type === 'direction'
-                          ? 'left'
+                          ? (field.choices ? field.choices.find((choice) => choice !== field.initial) : 'left')
                         : field.type === 'reference'
                             ? '変更知らせ'
                             : field.type === 'heading'
@@ -350,9 +350,12 @@ function runBlockCodecTests() {
       const postfix = createBlock('BuiltinCall:LENGTH');
       postfix.inputs.args = [];
       reject(() => blockDecode(postfix));
-      const command = createBlock('MotionCommand:GOTO');
-      command.inputs.args.pop();
-      reject(() => blockDecode(command));
+      // 決めたばしょへ行く always holds both step counts (LANGUAGE.md 動きの文).
+      for (const axis of ['x', 'y']) {
+        const command = createBlock('MotionCommand:GOTO');
+        delete command.inputs[axis];
+        reject(() => blockDecode(command));
+      }
       const annotation = createBlock('NoOperation');
       annotation.annotations.inlineComment = '注釈マーカーなし';
       reject(() => blockDecode(annotation));

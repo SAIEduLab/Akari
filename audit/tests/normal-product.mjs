@@ -1,9 +1,11 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const [browserPath,product,output]=process.argv.slice(2),dir=path.resolve(path.dirname(output));
 fs.mkdirSync(dir,{recursive:true});
 const before=snapshot(product),literal="'); globalThis.__injected = true; //",source='「'+literal+'」と言う。';
@@ -22,8 +24,8 @@ const evidence=await withBrowser(browserPath,async browser=>{
   await (await reveal(p.locator('#eventSelect'))).selectOption('start');
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);
-  await (async()=>{const control=await reveal(p.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();
-  await (async()=>{const control=await reveal(p.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();
+  await chooseView(p,'blocks',{reveal,open:openBodyForTest});
+  await chooseView(p,'code',{reveal,open:openBodyForTest});
   assert.equal(await p.locator('#codeEditor').inputValue(),source);
   const saved=path.join(dir,'normal-product.akari.md');
   let pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();await (await pending).saveAs(saved);
@@ -53,8 +55,9 @@ const evidence=await withBrowser(browserPath,async browser=>{
   assert.equal(await p.evaluate(()=>globalThis.__injected),undefined);
   assert.equal(await p.evaluate(()=>globalThis.Akari),undefined);
   await p.screenshot({path:path.join(dir,'normal-player.png'),fullPage:true});
-  await p.locator('#playerStop').click();
-  assert.equal(await p.locator('#playerStop').isDisabled(),true);
+  // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+  await pressStop(p.locator('#playerStop'));
+  assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
  } finally {await context.close();}
  assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
  // Observe cleanup across fresh contexts, including storage, globals and listeners.
@@ -67,4 +70,4 @@ assert.deepEqual(snapshot(product),before);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:before,...evidence},null,2)+'\n');console.log('Normal GUI save/reload/export/offline/isolation: PASS');
 
 // Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (!await page.locator("#codeEditor").isVisible() && !await page.locator("#blockEditor").isVisible()) await page.locator("#editorModecode").click(); if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
+async function openBodyForTest(page) { if (!await page.locator("#codeEditor").isVisible() && !await page.locator("#blockEditor").isVisible()) await chooseView(page,'code'); if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

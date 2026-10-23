@@ -9,6 +9,7 @@ import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {componentControlSizes,componentControlTargets,verifyComponentControlReach,verifyComponentControls} from '../lib/component-controls-contract.mjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2);
 assert.ok(chrome&&output,'Usage: component-controls-browser.mjs <fixed browser> <fresh report>');
@@ -52,19 +53,27 @@ async function fixture(p) {
   await p.locator('#uiLevel').selectOption('advanced');
   await p.locator('#objectSelect').selectOption('sprite-1');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
-  await p.locator('#editorModecode').click();
+  await chooseView(p,'code');
   await p.locator('#codeEditor').fill('「変更した動き」と言う。');
   await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「変更した動き」と言う。');
   await p.locator('#undoBtn').click();
   await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「元の動き」と言う。');
-  await p.locator('#editorModeblocks').click(); await frame(p);
+  await chooseView(p,'blocks'); await frame(p);
+  // The column on the right is the one scroller of the part list and its tools (the page, where the column is not a
+  // scroller of its own); native wheel and touch input over the column is recorded.
   await p.evaluate(()=>{
     globalThis.controlsWheelEvents=[]; globalThis.controlsTrustedTouches=0;
-    const c=document.querySelector('#componentControls');
+    const c=document.querySelector('.side');
     c.addEventListener('wheel',e=>controlsWheelEvents.push({trusted:e.isTrusted,deltaY:e.deltaY}),{passive:true});
     c.addEventListener('touchstart',e=>{if(e.isTrusted)controlsTrustedTouches++;},{passive:true});
   });
 }
+// The element that scrolls the column: the column itself, or the page when the column is laid out at full height.
+const scrollerState=p=>p.evaluate(()=>{
+  const side=document.querySelector('.side'),own=/auto|scroll/.test(getComputedStyle(side).overflowY)&&side.scrollHeight>side.clientHeight+1;
+  const s=own?side:document.scrollingElement;return{own,top:s.scrollTop,max:s.scrollHeight-s.clientHeight};
+});
+const notScroller=(p,selector)=>p.locator(selector).evaluate(e=>e.scrollHeight<=e.clientHeight+1||!/auto|scroll/.test(getComputedStyle(e).overflowY));
 async function measure(p,selector) {
   return p.locator(selector).evaluate((e,selector)=>{
     const rect=r=>({x:r.left,y:r.top,width:r.width,height:r.height}),r=e.getBoundingClientRect();
@@ -81,29 +90,34 @@ async function measure(p,selector) {
   },selector);
 }
 function visible(o) {try{verifyComponentControlReach(o);return true;}catch{return false;}}
-async function wheel(p,region,delta) {
-  const before=await p.locator(region).evaluate(e=>e.scrollTop),r=await p.locator(region).boundingBox();
-  const v=await p.evaluate(()=>({width:innerWidth,height:innerHeight}));
-  // The scrollbar gutter belongs to this scroll surface, avoiding nested chooser lists.
-  await p.mouse.move(Math.min(v.width-3,r.x+r.width-4),Math.max(3,Math.min(v.height-3,r.y+r.height/2)));
+async function wheel(p,delta) {
+  const before=await p.evaluate(()=>({side:document.querySelector('.side').scrollTop,page:document.scrollingElement.scrollTop})),v=await p.evaluate(()=>({width:innerWidth,height:innerHeight}));
+  const r=await p.locator('.side').evaluate(e=>{const b=e.getBoundingClientRect();return{x:b.x,y:b.y,width:b.width,height:b.height};});
+  // The column's own scrollbar gutter (or its visible part of the page), avoiding the nested part chooser list.
+  const top=Math.max(3,r.y),bottom=Math.min(v.height-3,r.y+r.height);
+  await p.mouse.move(Math.min(v.width-3,r.x+r.width-4),Math.max(3,(top+bottom)/2));
   await p.mouse.wheel(0,delta);
-  await p.waitForFunction(({region,before})=>document.querySelector(region).scrollTop!==before,{region,before},{timeout:2500});
+  await p.waitForFunction(before=>{const side=document.querySelector('.side');
+    return side.scrollTop!==before.side||document.scrollingElement.scrollTop!==before.page;},before,{timeout:2500});
   await frame(p);
 }
 async function reach(p,selector) {
-  await p.locator('#componentControls').scrollIntoViewIfNeeded(); await frame(p);
-  for(let i=0;i<12;i++){
+  for(let i=0;i<16;i++){
     const o=await measure(p,selector); if(visible(o))return o;
     const delta=o.rect.y<o.clip.y?o.rect.y-o.clip.y-4:o.rect.y+o.rect.height-o.clip.y-o.clip.height+4;
-    await wheel(p,'#componentControls',Math.sign(delta)*Math.max(12,Math.ceil(Math.abs(delta))));
+    try { await wheel(p,Math.sign(delta)*Math.max(12,Math.ceil(Math.abs(delta)))); }
+    catch (error) {
+      const geometry=await p.evaluate(()=>{const s=document.querySelector('.side'),r=s.getBoundingClientRect();return{side:{x:r.x,y:r.y,width:r.width,height:r.height},viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},scrollingElement:document.scrollingElement.tagName};});
+      error.stack=(error.stack||error.message)+'\nNative reach failure: '+JSON.stringify({selector,attempt:i,delta,measurement:o,scroll:await scrollerState(p),geometry});
+      throw error;
+    }
   }
   const o=await measure(p,selector);
   throw Error('Native wheel could not reveal '+JSON.stringify({selector,rect:o.rect,clip:o.clip,hit:o.hit}));
 }
+// Setup only (not reach evidence): the column and the page start at their tops.
 async function home(p) {
-  await p.locator('#componentControls').scrollIntoViewIfNeeded();
-  await p.locator('#componentControls').focus(); await p.keyboard.press('Home'); await frame(p);
-  await p.waitForFunction(()=>document.querySelector('#componentControls').scrollTop===0);
+  await p.evaluate(()=>{document.querySelector('.side').scrollTop=0;document.scrollingElement.scrollTop=0;}); await frame(p);
 }
 async function picker(p,open) {
   if(await p.locator('#componentPickerCore').evaluate(e=>e.open)!==open){await reach(p,'#componentPickerCore > summary');await p.locator('#componentPickerCore > summary').click();}
@@ -123,8 +137,10 @@ async function exercise(p,name) {
   await reach(p,'#dataBtn');await p.locator('#dataBtn').click();
   clicks.dataDialog=await p.locator('#dataModal.show').isVisible();await p.locator('#dataClose').click();
   const geometry=await p.evaluate(()=>({region:{height:document.querySelector('#componentControls').clientHeight},
-    treeHeight:document.querySelector('.objects-window .tree').clientHeight,help:document.querySelector('.child-copy-help').textContent,wheelEvents:controlsWheelEvents}));
-  return{before,after:await state(p),targets,clicks,...geometry};
+    treeHeight:document.querySelector('.objects-window .tree').clientHeight,
+    help:document.querySelector('#componentActions .prop-duplicate')?.getAttribute('aria-description')??null,
+    separateHelpLines:document.querySelectorAll('.child-copy-help').length,wheelEvents:controlsWheelEvents}));
+  return{before,after:await state(p),targets,clicks,listScroller:!(await notScroller(p,'.objects-window .tree')),controlsScroller:!(await notScroller(p,'#componentControls')),...geometry};
 }
 async function run(id,fn) {
   const row={id,status:'RUNNING'};report.results.push(row);
@@ -146,45 +162,53 @@ await withBrowser(chrome,async browser=>{
     await p.setViewportSize({width:1280,height:720});await fixture(p);const observations=[];
     for(const level of ['basic','advanced']){
       await p.locator('#uiLevel').selectOption(level);await picker(p,false);const before=await state(p);
-      const startScroll=await p.locator('#componentControls').evaluate(e=>e.scrollTop);
-      await p.keyboard.press('End');await frame(p);const endScroll=await p.locator('#componentControls').evaluate(e=>e.scrollTop);
-      await p.keyboard.press('Home');await frame(p);const homeScroll=await p.locator('#componentControls').evaluate(e=>e.scrollTop),forward=[],reverse=[];
+      // Tab from the chosen part tile through the tools: each tool scrolls into view when it takes the focus.
+      await p.locator('#projectTree .tree-item.selected').focus();await frame(p);
+      const startScroll=(await scrollerState(p)).top,forward=[],reverse=[];
       for(let i=0;i<20;i++){await p.keyboard.press('Tab');await frame(p);const id=await p.evaluate(()=>document.activeElement.id);
         if(['soundQuickAdd','assetBtn','dataBtn'].includes(id))forward.push(await measure(p,'#'+id));
         if(id==='dataBtn')break;
       }
+      const endScroll=(await scrollerState(p)).top;
       await p.keyboard.press('Tab');
       for(let i=0;i<20;i++){await p.keyboard.press('Shift+Tab');await frame(p);const id=await p.evaluate(()=>document.activeElement.id);
         if(['soundQuickAdd','assetBtn','dataBtn'].includes(id))reverse.push(await measure(p,'#'+id));
         if(id==='soundQuickAdd')break;
       }
-      observations.push({level,before,after:await state(p),startScroll,endScroll,homeScroll,forward,reverse});
+      observations.push({level,before,after:await state(p),startScroll,endScroll,forward,reverse});
     }return observations;
   }));
+  // 25 parts: the last tile and the tools under the list are reached by wheeling the one column; neither the list nor
+  // the tools scroll on their own.
   await run('COMPONENT-CONTROLS-LIST',()=>pageFor(browser,product,async p=>{
     await p.setViewportSize({width:1280,height:720});await fixture(p);await picker(p,true);const before=await state(p);
-    const controlsScrollBefore=await p.locator('#componentControls').evaluate(e=>e.scrollTop);
-    const tree='.objects-window .tree';await p.locator(tree).scrollIntoViewIfNeeded();
-    while(await p.locator(tree).evaluate(e=>e.scrollTop+e.clientHeight<e.scrollHeight-1))await wheel(p,tree,300);
-    const treeScroll=await p.locator(tree).evaluate(e=>e.scrollTop);
-    const lastHit=await p.locator(tree+' .tree-item').last().evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));});
-    const controlsScrollAfter=await p.locator('#componentControls').evaluate(e=>e.scrollTop);
-    const treeScrollBeforeControls=treeScroll;await reach(p,'#dataBtn');
-    return{before,after:await state(p),treeScroll,lastHit,controlsScrollBefore,controlsScrollAfter,
-      controlsScrollAfterWheel:await p.locator('#componentControls').evaluate(e=>e.scrollTop),treeScrollBeforeControls,treeScrollAfterControls:await p.locator(tree).evaluate(e=>e.scrollTop)};
+    const tree='.objects-window .tree',last=tree+' .tree-item:last-child',columnBefore=(await scrollerState(p)).top;
+    const lastHit=()=>p.locator(last).evaluate(e=>{const r=e.getBoundingClientRect();return e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));});
+    for(let i=0;i<20&&!await lastHit();i++)await wheel(p,240);
+    const lastTileHit=await lastHit(),columnAtLastTile=(await scrollerState(p)).top;
+    await reach(p,'#dataBtn');const columnAtTools=(await scrollerState(p)).top;
+    return{before,after:await state(p),lastHit:lastTileHit,columnBefore,columnAtLastTile,columnAtTools,
+      listScroller:!(await notScroller(p,tree)),controlsScroller:!(await notScroller(p,'#componentControls')),wheelEvents:await p.evaluate(()=>controlsWheelEvents)};
   }));
   await run('COMPONENT-CONTROLS-TOUCH',async()=>{
     const context=await browser.newContext({offline:true,hasTouch:true,viewport:{width:390,height:600}});
     try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});
       const p=await context.newPage();await p.goto(pathToFileURL(path.resolve(product)).href);await fixture(p);await picker(p,false);
-      const before=await state(p),scrollBefore=await p.locator('#componentControls').evaluate(e=>e.scrollTop),cdp=await context.newCDPSession(p);let swipes=0;
-      while(!visible(await measure(p,'#dataBtn'))&&swipes<12){const r=await p.locator('#componentControls').boundingBox(),x=r.x+r.width*.7,y=r.y+r.height*.78;
+      const before=await state(p),scrollBefore=(await scrollerState(p)).top,cdp=await context.newCDPSession(p);let swipes=0;
+      // Swipe up over the visible part of the column (it scrolls the column, or the page at this narrow size; before the
+      // column comes into view, the page above it).
+      while(!visible(await measure(p,'#dataBtn'))&&swipes<16){const r=await p.locator('.side').evaluate(e=>{const b=e.getBoundingClientRect(),top=Math.max(0,b.top),bottom=Math.min(innerHeight,b.bottom);
+        return bottom-top>=80?{x:b.x,width:b.width,top,height:bottom-top}:{x:0,width:innerWidth,top:0,height:innerHeight};});
+        // Off the stage and the block workspace, which take a finger for themselves (a tap on the stage chooses the stage,
+        // a drag moves a part or the workspace): in the column if it has such a place, else anywhere on the page.
+        const {x,y}=await p.evaluate(({left,width,top,height})=>{for(const [l,w,t,h] of [[left,width,top,height],[0,innerWidth,0,innerHeight]])for(const fx of [.7,.95,.05])for(let f=.78;f>.3;f-=.04){const x=l+w*fx,y=t+h*f,e=document.elementFromPoint(x,y);if(e&&!e.closest('#designerWindow,.blockui-workspace'))return{x,y};}return{x:left+width*.7,y:top+height*.78};},{left:r.x,width:r.width,top:r.top,height:r.height});
+        const distance=Math.min(r.height*.55,y-8);
         await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});
-        for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-r.height*.55*step/8,id:1}]});await frame(p);}
+        for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-distance*step/8,id:1}]});await frame(p);}
         await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await frame(p);swipes++;
       }
       const target=await measure(p,'#dataBtn');verifyComponentControlReach(target);
-      const scrollAfter=await p.locator('#componentControls').evaluate(e=>e.scrollTop),trustedTouches=await p.evaluate(()=>controlsTrustedTouches);
+      const scrollAfter=(await scrollerState(p)).top,trustedTouches=await p.evaluate(()=>controlsTrustedTouches);
       const r=target.rect;await p.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);const dialogOpened=await p.locator('#dataModal.show').isVisible();await p.locator('#dataClose').click();await shot(p,'controls-touch');
       return{before,after:await state(p),scrollBefore,scrollAfter,swipes,trustedTouches,target,dialogOpened};
     }finally{await context.close();}

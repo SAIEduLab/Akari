@@ -13,7 +13,7 @@ function fixture(source){
  p.scripts=[{id:'reference-main',targetId:cat.id,event:'start',source}];return p;
 }
 const cases=[['costume','衣装を「たくどん」にする。','costume:costume-1'],['backdrop','背景を「空色」にする。','backdrop:backdrop-1'],['sound','「音1」を鳴らす。','sound:sound-one'],
- ['actor','あかりは画面の右へ1歩動く。','component:sprite-1'],['sensor','「あかり」までの距離を言う。','component:sprite-1'],['action','「おじぎ」という手順を行う。','action:action-one'],
+ ['actor','あかりはいまのばしょから、右へ1歩動く。','component:sprite-1'],['sensor','「あかり」までの距離を言う。','component:sprite-1'],['action','「おじぎ」という手順を行う。','action:action-one'],
  ['function','【代金】で求めた答えを言う。','function:function-one'],['local-data','点数を言う。','data:local-score'],['list','持ち物の1番目を言う。','data:global-list']];
 for(const[id,source,key]of cases)check('references/'+id,()=>{
  const p=fixture(source),before=JSON.stringify(p),impact=A.resourceChangeImpact(p,key);assert.ok(impact.references.some(r=>r.sourceKey==='script:reference-main'),JSON.stringify(impact));assert.equal(impact.uncertain.length,0);assert.equal(JSON.stringify(p),before);
@@ -35,24 +35,25 @@ check('references/rename-background-and-sound',()=>{for(const[key,oldName,newNam
 function execute(p){const c=A.compileProject(p);assert.equal(c.errors.length,0,JSON.stringify(c.errors));const r=new A.RuntimeModel(p,{}),speech=[],errors=[];r.now=()=>0;const scheduler=new A.EventScheduler(p,c,r,{say:(id,text)=>speech.push(text),runtimeError:(task,error)=>errors.push(error.code)});scheduler.schedule=()=>{};try{scheduler.start();let turns=0;while(scheduler.ready.length&&turns++<1000)scheduler.runTurn(true);assert.ok(turns<1000);assert.deepEqual(errors,[]);return{speech,actors:plain([...r.actors.values()].map(a=>({id:a.id,x:a.x,y:a.y,direction:a.direction})))}}finally{scheduler.stop();}}
 function verifyActorTokenBoundaries() {
  const sources=[
-  '灯は横位置を100にする。\n【灯合図】という手順を行う。',
-  '灯は横位置を100にする。\n灯は【灯合図】という手順を行う。',
-  '【灯】は横位置を100にする。 ※ 灯合図と灯\r\n「灯と灯合図🐈」と言う。\r\n0.12345678901234566を言う。\r\n【灯合図】という手順を行う。',
-  '灯は横位置を100にする。\n2回くり返す。\n  【灯合図】という手順を行う。',
+  '灯は画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。\n【灯合図】という手順を行う。',
+  '灯は画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。\n灯は【灯合図】という手順を行う。',
+  '【灯】は画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。 ※ 灯合図と灯\r\n「灯と灯合図🐈」と言う。\r\n0.12345678901234566を言う。\r\n【灯合図】という手順を行う。',
+  '灯は画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。\n2回くり返す。\n  【灯合図】という手順を行う。',
   '灯は、2回くり返す。\n  【灯合図】という手順を行う。',
-  '灯は横位置を100にする。それから、【灯合図】という手順を行う。',
+  '灯は画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。それから、【灯合図】という手順を行う。',
+  '灯はいまのばしょから、右へ30歩動く。\n灯は2秒かけて、いまのばしょから、上へ10歩動く。',
   '作品を動かしたとき、【灯】は、\n  【灯合図】という手順を行う。',
   '作品を動かしたとき、【灯】は、\n  【灯合図】という手順を行う。\n灯がクリックされたとき、\n  【灯合図】という手順を行う。',
-  '画面の右へ、灯を30歩動かす。\n【灯合図】という手順を行う。',
-  '灯の（横位置）を言う。',
+  '灯をいまのばしょから、右へ30歩動かす。\n【灯合図】という手順を行う。',
+  '灯の（よこのばしょ）を言う。',
   'もし灯が「端」にふれていれば、\n  【灯合図】という手順を行う。',
-  '「右」キーが押されているあいだは、灯は画面の右へ1秒に20歩の速さで動き続ける。',
+  '「右」キーが押されているあいだは、灯は右へ1秒に20歩の速さで動き続ける。',
  ];
  const identity=p=>A.buildProjectReferenceGraph(p).references.map(r=>JSON.stringify([r.sourceKey,r.resourceKey,r.binding,r.nodePath])).sort();
  for(const source of sources){
   const p=plain(A.makeDefaultProject());p.components[0].name='灯';p.scripts=[{id:'actor-token',targetId:'stage',event:'start',source}];p.actions=[{id:'prefix-action',ownerId:'stage',name:'灯合図',args:[],source:'何もしない。'}];p.functions=[];
   const before=JSON.stringify(p);assert.equal(A.compileProject(p).errors.length,0);assert.equal(A.buildProjectReferenceGraph(p).uncertain.length,0);
-  const next=A.prepareResourceRename(p,'component:sprite-1','灯新'),expected=source.replace(/【灯】/g,'【灯新】').replace(/灯(?=は|がクリック|を30歩|の（|が「端」)/g,'灯新');
+  const next=A.prepareResourceRename(p,'component:sprite-1','灯新'),expected=source.replace(/【灯】/g,'【灯新】').replace(/灯(?=は|がクリック|をいまのばしょから|の（|が「端」)/g,'灯新');
   assert.equal(next.scripts[0].source,expected);assert.equal(next.actions[0].name,'灯合図');assert.deepEqual(identity(next),identity(p));assert.equal(A.compileProject(next).errors.length,0);assert.equal(JSON.stringify(p),before);
   const roundtrip=plain(next),record=A.sourceRegistry(roundtrip)[0],session=A.createEditorSession(record.key,record.source,record.context,roundtrip);
   const decoded=A.blockDecode(session.blockView);assert.equal(A.astEquivalent(session.syntaxAst,decoded),true);
@@ -60,10 +61,10 @@ function verifyActorTokenBoundaries() {
  }
 }
 for(const name of ['灯り','星2','はなを'])check('references/rename-actor/'+name,()=>{
- const source='作品を動かしたとき、【あかり】は、\r\n  右へ10歩動く。 ※ あかりの台詞\r\n  「あかり🐈」と言う。\r\n  0.12345678901234566を言う。',p=fixture(source),before=JSON.stringify(p),result=execute(p),next=A.prepareResourceRename(p,'component:sprite-1',name);
+ const source='作品を動かしたとき、【あかり】は、\r\n  いまのばしょから、右へ10歩動く。 ※ あかりの台詞\r\n  「あかり🐈」と言う。\r\n  0.12345678901234566を言う。',p=fixture(source),before=JSON.stringify(p),result=execute(p),next=A.prepareResourceRename(p,'component:sprite-1',name);
  assert.equal(next.scripts[0].source,source.replace('【あかり】','【'+name+'】'));assert.deepEqual(execute(next),result);assert.equal(JSON.stringify(p),before);if(name==='灯り')verifyActorTokenBoundaries();return{newName:name,referenceOnly:true,runtimeSame:true};
 });
-check('references/rename-actor-sensor-and-units',()=>{const source='画面の右へ、あかりを30歩動かす。\n星は「あかり」までの距離を言う。\nあかりがクリックされたとき、\n  「あかり」と言う。',p=fixture(source);const other=structuredClone(p.components[0]);other.id='other';other.name='星';other.localData={variables:[],lists:[]};other.costumes=other.costumes.map((c,i)=>({...c,id:'other-costume-'+i}));other.costumeId=other.costumes[0].id;p.components.push(other);A.updateScriptSource(p.scripts[0],source,p);const ids=plain(p.scripts[0].document.unitIds),r=execute(p),next=A.prepareResourceRename(p,'component:sprite-1','灯り');assert.equal(next.scripts[0].source,source.replace('あかりを','灯りを').replace('「あかり」まで','「灯り」まで').replace('あかりが','灯りが'));assert.deepEqual(plain(next.scripts[0].document.unitIds),ids);assert.deepEqual(execute(next),r);return{stableUnits:true,runtimeSame:true,proseUnchanged:true};});
+check('references/rename-actor-sensor-and-units',()=>{const source='あかりをいまのばしょから、右へ30歩動かす。\n星は「あかり」までの距離を言う。\nあかりがクリックされたとき、\n  「あかり」と言う。',p=fixture(source);const other=structuredClone(p.components[0]);other.id='other';other.name='星';other.localData={variables:[],lists:[]};other.costumes=other.costumes.map((c,i)=>({...c,id:'other-costume-'+i}));other.costumeId=other.costumes[0].id;p.components.push(other);A.updateScriptSource(p.scripts[0],source,p);const ids=plain(p.scripts[0].document.unitIds),r=execute(p),next=A.prepareResourceRename(p,'component:sprite-1','灯り');assert.equal(next.scripts[0].source,source.replace('あかりを','灯りを').replace('「あかり」まで','「灯り」まで').replace('あかりが','灯りが'));assert.deepEqual(plain(next.scripts[0].document.unitIds),ids);assert.deepEqual(execute(next),r);return{stableUnits:true,runtimeSame:true,proseUnchanged:true};});
 for(const scope of ['global','local'])check('references/rename-scoped-data/'+scope,()=>{const source='作品の点数を1にする。\n自分の点数を言う。\n作品の点数を言う。',p=fixture(source),next=A.prepareResourceRename(p,'data:'+scope+'-score','記録'),expected=scope==='global'?source.replaceAll('作品の点数','作品の記録'):source.replaceAll('自分の点数','自分の記録');assert.equal(next.scripts[0].source,expected);assert.deepEqual(execute(next),execute(p));return{scope,qualifiedReferences:true,runtimeSame:true};});
 check('references/rename-list',()=>{const source='持ち物の1番目を言う。\n「持ち物」と言う。',p=fixture(source),next=A.prepareResourceRename(p,'data:global-list','鞄');assert.equal(next.scripts[0].source,source.replace('持ち物の1','鞄の1'));assert.deepEqual(execute(next),execute(p));return{list:true,runtimeSame:true};});
 check('references/rename-action',()=>{const source='「おじぎ」という手順を2回行う。\n「おじぎ」と言う。',p=fixture(source),next=A.prepareResourceRename(p,'action:action-one','礼');assert.equal(next.scripts[0].source,source.replace('「おじぎ」という','「礼」という'));assert.deepEqual(execute(next),execute(p));return{count:2,runtimeSame:true};});

@@ -46,28 +46,33 @@ function runDesignResizeTests() {
         JSON.stringify(designResizeGeometry(box, 'se', 0, 0)) ===
           JSON.stringify({ x: 150, y: 140, w: 120, h: 60, scalePercent: 100 }),
       ));
+    // LANGUAGE.md 部品を入れたときのばしょ: a handle keeps the part's centre, so moving a handle 10 steps
+    // outward makes the size 20 steps larger. The pointer travel (dx, dy) is in the work's frame: y grows upward,
+    // so the bottom handles move outward with a negative dy.
     test('RIGHT', () => {
       const n = designResizeGeometry(box, 'e', 40, 90);
-      near(n.w, 160);
+      near(n.w, 200);
       near(n.h, 60);
       near(n.x, 150);
       near(n.y, 140);
     });
     test('BOTTOM', () => {
-      const n = designResizeGeometry(box, 's', 90, 20);
+      const n = designResizeGeometry(box, 's', 90, -20);
       near(n.w, 120);
-      near(n.h, 80);
+      near(n.h, 100);
       near(n.x, 150);
       near(n.y, 140);
     });
     test('IMAGE-FREE', () => {
-      const n = designResizeGeometry(image, 'se', 80, 10);
-      near(n.w, 200);
-      near(n.h, 70);
+      const n = designResizeGeometry(image, 'se', 80, -10);
+      near(n.w, 280);
+      near(n.h, 80);
+      near(n.x, 150);
+      near(n.y, 140);
       near(n.scalePercent, 100);
     });
     test('TEXT-SCALE', () => {
-      const n = designResizeGeometry(text, 'se', 60, 30);
+      const n = designResizeGeometry(text, 'se', 60, -30);
       near(n.scalePercent, 200);
       near(n.w, 120);
       near(n.h, 60);
@@ -79,15 +84,24 @@ function runDesignResizeTests() {
         const opposite = { nw: 'se', n: 's', ne: 'sw', e: 'w', se: 'nw', s: 'n', sw: 'ne', w: 'e' }[
           direction
         ];
-        for (const rotation of [0, 30, 90, 210, 315])
-          for (const scalePercent of [50, 100, 175]) {
-            const c = { ...box, direction: rotation, scalePercent },
-              n = { ...c, ...designResizeGeometry(c, direction, 11, 9) },
-              a = designResizePoint(c, opposite),
-              b = designResizePoint(n, opposite);
-            near(a.x, b.x);
-            near(a.y, b.y);
-          }
+        const [hx, hy] = DESIGN_RESIZE_DIRECTIONS[direction];
+        for (const part of [box, text])
+          for (const rotation of [0, 30, 90, 210, 315])
+            for (const scalePercent of [50, 100, 175]) {
+              // The centre is the anchor: it stays, and the dragged and the opposite handles stay mirrored around it.
+              const c = { ...part, direction: rotation, scalePercent },
+                n = { ...c, ...designResizeGeometry(c, direction, 11, 9) },
+                a = designResizePoint(n, direction),
+                b = designResizePoint(n, opposite);
+              near(n.x, c.x);
+              near(n.y, c.y);
+              near(a.x + b.x, 2 * c.x);
+              near(a.y + b.y, 2 * c.y);
+              if (part === box) {
+                assert(hx ? n.w !== c.w : n.w === c.w);
+                assert(hy ? n.h !== c.h : n.h === c.h);
+              } else assert(n.scalePercent !== c.scalePercent);
+            }
       });
     test('SHIFT-RATIO', () => {
       const n = designResizeGeometry(image, 'se', 120, 10, true);
@@ -101,8 +115,8 @@ function runDesignResizeTests() {
       }
     });
     test('BOX-LIMITS', () => {
-      const low = designResizeGeometry(box, 'se', -10000, -10000),
-        high = designResizeGeometry(box, 'se', 10000, 10000);
+      const low = designResizeGeometry(box, 'se', -10000, 10000),
+        high = designResizeGeometry(box, 'se', 10000, -10000);
       near(low.w, 8);
       near(low.h, 8);
       near(high.w, 1200);
@@ -110,7 +124,7 @@ function runDesignResizeTests() {
     });
     test('SCALE-LIMITS', () => {
       near(designResizeGeometry(text, 'se', 100000, 100000).scalePercent, 1000);
-      near(designResizeGeometry(text, 'se', -60, -30).scalePercent, 1);
+      near(designResizeGeometry(text, 'se', -60, 30).scalePercent, 1);
     });
     test('IMMUTABLE', () => {
       const old = JSON.stringify(box);

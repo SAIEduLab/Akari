@@ -16,16 +16,16 @@ function geometry(g){
   contains(g.controls,g.input,'search');contains(g.controls,g.labelRect,'visible label');contains(g.controls,g.summary,'candidate summary');contains(g.controls,g.scope,'search scope');
   assert.ok(g.labelRect.bottom<=g.input.top+1);assert.ok(g.input.bottom<=g.summary.top+1,'adjacent controls wrap after search');
   assert.ok(g.input.bottom<=g.scope.top+1);assert.ok(g.summary.bottom<=g.scope.top+1||g.scope.right<=g.summary.left||g.summary.right<=g.scope.left,'scope and summary do not overlap');
-  assert.equal(g.summaryText,'ブロックの見せ方');assert.ok(g.summaryFontSize>=11);assert.doesNotMatch(g.summaryAfter,/\.\.\./);
+  assert.equal(g.summaryText,'ブロックの しゅるい');assert.ok(g.summaryFontSize>=11);assert.doesNotMatch(g.summaryAfter,/\.\.\./);
   assert.ok(g.scopeFontSize>=11);assert.equal(g.scopeClipped,false);assert.equal(g.summaryClipped,false);
   assert.equal(g.inputHit,true);assert.equal(g.labelHit,true);assert.ok(g.input.left>=0&&g.input.right<=g.viewport.width+1);
 }
 function exercise(o,callable=false){
   geometry(o.initial);geometry(o.queried);geometry(o.optionsOpen);
-  assert.equal(o.initial.scopeText,'すべての なかまから さがせます');assert.equal(o.initial.value,'');assert.equal(o.queried.value,'時間を待つ');
+  assert.equal(o.initial.scopeText,'すべての なかまから さがせるよ');assert.equal(o.initial.value,'');assert.equal(o.queried.value,'時間を待つ');
   assert.equal(o.optionsOpen.value,'時間を待つ');assert.equal(o.optionsOpen.optionsExpanded,true);assert.ok(o.optionsOpen.mode.width>0);contains(o.optionsOpen.controls,o.optionsOpen.mode,'expanded candidate mode');
   assert.deepEqual(o.keyboard,{inputFocused:true,tabReachedSummary:true,enterOpened:true,enterClosed:true,shiftTabReturned:true,candidateEntered:true});
-  assert.equal(o.category.scope,'もし・くり返しの中を さがしています');assert.equal(o.category.pressed,'true');assert.equal(o.category.query,'時間を待つ');assert.equal(o.cleared,'');
+  assert.equal(o.category.scope,'すべての なかまから さがして いるよ');assert.equal(o.category.pressed,'true');assert.equal(o.category.query,'時間を待つ');assert.equal(o.cleared,'');
   assert.ok(o.matches.includes('WaitTime'));assert.equal(o.insertionQuery,'時間を待つ');assert.deepEqual(o.afterSearch,o.before);assert.deepEqual(o.projectAfterSearch,o.before.project);
   assert.equal(o.inserted.waits.length,1);assert.equal(o.inserted.waits[0].seconds,1);assert.equal(o.inserted.history,o.before.history+1);
   assert.equal(o.after.source.includes('本文を守る'),true);assert.notEqual(o.after.source,o.before.source);
@@ -35,7 +35,7 @@ function exercise(o,callable=false){
   else{const expected=structuredClone(o.before.project);expected.scripts[0].source=o.after.source;assert.deepEqual(o.after.project,expected);}
   assert.equal(o.undo.source,o.before.source);assert.equal(o.redo.source,o.after.source);assert.equal(o.before.source,searchLayoutSource);
   for(const [name,c]of Object.entries(o.reachable)){assert.equal(c.hit,true,name+' reachable');assert.ok(c.rect.left>=0&&c.rect.right<=c.viewport.width+1&&c.rect.top>=0&&c.rect.bottom<=c.viewport.height+1,name+' in viewport');}
-  assert.deepEqual(Object.keys(o.reachable),callable?['callableSave','callableSaveProject','procClose','callableModecode','callableModeblocks','callableCancel']:['runBtn','stopBtn','saveBtn','editorModecode','editorModeblocks']);
+  assert.deepEqual(Object.keys(o.reachable),callable?['callableSave','callableSaveProject','procClose','callableModecode','callableModeblocks','callableCancel']:['runBtn','saveBtn','editorModecode','editorModeblocks']);
 }
 export function verifySearchLayoutReport(report){
   const count=verifySemanticExtension(report,'akari-search-layout-v1',searchLayoutIds);

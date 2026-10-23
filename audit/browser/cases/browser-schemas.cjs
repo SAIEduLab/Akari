@@ -2,6 +2,9 @@
 // edit every declared role, run the structural operations, compare block and source
 // ASTs, and save and reopen. Rows listed in the schema contract's semanticRows also
 // check the hand-written sentence and runtime result LANGUAGE.md gives them.
+const {pressStop}=require('../../lib/stop-press.cjs');
+const {chooseView}=require('./view-toggle.cjs');
+const {cancelInput}=require('./cancel-input.cjs');
 const {setupRegressionPage, completeRegressionHoles, openPaletteTools, openBodyForTest} = require('./regression-setup.cjs');
 const U=require('./ui-routes.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
@@ -15,12 +18,21 @@ const ARGUMENT_NAMES=['高さ','幅','速さ'];
 (async()=>{const dir=L.path.resolve(process.argv[2]||'audit-evidence/browser/candidate'),output=L.path.resolve(process.argv[4]||dir),manifest=L.verifyManifest(dir),filter=process.argv[3]?.split(','),api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),contract=C.currentInputs(dir);
 C.verifySchemaContract({fixture:contract.fixture,schemaIds:contract.schemaIds,productSchemas:api.BLOCK_SCHEMAS});
 const schemas=contract.fixture.schemas,semanticRows=contract.fixture.semanticRows,results=[],errors=[],network=[],browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
-const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});const p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(p);
+let p=null,setupComplete=false,primaryError=null;
+// These are Node receipt times, not renderer execution times. Keep passive setup
+// events even when a stalled renderer cannot answer the failure-state query.
+const setupStarted=Date.now(),setupEvents=[];let omittedSetupEvents=0;
+const setupEvent=(name,detail={})=>{if(setupComplete)return;if(setupEvents.length>=256){omittedSetupEvents++;return;}setupEvents.push({atMs:Date.now()-setupStarted,name,...detail});};
+try{const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>{setupEvent('dialog',{type:d.type()});return d.accept(d.type()==='prompt'?d.defaultValue():undefined).then(()=>setupEvent('dialog-accepted'));});await answerProductConfirms(p);
+for(const event of ['domcontentloaded','load','crash','close'])p.on(event,()=>setupEvent(event));
+p.on('framenavigated',frame=>setupEvent('framenavigated',{main:frame===p.mainFrame(),url:frame.url().slice(0,240)}));
+for(const event of ['request','requestfinished','requestfailed'])p.on(event,request=>setupEvent(event,{url:request.url().slice(0,240),resourceType:request.resourceType(),navigation:request.isNavigationRequest(),...(event==='requestfailed'?{failure:request.failure()}: {})}));
+p.on('response',response=>setupEvent('response',{url:response.url().slice(0,240),status:response.status()}));
 const openPage=async()=>{await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);await (await reveal(p.locator('#assetBtn'))).click();await p.locator('#soundInput').setInputFiles(L.path.join(__dirname,'media','tone.wav'));await p.waitForFunction(()=>Akari.app.project.sounds.length>=1);await (await reveal(p.locator('#assetClose'))).click();await (await reveal(p.locator('.tool[data-type="input"]'))).click();return p.locator('#objectSelect').inputValue();};
-let inputId=await openPage();let draft=false,rootId='#blockEditor';
+let inputId=await openPage();setupComplete=true;let draft=false,rootId='#blockEditor';
 const session=()=>p.evaluate(d=>(d?Akari.app.editorState.draft:Akari.app.editorState.main),draft);
 const projectText=()=>p.evaluate(()=>JSON.stringify(Akari.app.project));
-const mode=async which=>{await p.locator(`#${draft?'callable':'editor'}Mode${which}`).click();await p.locator(rootId).waitFor({state:which==='blocks'?'visible':'hidden'});};
+const mode=async which=>{await chooseView(p,which,{prefix:draft?'callable':'editor'});await p.locator(rootId).waitFor({state:which==='blocks'?'visible':'hidden'});};
 const root=()=>p.locator(rootId),node=(id)=>root().locator('.blockui-node[data-block-id="'+id+'"]');
 const walkTree=(n,fn)=>{fn(n);for(const v of Object.values(n.inputs||{}))(Array.isArray(v)?v:[v]).forEach(c=>walkTree(c,fn));for(const v of Object.values(n.bodies||{}))v.forEach(c=>walkTree(c,fn));};
 const locate=async schema=>{const s=await session(),found=[];walkTree(s.blockView,n=>{if(n.schemaId===schema)found.push(n);});return found;};
@@ -28,7 +40,15 @@ const byId=async id=>{let hit=null;walkTree((await session()).blockView,n=>{if(n
 const at=(tree,path)=>path.reduce((n,k)=>n?.[k],tree);
 const ownerName=async()=>draft?'たくどん':p.evaluate(()=>{const id=document.querySelector('#objectSelect').value;return Akari.app.project.components.find(c=>c.id===id)?.name||Akari.app.project.stage.name;});
 const settle=async()=>{for(let i=0;i<20&&(await session()).pendingEdit;i++)await p.waitForTimeout(100);};
-const paletteButton=async(schema,category)=>{await (await reveal(root().locator('[data-blockui-palette-mode]'))).selectOption(category==='expression'?'expression':'statement');const options=root().locator('.blockui-palette-options');if(await options.getAttribute('open')!==null)await options.locator(':scope > summary').click();await (await reveal(root().locator('[data-blockui-search]'))).fill(schema);const button=root().locator('[data-blockui-schema="'+schema+'"]');
+const CALL_NAMES={UserActionCall:'検査動作',UserFunctionCall:'検査計算'};
+const ensureCallDefinition=async schema=>{
+ if(!CALL_NAMES[schema]||await p.evaluate(name=>[...Akari.app.project.actions,...Akari.app.project.functions].some(d=>d.name===name),CALL_NAMES[schema]))return;
+ await (await reveal(p.locator('#procBtn'))).click();await p.locator(schema==='UserActionCall'?'#callableNewAction':'#callableNewFunction').click();
+ await p.locator('#callableName').fill(CALL_NAMES[schema]);await p.locator('#callableArgs').fill(ARGUMENT_NAMES.join('、'));
+ await chooseView(p,'code',{prefix:'callable'});await p.locator('#callableCode').fill(schema==='UserActionCall'?'「動作」と言う。':'1を答えとして返す。');await p.locator('#callableSave').click();
+ await p.waitForFunction(name=>[...Akari.app.project.actions,...Akari.app.project.functions].some(d=>d.name===name),CALL_NAMES[schema]);await p.locator('#procClose').click();
+};
+const paletteButton=async(schema,category)=>{await (await reveal(root().locator('[data-blockui-palette-mode]'))).selectOption(category==='expression'?'expression':'statement');const options=root().locator('.blockui-palette-options');if(await options.getAttribute('open')!==null)await options.locator(':scope > summary').click();await (await reveal(root().locator('[data-blockui-search]'))).fill(CALL_NAMES[schema]||schema);const button=root().locator('[data-blockui-schema="'+schema+'"]');
  if(await button.count()===0){await U.showUnavailable(root());await (await reveal(root().locator('[data-blockui-search]'))).fill(schema);const hidden=root().locator('[data-blockui-schema="'+schema+'"]');const reason=await hidden.count()?await hidden.getAttribute('title'):'not listed';throw Error('Palette refuses '+schema+' here: '+reason);}
  assert.equal(await button.count(),1,'palette '+schema);if(await button.isDisabled()||await button.getAttribute('aria-disabled')==='true')throw Error('Disabled palette '+schema+': '+await button.getAttribute('title'));return button;};
 const categoryOf=schema=>schemas.find(s=>s.id===schema)?.category;
@@ -42,20 +62,27 @@ const editActor=async(id,name,schemaId)=>{const before=await session(),current=(
  const input=root().locator('[data-blockui-structured-role="actorRef.name"][data-block-id="'+id+'"]');await (await reveal(input)).fill(name);await input.press('Enter');await settle();
  // Leaving the field also commits; it reports the real refusal when Enter only stages the value.
  if((await session()).pendingEdit&&await input.isVisible()){await input.press('Tab');await settle();}
- if(SUBJECTLESS.has(schemaId)){if((await session()).pendingEdit)await (await reveal(p.locator('#editorCancel'))).click();const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText,'a sentence without a subject keeps its text');assert.deepEqual((await locate(schemaId))[0].fields.actorRef||{kind:'self'},current,'a sentence without a subject keeps its block subject');return{key:'actorRef',type:'actor-ref',before:current,subjectInSentence:false,unchanged:true};}
+ if(SUBJECTLESS.has(schemaId)){if((await session()).pendingEdit)await cancelInput(p,draft?'callable':'editor');const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText,'a sentence without a subject keeps its text');assert.deepEqual((await locate(schemaId))[0].fields.actorRef||{kind:'self'},current,'a sentence without a subject keeps its block subject');return{key:'actorRef',type:'actor-ref',before:current,subjectInSentence:false,unchanged:true};}
  const value={kind:'named',name},after=await session();assert.equal(after.pendingEdit,null,schemaId+' subject '+name+' refused: '+after.pendingEdit?.reason+' '+JSON.stringify(after.pendingEdit?.value));assert.deepEqual((await locate(schemaId))[0].fields.actorRef,value,'block subject');
  if(categoryOf(schemaId)!=='expression')assert.ok(after.sourceText.split('\n').some(line=>line.trimStart().startsWith(name+'は')||line.includes('、'+name+'は')),'sentence names its subject: '+after.sourceText);
- assert.notDeepEqual(value,current);return{key:'actorRef',type:'actor-ref',before:current,value};};
+ assert.notDeepEqual(value,current);await closeWho();return{key:'actorRef',type:'actor-ref',before:current,value};};
 // Back to the default subject, so later statements keep the subject the row's other
 // operations were written for (an explicit subject also becomes the topic, LANGUAGE.md 202).
-const restoreSelf=async(schemaId,named)=>{const n=(await locate(schemaId))[0],kind=root().locator('[data-blockui-structured-role="actorRef.kind"][data-block-id="'+n.id+'"]');await (await reveal(kind)).selectOption('self');await settle();
+// The だれが choice stays open over the sentence until its summary is pressed again (1.5.0); close it when done.
+const closeWho=async()=>{for(const summary of await root().locator('details.blockui-who[open] > summary').all())if(await summary.isVisible())await summary.click();};
+const restoreSelf=async(schemaId,named)=>{const n=(await locate(schemaId))[0],kind=root().locator('[data-blockui-structured-role="actorRef.kind"][data-block-id="'+n.id+'"]');await (await reveal(kind)).selectOption('self');await settle();await closeWho();
  const after=await session();assert.equal(after.pendingEdit,null);assert.deepEqual((await locate(schemaId))[0].fields.actorRef,{kind:'self'},'subject restored');
  if(categoryOf(schemaId)!=='expression')assert.ok(!after.sourceText.split('\n').some(line=>line.trimStart().startsWith(named+'は')),'restored sentence has no explicit subject');return{kind:'self'};};
-const editReference=async(id,f)=>{const control=root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]'),before=await session(),project=await projectText(),shown=await (await reveal(control)).inputValue();
+const editReference=async(id,f)=>{const node0=await byId(id);
+ // A 「〜の合図を送る」 shows no field for its link to the wait after it: that link comes from the code that follows
+ // (1.5.0, E-14 / I4V-09), so it is not a choice of the block and stays as it was.
+ if(node0.schemaId==='Broadcast'&&f.key==='broadcastRef'){assert.equal(await root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]').count(),0,'no field for the internal broadcastRef');
+  return{key:f.key,type:f.type,before:node0.fields[f.key]??null,shown:false,internal:true};}
+ const control=root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]'),before=await session(),project=await projectText(),shown=await (await reveal(control)).inputValue();
  // LANGUAGE.md 439: the broadcast is bound by position, so a typed name cannot rebind it.
  await control.fill(shown+'改');await control.press('Tab');await p.waitForFunction(d=>!!(d?Akari.app.editorState.draft:Akari.app.editorState.main).pendingEdit,draft);
  const pending=(await session()).pendingEdit;assert.ok(pending.reason,'reference change explains its refusal');assert.equal(await projectText(),project,'refused reference leaves the project unchanged');
- await (await reveal(p.locator('#editorCancel'))).click();const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText);assert.equal(await control.inputValue(),shown,'cancel restores the shown reference');
+ await cancelInput(p,draft?'callable':'editor');const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText);assert.equal(await control.inputValue(),shown,'cancel restores the shown reference');
  return{key:f.key,type:f.type,before:shown,refused:true,reason:pending.reason};};
 const editHeading=async(id,f)=>{const before=(await byId(id)).fields.heading,role=suffix=>root().locator('[data-blockui-structured-role="heading.'+suffix+'"][data-block-id="'+id+'"]'),event=await p.locator('#eventSelect').inputValue();
  await (await reveal(role('enabled'))).selectOption('yes');await (await reveal(root().locator('[data-blockui-action="heading-commit"]').first())).click();await settle();
@@ -64,12 +91,31 @@ const editArgumentNames=async(id,f)=>{const n=await byId(id),names=ARGUMENT_NAME
  await (await reveal(root().locator('[data-blockui-structured-role="argumentNames.mode"][data-block-id="'+id+'"]'))).selectOption('named');
  for(const [i,name]of names.entries()){const input=root().locator('[data-blockui-structured-role="argumentNames.'+i+'"][data-block-id="'+id+'"]');await (await reveal(input)).fill(name);if(i===names.length-1)await input.press('Enter');}await settle();
  assert.equal((await session()).pendingEdit,null);assert.deepEqual((await locate(n.schemaId))[0].fields.argumentNames,names,'named arguments');return{key:f.key,type:f.type,before:n.fields.argumentNames??null,value:names};};
+// Directions of the move blocks (LANGUAGE.md 789-791). いまのばしょから動く starts with one direction, chosen from
+// 右・左・上・下; the other one is added with 「＋ たてにも動く」／「＋ よこにも動く」 and taken off again with
+// 「たてを外す」／「よこを外す」. 決めたばしょへ行く shows 「右へ」「上へ」 as words with no choice unless the code writes
+// 左へ／下へ. Every other direction is a choice of its field; the choices are the product schema's.
+const directionChoices=(schemaId,key)=>api.BLOCK_SCHEMA_BY_ID.get(schemaId)?.fields.find(x=>x.key===key)?.choices||['left','right'];
+const editMoveDirection=async(id,f,choice)=>{const n=await byId(id),schemaId=n.schemaId;
+ if(!['MotionCommand:MOVE_BY','MotionCommand:GOTO'].includes(schemaId)||await root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]').count())return null;
+ const choices=directionChoices(schemaId,f.key),leg=f.key==='xDir'?'x':'y',main=node(id).locator(':scope > .blockui-node-content > .blockui-node-main');
+ if(schemaId==='MotionCommand:GOTO'){const word=f.key==='xDir'?'右へ':'上へ';assert.ok((await main.innerText()).replace(/\s+/g,'').includes(word),'fixed word '+word);
+  assert.equal(await main.locator('select[data-blockui-field="'+f.key+'"],select[data-blockui-action="motion-direction"]').count(),0,'no direction choice in a fixed place');assert.equal(n.fields[f.key],choices[0]);return{key:f.key,type:f.type,before:n.fields[f.key],fixedWord:word,noChoice:true};}
+ const single=main.locator(':scope > [data-blockui-action="motion-direction"]');
+ if(n.inputs[leg]&&await single.count()){const before=await single.inputValue(),value=choice??choices.find(c=>c!==before);await (await reveal(single)).selectOption(value);await settle();
+  const after=await session();assert.equal(after.pendingEdit,null);assert.equal((await locate(schemaId))[0].fields[f.key],value,'one direction chosen');assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,oneDirection:true};}
+ const source=(await session()).sourceText,add=node(id).locator('.blockui-extra [data-blockui-action="motion-leg-add-'+leg+'"]');await (await reveal(add)).click();await settle();id=(await locate(schemaId))[0].id;
+ const control=root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]'),before=await control.inputValue(),value=choice??choices.find(c=>c!==before);await (await reveal(control)).selectOption(value);await settle();
+ assert.equal((await session()).pendingEdit,null);assert.equal((await locate(schemaId))[0].fields[f.key],value,'added direction chosen');
+ await (await reveal(node(id).locator('.blockui-extra [data-blockui-action="motion-leg-remove-'+leg+'"]'))).click();await settle();{const now=(await session()).sourceText;assert.equal(now,source,'taking the added direction off restores the sentence: '+JSON.stringify({now,source}));}
+ return{key:f.key,type:f.type,before,value,addedAndRemoved:true};};
 const editField=async(id,f,annotation=false,choice)=>{
+ if(!annotation&&f.type==='direction'){const moved=await editMoveDirection(id,f,choice);if(moved)return moved;}
  if(!annotation&&f.type==='actor-ref'){const schemaId=(await byId(id)).schemaId,name=choice??await ownerName(),result=await editActor(id,name,schemaId);if(!result.unchanged)result.restored=await restoreSelf(schemaId,name);return result;}
  if(!annotation&&f.type==='reference')return editReference(id,f);
  if(!annotation&&f.type==='heading')return editHeading(id,f);
  if(f.key==='hasElse')await U.openNodeMenu(node(id));if(annotation)await U.openAnnotations(node(id));let control=root().locator('['+(annotation?'data-blockui-annotation':'data-blockui-field')+'="'+f.key+'"][data-block-id="'+id+'"]');if(annotation){const details=control.locator('xpath=ancestor::details[1]');if(!(await details.getAttribute('open')!==null))await (await reveal(details.locator('summary'))).click();}const before=await control.inputValue(),signedParentId=await control.getAttribute('data-signed-parent-id'),signedNumber=f.type==='number'&&!!signedParentId;let value;
- if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else if(f.type==='unit'){value=choice??(before==='点'?'歩':'点');await (await reveal(control)).selectOption(value);}else if(f.type==='direction'){value=choice??(before==='left'?'right':'left');await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?(choice!==undefined?String(choice):signedNumber?'-13':'13'):f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}
+ if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else if(f.type==='unit'){value=choice??(before==='点'?'歩':'点');await (await reveal(control)).selectOption(value);}else if(f.type==='direction'){const schemaId=(await byId(id)).schemaId;value=choice??directionChoices(schemaId,f.key).find(c=>c!==before);await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?(choice!==undefined?String(choice):signedNumber?'-13':'13'):f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}
  if(f.key==='hasElse'&&value==='true')await completeRegressionHoles(p,rootId,id);
  const active=await session();assert.equal(active.pendingEdit,null,`${id}.${f.key} pending`);if(signedNumber){const nodes=[];walkTree(active.blockView,n=>nodes.push(n));const unary=nodes.find(n=>n.id===signedParentId);assert.ok(unary,'original signed parent remains in the tree');assert.equal(unary.inputs.value.id,id,'edited magnitude remains under the original signed parent');assert.equal(unary.schemaId,'UnaryExpression:NEG','merged signed control preserves the original negation');assert.equal(unary.inputs.value.schemaId,'NumberLiteral');assert.equal(unary.inputs.value.fields.value,13,'original child magnitude remains exactly13');}assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,annotation};};
 const action=(id,name)=>({click:async()=>{await U.openNodeMenu(node(id));await node(id).locator(':scope > .blockui-node-head [data-blockui-action="'+name+'"]').click();}});
@@ -77,7 +123,39 @@ const bodyPosition=(id,body,position)=>({click:async()=>keyboardActivate(root().
 const slot=(id,input)=>({click:async()=>selectSlot(root().locator('[data-parent-id="'+id+'"][data-blockui-input="'+input+'"]').first())});
 const append=async(schema)=>{const state=await session(),r=state.blockView,position=state.context.definitionKind==='function'&&r.bodies.body.at(-1)?.schemaId==='ReturnStatement'?r.bodies.body.length-1:r.bodies.body.length;await bodyPosition(r.id,'body',position).click();await add(schema);return(await session()).blockView.bodies.body[position];};
 const historyRoundtrip=async before=>{const after=await session();assert.notEqual(after.sourceText,before.sourceText,'operation changes source');await p.keyboard.press('Control+z');assert.equal((await session()).sourceText,before.sourceText,'undo exact source');await p.keyboard.press('Control+y');assert.equal((await session()).sourceText,after.sourceText,'redo exact source');};
-const blockSourceAgreement=async()=>{const before=await session();assert.equal(before.pendingEdit,null);assert.ok(before.syntaxAst);const equivalent=await p.evaluate(d=>{const A=Akari,s=d?A.app.editorState.draft:A.app.editorState.main;const parsed=A.parseSyntax(s.sourceText,s.context);return !!parsed.ast&&A.astEquivalent(s.syntaxAst,parsed.ast)&&A.astEquivalent(A.blockDecode(s.blockView),parsed.ast);},draft);assert.equal(equivalent,true,'block/source AST');await mode('code');const text=await p.locator(draft?'#callableCode':'#codeEditor').inputValue();assert.equal(text,before.sourceText);await mode('blocks');assert.equal((await session()).sourceText,text);return{before,text};};
+// Hold only the asynchronous work check so its arrival is deterministic. The
+// real compiler and UI still produce the notice; no project or editor state is set.
+const holdWorkChecks=()=>p.evaluate(()=>{
+ const native=window.setTimeout.bind(window),waiting=[];
+ window.schemaHeldNotices={waiting,hold:true,release(){this.hold=false;window.setTimeout=native;for(const fn of waiting.splice(0))fn();}};
+ window.setTimeout=(fn,ms,...args)=>native(fn?.name==='checkNotices'?()=>{
+  if(schemaHeldNotices.hold)waiting.push(()=>fn(...args));else fn(...args);
+ }:fn,ms,...args);
+});
+const checkNoticeDuringMove=async()=>{
+ const before=await session(),history=await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,project:JSON.stringify(Akari.app.project)}));
+ await p.waitForFunction(()=>schemaHeldNotices.waiting.length>0);
+ await p.evaluate(()=>schemaHeldNotices.release());
+ // Keep carrying across the existing 400ms busy-check retry, within the original case timeout.
+ await p.waitForTimeout(450);
+ const after=await session();
+ assert.equal(after.sourceText,before.sourceText,'a waiting work check does not edit source');
+ assert.equal(after.sourceRevision,before.sourceRevision);assert.equal(after.contextRevision,before.contextRevision);
+ assert.deepEqual(await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,project:JSON.stringify(Akari.app.project)})),history);
+ assert.deepEqual(after.notices,[],'the work check waits until carrying ends');
+ assert.deepEqual(await root().locator('[data-blockui-action="cancel"]').allTextContents(),['もって いくのを やめる']);
+};
+const checkNoticeAfterModeChange=async id=>{
+ const before=await session(),history=await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
+ await mode('code');
+ await p.waitForFunction(()=>Akari.app.editorState.main.notices.some(n=>n.code==='I135'));
+ assert.equal((await session()).sourceText,before.sourceText,'the hidden block view does not hold back the notice');
+ assert.deepEqual(await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo})),history);
+ await mode('blocks');await action(id,'move').click();
+};
+// The code is read again with the work's names, as the editor reads it: block→code writes 「点数を言う。」 for a
+// variable's value (E2E-R1-03), which only the names tell from the words 点数 or a sound 点数.
+const blockSourceAgreement=async()=>{const before=await session();assert.equal(before.pendingEdit,null);assert.ok(before.syntaxAst);const equivalent=await p.evaluate(d=>{const A=Akari,s=d?A.app.editorState.draft:A.app.editorState.main;const parsed=A.parseSyntax(s.sourceText,{...s.context,symbols:A.buildSymbols(A.app.project)});return !!parsed.ast&&A.astEquivalent(s.syntaxAst,parsed.ast)&&A.astEquivalent(A.blockDecode(s.blockView),parsed.ast);},draft);assert.equal(equivalent,true,'block/source AST');await mode('code');const text=await p.locator(draft?'#callableCode':'#codeEditor').inputValue();assert.equal(text,before.sourceText);await mode('blocks');assert.equal((await session()).sourceText,text);return{before,text};};
 const eventCountStructural=async s=>{
  const original=(await locate(s.id))[0],first=await append('WaitUntil');await action(original.id,'duplicate').click();await slot(first.id,'condition').click();
  let now=await session(),copied=now.blockView.bodies.body.find(n=>n.id===first.id).inputs.condition;assert.equal(copied.schemaId,s.id);assert.equal(api.astEquivalent(api.blockDecode(now.blockView),api.parseSyntax(now.sourceText,now.context).ast),true,'tree decode agrees after copy');
@@ -95,7 +173,20 @@ const structuralOperations=async(s,id)=>{
  }
  let current=await session(),originalId=s.category==='target'?current.blockView.bodies.body[0].id:s.category==='script'?current.blockView.bodies.body[0].id:id;
  const container=await append('RepeatCount');await editField(container.bodies.body[0].id,{key:'inlineComment',fixtureValue:'※ 移動先 '},true);await action(originalId,'duplicate').click();current=await session();const list=[];const walk=n=>{list.push(n);for(const children of Object.values(n.bodies||{}))children.forEach(walk);};walk(current.blockView);const original=list.find(n=>n.id===originalId),copy=list.filter(n=>n.schemaId===original.schemaId&&n.id!==originalId&&n.id!==container.id).find(n=>JSON.stringify({...n,id:null})===JSON.stringify({...original,id:null}))||list.find(n=>n.schemaId===original.schemaId&&n.id!==originalId&&n.id!==container.id);
- assert.ok(copy,'duplicate present');await action(copy.id,'move').click();await bodyPosition(container.id,'body',1).click();current=await session();const moved=current.blockView.bodies.body.find(n=>n.id===container.id).bodies.body;assert.equal(moved.at(-1).id,copy.id);await action(copy.id,'move-up').click();await action(copy.id,'move-down').click();const before=await session();await action(copy.id,'remove').click();await historyRoundtrip(before);return{scope:s.category==='target'?'required target through owning statement':s.category==='script'?'root body child':'statement',duplicate:true,nestedMove:true,reorderBothDirections:true,delete:true,undoRedoExact:true};
+ // The original keeps its place: the copy comes right after it and goes to the loop's end, so the original's path in the
+ // tree does not change, whether it sits at the top or inside a block (続ける・ぬける, or 答えを返す put in the loop with it).
+ // The number of blocks of that tree stays the same: the move neither copies nor drops one. Ids may change, paths do not.
+ const pathOf=(view,id)=>{const go=(node,path)=>{for(const [key,children] of Object.entries(node.bodies||{}))for(const [i,child] of children.entries()){const at=[...path,[key,i]];if(child.id===id)return at;const deeper=go(child,at);if(deeper)return deeper;}return null;};return go(view,[]);},
+  nodeAt=(view,path)=>path.reduce((node,[key,i])=>node?.bodies?.[key]?.[i],view),
+  alike=view=>{let n=0;const walk=node=>{if(treeShape(node)===treeShape(original))n++;for(const children of Object.values(node.bodies||{}))children.forEach(walk);};for(const children of Object.values(view.bodies||{}))children.forEach(walk);return n;},
+  originalPath=pathOf(current.blockView,originalId),alikeBefore=alike(current.blockView);
+ assert.ok(copy,'duplicate present');assert.ok(originalPath,'the original is in the body');assert.ok(alikeBefore>=2,'the original and its copy are both there');await action(copy.id,'move').click();if(s.id==='Continue'){await checkNoticeDuringMove();await checkNoticeAfterModeChange(copy.id);}await bodyPosition(container.id,'body',1).click();current=await session();const containerIndex=current.blockView.bodies.body.findIndex(n=>n.id===container.id),moved=current.blockView.bodies.body[containerIndex].bodies.body;assert.equal(treeShape(moved.at(-1)),treeShape(copy),'the duplicate is now the last sentence of the loop (a committed move may give it a new id)');assert.equal(treeShape(nodeAt(current.blockView,originalPath)),treeShape(original),'the original stays where it was; only the copy moved');assert.equal(alike(current.blockView),alikeBefore,'the move neither copies nor drops a block');
+ if(s.id==='Continue'){await p.waitForFunction(()=>Akari.app.editorState.main.notices.some(n=>n.code==='I135'));assert.equal((await session()).sourceText,current.sourceText,'the deferred notice arrives without changing the moved source');}
+ // A committed edit may give the blocks new ids (1.5.0), so the copy is found again by its place after each move.
+ const shape=treeShape(moved.at(-1)),inner=async()=>(await session()).blockView.bodies.body[containerIndex].bodies.body;
+ await action(copy.id,'move-up').click();const up=(await inner()).at(-2);assert.equal(treeShape(up),shape,'move-up moves the copy one place up');
+ await action(up.id,'move-down').click();const down=(await inner()).at(-1);assert.equal(treeShape(down),shape,'move-down moves it back');
+ const before=await session();await action(down.id,'remove').click();await historyRoundtrip(before);return{scope:s.category==='target'?'required target through owning statement':s.category==='script'?'root body child':'statement',duplicate:true,nestedMove:true,reorderBothDirections:true,delete:true,undoRedoExact:true};
 };
 const download=async name=>{const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();const file=L.path.join(output,name);await (await pending).saveAs(file);return file;};
 const reopen=async(file,expected)=>{await (await reveal(p.locator('#newBtn'))).click();assert.notEqual(await projectText(),expected);await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(expected=>JSON.stringify(Akari.app.project)===expected,expected);};
@@ -116,7 +207,12 @@ const saveReopenDraft=async(path,schemaId,index)=>{const before=await session(),
 const holeShown=async(id,schemaId)=>{const shown=node(id);await shown.waitFor({state:'visible'});assert.equal(await shown.getAttribute('data-schema-id'),schemaId);assert.ok((await shown.getAttribute('class')).includes('blockui-draft-hole'),'hole is drawn as an open place');const label=await shown.locator('.blockui-hole-label').first().textContent();assert.match(label,/^〔.+を えらぶ〕$/,'hole asks for a choice');return label;};
 const treeShape=tree=>JSON.stringify(tree,(key,value)=>key==='id'?undefined:value);
 const runRefused=async()=>{const before=await session(),project=await projectText();await (await reveal(p.locator('#runBtn'))).click();await p.waitForTimeout(400);assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN','an unfinished body does not run');assert.equal(await projectText(),project);const after=await session();assert.equal(after.pendingEdit?.kind,'block-draft');assert.equal(treeShape(after.blockView),treeShape(before.blockView),'the draft is kept');assert.equal(await p.locator('#editorPending').isVisible(),true,'the open place is pointed out');return{refused:true,notice:(await p.locator('#editorPending').innerText()).slice(0,200)};};
-const chooseExpression=async(holeId,schema)=>{await (await reveal(node(holeId).locator('[data-blockui-action="hole-select-expression"]').first())).click();await (await paletteButton(schema,'expression')).click();};
+// A compact numeric hole is a number field in its slot (1.5.0): choosing the field shows the slot's tools,
+// whose 「計算を入れる」 opens the expression palette.
+const chooseExpression=async(holeId,schema)=>{const compact=root().locator('[data-expression-hole="true"][data-block-id="'+holeId+'"]');
+ if(await compact.count()){await (await reveal(compact)).click();await (await reveal(compact.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-input-slot ")][1]').locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'))).click();}
+ else await (await reveal(node(holeId).locator('[data-blockui-action="hole-select-expression"]').first())).click();
+ await (await paletteButton(schema,'expression')).click();};
 const chooseStatement=async(holeId,schema)=>{await (await reveal(node(holeId).locator('[data-blockui-action="hole-select-statement"]').first())).click();await (await paletteButton(schema,'statement')).click();};
 const chooseTarget=async(holeId,name)=>{await (await reveal(root().locator('[data-blockui-hole-target="'+holeId+'"]'))).selectOption(name);};
 const readMonitor=()=>p.evaluate(()=>Object.fromEntries([...document.querySelectorAll('#runtimeMonitor .monitor-row')].map(r=>[r.querySelector('.monitor-key')?.textContent,[...(r.querySelector('.monitor-value')?.childNodes||[])].filter(n=>n.nodeType===3).map(n=>n.textContent).join('')])));
@@ -134,13 +230,13 @@ const runObserve=async row=>{const design=await projectText(),observed={};
  if(row.run?.stepsPerSecond!==undefined){await p.waitForTimeout(150);const start=await p.evaluate(id=>({x:parseFloat(document.querySelector('#formSurface .component[data-id="'+id+'"]').style.left),t:performance.now()}),row.run.actor);await p.waitForTimeout(row.run.observeMs);const end=await p.evaluate(id=>({x:parseFloat(document.querySelector('#formSurface .component[data-id="'+id+'"]').style.left),t:performance.now()}),row.run.actor);const seconds=(end.t-start.t)/1000,moved=end.x-start.x;assert.ok(Math.abs(moved-row.run.stepsPerSecond*seconds)<=row.run.tolerance,'continuous motion '+moved+' in '+seconds+'s');observed.continuous={seconds,moved};}
  if(row.speech!==undefined){await p.waitForFunction(text=>[...document.querySelectorAll('#formSurface .sprite-bubble-text')].some(e=>e.textContent===text),row.speech,{timeout:5000}).catch(()=>{});observed.speech=await p.locator('#formSurface .sprite-bubble-text').allTextContents();assert.ok(observed.speech.includes(row.speech),'speech '+JSON.stringify(observed.speech));}
  if(row.monitor){await p.waitForFunction(()=>true);for(let i=0;i<50;i++){const m=await readMonitor();if(Object.entries(row.monitor).every(([k,v])=>m[k]===v))break;await p.waitForTimeout(100);}observed.monitor=await readMonitor();for(const [k,v]of Object.entries(row.monitor))assert.equal(observed.monitor[k],v,'monitor '+k);}
- await (await reveal(p.locator('#stopBtn'))).click();await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await root().waitFor({state:'visible'});assert.equal(await projectText(),design,'running leaves the design unchanged');return observed;};
+ await pressStop(await reveal(p.locator('#stopBtn')));await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await root().waitFor({state:'visible'});assert.equal(await projectText(),design,'running leaves the design unchanged');return observed;};
 // The GUI result must mean the hand-written LANGUAGE.md sentence (same AST in the same
 // body context) and end every generated sentence with one 。 (LANGUAGE.md 233). The
 // generated wording itself is owned by the command catalog, not by these rows.
 const sentenceIs=async row=>{const s=await session();assert.equal(s.pendingEdit,null);
  for(const line of s.sourceText.split('\n'))assert.ok(!/。。$/.test(line),'one sentence end per generated sentence: '+JSON.stringify(s.sourceText));
- const same=await p.evaluate(({d,text})=>{const A=Akari,m=d?A.app.editorState.draft:A.app.editorState.main,parsed=A.parseSyntax(text,m.context);return !!parsed.ast&&A.astEquivalent(parsed.ast,m.syntaxAst);},{d:draft,text:row.sentence});
+ const same=await p.evaluate(({d,text})=>{const A=Akari,m=d?A.app.editorState.draft:A.app.editorState.main,parsed=A.parseSyntax(text,{...m.context,symbols:A.buildSymbols(A.app.project)});return !!parsed.ast&&A.astEquivalent(parsed.ast,m.syntaxAst);},{d:draft,text:row.sentence});
  assert.equal(same,true,'the GUI result means the hand-written sentence '+JSON.stringify(row.sentence)+', got '+JSON.stringify(s.sourceText));return s.sourceText;};
 // Rows whose GUI route is the generic palette route; their semantic step runs after the role edits.
 const semanticStep=async(s,id)=>{const row=semanticRows[s.id],edits=row.edits||{};
@@ -150,21 +246,30 @@ const semanticStep=async(s,id)=>{const row=semanticRows[s.id],edits=row.edits||{
   if(edits.value.value!==undefined){const number=(await byId(inner.id)).inputs.value;await editField(number.id,{key:'value',type:'number'},false,edits.value.value);}}
  const result={sentence:await sentenceIs(row),runtime:await runObserve(row)};
  if(edits.actorRef&&categoryOf(s.id)!=='expression')result.restored=await restoreSelf(s.id,edits.actorRef);return result;};
-const SEMANTIC_GENERIC=new Set(['QuantityLiteral','UnitlessRead','ActorQualifiedRead','MotionCommand:MOVE_DIRECTION','MotionCommand:GLIDE_DIRECTION']);
+const SEMANTIC_GENERIC=new Set(['QuantityLiteral','UnitlessRead','ActorQualifiedRead','MotionCommand:MOVE_BY']);
 const fieldChoice=(s,f)=>semanticRows[s.id]?.edits?.[f.key];
-const numberChoice=(s,input,index)=>{const edits=semanticRows[s.id]?.edits||{};if(input.key==='args'&&Array.isArray(edits.args))return edits.args[index];return typeof edits[input.key]==='number'?edits[input.key]:undefined;};
+const numberChoice=(s,input,index)=>{const edits=semanticRows[s.id]?.edits||{};if(input.key==='args'&&index===0&&['SoundCommand:TONE','SoundCommand:TONE_WAIT'].includes(s.id))return 441;if(input.key==='args'&&Array.isArray(edits.args))return edits.args[index];return typeof edits[input.key]==='number'?edits[input.key]:undefined;};
 const genericRow=async(s,evidence)=>{
- await reset(s);let id;if(s.id==='Script'){id=(await session()).blockView.id;await add('NoOperation');evidence.creation='Implicit root with palette-created body';}else if(s.category==='target'){await add('Assignment');id=(await locate(s.id))[0].id;evidence.creation='Assignment target slot';}else if(s.category==='expression'){const holder=s.kind==='EventCount'?{statement:'WaitUntil',input:'condition'}:{statement:'Say',input:'value'};await add(holder.statement);const owner=(await locate(holder.statement))[0];await selectSlot(root().locator('[data-blockui-input="'+holder.input+'"][data-parent-id="'+owner.id+'"]').first());await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Expression palette into '+holder.statement+'.'+holder.input;}else{if(['Break','Continue'].includes(s.id)){await add('Forever');const owner=(await locate('Forever'))[0];await root().locator('[data-blockui-body="body"][data-parent-id="'+owner.id+'"]').last().click();}await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Statement palette';}
+ await ensureCallDefinition(s.id);
+ await reset(s);if(s.id==='Continue')await holdWorkChecks();let id;if(s.id==='Script'){id=(await session()).blockView.id;await add('NoOperation');evidence.creation='Implicit root with palette-created body';}else if(s.category==='target'){await add('Assignment');id=(await locate(s.id))[0].id;evidence.creation='Assignment target slot';}else if(s.category==='expression'){const holder=s.kind==='EventCount'?{statement:'WaitUntil',input:'condition'}:{statement:'Say',input:'value'};await add(holder.statement);const owner=(await locate(holder.statement))[0];await selectSlot(root().locator('[data-blockui-input="'+holder.input+'"][data-parent-id="'+owner.id+'"]').first());await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Expression palette into '+holder.statement+'.'+holder.input;}else{if(['Break','Continue'].includes(s.id)){await add('Forever');const owner=(await locate('Forever'))[0];await root().locator('[data-blockui-body="body"][data-parent-id="'+owner.id+'"]').last().click();}await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Statement palette';}
  assert.ok(await node(id).count()||s.id==='Script','Created node visible '+s.id);
  for(const f of s.fields.filter(f=>f.type!=='argument-names')){evidence.fields.push(await editField(id,f,false,fieldChoice(s,f)));id=(await locate(s.id))[0].id;}
  // Edit every value slot through its own child controls, including fixed arity arguments.
  for(const input of s.inputs){let created=(await locate(s.id))[0];
+  // 〜のところへ行く: the partner is chosen from the work's parts and マウス, never typed (LANGUAGE.md 789).
+  if(s.id==='MotionCommand:GOTO_PART'&&input.key==='args'){const target=node(id).locator(':scope > .blockui-node-content > .blockui-node-main [data-blockui-action="motion-target"]').first(),before=await target.inputValue(),options=await target.locator('option').evaluateAll(o=>o.map(x=>x.value)),value=options.find(v=>v!==before);
+   assert.equal(created.inputs.args[0].fields.value,before,'the shown partner is the block\'s');await (await reveal(target)).selectOption(value);await settle();created=(await locate(s.id))[0];id=created.id;assert.equal((await session()).pendingEdit,null);assert.equal(created.inputs.args[0].fields.value,value,'chosen partner');
+   evidence.inputs.push({key:input.key,multiple:input.multiple,count:1,edited:[{index:0,schema:created.inputs.args[0].schemaId,key:'value',type:'part-choice',before,value,options}]});continue;}
   if(created.inputs[input.key]===undefined){assert.equal(input.required,false,'required input missing '+s.id+'.'+input.key);
    // Optional roles absent from a new block: timed speech has its own control; the others are recorded as absent.
    if(s.id==='Say'&&input.key==='seconds'){await (await reveal(node(id).locator('[data-blockui-action="speech-timed"]').first())).click();created=(await locate(s.id))[0];assert.ok(created.inputs.seconds,'timed speech adds its time');}
    else{evidence.inputs.push({key:input.key,optional:true,absentAfterCreation:true});continue;}}
   let children=input.multiple?created.inputs[input.key]:[created.inputs[input.key]];const slotResult={key:input.key,multiple:input.multiple,count:children.length,edited:[]};for(let i=0;i<children.length;i++){let child=children[i];if(child.schemaId==='QuantityLiteral'){const expectedUnit=roleUnit(s.id,input.key,i);assert.ok(expectedUnit,'declared quantity role '+s.id+'.'+input.key+'['+i+']');assert.equal(child.fields.unit,expectedUnit,'exact role unit while retaining the original numeric operand edit');slotResult.unit=child.fields.unit;child=child.inputs.value;}const childSchema=schemas.find(x=>x.id===child.schemaId);for(const f of childSchema.fields){slotResult.edited.push({index:i,schema:child.schemaId,...await editField(child.id,f,false,f.type==='number'?numberChoice(s,input,i):undefined)});}if(!childSchema.fields.length&&input.type==='expression'){const slotControl=root().locator('[data-blockui-input="'+input.key+'"][data-parent-id="'+id+'"]'+(input.multiple?'[data-slot-index="'+i+'"]':''));await selectSlot(slotControl.first());await add('NumberLiteral');slotResult.edited.push({index:i,replacedBy:'NumberLiteral'});}}
-  if(input.variadic){const before=children.length;await node(id).locator('[data-blockui-action="variadic-add"]').first().click();created=(await locate(s.id))[0];assert.equal(created.inputs[input.key].length,before+1);slotResult.variadicAdded=true;}
+  if(input.variadic&&input.semanticArity==='definition'){
+   assert.equal(children.length,ARGUMENT_NAMES.length,'call arguments retain the prepared definition arity');
+   assert.equal(await node(id).locator('[data-blockui-action="variadic-add"]').count(),0,'a definition fixes its call argument count');
+   slotResult.definitionArity=ARGUMENT_NAMES.length;slotResult.arityAddControlAbsent=true;
+  }else if(input.variadic){const before=children.length;await node(id).locator('[data-blockui-action="variadic-add"]').first().click();created=(await locate(s.id))[0];assert.equal(created.inputs[input.key].length,before+1);slotResult.variadicAdded=true;}
   evidence.inputs.push(slotResult);}
  // Named arguments need the passed values, so they are chosen after the slots.
  for(const f of s.fields.filter(f=>f.type==='argument-names')){evidence.fields.push(await editArgumentNames(id,f));id=(await locate(s.id))[0].id;}
@@ -205,9 +310,14 @@ const ruleHoleRow=async(s,evidence)=>{const row=semanticRows[s.id];draft=false;r
  const {text:code}=await blockSourceAgreement();evidence.source=code;evidence.roundtrip=true;evidence.runtime=await runObserve(row);};
 const continuousRuleRow=async(s,evidence)=>{const row=semanticRows[s.id];draft=false;rootId='#blockEditor';await reset({id:'ContinuousRule'});
  await (await reveal(root().locator('[data-blockui-action="rule-add"]'))).click();let rule=(await session()).blockView.inputs.rules[0];assert.equal(rule.schemaId,s.id);
- for(const key of ['condition','seconds','distance'])assert.equal(rule.inputs[key].schemaId,'Hole:expression',key+' starts open, never an implicit value');
+ // A rule added from the list moves 1秒に200歩, the values of its hint (FCB-09); the condition is left open to choose.
+ assert.equal(rule.inputs.condition.schemaId,'Hole:expression','the condition starts open, never an implicit value');
+ for(const [key,value] of [['seconds',1],['distance',200]]){assert.equal(rule.inputs[key].schemaId,'NumberLiteral',key+' starts with the hint value');assert.equal(rule.inputs[key].fields.value,value,key+' starts at '+value);}
  assert.equal((await session()).pendingEdit?.kind,'block-draft');evidence.creation='Script rule list: add a rule';
- for(const [key,schema]of Object.entries(row.fill)){await chooseExpression((await session()).blockView.inputs.rules[0].inputs[key].id,schema);evidence.inputs.push({key,chosen:schema});}
+ for(const [key,schema]of Object.entries(row.fill)){const value=(await session()).blockView.inputs.rules[0].inputs[key];
+  // A value that already is what the row fills in (the hint's numbers) is kept; an open one is chosen from the list.
+  const literal=value.schemaId==='QuantityLiteral'?value.inputs?.value:value;if(literal?.schemaId===schema){evidence.inputs.push({key,kept:schema});continue;}
+  await chooseExpression(value.id,schema);evidence.inputs.push({key,chosen:schema});}
  await settle();assert.equal((await session()).pendingEdit,null,'the rule is complete');rule=(await session()).blockView.inputs.rules[0];
  for(const key of ['seconds','distance'])assert.equal(rule.inputs[key].fields.unit,roleUnit(s.id,key,0),key+' role unit');
  for(const f of s.fields){evidence.fields.push(await editField(rule.id,f,false,row.edits[f.key]));rule=(await session()).blockView.inputs.rules[0];}
@@ -235,12 +345,28 @@ const waitBroadcastGroupRow=async(s,evidence)=>{const row=semanticRows[s.id];
  evidence.structuralOperations={duplicateKeptBinding:true,delete:true,undoRedoExact:true};evidence.saveReopen=await saveReopen(schemas.indexOf(s));
  await setBody(row.receiver.target,row.receiver.event,'');};
 const DEDICATED={'Hole:expression':holeRow,'Hole:statement':holeRow,'Hole:target':holeRow,'Hole:rule':ruleHoleRow,ContinuousRule:continuousRuleRow,WaitBroadcastGroup:waitBroadcastGroupRow};
-try{for(const s of schemas){if(filter&&!filter.includes(s.id))continue;const evidence={category:s.category,fields:[],inputs:[],bodies:[],annotations:[]};try{
+for(const s of schemas){if(filter&&!filter.includes(s.id))continue;const evidence={category:s.category,fields:[],inputs:[],bodies:[],annotations:[]};try{
  await (DEDICATED[s.id]||genericRow)(s,evidence);results.push({id:s.id,pass:true,evidence});console.log('PASS '+s.id);
  }catch(e){results.push({id:s.id,pass:false,evidence,error:e.message.split('\n').slice(0,9).join('\n')});console.log('FAIL '+s.id+': '+e.stack);L.result(L.path.join(output,'schema-debug.json'),results);await p.screenshot({path:L.path.join(output,'schema-failure-'+results.length+'.png'),fullPage:true}).catch(()=>{});inputId=await openPage();draft=false;rootId='#blockEditor';}
  L.result(L.path.join(output,'schema-case-'+schemas.indexOf(s)+'.json'),results.at(-1));}
 L.result(L.path.join(output,filter?'browser-schemas-selected.json':'browser-schemas.json'),{manifest,browser:browser.version(),expected:filter?filter.length:schemas.length,results,pageErrors:errors,networkRequests:network});
-}finally{await browser.close();}console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length,pageErrors:errors,networkRequests:network}));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;
+}catch(error){
+ primaryError=error;
+ if(!setupComplete){
+  const failure={schema:'akari-schema-setup-failure-v1',error:error.stack,events:setupEvents,omittedEvents:omittedSetupEvents,
+   client:{observedAtMs:Date.now()-setupStarted,browserConnected:browser.isConnected(),pageUrl:p?.url(),pageClosed:p?.isClosed()},pageErrors:errors,networkRequests:network,page:null};
+  const capture=async read=>{let timer;try{return await Promise.race([Promise.resolve().then(read),new Promise(resolve=>{timer=setTimeout(()=>resolve({unavailable:'failure-state-timeout'}),1000);})]);}catch(captureError){return{unavailable:captureError.message};}finally{clearTimeout(timer);}};
+  // Start DevTools only after the original failure. Its browser-level response
+  // can survive a blocked renderer. cpuTime is a process-lifetime total; it does
+  // not by itself attribute work to this page or to the product's JavaScript.
+  [failure.page,failure.processes]=await Promise.all([
+   p?capture(()=>p.evaluate(()=>({readyState:document.readyState,appAvailable:!!globalThis.Akari?.app,fontStatus:document.fonts?.status,
+    pendingImages:[...document.images].filter(image=>!image.complete).length,navigation:performance.getEntriesByType('navigation').map(entry=>entry.toJSON())}))):null,
+   capture(async()=>{const session=await browser.newBrowserCDPSession(),info=await session.send('SystemInfo.getProcessInfo');return{observedAtMs:Date.now()-setupStarted,...info};})]);
+  try{L.result(L.path.join(output,'schema-setup-failure.json'),failure);}catch(captureError){console.error('Setup failure evidence could not be written:',captureError);}
+ }
+ throw error;
+}finally{try{await browser.close();}catch(closeError){if(primaryError)console.error('Browser cleanup also failed:',closeError);else throw closeError;}}console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length,pageErrors:errors,networkRequests:network}));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});
 
 
@@ -249,6 +375,14 @@ async function reveal(locator){
   if(!await locator.isVisible())for(const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())await panel.locator('.blockui-side-toggle').click();
   const controls=locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-palette-controls ")]');
   if(await controls.count())await openPaletteTools(controls.locator('..'));
+  // A block's own tools (だれが, ほかのそうさ) are in its head, shown while the block is selected: select it first.
+  const owner=locator.locator('xpath=ancestor::div[contains(concat(" ",normalize-space(@class)," ")," blockui-node-tools ")][1]/../..');
+  if(await owner.count()&&!await owner.evaluate(e=>e.classList.contains('blockui-selected')))await U.clickNode(owner);
+  // A selected value's own tools (「全部見て なおす」) are drawn over the words after it, and so over its sentence's
+  // 「…」. A child chooses the sentence itself first: press the block where nothing lies over it.
+  const extra=locator.locator('xpath=ancestor::details[contains(concat(" ",normalize-space(@class)," ")," blockui-extra ")][1]');
+  if(await extra.count()&&await extra.getAttribute('open')===null){const summary=extra.locator(':scope > summary');
+   if(await summary.isVisible()&&!await summary.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return !!hit&&e.contains(hit);}))await extra.locator('xpath=ancestor::article[1]').click({position:{x:4,y:4}});}
   // Open the outermost closed disclosure first; inner ones are re-read after each click.
   const ancestors=locator.locator(await locator.evaluate(e=>e.tagName==='SUMMARY')?'xpath=parent::details/ancestor::details[not(@open)]':'xpath=ancestor::details[not(@open)]');
   for(let i=0;await ancestors.count();i++){assert.ok(i<12,'disclosure ancestors open');await ancestors.first().locator(':scope > summary').click();}
@@ -257,7 +391,9 @@ async function reveal(locator){
 }
 
 async function keyboardActivate(l){const p=l.page();for(let i=0;i<500&&!await l.evaluate(e=>e===document.activeElement);i++){const backwards=await l.evaluate(e=>!!(e.compareDocumentPosition(document.activeElement)&Node.DOCUMENT_POSITION_FOLLOWING));await p.keyboard.press(backwards?'Shift+Tab':'Tab');}assert(await l.evaluate(e=>e===document.activeElement),'exact insertion receives keyboard focus');await l.press('Enter');}
-async function selectSlot(slot){await U.clickNode(slot.locator(':scope > .blockui-node'));await U.openSlot(slot);return keyboardActivate(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'));}
+// Pointer/focus handlers finish their deferred render and slot-head placement on the next frame.
+const visualFrame=page=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+async function selectSlot(slot){await visualFrame(slot.page());await U.clickNode(slot.locator(':scope > .blockui-node'));await visualFrame(slot.page());await U.openSlot(slot);await visualFrame(slot.page());return keyboardActivate(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'));}
 
 
 // Specification-owned role units (LANGUAGE.md 227, 270, 280); never inferred from the observed block.
@@ -266,10 +402,11 @@ function roleUnit(schema,key,index){
  if(['WaitTime','Say'].includes(schema)&&key==='seconds')return '秒';
  if(schema==='ContinuousRule')return {seconds:'秒',distance:'歩'}[key]||null;
  if(['ListInsert','ListReplace','ListDelete','ListRead'].includes(schema)&&key==='index')return '番目';
+ // The move sentences (LANGUAGE.md 745-760): legs in 歩, the time in 秒 on every move and turn block.
+ if(['MotionCommand:GOTO','MotionCommand:MOVE_BY'].includes(schema)&&['x','y'].includes(key))return '歩';
+ if(schema.startsWith('MotionCommand:')&&key==='seconds')return '秒';
  const args={
-  'MotionCommand:MOVE':['歩'],'MotionCommand:GOTO':['歩','歩'],'MotionCommand:GLIDE':['秒','歩','歩'],
-  'MotionCommand:MOVE_DIRECTION':['歩'],'MotionCommand:GLIDE_DIRECTION':['秒','歩'],
-  'MotionCommand:SET_X':['歩'],'MotionCommand:SET_Y':['歩'],'MotionCommand:SET_DIRECTION':['度'],
+  'MotionCommand:MOVE':['歩'],'MotionCommand:SET_DIRECTION':['度'],
   'MotionCommand:TURN_RIGHT':['度'],'MotionCommand:TURN_LEFT':['度'],
   'LooksCommand:SET_SCALE':['％'],'SoundCommand:SET_VOLUME':['％'],
   'SoundCommand:TONE':['Hz','秒'],'SoundCommand:TONE_WAIT':['Hz','秒']

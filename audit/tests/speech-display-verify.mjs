@@ -16,6 +16,8 @@ const controls=[
  r=>group(r,'DISPLAY-SETTINGS').rows[0].preview.editorVisible=true,
  r=>group(r,'DISPLAY-SETTINGS').rows[0].preview.inspector.opened=false,
  r=>{const o=group(r,'DISPLAY-SETTINGS').rows[2].paletteFold;o.folded.listHeight=o.opened.listHeight;},
+ r=>{group(r,'DISPLAY-SETTINGS').runScreens[0].preview.controls[2].rect.visible=true;},
+ r=>{group(r,'DISPLAY-SETTINGS').runScreens[1].preview.inspector.toggles=[];},
 ];
 assert.equal(controls.length,rejectionIds.length);for(const [i,mutate]of controls.entries()){const r=structuredClone(report);mutate(r);assert.throws(()=>verifyDisplay(r,inputs,input+'.artifacts'),rejectionIds[i]);}
 const proof={...result,snapshot:inputs,negativeControls:rejectionIds.map(id=>({id,status:'PASS'}))};if(output)fs.writeFileSync(output,JSON.stringify(proof,null,2)+'\n');console.log(`Display audit: ${result.groups} groups, ${result.bubbleCases} speech layouts, ${result.objectCases} object layouts, ${result.zoomCases} native zooms; ${controls.length} rejection controls PASS`);

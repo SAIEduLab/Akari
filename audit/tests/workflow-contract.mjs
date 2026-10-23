@@ -34,7 +34,7 @@ reject('workflow-set/unknown-file','workflow-set',/undeclared/,f=>({...f,'akari-
 reject('workflow-set/missing-file','workflow-set',/missing/,f=>{const {[guard]:_,...rest}=f;return rest;});
 reject('yaml/anchor','yaml',/unsupported YAML construct/,f=>edit(f,audit,'permissions:\n  contents: read','permissions: &perm\n  contents: read'));
 reject('yaml/alias','yaml',/unsupported YAML construct/,f=>edit(f,guard,"node-version: '24'",'node-version: *version'));
-reject('yaml/tab-indentation','yaml',/tab character/,f=>edit(f,guard,'    runs-on: ubuntu-latest','\truns-on: ubuntu-latest'));
+reject('yaml/tab-indentation','yaml',/tab character/,f=>edit(f,guard,'    runs-on: windows-latest','\truns-on: windows-latest'));
 reject('yaml/flow-mapping','yaml',/unsupported YAML construct/,f=>edit(f,audit,'permissions:\n  contents: read','permissions: {contents: read}'));
 reject('yaml/folded-scalar','yaml',/literal block scalars/,f=>edit(f,audit,'      - run: |\n','      - run: >\n'));
 reject('yaml/duplicate-key','yaml',/duplicate key/,f=>edit(f,guard,'    timeout-minutes: 10\n','    timeout-minutes: 10\n    timeout-minutes: 30\n'));
@@ -52,9 +52,11 @@ reject('concurrency/cancels-main','concurrency',/cancel/,f=>edit(f,audit,"  canc
 reject('concurrency/shared-main-group','concurrency',/own concurrency group/,f=>edit(f,acceptance,'  group: akari-acceptance-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}','  group: akari-acceptance-${{ github.event.pull_request.number || github.ref }}'));
 reject('concurrency/missing','concurrency',/missing concurrency/,f=>edit(f,guard,"concurrency:\n  group: akari-change-guard-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: ${{ github.event_name == 'pull_request' }}\n",''));
 reject('jobs/missing-job','jobs',/missing job/,f=>edit(f,guard,'  audit-change-guard:\n','  change-guard:\n'));
-reject('jobs/extra-job','jobs',/undeclared job/,f=>({...f,[guard]:f[guard]+'  extra-check:\n    runs-on: ubuntu-latest\n    timeout-minutes: 5\n    steps:\n      - run: echo ok\n'}));
+reject('jobs/extra-job','jobs',/undeclared job/,f=>({...f,[guard]:f[guard]+'  extra-check:\n    runs-on: windows-latest\n    timeout-minutes: 5\n    steps:\n      - run: echo ok\n'}));
 reject('jobs/condition-changed','jobs',/condition differs/,f=>edit(f,audit,sameRepositoryIf,'    if: ${{ false }}\n'));
-reject('job-keys/reusable-workflow','job-keys',/not allowed/,f=>edit(f,guard,'    runs-on: ubuntu-latest\n','    runs-on: ubuntu-latest\n    uses: ./.github/workflows/other.yml\n'));
+reject('runner/wrong-platform','runner',/windows-latest/,f=>edit(f,guard,'    runs-on: windows-latest','    runs-on: ubuntu-latest'));
+reject('runner/missing-bash','runner',/declared bash shell/,f=>edit(f,guard,'    defaults:\n      run:\n        shell: bash\n',''));
+reject('job-keys/reusable-workflow','job-keys',/not allowed/,f=>edit(f,guard,'    runs-on: windows-latest\n','    runs-on: windows-latest\n    uses: ./.github/workflows/other.yml\n'));
 reject('needs/dropped-job','needs',/needs must be/,f=>edit(f,audit,'needs: [selftest, full-browser-gate, audio-codecs]','needs: [selftest, full-browser-gate]'));
 reject('needs/without-always','needs',/always\(\)/,f=>edit(f,audit,"    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}\n",sameRepositoryIf));
 reject('continue-on-error/job','continue-on-error',/job/,f=>edit(f,guard,'    timeout-minutes: 10\n','    timeout-minutes: 10\n    continue-on-error: true\n'));

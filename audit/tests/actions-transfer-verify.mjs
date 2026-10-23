@@ -54,12 +54,13 @@ function syntheticComposition(){
  for(const d of prose.drafts){
   const actor={id:'sprite-1',x:100,y:100,direction:0,isClone:false},star={...actor,id:'composition-star',x:200};
   const state=time=>({time,actors:[structuredClone(actor),structuredClone(star)],variables:[['点数',0]],lists:[],speech:[]});
-  const times={I07:[0],I08:[0,1999,2000,3999,4000,5999,6000],I09:[0,999,1000],I10:[0],I11:[0,999,1000,1999,2000],I12:[0,999,1000]}[d.id],states=times.map(state);
+  const times={I07:[0],I08:[0,1999,2000,3999,4000,5999,6000],I09:[0,999,1000],I10:[0,17,34],I11:[0,999,1000,1999,2000],I12:[0,999,1000]}[d.id],states=times.map(state);
   const say=(text,time,id='sprite-1')=>({kind:'say',id,text,time});let trace=[];
   if(d.id==='I07'){states[0].variables=[['点数',{magnitude:3,unit:'点'}]];trace=[say('できた！',0),say('3点',0)];}
   if(d.id==='I08'){trace=[say('本',0),say('かさ',2000),say('ぼうし',4000)];for(const s of states)s.lists=[['持ち物',['本','かさ','ぼうし']]];}
   if(d.id==='I09')trace=[{kind:'ask',text:'名前を教えてください',time:0},say('はる「青空」さん、こんにちは',1000)];
-  if(d.id==='I10')trace=[... [15,0,15,0].map(direction=>({kind:'motion',after:{direction},time:0})),say('250',0)];
+  // 右に15度回る lowers the angle to 345; the second turn of the repeat waits for the next こま (17 ms).
+  if(d.id==='I10')trace=[...[[345,0],[0,0],[345,17],[0,17]].map(([direction,time])=>({kind:'motion',after:{direction},time})),say('250',34)];
   if(d.id==='I11')trace=[say('準備できた',1000),say('準備できた',2000,'composition-star'),say('全員集合',2000)];
   if(d.id==='I12')for(const s of states)if(s.time<1000)s.actors.push(...[0,1,2].map(i=>({...actor,id:'clone-'+i,x:120,isClone:true})));
   for(const s of states)s.speech=trace.filter(x=>x.kind==='say'&&x.time<=s.time);
@@ -72,7 +73,7 @@ function syntheticComposition(){
  }
  const extra=prose.drafts.find(d=>d.id==='I10').extra;
  for(const kind of ['action','function'])r.results.push({id:'I10/'+kind+'-original',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{kind,original:kind==='action'?extra.actionBody:extra.functionBody,compileErrors:[]}});
- const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';
+ const source='あかりがクリックされたとき、\n  あかりは、いまのばしょから、右へ30歩動いて、「今日はどこへ行こう」と言う。';
  const observation={textarea:source,event:'click',scripts:[{id:'synthetic-body-id',targetId:'sprite-1',event:'click',source}]};
  const baseline={project:'synthetic-original-project',owner:'synthetic-original-owner',event:'start'};
  const staged={...baseline,raw:source};
@@ -96,10 +97,10 @@ try{
 }catch(error){results.push({file:'data-validator-negative',status:'FAIL',error:error.stack});}
 try{
  const trig=[['正弦（30）','0.5','0.49999999999999994'],['余弦（60）','0.5','0.5000000000000001'],['正接（45）','1','0.9999999999999999'],['逆正弦（0.5）','30度','30.000000000000004度'],['逆余弦（0.5）','60度','60.00000000000001度']];
- const observed=[...trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})),...[1366,1024,390].map(width=>({monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width,monitorHeight:144})),{shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}];
+ const observed=[...trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})),...[1366,1024,390].map(width=>({monitor:'0.3',text:'0.3',raw:'0.30000000000000004',savedExact:true,width,monitorHeight:144})),{shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}];
  const control={schema:'akari-numeric-display-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:numericBrowserIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
  verifyNumericBrowser(control);
- for(const[id,mutate]of Object.entries({'display-missing-detail':r=>r.results[0].observed.detailExact=false,'display-rounded-raw':r=>r.results[0].observed.raw='0.5','display-changed-text':r=>r.results[5].observed.text='0.3','display-online-player':r=>r.results[9].observed.offline=false,'display-collapsed-monitor':r=>r.results[6].observed.monitorHeight=16})){
+ for(const[id,mutate]of Object.entries({'display-missing-detail':r=>r.results[0].observed.detailExact=false,'display-rounded-raw':r=>r.results[0].observed.raw='0.5','display-changed-text':r=>r.results[5].observed.text='0.30000000000000004','display-online-player':r=>r.results[9].observed.offline=false,'display-collapsed-monitor':r=>r.results[6].observed.monitorHeight=16})){
   const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyNumericBrowser(bad));negative.push({id,rejected:true});
  }
 }catch(error){results.push({file:'numeric-validator-negative',status:'FAIL',error:error.stack});}
@@ -131,7 +132,7 @@ try{
 }catch(error){results.push({file:'ux-validator-negative',status:'FAIL',error:error.stack});}
 try{
  const fixture=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json'));
- const details=[{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},{jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true},{rate:30,elapsed:1.05,distance:31.5,stopped:true},{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'},{closedSquare:true,ink:160},{rate:20,elapsed:1.05,distance:21,stopped:true}];
+ const details=[{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},{jumpY:124,returnY:100,repeatedDownIdle:true,secondPress:true},{rate:30,elapsed:1.05,distance:31.5,stopped:true},{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'},{closedSquare:true,ink:160},{rate:20,elapsed:1.05,distance:21,stopped:true}];
  const control={schema:'akari-basic-intents-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:fixture.cases.map((d,i)=>({id:d.id,status:'PASS',observed:{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true,detail:details[i]}}))};
   for(const i of [2,6]){const d=details[i];control.results[i].releaseObservation={pressedAt:0,releasedAt:1050,elapsed:d.elapsed,distance:d.distance,domOnRelease:100+d.distance-.3,domAfterPaint:100+d.distance,domAfter300:100+d.distance};}
   verifyBasicBrowser(control);
@@ -186,9 +187,9 @@ try{
  }
 }catch(error){results.push({file:'audio-output-validator-negative',status:'FAIL',error:error.stack});}
 try{
- const control={schema:'akari-structured-editing-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:structuredEditingIds.map((id,i)=>{const[,kind,event]=id.split('/');return{id,status:'PASS',observed:i<6?{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:true}:{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,elapsed:1.1,moved:22,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true}};})};
+ const control={schema:'akari-structured-editing-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:structuredEditingIds.map((id,i)=>{const[,kind,event]=id.split('/');return{id,status:'PASS',observed:i<6?{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:!(kind==='empty'&&event==='keyDown'),emptyWorkRefused:kind==='empty'&&event==='keyDown'}:{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,elapsed:1.1,moved:22,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true}};})};
  verifyStructuredEditing(control);
- for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
+ for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-empty-work-ran':r=>{r.results[0].observed.run=true;r.results[0].observed.emptyWorkRefused=false;},'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
 try { for(const [file,mutate] of uxNormalWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=uxNormalInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/wrong-meaning',rejected:true});} }
 catch(error){results.push({file:'ux-normal-meaning-negative',status:'FAIL',error:error.message});}
@@ -252,7 +253,7 @@ const requiredNegativeIds=[
  'failed-status','missing-case','duplicate-case','skipped-case','pending-as-pass','changed-original','rewritten-ui-source','wrong-product','wrong-browser','missing-extra-definition','wrong-meaning','source-block-mismatch','changed-time','duplicate-body','changed-identity','multiline-lost-lf','multiline-cancel-committed','draft-dropped-source','draft-coerced-number','page-error','network',
  'missing-value','wrong-expected','wrong-observed','missing-route','missing-variant',
  'audio-missing','audio-duplicate','audio-wrong-head','audio-no-output','audio-wrong-frequency','audio-no-volume-change','audio-wait-early','audio-waits-other-sound','audio-restarts-after-stop','audio-short-recording','audio-unstable-periods',
- 'structured-missing','structured-identity-drift','structured-lost-body','structured-wrong-direction','structured-rate-confusion',
+ 'structured-missing','structured-identity-drift','structured-lost-body','structured-empty-work-ran','structured-wrong-direction','structured-rate-confusion',
  ...evidenceControls(['ux-normal-language.json','ux-normal-browser.json','ux-normal-matrix.json','ux-normal-layout.json','ux-normal-speech.json'],['wrong-meaning']),
  ...evidenceControls(['ux-normal-matrix.json'],['B12-wait-three-seconds','B10-serialized','wrong-initial-source','wrong-result-source','B12-other-body-changed','missing-required-rerun','B20-initial-zero-lost','virtual-input-not-final-source']),
  'ux-normal-speech.json/outside-visible-stage','ux-normal-layout.json/left-edge-clipped',

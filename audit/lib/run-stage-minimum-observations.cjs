@@ -1,0 +1,58 @@
+const assert=require('node:assert/strict'),path=require('node:path'),{pathToFileURL}=require('node:url');
+async function observeRunStageMinimum(browser,product){
+ const results=[];
+ const configs=[[740,360,640,400],[740,360,1200,200],[740,360,200,800],[844,390,640,400],[844,390,1200,200],[844,390,200,800],[1366,650,640,400],[650,700,640,400],[651,700,640,400]];
+ for(const [width,height,w,h]of configs){
+  const context=await browser.newContext({viewport:{width,height},hasTouch:true}),p=await context.newPage(),errors=[];
+  try{
+   p.on('pageerror',e=>errors.push(String(e)));await p.addInitScript(()=>{localStorage.clear();localStorage.setItem('akari.uiLevel.v1','entry')});
+   await p.goto(pathToFileURL(path.resolve(product)).href);await p.waitForFunction(()=>window.Akari?.app);
+   const file=await p.evaluate(([w,h])=>{const q=Akari.makeEmptyProject();q.name='動かす画面の確認';q.stage.width=w;q.stage.height=h;q.projectData.variables=[{id:'counter',name:'点数',initialValue:0}];
+    q.scripts=[{id:'waiting',targetId:q.components[0].id,event:'start',source:'ずっとくり返す。\n  1秒待つ。'},{id:'key',targetId:q.components[0].id,event:'keyDown',filter:{key:'右'},source:'「キー」と言う。'}];return Akari.serializeProject(q,Akari.makeDefaultAssetStore());},[w,h]);
+   await p.locator('#fileInput').setInputFiles({name:'run-minimum.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await p.waitForFunction(()=>Akari.app.project.name==='動かす画面の確認'&&Akari.app.editorState.state==='DESIGN'&&!document.querySelector('#fileInput').value);
+   const read=()=>p.evaluate(()=>{const m=document.querySelector('.main'),rect=q=>{const r=document.querySelector(q).getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height}},frame=rect('#formFrame'),wrap=rect('.designer-wrap'),r=m.getBoundingClientRect();return{frame,wrap,stop:rect('#stopBtn'),main:{x:r.x,y:r.y,w:r.width,h:r.height,left:m.scrollLeft,top:m.scrollTop,totalW:m.scrollWidth,totalH:m.scrollHeight},page:[document.documentElement.scrollWidth,document.documentElement.scrollHeight],content:[frame.x+m.scrollLeft,frame.y+m.scrollTop,frame.w,frame.h],state:Akari.app.editorState.state}});
+   const edit=await read(),project=await p.evaluate(()=>JSON.stringify(Akari.app.project)),start=await p.locator('#runBtn').boundingBox();await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.waitForTimeout(600);const run=await read();
+   assert.ok(run.frame.w>=edit.frame.w-.1&&run.frame.h>=edit.frame.h-.1,'run stage preserves both edit dimensions');assert.ok(Math.abs(run.stop.x-start.x)<.1&&Math.abs(run.stop.y-start.y)<.1,'Stop occupies Run position');assert.deepEqual(run.page,[width,height]);
+   assert.ok(run.frame.x>=run.wrap.x&&run.frame.x+run.frame.w<=run.wrap.x+run.wrap.w+.1&&run.frame.y>=run.wrap.y&&run.frame.y+run.frame.h<=run.wrap.y+run.wrap.h+.1,'frame fits its parent rather than overflowing a clip');
+   // Wheel and touch begin outside the game surface. The game continues to own its own pointer and keys.
+   const header=await p.locator('#designerWindow > .win-title').boundingBox(),x=Math.min(width-20,header.x+30),y=Math.max(run.main.y+20,header.y+20);
+   await p.mouse.move(x,y);await p.mouse.wheel(1000,1000);await p.waitForTimeout(180);const wheeled=await read();
+   if(run.main.totalW>run.main.w)assert.ok(wheeled.main.left>0,'native horizontal wheel reaches the wide stage');if(run.main.totalH>run.main.h)assert.ok(wheeled.main.top>0,'native wheel reaches vertical overflow '+JSON.stringify({run,wheeled,x,y,hit:await p.evaluate(([x,y])=>{const n=document.elementFromPoint(x,y),m=document.querySelector('.main');return{hit:n?.outerHTML.slice(0,120),overflow:getComputedStyle(m).overflow}},[x,y])}));
+   await p.evaluate(()=>{const m=document.querySelector('.main');m.scrollLeft=0;m.scrollTop=0});
+   const cdp=await context.newCDPSession(p);
+   const touchDrag=async(dx,dy)=>{await p.evaluate(()=>{const m=document.querySelector('.main');m.scrollLeft=0;m.scrollTop=0});await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let n=1;n<=10;n++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+dx*n/10,y:y+dy*n/10}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await p.waitForTimeout(180);return read();};
+   if(run.main.totalH>run.main.h)assert.ok((await touchDrag(0,-60)).main.top>0,'native touch on stage heading scrolls vertically');
+   if(run.main.totalW>run.main.w)assert.ok((await touchDrag(-60,0)).main.left>0,'native touch on stage heading scrolls horizontally');
+   await p.evaluate(()=>{const m=document.querySelector('.main');m.scrollLeft=0;m.scrollTop=0});await p.locator('.main').focus();await p.keyboard.press('ArrowRight');await p.keyboard.press('PageDown');await p.waitForTimeout(180);const keyed=await read();if(run.main.totalH>run.main.h)assert.ok(keyed.main.top>0,'PageDown scrolls the focused workspace');if(run.main.totalW>run.main.w)assert.ok(keyed.main.left>0,'Right scrolls the focused workspace');assert.equal(await p.evaluate(()=>document.querySelectorAll('.sprite-bubble').length),0);
+   await p.evaluate(()=>{const m=document.querySelector('.main'),r=document.querySelector('#formFrame').getBoundingClientRect(),s=m.getBoundingClientRect();m.scrollLeft+=r.right>s.right?r.right-s.right+1:r.left<s.left?r.left-s.left-1:0;m.scrollTop+=r.bottom>s.bottom?r.bottom-s.bottom+1:r.top<s.top?r.top-s.top-1:0;});
+   // A stage taller than the finite workspace keeps its edit dimensions (LANGUAGE.md).
+   // Reach every corner; simultaneous containment is required only along axes that fit.
+   const corners=[];
+   for(const corner of ['top-left','top-right','bottom-left','bottom-right']){
+    await p.evaluate(corner=>{const m=document.querySelector('.main'),f=document.querySelector('#formFrame').getBoundingClientRect(),s=m.getBoundingClientRect(),x=s.x+m.clientLeft,y=s.y+m.clientTop,
+     maxX=m.scrollWidth-m.clientWidth,maxY=m.scrollHeight-m.clientHeight;
+     const left=f.width>m.clientWidth+.1?(corner.endsWith('left')?0:maxX):m.scrollLeft+f.x-x-(m.clientWidth-f.width)/2,
+      top=f.height>m.clientHeight+.1?(corner.startsWith('top')?0:maxY):m.scrollTop+f.y-y-(m.clientHeight-f.height)/2;
+     m.scrollTo({left,top,behavior:'instant'});},corner);
+    await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    const raw=await p.evaluate(corner=>{const m=document.querySelector('.main'),f=document.querySelector('#formFrame'),r=f.getBoundingClientRect(),s=m.getBoundingClientRect(),inset=Math.min(8,r.width/4,r.height/4),x=corner.endsWith('left')?r.left+inset:r.right-inset,y=corner.startsWith('top')?r.top+inset:r.bottom-inset,hit=document.elementFromPoint(x,y);
+     return{corner,frame:{x:r.x,y:r.y,w:r.width,h:r.height},viewport:{x:s.x+m.clientLeft,y:s.y+m.clientTop,w:m.clientWidth,h:m.clientHeight},scroll:{x:m.scrollLeft,y:m.scrollTop,maxX:m.scrollWidth-m.clientWidth,maxY:m.scrollHeight-m.clientHeight},hitPoint:{x,y},hitOwnsCorner:hit===f||f.contains(hit),hit:hit?.tagName+':'+hit?.id};},corner);
+    const f=raw.frame,v=raw.viewport,right=f.x+f.w,bottom=f.y+f.h,
+     x=f.w<=v.w+.1?f.x>=v.x&&right<=v.x+v.w+.1:(corner.endsWith('left')?f.x:right)>=v.x&&(corner.endsWith('left')?f.x:right)<=v.x+v.w+.1,
+     y=f.h<=v.h+.1?f.y>=v.y&&bottom<=v.y+v.h+.1:(corner.startsWith('top')?f.y:bottom)>=v.y&&(corner.startsWith('top')?f.y:bottom)<=v.y+v.h+.1;
+    assert.ok(x&&y&&raw.hitOwnsCorner,'each stage corner is visible through the finite workspace '+JSON.stringify({width,height,w,h,edit,run,corner:raw}));corners.push(raw);
+   }
+   const reach=async selector=>{await p.locator(selector).scrollIntoViewIfNeeded();await p.locator(selector).evaluate(e=>{const m=document.querySelector('.main'),r=e.getBoundingClientRect(),s=m.getBoundingClientRect();if(r.right>s.right)m.scrollLeft+=Math.ceil(r.right-s.right);if(r.bottom>s.bottom)m.scrollTop+=Math.ceil(r.bottom-s.bottom);});await p.waitForTimeout(80);return p.locator(selector).evaluate(e=>{const r=e.getBoundingClientRect(),m=document.querySelector('.main').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.left>=m.left&&r.right<=m.right+.1&&r.top>=m.top&&r.bottom<=m.bottom+.1&&(hit===e||e.contains(hit));});};
+   assert.equal(await reach('#pauseBtn'),true,'Pause is completely visible and clickable '+JSON.stringify({width,height,w,h,state:await read(),button:await p.locator('#pauseBtn').evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{rect:r.toJSON(),hit:hit?.outerHTML.slice(0,120)}})}));await p.locator('#pauseBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');const paused=await read();
+   assert.equal(await reach('#continueBtn'),true);await p.waitForTimeout(550);await p.locator('#continueBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');const continued=await read();
+   for(const state of [paused,continued])for(let i=0;i<4;i++)assert.ok(Math.abs(state.content[i]-run.content[i])<.75,'pause/continue preserve content geometry');
+   if(width>650){await p.evaluate(()=>{const m=document.querySelector('.main');m.scrollLeft=0;m.scrollTop=0});assert.equal(await p.locator('#blockEditor .blockui-workspace').isVisible(),true);assert.ok(await p.locator('#blockEditor .blockui-workspace').evaluate(e=>e.clientHeight)>=40,'running blocks retain a readable viewport');}
+   await p.evaluate(()=>document.querySelector('#formSurface').focus({preventScroll:true}));await p.keyboard.press('ArrowRight');await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キー');
+   assert.equal(await p.evaluate(()=>document.querySelector('#formSurface').style.touchAction),'none');
+   await p.locator('#stopBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),project);assert.equal(await p.locator('.main').getAttribute('tabindex'),null);assert.equal(await p.locator('body').getAttribute('data-run-stage-minimum'),null);assert.deepEqual(errors,[]);
+   results.push({viewport:[width,height],stage:[w,h],edit:[edit.frame.w,edit.frame.h],run:[run.frame.w,run.frame.h],corners,stageMinimum:true,parentContains:true,wholeStageReachable:true,rootFits:true,stopFixed:true,wheel:true,touch:true,keyboard:true,gameKeysPreserved:true,controlsReachable:true,pauseStable:true,designPreserved:true});
+  }finally{await context.close();}
+ }
+ return results;
+}
+module.exports={observeRunStageMinimum};

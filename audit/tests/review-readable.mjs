@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,snapshot} from '../lib/product-test-host.mjs';
 import {verifyReviewReport} from '../lib/review-regression-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const [browserPath,productArg,outputArg]=process.argv.slice(2);
 assert.ok(browserPath&&productArg&&outputArg,
@@ -27,13 +29,13 @@ async function openPage(browser,viewport,level='basic'){
   page.setDefaultTimeout(8000);
   await page.goto(pathToFileURL(product).href);
   await page.waitForFunction(()=>!!globalThis.Akari?.app);
-  await installGreetingFixture(page);
+  await installGreetingFixture(page,{keepRunning:true});
   await page.locator('#uiLevel').selectOption(level);
   return {page,context};
 }
 
 async function captureRuntime(page,viewport,level,editorMode){
-  if(editorMode==='code') await page.locator('#editorModecode').click();
+  if(editorMode==='code') await chooseView(page,'code');
   await page.locator('#runBtn').click();
   await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
   await page.waitForFunction(()=>document.querySelector('#formSurface .sprite-bubble'));
@@ -89,10 +91,10 @@ async function stageSpeechReview(browser){
         assert.ok(info.controls.pauseVisible,'advanced mode retains pause/continue controls');
         await page.locator('#pauseBtn').click();
         await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');
-        await page.locator('#continueBtn').click();
+        await page.waitForTimeout(510);await page.locator('#continueBtn').click();
         await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
       }
-      await page.locator('#stopBtn').click();
+      await pressStop(page.locator('#stopBtn'));
       await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
       assert.equal(await page.locator('#uiLevel').inputValue(),level,'stop returns to the same detail level');
       if(level==='advanced')
@@ -107,20 +109,23 @@ async function stageSpeechReview(browser){
     await page.locator('#runBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
     await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();
-    await page.locator('#editorModecode').click();
+    await chooseView(page,'code');
     await page.waitForFunction(()=>document.body.dataset.editorMode==='code'&&getComputedStyle(document.querySelector('.codewin')).display!=='none');
     assert.ok(await page.locator('#codeEditor').isVisible(),'basic runtime can switch to its existing code view');
-    await page.locator('#uiLevel').selectOption('advanced');
-    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');
-    assert.ok(await page.locator('#codeEditor').isVisible());
+    // The level is chosen on the edit screen only: neither the run screen nor 本文と動きのようす offers it.
+    assert.equal(await page.locator('#uiLevel').isVisible(),false,'no level picker while the work runs');
+    assert.equal(await page.locator('#runtimeInspector #uiLevel').count(),0);
     await page.locator('#pauseBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');
-    await page.locator('#continueBtn').click();
+    await page.waitForTimeout(510);await page.locator('#continueBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
     await page.locator('#runtimeInspectorStop').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
     assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');
-    transition={basicBlocksRun:true,basicCodeViewVisible:true,advancedModeSwitch:true,pauseResume:true,stopReturnsToCodeEditor:true};
+    await page.locator('#uiLevel').selectOption('advanced');
+    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','the edit screen switches into advanced mode');
+    assert.ok(await page.locator('#codeEditor').isVisible());
+    transition={basicBlocksRun:true,basicCodeViewVisible:true,levelOnEditScreenOnly:true,advancedModeSwitch:true,pauseResume:true,stopReturnsToCodeEditor:true};
     await context.close();
   }catch(error){await context.close();throw Error(`basic runtime mode transition: ${error.message}`);}
   return {observations,transition,coverage:{viewports,levels},checks:['stage-visible','speech-rendered-size','stop-editor-return','advanced-code-monitor-retained','advanced-pause-resume','basic-code-view-and-advanced-switch']};
@@ -131,7 +136,7 @@ async function questionInputReview(browser){
   for(const viewport of viewports) for(const level of levels){
     const {page,context}=await openPage(browser,viewport,level);
     try{
-      await page.locator('#editorModecode').click();
+      await chooseView(page,'code');
       const source='「名前は何ですか」とたずねて、答えを待つ。';
       await page.locator('#codeEditor').fill(source);
       await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);
@@ -146,7 +151,7 @@ async function questionInputReview(browser){
       await page.locator('#questionAnswer').fill('あかり');
       await page.locator('#questionAnswer').press('Enter');
       await page.waitForFunction(()=>!document.querySelector('#questionModal').classList.contains('show'));
-      await page.locator('#stopBtn').click();
+      await pressStop(page.locator('#stopBtn'));
       await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
       observations.push({viewport,level,source,prompt,focused,modal,answerAccepted:true,stopReturnsToEditor:true});
       await context.close();
@@ -183,11 +188,11 @@ async function fullTextEditorReview(browser) {
   for(const width of [1366,1024]) for(const level of levels) {
     const {page,context}=await openPage(browser,{width,height:768},level);
     try {
-      await page.locator('#editorModecode').click();
+      await chooseView(page,'code');
       const source='「'+short+'」と言う。';
       await page.locator('#codeEditor').fill(source);
       await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);
-      await page.locator('#editorModeblocks').click();
+      await chooseView(page,'blocks');
       const string=page.locator('#blockEditor .blockui-node[data-schema-id="StringLiteral"]').first();
       const input=string.locator('input[data-blockui-field="value"]');
       const editor=page.locator('.blockui-text-dialog textarea');
@@ -222,8 +227,8 @@ async function fullTextEditorReview(browser) {
       await input.click();
       await string.locator('[data-blockui-action="edit-text"]').click();await editor.fill(short+'\n'+long);await editor.press('Escape');
       assert.equal(await page.evaluate(()=>Akari.app.editorState.main.sourceText),committed,'Escape cancels a multiline draft exactly');
-      await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),committed);
-      await page.locator('#editorModeblocks').click();assert.equal(await input.inputValue(),long);
+      await chooseView(page,'code');assert.equal(await page.locator('#codeEditor').inputValue(),committed);
+      await chooseView(page,'blocks');assert.equal(await input.inputValue(),long);
       for(const action of ['zoom-reset','workspace-fit']) {
         await page.locator('#blockEditor [data-blockui-action="'+action+'"]').click();
         const geometry=await openFocusedFullTextEditor(page,input,string,width);
@@ -240,10 +245,10 @@ async function fullTextEditorReview(browser) {
 
 async function longTextReview(browser){
   const long='長い文字列'.repeat(39),observations=[];
-  for(const viewport of viewports) for(const level of levels) for(const targetZoom of [1,.55]){
+  for(const viewport of viewports) for(const level of levels) for(const targetZoom of [1,.5]){
     const {page,context}=await openPage(browser,viewport,level);
     try{
-      await page.locator('#editorModeblocks').click();
+      await chooseView(page,'blocks');
       await page.waitForFunction(()=>document.body.dataset.editorMode==='blocks');
       const field=page.locator('#blockEditor .blockui-world .blockui-field input').filter({hasNotText:/^$/}).first();
       const inputs=page.locator('#blockEditor .blockui-world .blockui-field input');
@@ -253,7 +258,7 @@ async function longTextReview(browser){
       const zoomReset=page.locator('#blockEditor [data-blockui-action="zoom-reset"]');
       await zoomReset.click();
       const zoomOut=page.locator('#blockEditor [data-blockui-action="zoom-out"]');
-      if(targetZoom<1) for(let i=0;i<9;i++) await zoomOut.click();
+      if(targetZoom<1) for(let i=0;i<2;i++) await zoomOut.click();
       await page.waitForFunction(expected=>Math.abs(parseFloat(getComputedStyle(document.querySelector('#blockEditor .blockui-world')).getPropertyValue('--blockui-scale'))-expected)<.001,targetZoom);
       const before=await page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,stageZoom:document.querySelector('#stageZoomReset')?.textContent||'',world:document.querySelector('.blockui-world')?.style.transform||'',blockZoom:document.querySelector('#blockEditor [data-blockui-action="zoom-reset"]')?.textContent||'',history:Akari.app.editorState.history.length}));
       await input.evaluate(el=>el.scrollIntoView({block:'center',inline:'center'}));
@@ -293,10 +298,10 @@ async function longTextReview(browser){
       await page.locator('#redoBtn').click();
       await page.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,committed);
       const redone=await page.evaluate(()=>Akari.app.editorState.main.sourceText);
-      await page.locator('#editorModecode').click();
+      await chooseView(page,'code');
       const code=await page.locator('#codeEditor').inputValue();
       assert.equal(code,committed,'code view contains the complete committed source');
-      await page.locator('#editorModeblocks').click();
+      await chooseView(page,'blocks');
       const returned=await page.locator('#blockEditor .blockui-world .blockui-field input').evaluateAll(nodes=>nodes.find(node=>node.value.includes('長い文字列'))?.value||'');
       assert.equal(returned,long,'block view restores all 195 characters');
       await page.waitForFunction(zoom=>document.querySelector('#stageZoomReset')?.textContent===zoom,before.stageZoom);

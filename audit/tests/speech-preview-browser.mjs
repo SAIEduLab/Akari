@@ -8,6 +8,8 @@ import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {reveal} from '../lib/ux-normal-ui.mjs';
 import {previewCases,previewNames,previewShortTexts,previewLongTexts} from '../fixtures/speech-preview.mjs';
 import {verifyPreviewObserved,verifyPreviewReport} from '../lib/speech-preview-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const require=createRequire(import.meta.url),[chrome,out='audit-evidence/speech-preview.json']=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output+'.artifacts';
 fs.mkdirSync(dir,{recursive:true});
 const inputs=snapshot(product),report={schema:'akari-speech-preview-v1',status:'RUNNING',snapshot:inputs,uxAcceptance:false,classification:'automated native UI evidence; final acceptance requires Dango independent operation audit',environment:{browser:null,playwright:require('playwright/package.json').version,os:process.platform},pageErrors:[],networkRequests:[],results:[]};
@@ -15,9 +17,9 @@ const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 async function prepare(p,c){
  // 新しく作る starts in はじめて, where code cannot be shown: かんたん comes first.
- await p.locator('#newBtn').click();await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
+ await p.locator('#newBtn').click();await p.locator('#uiLevel').selectOption('basic');await chooseView(p,'code');
  await nameLegacyFixtureActor(p);
- const dango=p.locator('[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
+ const dango=p.locator('.tool.sprite-preset[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
  const texts=c.kind==='short'?previewShortTexts:previewLongTexts,seconds=c.kind==='short'?2:10;
  for(const [i,name] of previewNames.entries()){
   const id=await p.evaluate(name=>Akari.app.project.components.find(c=>c.name===name).id,name);
@@ -93,7 +95,7 @@ try{await withBrowser(chrome,async browser=>{
      d.closeInput=input;d.closed=!(await p.locator('#valueModal').isVisible());o.openings.push(d);
     }
    }
-   verifyPreviewObserved(c.id,o);await p.locator('#stopBtn').click();
+   verifyPreviewObserved(c.id,o);await pressStop(p.locator('#stopBtn'));
   });row.status='PASS';}catch(e){row.status='FAIL';row.error=e.stack;}
   save();console.log(row.status+' '+c.id);
  }

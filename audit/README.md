@@ -9,6 +9,8 @@
 - node audit/browser/run-full-browser-audit.mjs --group all --evidence audit-evidence/browser
 - 公開ActionsのAkari audit / Akari fixed acceptanceで必要なsuiteを実行・集約する。現行の実行集合はgate-contractと各runner/validatorを正本とし、段階数をここへ手で複製しない。
 
+公開CIはWindows上で実行する。固定browserと媒体fixtureを使い、OS・入力・run/attemptの一致を検証する。Windowsの結果をLinuxの実行証拠として扱わない。
+
 監査基盤自体の検査（ファイルの到達性、workflowの契約、変更ガード、文の形の網羅、仕様の例文、仕様の期待値）はgateの必須段で、内容は [AUDIT.md](../AUDIT.md) の「監査基盤の保証」を参照する。PRでは`audit-change-guard`が、検査の削除・固定値の変更・製品版の上げ方を確認し、所有者のラベル`owner-approved-audit-change`がない変更を止める。
 
 通常の正規経路はpublicのActions。privateコピーはpublic-onlyのworkflowやマニュアルを持たないため、同じファイル群があることだけでprivate単独full gateの成立を主張しない。publicからprivateの認証・資料へ依存しない。
@@ -21,7 +23,7 @@
 ## 入力と独立期待値
 
 候補とテスト入力の同一性を検査する。配布固定の更新は実行成功ではない。現在の期待値を候補出力から自動生成して追認しない。
-同じ環境の同じproducerは一回の有効結果を共有できる。Node/browserやLinux/Windowsなど目的の異なる検査は残す。最後の修正に必要な結果は最終候補へ結び付ける。
+同じ環境の同じproducerは一回の有効結果を共有できる。Node/browserなど目的の異なる検査は残す。最後の修正に必要な結果は最終候補へ結び付ける。
 
 ## 保守
 

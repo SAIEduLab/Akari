@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,8 +11,11 @@ import { currentProductFile } from '../lib/product-path.cjs';
 import { snapshot, sha } from '../lib/product-test-host.mjs';
 import { loadApi } from '../browser/cases/audit-lib.cjs';
 import { answerProductConfirms } from '../lib/product-dialogs.cjs';
+import { installGreetingFixture } from '../lib/gate-ui-fixture.mjs';
 import { browserEnvironment } from '../lib/browser-environment.mjs';
 import { extensionFoundationIds, extensionExpectedObservations, verifyExtensionFoundation } from '../lib/extension-foundation-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {observeExtensionRuntimeContracts} from '../lib/extension-runtime-observations.mjs';
 
 const require = createRequire(import.meta.url), [browserPath, output, productOverride] = process.argv.slice(2);
 assert.ok(browserPath && output, 'Usage: node extension-foundation.mjs <fixed browser> <new report.json>');
@@ -119,6 +123,8 @@ async function withOrdinaryFileBrowser(fn) {
   finally{clearTimeout(timer);await browser.close();}
 }
 await withOrdinaryFileBrowser(async browser=>{
+  let runtimeContractsPromise;
+  const runtimeContracts=()=>runtimeContractsPromise ||= observeExtensionRuntimeContracts(browser,candidate,directory);
   assert.equal(browser.version(),browserEnvironment.version);assert.equal(require('playwright/package.json').version,browserEnvironment.playwright);
   async function pageAt(file){const context=await browser.newContext();const page=await context.newPage();const requests=[],sockets=[],errors=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('websocket',s=>sockets.push(s.url()));page.on('pageerror',e=>errors.push(e.message));await page.goto(pathToFileURL(file).href);await page.waitForFunction(()=>!!globalThis.Akari?.app);return{context,page,requests,sockets,errors};}
   const standard=await pageAt(candidate),fork=derived?await pageAt(derived):null;
@@ -127,14 +133,20 @@ await withOrdinaryFileBrowser(async browser=>{
   // locator action, so the opening step waits for that action before reading the result.
   if(fork)await answerProductConfirms(fork.page,true);
   const productQuestionAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
-  await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await standard.page.locator('#runBtn').click();await standard.page.locator('#stopBtn').click();await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
-  await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await fork.page.locator('#runBtn').click();await fork.page.locator('#stopBtn').click();await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
-  async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);return fork.page.evaluate(fn);});}
+  // The first work has no sentence and does not run (LANGUAGE.md 新しい作品とお手本、吹出し), so a running work is opened first.
+  await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await installGreetingFixture(standard.page,{keepRunning:true});await standard.page.locator('#runBtn').click();await pressStop(standard.page.locator('#stopBtn'));await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
+  await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await installGreetingFixture(fork.page,{keepRunning:true});await fork.page.locator('#runBtn').click();await pressStop(fork.page.locator('#stopBtn'));await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
+  async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);const observed=await fork.page.evaluate(fn);return id==='EXTENSION-COMMAND-EVENT-STATE'?{...observed,handlerContext:(await runtimeContracts()).handlerContext}:observed;});}
   await evaluate('EXTENSION-REGISTRATION-COLLISION-TYPES',()=>{
     const R=Akari.createAkariRuntime({extensions:auditDefinitions}),host=R.extensions;let duplicateRejected=false,invalidNumberRejected=false,promiseCalculationRejected=false;
     try{host.register(auditDefinitions[0].manifest,auditDefinitions[0].factory);}catch(_){duplicateRejected=true;}host.beginSession();try{host.invokeCalculation('demo.offline/double',['wrong']);}catch(_){invalidNumberRejected=true;}host.endSession();
     const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.promise';delete manifest.name;manifest.commands=[];manifest.events=[];manifest.calculations=[manifest.calculations[0]];
-    const other=Akari.createAkariRuntime({extensions:[{manifest,factory:()=>({calculations:{double:()=>Promise.resolve(1)}})}]}).extensions;other.beginSession();try{other.invokeCalculation('audit.promise/double',[1]);}catch(_){promiseCalculationRejected=true;}other.endSession();return{duplicateRejected,invalidNumberRejected,promiseCalculationRejected};
+    const other=Akari.createAkariRuntime({extensions:[{manifest,factory:()=>({calculations:{double:()=>Promise.resolve(1)}})}]}).extensions;other.beginSession();try{other.invokeCalculation('audit.promise/double',[1]);}catch(_){promiseCalculationRejected=true;}other.endSession();
+    // An extension written for the earlier contract (standard 3/3) is refused, with the product's contract as the control.
+    const older=structuredClone(auditDefinitions[0].manifest);older.id='audit.older';delete older.name;older.standard={languageContractId:Akari.EXECUTABLE_CONTRACT.languageContractId-1,runtimeContractId:Akari.EXECUTABLE_CONTRACT.runtimeContractId-1};
+    let olderStandardRejected=null;try{Akari.createAkariRuntime({extensions:[{manifest:older,factory:auditDefinitions[0].factory}]});olderStandardRejected='accepted';}catch(e){olderStandardRejected=e.code||e.message;}
+    const current=structuredClone(older);current.standard={languageContractId:Akari.EXECUTABLE_CONTRACT.languageContractId,runtimeContractId:Akari.EXECUTABLE_CONTRACT.runtimeContractId};const currentStandardAccepted=Akari.createAkariRuntime({extensions:[{manifest:current,factory:auditDefinitions[0].factory}]}).extensions.requirements().required.length===1;
+    return{duplicateRejected,invalidNumberRejected,promiseCalculationRejected,olderStandardRejected,currentStandardAccepted};
   });
   await evaluate('EXTENSION-INDEPENDENT-CALCULATIONS',()=>{const host=Akari.createAkariRuntime({extensions:auditDefinitions}).extensions;host.beginSession();const doubled=host.invokeCalculation('demo.offline/double',[7]),shouted=host.invokeCalculation('demo.text/shout',['hello']);host.endSession();return{doubled,shouted,independent:host.requirements().required.length===2};});
   await evaluate('EXTENSION-COMMAND-EVENT-STATE',async()=>{const host=Akari.createAkariRuntime({extensions:auditDefinitions}).extensions,events=[];host.beginSession({onEvent:e=>events.push(e)});const remembered=await host.invokeCommand('demo.offline/remember',[9]),value=host.invokeCalculation('demo.offline/remembered',[]),state=host.snapshotState();host.endSession();host.restoreState(state);host.beginSession();const restored=host.invokeCalculation('demo.offline/remembered',[]);host.endSession();return{remembered,value,event:events[0].payload,restored};});
@@ -204,11 +216,11 @@ await withOrdinaryFileBrowser(async browser=>{
     return{sourceChars:loaded.project.scripts[0].source.length,parsed:loaded.diagnostics.length===0,runtimeList:100001,listRejected,capacityRejected};
   });
   await check('EXTENSION-GUI-HISTORY-AUTOSAVE',async()=>{
-    assert.ok(fork);const page=fork.page,source='拡張計算「demo.offline」「double」（7）を言う。';await page.locator('#uiLevel').selectOption('advanced');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModecode').click();await page.locator('#codeEditor').click();await page.locator('#codeEditor').press('ControlOrMeta+A');await page.keyboard.insertText(source);await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await page.waitForTimeout(400);
-    const typed=await page.locator('#codeEditor').inputValue()===source;await page.locator('#editorModeblocks').click();const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();await field.fill('8');await field.press('Enter');await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const blocks=await page.evaluate(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));await page.locator('#undoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（7）'));const undo=true;await page.locator('#redoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const redo=true;await page.waitForTimeout(1800);await page.reload();await page.waitForFunction(()=>!!Akari.app);await page.locator('#recoveryModal').waitFor({state:'visible'});await page.locator('#recoveryRestore').click();await page.waitForFunction(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));const reloaded=true;await page.evaluate(install);return{typed,blocks,undo,redo,reloaded};
+    assert.ok(fork);const page=fork.page,source='拡張計算「demo.offline」「double」（7）を言う。';await page.locator('#uiLevel').selectOption('advanced');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await chooseView(page,'code');await page.locator('#codeEditor').click();await page.locator('#codeEditor').press('ControlOrMeta+A');await page.keyboard.insertText(source);await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await page.waitForTimeout(400);
+    const typed=await page.locator('#codeEditor').inputValue()===source;await chooseView(page,'blocks');const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();await field.fill('8');await field.press('Enter');await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const blocks=await page.evaluate(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));await page.locator('#undoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（7）'));const undo=true;await page.locator('#redoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const redo=true;await page.waitForTimeout(1800);await page.reload();await page.waitForFunction(()=>!!Akari.app);await page.locator('#recoveryModal').waitFor({state:'visible'});await page.locator('#recoveryRestore').click();await page.waitForFunction(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));const reloaded=true;await page.evaluate(install);return{typed,blocks,undo,redo,reloaded};
   });
   await check('EXTENSION-FAILED-IMPORT-PRESERVES-EDITOR',async()=>{
-    assert.ok(fork);await fork.page.locator('#editorModecode').click();const source=await fork.page.locator('#codeEditor').inputValue()+'\n「未保存」と言う。';await fork.page.locator('#codeEditor').fill(source);await fork.page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await fork.page.waitForTimeout(300);
+    assert.ok(fork);await chooseView(fork.page,'code');const source=await fork.page.locator('#codeEditor').inputValue()+'\n「未保存」と言う。';await fork.page.locator('#codeEditor').fill(source);await fork.page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await fork.page.waitForTimeout(300);
     const before=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});assert.equal(before.dirty,true);
     const serialized=await fork.page.evaluate(()=>({file:Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),hash:Akari.extensions.requirements().required[0].contentHash}));const malformed=path.join(directory,'unavailable-extension.akari.md');fs.writeFileSync(malformed,serialized.file.replace(serialized.hash,'0'.repeat(64)));await fork.page.locator('#fileInput').setInputFiles(malformed);await productQuestionAnswered(fork.page);await fork.page.waitForTimeout(300);const after=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});return{source:before.source===after.source,history:before.history===after.history,dirty:before.dirty===after.dirty};
   });
@@ -222,9 +234,9 @@ await withOrdinaryFileBrowser(async browser=>{
     try{
       await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForTimeout(500);
       const kept=await page.evaluate(()=>Akari.app.editorState.main.sourceText);const asked=messages.some(m=>m.includes('前の バージョン'));
-      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.1.0'));
+      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.2.0'));
       const recordedVersion=await page.evaluate(()=>Akari.app.project.extensions.required.find(x=>x.id==='demo.offline').version);
-      return{asked,namesVersions:messages.some(m=>m.includes('数の記憶')&&m.includes('1.0.0 → 1.1.0')),dismissedKeepsWork:kept===prepared.source,acceptedOpens:true,recordedVersion};
+      return{asked,namesVersions:messages.some(m=>m.includes('数の記憶')&&m.includes('1.0.0 → 1.2.0')),dismissedKeepsWork:kept===prepared.source,acceptedOpens:true,recordedVersion};
     }finally{page.off('dialog',onDialog);}
   });
   await evaluate('EXTENSION-ASYNC-PARALLEL-PAUSE-STOP',async()=>{
@@ -241,17 +253,17 @@ await withOrdinaryFileBrowser(async browser=>{
     async function run(source,additional=[]){const p=A.makeEmptyProject();p.projectData.variables=[{id:'counter',name:'回数',initialValue:0}];p.functions=[{id:'identity',ownerId:'stage',name:'現在',args:['値'],source:'値を答えとして返す。'}];p.scripts=[{id:'recurring-start',targetId:'sprite-1',event:'start',source},...additional];const c=A.compileProject(p);if(c.errors.length)throw Error(JSON.stringify(c.errors));const errors=[],logs=[],runtime=new A.RuntimeModel(p,{}),q=new A.EventScheduler(p,c,runtime,{say:(_,v)=>logs.push(v),runtimeError:(_,e)=>errors.push(e.message)});q.start();return{q,runtime,logs,errors};}
     const recurring=await run('【現在】（回数）が3より小さいあいだ、くり返す。\n  回数を1増やす。\n回数を言う。');await delay(100);recurring.q.stop();if(recurring.logs.join(',')!=='3'||recurring.runtime.projectVars.get('回数')!==3||recurring.errors.length)throw Error('Cooperative RepeatWhile did not reevaluate');
     const waiting=await run('【現在】（回数）が1以上になるまで待つ。\n「再開」を言う。',[{id:'parallel-update',targetId:'sprite-1',event:'start',source:'0.02秒待つ。\n回数を1にする。'}]);await delay(120);waiting.q.stop();if(waiting.logs.join(',')!=='再開'||waiting.errors.length)throw Error('Cooperative WaitUntil did not observe other event');
-    const motion=await run('【現在】（回数）が0以上のあいだ、自分は画面の右へ1秒に60歩の速さで動き続ける。',[{id:'motion-cancel',targetId:'sprite-1',event:'click',source:'ほかの実行をすべて止める。\n0.1秒待つ。\n回数を-1にする。\n0.1秒待つ。\n回数を0にする。'}]);
+    const motion=await run('【現在】（回数）が0以上のあいだ、自分は右へ1秒に60歩の速さで動き続ける。',[{id:'motion-cancel',targetId:'sprite-1',event:'click',source:'ほかの実行をすべて止める。\n0.1秒待つ。\n回数を-1にする。\n0.1秒待つ。\n回数を0にする。'}]);
     async function state(expected){const until=performance.now()+2000;while(performance.now()<until){if([...motion.q.continuous.values()].some(c=>c.state===expected))return;await delay(5);}throw Error('Missing continuous state '+expected);}
     await state('ACTIVE');motion.q.spawnForRuntime('sprite-1','click',{});await state('CANCELLED_UNTIL_FALSE');await state('INACTIVE');await state('ACTIVE');motion.q.stop();if(motion.errors.length)throw Error(motion.errors.join(','));
     // A continuous predicate may itself call an offline extension; Stop must
     // advance motion while its extension session is still alive.
-    const p2=A.makeEmptyProject();p2.scripts=[{id:'extension-motion',targetId:'sprite-1',event:'start',source:'拡張計算「demo.offline」「double」（1）が0以上のあいだ、自分は画面の右へ1秒に60歩の速さで動き続ける。'}];const c2=A.compileProject(p2);if(c2.errors.length)throw Error(JSON.stringify(c2.errors));const errors=[],q2=new A.EventScheduler(p2,c2,new A.RuntimeModel(p2,{}),{runtimeError:(_,e)=>errors.push(e.message)});q2.start();await delay(25);q2.stop();if(errors.length)throw Error(errors.join(','));
+    const p2=A.makeEmptyProject();p2.scripts=[{id:'extension-motion',targetId:'sprite-1',event:'start',source:'拡張計算「demo.offline」「double」（1）が0以上のあいだ、自分は右へ1秒に60歩の速さで動き続ける。'}];const c2=A.compileProject(p2);if(c2.errors.length)throw Error(JSON.stringify(c2.errors));const errors=[],q2=new A.EventScheduler(p2,c2,new A.RuntimeModel(p2,{}),{runtimeError:(_,e)=>errors.push(e.message)});q2.start();await delay(25);q2.stop();if(errors.length)throw Error(errors.join(','));
     return{overStandard,responsive,stopped:!second.running&&second.tasks.size===0,standardRejected};
   });
   await check('EXTENSION-EVENT-LANGUAGE',async()=>{
     await standard.page.evaluate(()=>{let rejected=false;try{Akari.parseExpression('拡張「できごとの値」',Akari.buildSymbols(Akari.makeEmptyProject()));}catch(_){rejected=true;}if(!rejected)throw Error('Standard editor accepted extension-only event sensor');});
-    assert.ok(fork);return fork.page.evaluate(async()=>{
+    assert.ok(fork);const observed=await fork.page.evaluate(async()=>{
       const A=Akari,canonical='拡張「できごとの値」',bare='拡張の値を言う。';
       function variableRead(ast){const value=ast?.body[0]?.value;if(value?.kind!=='VariableRead'||value.name!=='拡張')throw Error('Existing variable read was shadowed by extension sensor');}
       for(const owner of ['project','component']){
@@ -268,6 +280,7 @@ await withOrdinaryFileBrowser(async browser=>{
       const sensor=A.parseExpression(canonical,symbols),formatted=A.formatExpression(sensor);if(sensor.kind!=='SensorRead'||sensor.sensor!=='拡張の値'||formatted!==canonical||!A.astEquivalent(sensor,A.parseExpression(formatted,symbols)))throw Error('Canonical event sensor did not roundtrip');
       const p=A.makeEmptyProject();p.scripts=[{id:'event-source',targetId:'sprite-1',event:'start',source:'拡張「demo.offline」「remember」（9）。'},{id:'event-target',targetId:'sprite-1',event:'message',filter:{message:'拡張:demo.offline/changed'},source:canonical+'を言う。'}];const compiled=A.compileProject(p);if(compiled.errors.length)throw Error(JSON.stringify(compiled.errors));const file=A.serializeProject(p,A.makeDefaultAssetStore()),loaded=await A.parseProjectFile(file),logs=[],scheduler=new A.EventScheduler(loaded.project,A.compileProject(loaded.project),new A.RuntimeModel(loaded.project,{}),{say:(_,v)=>logs.push(v),runtimeError:(_,e)=>{throw e;}});scheduler.start();await new Promise(r=>setTimeout(r,80));scheduler.stop();return{value:logs[0],compiled:true,saved:file.includes(canonical),restored:loaded.project.scripts[1].filter.message==='拡張:demo.offline/changed'};
     });
+    return{...observed,eventLifetime:(await runtimeContracts()).eventLifetime};
   });
   await check('EXTENSION-OFFLINE-STANDALONE',async()=>{
     assert.ok(fork);const generated=await fork.page.evaluate(()=>{const p=Akari.makeEmptyProject();p.name='Independent extension player';p.scripts=[{id:'player-extension',targetId:'stage',event:'start',source:'拡張計算「demo.offline」「double」（7）を言う。'}];return Akari.generateStandaloneHtml(p,Akari.makeDefaultAssetStore());});player=path.join(directory,'player.html');fs.writeFileSync(player,generated);
@@ -316,7 +329,7 @@ await withOrdinaryFileBrowser(async browser=>{
   for(const active of [standard,fork].filter(Boolean)){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}
 }).catch(error=>{pageErrors.push(error.message);console.error(error.stack);});
 for(const id of extensionFoundationIds)if(!results.has(id))results.set(id,{id,status:'FAIL',error:'Required check not executed'});
-const artifactNames=['candidate.html','derived.html','player.html','peer.html','external-derived.html','external-player.html','meijin-derived.html'].filter(name=>fs.existsSync(path.join(directory,name)));
+const artifactNames=['candidate.html','derived.html','player.html','peer.html','external-derived.html','external-player.html','meijin-derived.html','context-derived.html','context-async-player.html'].filter(name=>fs.existsSync(path.join(directory,name)));
 const report={schema:'akari-extension-foundation-v1',status:[...results.values()].every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:inputs,
   provenance:{run:process.env.GITHUB_RUN_ID||'local',attempt:process.env.GITHUB_RUN_ATTEMPT||'1'},
   environment:{platform:process.platform,browser:browserEnvironment.version,playwright:require('playwright/package.json').version},

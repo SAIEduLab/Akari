@@ -104,9 +104,9 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
   const negative=[
     '点数を10に増やす','点数を10に減らす','1を点数に残高に足す','を点数に代入する','1をに代入する',
     '点数にを代入する','1に点数を代入する','3を点数を足す','3を点数に足すです',
-    '横100、横50の位置へ行く','縦50の位置へ行く','100、50の位置へ行く','横100、縦50、横20の位置へ行く',
-    '1秒後に横100、縦50の位置へ滑る','横100、1秒で縦50の位置へ滑る','横100、縦50の位置に1秒秒で滑る',
-    '横100、縦50の位置へ、、1秒で滑る','横100、縦50の位置へで滑る','1秒で横100、縦50の位置にに滑る',
+    '画面の左下のはしから、右へ100歩、左へ50歩のばしょへ行く','画面の左下のはしから、のばしょへ行く','画面の左下のはしから、100歩、50歩のばしょへ行く','画面の左下のはしから、右へ100歩、上へ50歩、右へ20歩のばしょへ行く',
+    '1秒後に、画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く','画面の左下のはしから、右へ100歩、1秒かけて、上へ50歩のばしょへ行く','1秒秒かけて、画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く',
+    '1秒かけて、、画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く','画面の左下のはしから、右へ100歩、上へ50歩のばしょへで行く','1秒かけて、画面の左下のはしから、右へ100歩、上へ50歩のばしょにに行く',
     '15右に回る','15秒右に回る','15度上に回る','0.2秒440Hzの音を鳴らし始める','0.2秒、440の音を鳴らし始める',
     '点数が10未満あいだ、次のことをくり返す\n  何もしない','点数が10と異なるまで待つ',
     '10より点数が小さいあいだ、次のことをくり返す\n  何もしない',
@@ -129,13 +129,14 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
   for (const [id,source] of inlineNegative) test('RELEASE-INLINE-NEG/'+id,()=>ok(!api.parseSyntax(source).ast,source));
   test('LANG-ORDER-003',()=>{
     for(const [source,canonical] of [
-      ['縦乱数（1、100）、横乱数（1、100）の位置へ行く','横乱数（1、100）、縦乱数（1、100）の位置へ行く'],
-      ['縦乱数（1、100）、横乱数（1、100）の位置へ乱数（0、1）秒で滑る','乱数（0、1）秒で横乱数（1、100）、縦乱数（1、100）の位置へ滑る'],
+      ['画面の左下のはしから、上へ1歩から100歩のどれか、右へ1歩から100歩のどれかのばしょへ行く','画面の左下のはしから、右へ1歩から100歩のどれか、上へ1歩から100歩のどれかのばしょへ行く'],
+      ['乱数（0、1）秒かけて、画面の左下のはしから、上へ乱数（1、100）歩、右へ乱数（1、100）歩のばしょへ行く','0秒から1秒のどれかかけて、画面の左下のはしから、右へ1歩から100歩のどれか、上へ1歩から100歩のどれかのばしょへ行く'],
+      ['乱数（0、1）秒かけて、いまのばしょから、下へ1歩から100歩のどれか、左へ1歩から100歩のどれか動く','0秒から1秒のどれかかけて、いまのばしょから、左へ1歩から100歩のどれか、下へ1歩から100歩のどれか動く'],
       ['乱数（1、9）を名前一覧の乱数（1、2）番目に挿入する','名前一覧の乱数（1、2）番目に乱数（1、9）を挿入する'],
       ['（乱数（1、100）より乱数（1、100）が小さい）の値を言う','（乱数（1、100）が乱数（1、100）より小さい）の値を言う'],
       ['乱数（1、2）秒、乱数（440、880）Hzの音を鳴らし始める','乱数（440、880）Hzの音を乱数（1、2）秒鳴らし始める'],
     ]) eq(exec(source),exec(canonical));
-    const state=exec('縦乱数（1、100）、横乱数（1、100）の位置へ行く');
+    const state=exec('画面の左下のはしから、上へ1歩から100歩のどれか、右へ1歩から100歩のどれかのばしょへ行く');
     eq(state.random.length,2);ok(state.actor.x!==state.actor.y,'seed distinguishes coordinates');
   });
   test('LANG-ORDER-004',()=>{
@@ -151,8 +152,8 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     eq(functionResult,exec('名前一覧の（（1）を渡して、【計算】で求めた答え）番目に（（2）を渡して、【計算】で求めた答え）を挿入する'));
     eq(functionResult.bindings.filter(b=>b[0]==='値').length,2);
     eq(functionResult.lists,[['名前一覧',[2,7,8]]]);
-    const sensorResult=exec('（縦位置より横位置が大きい）の値を言う');
-    eq(sensorResult,exec('（横位置が縦位置より大きい）の値を言う'));eq(sensorResult.out,[['あてはまる',0]]);
+    const sensorResult=exec('（たてのばしょよりよこのばしょが大きい）の値を言う');
+    eq(sensorResult,exec('（よこのばしょがたてのばしょより大きい）の値を言う'));eq(sensorResult.out,[['あてはまる',0]]);
     for(const sensor of ['「a」キーが押されている','「a」キーが押されていない','マウスが押されている','マウスが押されていない']) {
       for(const source of [`（（${sensor}）が条件の答え（あてはまる）と等しい）の値を言う`,`（条件の答え（あてはまる）が（${sensor}）と等しい）の値を言う`]) {
         const canonical=source.replace('と等しい','と同じ');
@@ -163,7 +164,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
   });
   test('LANG-ORDER-005',()=>{
     for(const [source,canonical,code] of [
-      ['縦数（「x」）、横1÷0の位置へ行く','横1÷0、縦数（「x」）の位置へ行く','R401'],
+      ['画面の左下のはしから、上へ（数（「x」））歩、右へ（1÷0）歩のばしょへ行く','画面の左下のはしから、右へ（1÷0）歩、上へ（数（「x」））歩のばしょへ行く','R401'],
       ['1÷0を名前一覧の0番目に挿入する','名前一覧の0番目に1÷0を挿入する','R404'],
       ['（数（「x」）より1÷0が大きい）の値を言う','（1÷0が数（「x」）より大きい）の値を言う','R401'],
     ]) {
@@ -186,8 +187,10 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     eq(exec('3を名前一覧の3番目に挿入する').lists,[['名前一覧',[7,8,3]]]);
     eq(exec('名前一覧から1番目を削除する').lists,[['名前一覧',[8]]]);
     eq(exec('名前一覧の中身を全部消す').lists,[['名前一覧',[]]]);
-    eq(exec('縦50、横100の位置に行く').actor,{x:100,y:50,direction:0});
-    eq(exec('15度左に回る').actor.direction,-15);
+    eq(exec('画面の左下のはしから、上へ50歩、右へ100歩のばしょに行く').actor,{x:100,y:50,direction:0});
+    eq(exec('いまのばしょから、上へ5歩、左へ20歩動く').actor,{x:300,y:205,direction:0});
+    eq(exec('いまのばしょから、右へ－10歩動く').actor,{x:310,y:200,direction:0});
+    eq(exec('15度左に回る').actor.direction,15);
     eq(exec('「値」を「入力欄」に入れる').input,'値');
     eq(exec('0.2秒、440Hzの音を鳴らし始める').calls,[['tone',440,0.2,false]]);
     eq(exec('0.2秒、440Hzの音を鳴らす').blocked.kind,'audio');
@@ -206,11 +209,12 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     for(const [source,code] of [['点数を余り（1、0）にする','R401'],['もし「123」に1が含まれていれば、点数を1にする','R411'],['もし［1、2］に［1］が含まれていれば、点数を1にする','R411']]) {
       const result=exec(source);eq(result.errors[0]?.[0],code);eq(result.vars,[['点数',5]]);
     }
-    // The regression actor is 180×180 at 横230・縦110 on a 640×400 stage.
+    // The regression actor is 180×180 with its centre at 横320・縦200 on a 640×400 stage.
     for(const [source,actor] of [
-      ['横位置を－20にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:0,y:110,direction:0}],
-      ['横位置を0にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:0,y:110,direction:0}],
-      ['横位置を100にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:100,y:110,direction:180}],
+      ['すがたを「丸」にかえる\n画面の左下のはしから、左へ20歩、上へ（たてのばしょ）歩のばしょへ行く\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:90,y:200,direction:0}],
+      ['すがたを「丸」にかえる\n画面の左下のはしから、右へ0歩、上へ（たてのばしょ）歩のばしょへ行く\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:90,y:200,direction:0}],
+      ['すがたを「丸」にかえる\n画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:100,y:200,direction:180}],
+      ['すがたを「丸」にかえる\n画面の左下のはしから、右へ320歩、上へ10歩のばしょへ行く\n方向を270度にする\n画面の端にふれていれば、はね返る',{x:320,y:90,direction:90}],
     ]) eq(exec(source).actor,actor);
   });
   // A subject before a statement names who does it (LANGUAGE.md 202), also for the bounce
@@ -226,11 +230,11 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       eq([n.kind,n.op,n.actorRef],[kind,op,{kind:'named',name:'マスコット'}]);eq(api.formatScript(r.ast).trim(),source.replace('は、','は'));}
     for(const source of ['名前一覧に「あ」を入れる。','マスコットは名前一覧に「あ」を入れる。']){const r=read(source);ok(!r.ast,source);
       ok(/さいごに入れるのか、何番目かと 入れかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
-    // 1.3.1: headings are written in easy words; the older words are still read.
+    // 1.3.1: headings are written in easy words; the older words are still read. 1.5.0 writes the keyboard's own key names (「スペース」キー).
     for(const [source,written] of [
       ['マスコットがクリックされたとき、\n  「a」と言う。','マスコットがおされたとき、'],
       ['マスコットがおされたとき、\n  「a」と言う。','マスコットがおされたとき、'],
-      ['「空白」キーを押すたびに、マスコットは、\n  「a」と言う。','「空白」キーをおすたびに、マスコットは、'],
+      ['「空白」キーを押すたびに、マスコットは、\n  「a」と言う。','「スペース」キーをおすたびに、マスコットは、'],
       ['キーが押されたとき、マスコットは、\n  「a」と言う。','キーがおされたとき、マスコットは、'],
       ['背景が変わったとき、マスコットは、\n  「a」と言う。','はいけいがかわったとき、マスコットは、'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).split('\n')[0],written);}
@@ -241,9 +245,12 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       ['10歩進み、右に90度回る。','前へ10歩進む。\n右に90度回る。'],['10歩進んで右に90度回る。','前へ10歩進む。\n右に90度回る。'],
       ['もし1が2より小さかったら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],['もし1が2未満なら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],
       ['もし1が2でないなら、\n  何もしない。','もし1が2と同じでなければ、\n  何もしない。'],['もし1が1か2なら、\n  何もしない。','もし1が1と同じか、1が2と同じなら、\n  何もしない。'],
-      ['マスコットをクリックしたら、\n  何もしない。','マスコットがおされたとき、\n  何もしない。'],['「空白」キーをおしたとき、マスコットは、\n  何もしない。','「空白」キーをおすたびに、マスコットは、\n  何もしない。'],
+      ['マスコットをクリックしたら、\n  何もしない。','マスコットがおされたとき、\n  何もしない。'],['「空白」キーをおしたとき、マスコットは、\n  何もしない。','「スペース」キーをおすたびに、マスコットは、\n  何もしない。'],
       ['「a」と「b」をつなげて言う。','「a」と「b」をつなげて言う。'],['つなぐ（「a」、「b」）を言う。','「a」と「b」をつなげて言う。'],['あまり（10、3）を言う。','10÷3のあまりを言う。'],
-      ['向きを90度にする。','画面の下を向く。'],['（1＋2）秒待つ。','（1＋2）秒待つ。'],
+      ['向きを90度にする。','画面の上を向く。'],['（1＋2）秒待つ。','（1＋2）秒待つ。'],
+      ['マスコットはいまのばしょから、右へ10歩動く。','マスコットは、いまのばしょから、右へ10歩動く。'],['マスコットを、いまのばしょから、右へ10歩動かす。','マスコットは、いまのばしょから、右へ10歩動く。'],
+      ['マスコットは、2秒かけて、いまのばしょから、右へ10歩動く。','マスコットは2秒かけて、いまのばしょから、右へ10歩動く。'],
+      ['マスコットは、画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。','マスコットは画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).trim(),written);}
     // A condition with もし missing, and 〜になったら, are not guessed.
     for(const source of ['1が2より小さかったら、\n  何もしない。','もし1が2になったら、\n  何もしない。']){const r=read(source);ok(!r.ast,source);}

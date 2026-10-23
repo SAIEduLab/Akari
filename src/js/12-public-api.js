@@ -95,6 +95,8 @@
     hintCandidates,
     searchHintCandidates,
     blockSearchCandidates,
+    blockPaletteSearchText,
+    searchReading,
     searchIntent,
     insertionContext,
     insertSource,

@@ -7,9 +7,10 @@ export const childLanguageUiIds = Object.freeze([
   'CHILD-UI-RESPONSIVE-WORDS','CHILD-UI-TOUCH-HELP',
 ]);
 
+// The block view's 「いまの作り方のヒント」 speaks in the plain register, one register per surface (LANGUAGE.md 1042, F-18; FCB-18).
 export const childInsertionConceptHints=Object.freeze({
-  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、ブロックを じゅん番に ならべるところです。",
-  "palette": "ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの見せ方」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
+  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしい ことだよ。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところだよ。",
+  "palette": "ブロックは なかまごとに 分かれて いるよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。"
 });
 
 function readable(rows,min=1) {
@@ -53,7 +54,8 @@ function panelReach(observation,method,basic=false) {
   }
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    assert.ok(text.includes('コードは コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
+    // The last two explanations of the guide (1.5.0 adds 画面・部品・作業台の 大きさ after 見た目のコピー).
+    assert.ok(text.includes('作業台の 大きさ')&&text.includes('決めた ことを 1つ もとに もどす')&&text.includes('入力を やめる'),'the last explanations are reached: '+text.slice(0,80));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);
@@ -114,7 +116,9 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   const action=rows['CHILD-UI-ACTION-HELP'];
   for(const key of ['keyboardHelp','generatedPlayerWords','projectSourcePreserved'])assert.equal(action[key],true);
   readable(action.help,8);panelReach(action.tailReach,'native-keyboard',true);
-  assert.equal(action.editReading,null);assert.match(action.editMeaning,/「なおす動き」で えらびます/);
+  assert.equal(action.editReading,null);
+  // The body selector is 「きっかけ」 (final call 19, F-23): one word per idea, never 「なおす動き」 or 「できごと」.
+  assert.match(action.editMeaning,/「きっかけ」で えらびます/);assert.doesNotMatch(action.editMeaning,/なおす動き|できごと/);
   assert.deepEqual(action.downloadTypes,['akari.md','html']);
   assert.match(action.saveFile,/\.akari\.md$/); assert.match(action.exportFile,/\.html$/);
   const copy=rows['CHILD-UI-COPY-SEMANTICS'];
@@ -137,10 +141,10 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.equal(typeof copyModes.before.dirty,'boolean');
   for(const step of copyModes.steps) {
     const host=step.mode==='blocks'?'componentActions':'properties';
-    assert.equal(step.actionsHost,host);assert.equal(step.helpHost,host);
-    for(const key of ['adjacent','sameActionsNode','sameHelpNode'])assert.equal(step[key],true);
-    assert.equal(step.helpCount,1);assert.equal(step.text,"見た目と せっていを コピーします。コードは コピーしません。");
-    assert.equal(step.ariaDescription,"見た目と せっていを コピーします。コードは コピーしません。");
+    assert.equal(step.actionsHost,host);assert.equal(step.sameActionsNode,true);
+    assert.equal(step.helpCount,0,'no separate copy line');
+    // The fixed mascot is a sprite, and F-23 calls a sprite a キャラクター (other parts are 部品).
+    assert.equal(step.ariaDescription,"見た目と せっていが 同じ キャラクターを もう1つ 作ります。本文は もちません。");
     assert.deepEqual(step.state,copyModes.before,'moving one explanation node leaves the actual project/history intact');
   }
   assert.deepEqual(copyModes.after,copyModes.before);
@@ -149,6 +153,19 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.match(data.variablePlaceholder,/0、0点、こんにちは/); assert.equal(data.variableValue,'あかり');
   assert.deepEqual(data.listValue,['本','かさ','ぼうし'],'ordered list matches the visible example');
   const procedure=rows['CHILD-UI-PROCEDURE-EXAMPLES']; readable(procedure.concept,4);panelReach(procedure.tailReach,'native-keyboard');
+  const desktop=procedure.desktopReading;panelMeasurement(desktop);
+  assert.deepEqual(desktop.viewport,{width:1180,height:757});
+  assert.equal(desktop.paragraphInk?.length,desktop.paragraphs);
+  for(const row of desktop.paragraphInk){
+    assert.ok(typeof row.text==='string'&&row.text.trim());assert.ok(row.ink.width>0&&row.ink.height>0);
+    if(desktop.maxScroll===0){const r=row.ink,c=desktop.clip;
+      assert.ok(r.x>=c.x-1&&r.y>=c.y-1&&r.x+r.width<=c.x+c.width+1&&r.y+r.height<=c.y+c.height+1,'all desktop explanations remain readable');}
+  }
+  assert.deepEqual(procedure.tailReach.initial.viewport,desktop.maxScroll===0?{width:390,height:520}:desktop.viewport);
+  assert.ok(procedure.tailReach.initial.maxScroll>0,'procedure keyboard proof needs actual inner overflow');
+  assert.ok(procedure.tailReach.afterArrow.scrollTop<procedure.tailReach.afterArrow.maxScroll-1,'End has remaining scroll distance');
+  assert.deepEqual(procedure.tailReach.stateBefore,procedure.readingStateBefore);
+  assert.deepEqual(procedure.readingStateAfter,procedure.readingStateBefore,'viewport preparation/restoration preserves editing state');
   for(const key of ['advancedOnly','concreteValueExample','existingArgumentPlaceholder'])assert.equal(procedure[key],true);
   assert.deepEqual(procedure.definitionArgsPreserved,['点数','名前']); assert.equal(procedure.registeredSource,'名前を言う。');
   const block=rows['CHILD-UI-BLOCK-WORDS']; readable(block.help,9);
@@ -170,11 +187,15 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   const responsive=rows['CHILD-UI-RESPONSIVE-WORDS'];
   for(const key of ['ordinaryScroll','keyboard','helpPreservesEditing'])assert.equal(responsive[key],true);
   assert.deepEqual(responsive.observations?.map(o=>[o.viewport.width,o.viewport.height,o.mode]),[
-    [1180,757,'code'],[1180,757,'blocks'],[1188,848,'code'],[1188,848,'blocks'],[390,844,'code'],[390,844,'blocks'],
+    [1180,757,'code'],[1180,757,'blocks'],[1188,848,'code'],[1188,848,'blocks'],[1024,768,'code'],[1024,768,'blocks'],[768,1024,'code'],[768,1024,'blocks'],[390,844,'code'],[390,844,'blocks'],
   ]);
   for(const observation of responsive.observations) {
-    assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn','stopBtn']);
+    assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn']);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
+    // ■ 止める on the run screen: inside the viewport, the real hit target, and ▶ 動かす is not shown there.
+    bounds(observation.runScreen?.stopBtn,observation.viewport);assert.equal(observation.runScreen.stopHit,true,'■ 止める is the hit target at its centre');assert.equal(observation.runScreen.runShown,false,'the run screen shows no ▶ 動かす');
+    // ■ 止める comes where ▶ 動かす was, also where the toolbar wraps (D1-03).
+    const {runAt,stopAt}=observation.runScreen;assert.ok(runAt&&stopAt&&Math.abs(stopAt.x-runAt.x)<=2&&Math.abs(stopAt.y-runAt.y)<=2,'■ 止める in ▶\'s place at '+observation.viewport.width+'x'+observation.viewport.height+' '+observation.mode+': '+JSON.stringify({runAt,stopAt}));
     readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
     const text=observation.reading.map(r=>r.text).join(' ');
     for(const reading of ['ほぞん','へんすう','ほんぶん'])assert.ok(text.includes(reading));
@@ -184,7 +205,10 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   for(const key of ['hasTouch','actualTouchscreenTap','editingPreserved'])assert.equal(touch[key],true);
   assert.deepEqual(touch.viewport,{width:390,height:844}); bounds(touch.touchTarget,touch.viewport,24);readable(touch.help,8);
   panelReach(touch.tailReach,'native-touch',true);
-  assert.ok(Array.isArray(report.artifacts)&&report.artifacts.length>=9,'visual artifacts include paint and both ends of the touch explanation');
+  // Every screenshot the run takes, by name: paint, both ends of the touch explanation and one per responsive viewport.
+  assert.ok(Array.isArray(report.artifacts),'visual artifacts are listed');
+  assert.deepEqual(report.artifacts.map(a=>String(a.path).split('/').pop()),['child-data-examples','child-procedure-examples','child-paint-transparent','child-materials',
+    ...[1180,1188,1024,768,390].map(w=>'child-words-'+w),'child-touch-help-top','child-touch-help-tail'].map(n=>n+'.png'),'visual artifacts include paint, every responsive viewport and both ends of the touch explanation');
   assert.equal(new Set(report.artifacts.map(a=>a.path)).size,report.artifacts.length,'each visual artifact has its own file');
   for(const artifact of report.artifacts){assert.ok(typeof artifact.path==='string'&&artifact.path.endsWith('.png'));assert.match(artifact.sha256,/^[a-f0-9]{64}$/);}
   if(environment==='linux')assert.ok(!report.limitations.some(s=>s.includes('Linuxでは未実施')),'Linux result cannot claim unexecuted Linux');
@@ -198,13 +222,19 @@ export function verifyChildLanguageUiNegatives(report,inputs,environment) {
     ['copy-code-changed',r=>r.results[1].evidence.scriptsAfter.push({targetId:'sprite-copy',event:'start',source:'1を言う。'})],
     ['missing-copy-settings',r=>{r.results[1].evidence.copy={};r.results[1].evidence.original={};}],
     ['missing-copy-mode-observation',r=>delete r.results[1].evidence.copyHelpModes],
-    ['copy-help-old-mode-host',r=>r.results[1].evidence.copyHelpModes.steps[1].helpHost='properties'],
-    ['copy-help-not-adjacent',r=>r.results[1].evidence.copyHelpModes.steps[1].adjacent=false],
+    ['copy-actions-old-mode-host',r=>r.results[1].evidence.copyHelpModes.steps[1].actionsHost='properties'],
+    ['copy-help-line-shown',r=>r.results[1].evidence.copyHelpModes.steps[1].helpCount=1],
     ['copy-mode-history-changed',r=>r.results[1].evidence.copyHelpModes.steps[1].state.history++],
-    ['copy-help-node-recreated',r=>r.results[1].evidence.copyHelpModes.steps[1].sameHelpNode=false],
+    ['copy-actions-node-recreated',r=>r.results[1].evidence.copyHelpModes.steps[1].sameActionsNode=false],
     ['copy-help-aria-changed',r=>r.results[1].evidence.copyHelpModes.steps[1].ariaDescription='コードもコピーします'],
     ['wrong-data-value',r=>r.results[2].evidence.variableValue=10],
     ['reordered-list',r=>r.results[2].evidence.listValue.reverse()],
+    ['missing-desktop-reading',r=>delete r.results[3].evidence.desktopReading],
+    ['unreadable-desktop-ink',r=>r.results[3].evidence.desktopReading.paragraphInk[0].ink.width=0],
+    ['wrong-procedure-reading-viewport',r=>{const o=r.results[3].evidence.tailReach;for(const key of ['initial','afterArrow','bottom','beforeHome'])o[key].viewport.width+=10;}],
+    ['procedure-without-inner-overflow',r=>{const o=r.results[3].evidence.tailReach;for(const key of ['initial','afterArrow','bottom','beforeHome'])Object.assign(o[key],{scrollTop:0,maxScroll:0,scrollHeight:o[key].clientHeight});}],
+    ['missing-procedure-end-completion',r=>{const o=r.results[3].evidence.tailReach;for(const e of o.scrollEvents.slice(o.markers.end))if(e.type==='scrollend')e.type='scroll';}],
+    ['reading-resize-changes-state',r=>r.results[3].evidence.readingStateAfter.history++],
     ['operator-loses-value',r=>r.results[4].evidence.newValues[0]='0'],
     ['wrong-truth-example',r=>r.results[4].evidence.truthExample='条件の「はい・いいえ」'],
     ['missing-insertion-concepts',r=>delete r.results[4].evidence.insertionConceptHints],

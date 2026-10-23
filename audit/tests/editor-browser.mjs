@@ -8,6 +8,8 @@ import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
+import {pressStop,pressAfterDoublePress} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
 const dir=path.dirname(output);fs.mkdirSync(dir,{recursive:true});
@@ -15,7 +17,9 @@ const require=createRequire(import.meta.url);
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
-const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f4',autosaveFallback='akari.autosave.f4';
+// The storage names and the data marks carry the saved-file format number of the release record (features.json).
+const projectFormat=JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT.projectFormatVersion;
+const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f'+projectFormat,autosaveFallback='akari.autosave.f'+projectFormat;
 const regressionProject=makeRegressionProject(loadApi(fs.readFileSync(product,'utf8')));
 regressionProject.scripts=[{targetId:'stage',event:'start',source:'何もしない。'}];
 regressionProject.actions=[];regressionProject.functions=[];
@@ -28,7 +32,7 @@ async function reveal(l){
   return l;
 }
 const click=async(p,id)=>(await reveal(p.locator('#'+id))).click();
-const mode=(p,m)=>click(p,'editorMode'+m);
+const mode=(p,m)=>chooseView(p,m,{reveal});
 const state=p=>p.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,redo:s.redo,dirty:s.dirty,project:JSON.stringify(Akari.app.project),hasDraft:s.hasDraft,draft:s.callableDraft};});
 const fill=async(p,s)=>{await openBodyForTest(p);if(await p.locator('body').getAttribute('data-editor-mode')!=='code')await mode(p,'code');const history=(await state(p)).history;await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(s);})();await p.waitForFunction(({s,history})=>Akari.app.editorState.main.sourceText===s&&Akari.app.editorState.history>history,{s,history});};
 const number=p=>p.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();
@@ -51,10 +55,11 @@ await withBrowser(browser,async b=>{
     const changed=source.replace('点数を3','点数を7');assert.equal((await state(p)).source,changed);assert.equal((await state(p)).history,initial.history+1);
     assert.ok(await number(p).evaluate(t=>document.activeElement===t));
     await click(p,'undoBtn');assert.equal((await state(p)).source,source);await click(p,'redoBtn');assert.equal((await state(p)).source,changed);
-    await mode(p,'code');await fill(p,'横3、縦3の位置へ3秒かけて動く。');
-    const at='横'.length;await p.locator('#codeEditor').evaluate((t,n)=>t.setSelectionRange(n,n+1),at);await mode(p,'blocks');
+    const glide='3秒かけて、画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。';
+    await mode(p,'code');await fill(p,glide);
+    const at=glide.indexOf('右へ3')+'右へ'.length;await p.locator('#codeEditor').evaluate((t,n)=>t.setSelectionRange(n,n+1),at);await mode(p,'blocks');
     const selected=await p.evaluate(()=>{const s=Akari.app.editorState.main;return s.nodeMap.get(s.blockSelection).path;});
-    assert.deepEqual(selected,['body',0,'args',1,'value']);
+    assert.deepEqual(selected,['body',0,'x','value']);
     const nativeHistory=[];
     for(const editorMode of ['code','blocks']){
       await mode(p,editorMode);
@@ -175,21 +180,23 @@ await withBrowser(browser,async b=>{
     await fill(p,'もし条件（条件の答え（あてはまる））が成り立つなら、1秒待つ。\nもし条件（条件の答え（あてはまる））が成り立つなら、点数に（1÷0）を足す。');await mode(p,'blocks');
     await click(p,'runBtn');await p.waitForFunction(()=>!document.querySelector('#pauseBtn').disabled);await click(p,'pauseBtn');assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'PAUSED');
     await click(p,'stepBtn');assert.ok(await p.locator('#blockEditor .blockui-current').count());
-    await mode(p,'code');await mode(p,'blocks');assert.ok(await p.locator('#blockEditor .blockui-current').count());
-    await click(p,'continueBtn');await p.locator('#failureModal.show').waitFor();await click(p,'failureClose');
+    // On the run screen the view is switched in 本文と動きのようす (the toolbar shows neither the level nor the toggle).
+    await click(p,'runtimeInspectBtn');await mode(p,'code');await mode(p,'blocks');assert.ok(await p.locator('#blockEditor .blockui-current').count());await click(p,'runtimeInspectorClose');
+    // ▶ つづける is pressed after the 0.5 s in which a second press of the ⏸／▶ つづける place does nothing.
+    await pressAfterDoublePress(await reveal(p.locator('#continueBtn')));await p.locator('#failureModal.show').waitFor();await click(p,'failureClose');
     const highlighted=await p.locator('#blockEditor .blockui-current').getAttribute('data-schema-id');assert.equal(highlighted,'BinaryExpression:DIV');
-    assert.match(await p.locator('#failureBody').textContent(),/R/);await click(p,'stopBtn');
+    assert.match(await p.locator('#failureBody').textContent(),/R/);await pressStop(await reveal(p.locator('#stopBtn')));
     return{sameLineBody:true,errorRole:highlighted,pausedModeSwitch:true};
   });
   await run('RELEASE-GUI/save-reload-generated-offline',async p=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','editor-gui-saved.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F4-DATA-BEGIN'));
+    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F'+projectFormat+'-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
-    try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await player.locator('#playerStop').click();assert.equal(await player.locator('#playerStop').isDisabled(),true);}finally{await c.close();}
+    try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await pressStop(player.locator('#playerStop'));assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);}finally{await c.close();}
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
     return{sourceExact:true,offline:true,saveSha256:sha(saved),generatedSha256:sha(fs.readFileSync(generated))};
   });
@@ -198,7 +205,7 @@ await withBrowser(browser,async b=>{
     const set=async(id,text)=>{await p.locator('#'+id).fill(text);await p.waitForTimeout(350);};
     await set('callableName','仮計算');await set('callableArgs','値');await set('callableCode','もし値が0より大きければ、値を答えとして返す。\nそうでなければ、未知名を答えとして返す。 ※ 下書き');
     const initial=await state(p);assert.equal(JSON.parse(initial.project).functions.length,0);assert.equal(initial.hasDraft,true);
-    await click(p,'callableModeblocks');await click(p,'callableModecode');assert.deepEqual(await state(p),initial);
+    await chooseView(p,'blocks',{prefix:'callable',reveal});await chooseView(p,'code',{prefix:'callable',reveal});assert.deepEqual(await state(p),initial);
     await p.waitForFunction(text=>document.querySelector('#autosaveState').textContent.includes(text),autosaved);await p.reload();await p.locator('#recoveryModal.show').waitFor();await click(p,'recoveryRestore');
     const recovered=await state(p);assert.equal(JSON.parse(recovered.project).functions.length,0);assert.equal(recovered.draft.source,initial.draft.source);
     await p.locator('#procModal.show').waitFor();await click(p,'callableSave');assert.equal(JSON.parse((await state(p)).project).functions[0].source,initial.draft.source);
@@ -206,16 +213,35 @@ await withBrowser(browser,async b=>{
     await p.keyboard.press('Control+y');assert.equal(JSON.parse((await state(p)).project).functions.length,1);
     const definitions=[];
     for(const type of ['action','function']){
-      await click(p,type==='action'?'callableNewAction':'callableNewFunction');await click(p,'callableModecode');
+      await click(p,type==='action'?'callableNewAction':'callableNewFunction');await chooseView(p,'code',{prefix:'callable',reveal});
       await set('callableName',type==='action'?'戻る手順':'戻る計算');
       await set('callableCode',type==='action'?'「元」と言う。':'1を答えとして返す。');
+      if(type==='function')await p.evaluate(()=>{
+        const schedule=window.setTimeout;
+        // Exercise a queued history write arriving after the next definition
+        // was selected. Preserve native timeout cancellation and other timers.
+        window.__delayedCallableHistory={scheduled:0,fired:0,enabled:true};
+        window.setTimeout=(fn,delay,...args)=>{
+          const probe=window.__delayedCallableHistory;
+          if(probe.enabled&&typeof fn==='function'&&String(fn).includes('pushHistoryNow(queued)')){
+            probe.scheduled++;
+            return schedule(()=>{probe.fired++;fn(...args);},1000);
+          }
+          return schedule(fn,delay,...args);
+        };
+      });
       await click(p,'callableSave');definitions.push({type,key:await p.locator('#callableSelect').inputValue()});
+      if(type==='function')await p.evaluate(()=>{window.__delayedCallableHistory.enabled=false;});
     }
     const callableHistory=[];
     for(const editorMode of ['code','blocks'])for(const definition of definitions){
       const other=definitions.find(d=>d!==definition);
       await p.locator('#callableSelect').selectOption(other.key);await p.locator('#callableSelect').selectOption(definition.key);
-      await click(p,'callableMode'+editorMode);
+      await chooseView(p,editorMode,{prefix:'callable',reveal});
+      if(editorMode==='code'&&definition.type==='action'){
+        assert.ok(await p.evaluate(()=>window.__delayedCallableHistory.scheduled>0),'a real queued history write was delayed');
+        await p.waitForTimeout(1100);
+      }
       const beforeEdit=await state(p),original=beforeEdit.draft.source;
       const changed=definition.type==='action'?'「新 '+editorMode+'」と言う。':(editorMode==='code'?'2':'3')+'を答えとして返す。';
       if(editorMode==='code')await set('callableCode',changed);

@@ -1,6 +1,7 @@
 // Explicit regression preconditions, independent of the onboarding starter project.
 // Fresh data on every call. Current producer/format metadata comes from the public factory;
 // all fixture data, geometry, components, assets, events and program effects stay explicit.
+// Places are part centres from the bottom-left of the 640×400 screen (the 1.4.0 screen places).
 // Self-contained: Node can require this function; browser tests can inject its toString().
 function makeAkariRegressionProject(api) {
   const project = api.makeDefaultProject();
@@ -46,8 +47,8 @@ function makeAkariRegressionProject(api) {
         "id": "button-1",
         "type": "button",
         "name": "ボタン1",
-        "x": 28,
-        "y": 28,
+        "x": 88,
+        "y": 355,
         "w": 120,
         "h": 34,
         "fg": "#111111",
@@ -66,8 +67,8 @@ function makeAkariRegressionProject(api) {
         "id": "sprite-1",
         "type": "sprite",
         "name": "マスコット",
-        "x": 230,
-        "y": 110,
+        "x": 320,
+        "y": 200,
         "w": 180,
         "h": 180,
         "fg": "#f5a000",
@@ -128,7 +129,7 @@ function makeAkariRegressionProject(api) {
       {
         "targetId": "sprite-1",
         "event": "message",
-        "source": "もし 受け取った知らせが「スタート」と同じなら、次のことをする。\n  4回くり返す。\n    20歩動く。\n    端に触れていれば跳ね返る。"
+        "source": "もし 受け取った知らせが「スタート」と同じなら、次のことをする。\n  4回くり返す。\n    20歩動く。\n    画面の端に触れていれば跳ね返る。"
       }
     ],
     "actions": [],

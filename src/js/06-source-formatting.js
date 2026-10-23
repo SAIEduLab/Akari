@@ -11,19 +11,55 @@
   }
   function formatHoleSource(n) {
     if (!expressionDraftFormatDepth)
-      throw new AkariError('P210', 'あいている ところが あります。中身や することを えらんでください');
+      throw new AkariError('P210', 'あいて いる ところが あります。中身や する ことを えらんで ください');
     let label = typeof n.label === 'string' ? n.label.trim() : '';
-    if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいている ところの 名前に 〔 〕や 行がえは 使えません');
-    if (!label) label = ({expression:'中身を入れる',statement:'することをえらぶ',target:'かえるものをえらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
+    if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいて いる ところの 名前に 〔 〕や 行がえは 使えません');
+    if (!label) label = ({expression:'中身を入れる',statement:'する ことを えらぶ',target:'かえる ものを えらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
     else if (!/(?:選ぶ|えらぶ|入れる|指定する|書く)$/.test(label)) label += label === 'きまり' ? 'をえらぶ' : 'を入れる';
     return `〔${label}〕`;
   }
+  // The work's names while a script is formatted (options.symbols, or the symbols it was read with); null when unknown.
+  let formatSymbols = null, formatLocalNames = new Set();
+  // A name the formatted text can use bare: data of the work, or a name made in this text (この中だけ, 今見ているもの).
+  function formatKnownName(name) {
+    return !!formatSymbols?.allDataNames?.has?.(name) || formatLocalNames.has(name);
+  }
+  function localNamesOf(ast) {
+    const names = new Set(), visit = node => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(visit); return; }
+      if (node.kind === 'ForEach' && node.binder) names.add(node.binder);
+      if (['LocalVariableDeclaration', 'LocalListDeclaration'].includes(node.kind) && node.name) names.add(node.name);
+      for (const [key, value] of Object.entries(node)) if (key !== 'sourceSpan' && value && typeof value === 'object') visit(value);
+    };
+    visit(ast);
+    return names;
+  }
+  // A list's length is written 持ち物の数 (F-34), but only where that reads back: the name is a list of the work and no
+  // data is called 持ち物の数 (then 持ち物の長さ keeps the meaning). Without the work's names it is 〜の長さ.
+  function listCountWord(list) {
+    const s = formatSymbols;
+    if (!s || list?.kind !== 'VariableRead') return 'の長さ';
+    const lists = [s.projectLists, ...[...(s.individualByTargetId?.values?.() || [])].map(d => d.lists)];
+    const isList = lists.some(m => m?.has?.(list.name)), taken = s.allDataNames?.has?.(list.name + 'の数');
+    return isList && !taken ? 'の数' : 'の長さ';
+  }
+  // The character's colour is written 色を「赤」にする (F-25) when the work is known to have no data named 色; otherwise
+  // 表示色 keeps the meaning (色を… would change that data). For 05's formatCommand.
+  function colorCommandWord() {
+    return formatSymbols && !formatSymbols.allDataNames?.has?.('色') && !formatLocalNames.has('色') ? '色' : '表示色';
+  }
   function formatExpression(n, parent = 0, options = {}) {
     if (parent && typeof parent === 'object') { options = parent; parent = 0; }
-    return withExpressionFormatOptions(options, () => {
-      validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
-      return formatExpressionCore(n, parent);
-    });
+    // options.symbols: the work's names, as for formatScript (持ち物の数 and the other F-34 forms).
+    const outerSymbols = formatSymbols;
+    if (options.symbols) formatSymbols = options.symbols;
+    try {
+      return withExpressionFormatOptions(options, () => {
+        validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
+        return formatExpressionCore(n, parent);
+      });
+    } finally { formatSymbols = outerSymbols; }
   }
   // The value before a unit (秒・歩・回・度・％・番目・文字目): a number as it is, a name in 【 】, another expression in （ ）.
   function quantityValueSource(value, bareRange = false) {
@@ -72,7 +108,7 @@
         // 「たくどん」のよこのばしょ: a part's state word or data name follows without brackets, as other commands name the part in 「」.
         const state = n.value.kind === 'SensorRead' && n.value.arg === undefined;
         const plain = n.actorRef.kind === 'self' ? state : state || n.value.kind === 'VariableRead';
-        const owner = n.actorRef.kind === 'self' ? '自分' : '「' + n.actorRef.name + '」';
+        const owner = n.actorRef.kind === 'self' ? '自分' : formatExpressionCore(exprNode('StringLiteral',{value:n.actorRef.name}));
         s = plain ? `${owner}の${formatExpressionCore(n.value)}` : `${owner}の（${formatExpressionCore(n.value)}）`; p=PREC.POST; break;
       }
       case 'ListLiteral':
@@ -91,7 +127,7 @@
           s = `${formatExpressionCore(n.args[0], PREC.CMP + 1)}に${formatExpressionCore(n.args[1], PREC.CMP + 1)}が入っている`;
         else if (n.name === 'INDEX_OF')
           s = `${formatExpressionCore(n.args[0], PREC.POST)}の中で${formatExpressionCore(n.args[1], PREC.POST)}がはじめて出てくる番号`;
-        else if (n.name === 'LENGTH') s = `${formatExpressionCore(n.args[0], PREC.POST)}の長さ`;
+        else if (n.name === 'LENGTH') s = `${formatExpressionCore(n.args[0], PREC.POST)}${listCountWord(n.args[0])}`;
         else if (n.name === 'STRING_LENGTH')
           s = `${formatExpressionCore(n.args[0], PREC.POST)}の文字数`;
         else if (n.name === 'STRING_CHAR')
@@ -120,10 +156,10 @@
         else if (n.sensor === 'DISTANCE_TO')
           s = `${formatExpressionCore(n.arg, PREC.POST)}までのきょり`;
         else if (n.sensor === 'KEY_DOWN')
-          s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
+          s = `${n.arg?.kind === 'StringLiteral' ? formatExpressionCore(exprNode('StringLiteral', { value: keySurface(n.arg.value) })) : formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面のはし' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && isEdgeTarget(n.arg.value) ? EDGE_TARGETS[n.arg.value] : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }
@@ -153,7 +189,8 @@
           EQ: 'と同じ',
           NEQ: 'とちがう',
         }[n.op];
-        s = `${formatExpressionCore(n.left, PREC.CMP + 1)}が${formatExpressionCore(n.right, PREC.CMP + 1)}${suf}`;
+        const key = side => side?.kind === 'StringLiteral' && [n.left, n.right].some(x => x?.kind === 'SensorRead' && x.sensor === '押されたキー') ? exprNode('StringLiteral', { value: keySurface(side.value) }) : side;
+        s = `${formatExpressionCore(key(n.left), PREC.CMP + 1)}が${formatExpressionCore(key(n.right), PREC.CMP + 1)}${suf}`;
         p = PREC.CMP;
         break;
       }
@@ -177,6 +214,12 @@
     return BUILTIN_SURFACES[n] || n;
   }
   function formatScript(ast, options = {}) {
+    const outerSymbols = formatSymbols, outerLocals = formatLocalNames;
+    formatSymbols = options.symbols || FORMAT_SYMBOLS.get(ast) || outerSymbols;
+    formatLocalNames = new Set([...outerLocals, ...localNamesOf(ast), ...(options.localNames || [])]);
+    try { return formatScriptCore(ast, options); } finally { formatSymbols = outerSymbols; formatLocalNames = outerLocals; }
+  }
+  function formatScriptCore(ast, options) {
     return withExpressionFormatOptions(options,()=>{
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
@@ -193,18 +236,19 @@
         case 'RepeatCount':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,actorRef);continue;
         case 'RepeatWhile':case 'RepeatUntil':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,actorRef);continue;
         case 'Forever':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,actorRef);continue;
-        case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,actorRef);continue;
+        case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】とよぶ`);emit(n.body,depth+1,actorRef);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
       // ねこは、点数が10になるまで待つ: a wait that names its subject takes 、 after it, so the subject that waits and
       // the subject inside the condition read apart (as in ねこは、3回くり返す and the other headings with a condition).
-      line(depth,actor+(actor&&n.kind==='WaitUntil'?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
+      // たくどんは、いまのばしょから、…: the comma keeps a long run of kana apart (B-06).
+      line(depth,actor+(actor&&(n.kind==='WaitUntil'||text.startsWith('いまのばしょから'))?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);
     for(const rule of ast.rules||[])line(ast.heading?1:0,rule.kind==='Hole'?formatHoleSource(rule):sentenceFormFor(rule).render(rule),rule.inlineComment||'');
     for(const unit of ast.units||[])out.push(formatScript(unit,options));
-    const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','この 動きの まとまりが 長すぎます。ブロックや 文字を へらしてください',1,1);return source;
+    const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','この 動きの まとまりが 長すぎます。ブロックや 文字を へらして ください',1,1);return source;
     });
   }
   function formatTarget(t) {

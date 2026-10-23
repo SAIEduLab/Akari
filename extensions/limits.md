@@ -69,6 +69,7 @@ These constraints are not profile resources. Fixed software bounds are listed ho
 | Callable baseline record | `sourceEach × 4 + 30,000` UTF-16 code units | Encoded source and declaration metadata; workspace-history validation inherits the selected source policy |
 | IDs | lowercase leading letter, up to 64 ASCII characters | Identifier grammar and references; `safeId`, unique-ID registries |
 | Stage geometry | width 200–1,200; height 150–800 | Existing editor/renderer geometry contract; design/executable validation and stage settings |
+| Positions and directions | any finite number of steps; a part's position is its centre measured from the stage's bottom-left corner (right and up positive); direction 0 ≤ d < 360, counterclockwise from right | Frame contract in LANGUAGE.md; positions are not clamped to the stage, so this is not a profile resource |
 | Component geometry | width/height 8–1,200 | Existing component rendering/resize contract; validation, transform and resize controls |
 | Font size | 8–200 | Existing text-rendering contract; component validation and editing |
 | Scale | 1–1,000 percent | Existing transform contract; runtime command, static diagnostics, validation and editor controls |
@@ -76,6 +77,7 @@ These constraints are not profile resources. Fixed software bounds are listed ho
 | Pen width | positive, up to 200 | Existing drawing contract; runtime pen command |
 | Synthesized tone | 30–5,000 Hz; 0.01–60 seconds | Existing command domain; runtime tone command |
 | Media decode deadline | 10 seconds | Implementation timeout and rollback; asset decode wrapper and runtime preparation |
+| Logical frame | 1/60 second | Language timing unit for continuous rules, loop pacing and touch checks; independent of display refresh |
 | Scheduling slice | 200 turns and 8 ms | Cooperative execution/stop guarantee; `EventScheduler.loop` |
 | Internal stack unwinding | 1,000 steps per slice | Scheduling implementation guard; enlarged work yields before resuming rather than becoming a project resource |
 | Continuous motion trace | newest 1,000 records | Internal observation retention; scheduler continuous-motion bookkeeping |

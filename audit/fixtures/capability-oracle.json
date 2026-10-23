@@ -88,14 +88,19 @@
       "op": "MOVE"
     },
     {
+      "id": "MotionCommand:MOVE_BY",
+      "kind": "MotionCommand",
+      "op": "MOVE_BY"
+    },
+    {
       "id": "MotionCommand:GOTO",
       "kind": "MotionCommand",
       "op": "GOTO"
     },
     {
-      "id": "MotionCommand:GLIDE",
+      "id": "MotionCommand:GOTO_PART",
       "kind": "MotionCommand",
-      "op": "GLIDE"
+      "op": "GOTO_PART"
     },
     {
       "id": "MotionCommand:TURN_RIGHT",
@@ -111,16 +116,6 @@
       "id": "MotionCommand:SET_DIRECTION",
       "kind": "MotionCommand",
       "op": "SET_DIRECTION"
-    },
-    {
-      "id": "MotionCommand:SET_X",
-      "kind": "MotionCommand",
-      "op": "SET_X"
-    },
-    {
-      "id": "MotionCommand:SET_Y",
-      "kind": "MotionCommand",
-      "op": "SET_Y"
     },
     {
       "id": "MotionCommand:POINT_TO",
@@ -318,6 +313,11 @@
       "op": "OTHERS"
     },
     {
+      "id": "StopCommand:OWN_OTHERS",
+      "kind": "StopCommand",
+      "op": "OWN_OTHERS"
+    },
+    {
       "id": "StopCommand:ALL",
       "kind": "StopCommand",
       "op": "ALL"
@@ -390,8 +390,12 @@
     "EventCount:action",
     "EventCount:click",
     "ContinuousRule",
-    "MotionCommand:MOVE_DIRECTION",
-    "MotionCommand:GLIDE_DIRECTION",
+    "MotionCommand:GOTO",
+    "MotionCommand:MOVE_BY",
+    "MotionCommand:MOVE",
+    "MotionCommand:GOTO_PART",
+    "MotionCommand:TURN_RIGHT",
+    "MotionCommand:TURN_LEFT",
     "WaitBroadcastGroup",
     "TargetReference",
     "CommentLine",
@@ -425,15 +429,9 @@
     "LocalListDeclaration",
     "StopCommand:THIS",
     "StopCommand:OTHERS",
+    "StopCommand:OWN_OTHERS",
     "StopCommand:ALL",
-    "MotionCommand:MOVE",
-    "MotionCommand:GOTO",
-    "MotionCommand:GLIDE",
     "MotionCommand:SET_DIRECTION",
-    "MotionCommand:TURN_RIGHT",
-    "MotionCommand:TURN_LEFT",
-    "MotionCommand:SET_X",
-    "MotionCommand:SET_Y",
     "MotionCommand:POINT_TO",
     "MotionCommand:BOUNCE",
     "LooksCommand:FRONT",
@@ -868,10 +866,10 @@
     },
     {
       "id": "command:MotionCommand:MOVE",
-      "capability": "10歩動く",
+      "capability": "前へ10歩進む（「1秒かけて、」で時間をかけて進む）",
       "ast": "MotionCommand op=MOVE",
       "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:MOVE`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
+      "gui": "GUI-EDIT-STMT schema `MotionCommand:MOVE`; fields=direction; inputs=args[], seconds; bodies=なし; annotations=inlineComment",
       "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
       "runtime": "EventScheduler.execMotion",
       "selftest": "CORE catalog MotionCommand:MOVE; TEST-BLOCK-SCHEMA MotionCommand:MOVE; LANG statement roundtrip MotionCommand:MOVE",
@@ -879,11 +877,23 @@
       "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
     },
     {
+      "id": "command:MotionCommand:MOVE_BY",
+      "capability": "いまのばしょから、右へ10歩、上へ5歩動く（一つの向きだけ、「2秒かけて、」も書ける）",
+      "ast": "MotionCommand op=MOVE_BY",
+      "cui": "CODE-STMT",
+      "gui": "GUI-EDIT-STMT schema `MotionCommand:MOVE_BY`; fields=xDir, yDir; inputs=x, y, seconds; bodies=なし; annotations=inlineComment",
+      "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
+      "runtime": "EventScheduler.execMotion",
+      "selftest": "CORE catalog MotionCommand:MOVE_BY; TEST-BLOCK-SCHEMA MotionCommand:MOVE_BY; LANG statement roundtrip MotionCommand:MOVE_BY",
+      "browser": "BROWSER-LANG; browser-schemas:MotionCommand:MOVE_BY",
+      "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
+    },
+    {
       "id": "command:MotionCommand:GOTO",
-      "capability": "横100、縦50の位置へ行く",
+      "capability": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く（「1秒かけて、」も書ける）",
       "ast": "MotionCommand op=GOTO",
       "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:GOTO`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
+      "gui": "GUI-EDIT-STMT schema `MotionCommand:GOTO`; fields=xDir, yDir; inputs=x, y, seconds; bodies=なし; annotations=inlineComment",
       "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
       "runtime": "EventScheduler.execMotion",
       "selftest": "CORE catalog MotionCommand:GOTO; TEST-BLOCK-SCHEMA MotionCommand:GOTO; LANG statement roundtrip MotionCommand:GOTO",
@@ -891,23 +901,23 @@
       "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
     },
     {
-      "id": "command:MotionCommand:GLIDE",
-      "capability": "1秒で横200、縦100の位置へ滑る",
-      "ast": "MotionCommand op=GLIDE",
+      "id": "command:MotionCommand:GOTO_PART",
+      "capability": "「ロケット」のところへ行く／マウスのところへ行く（「1秒かけて、」も書ける）",
+      "ast": "MotionCommand op=GOTO_PART",
       "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:GLIDE`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
+      "gui": "GUI-EDIT-STMT schema `MotionCommand:GOTO_PART`; fields=なし; inputs=args[], seconds; bodies=なし; annotations=inlineComment",
       "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
       "runtime": "EventScheduler.execMotion",
-      "selftest": "CORE catalog MotionCommand:GLIDE; TEST-BLOCK-SCHEMA MotionCommand:GLIDE; LANG statement roundtrip MotionCommand:GLIDE",
-      "browser": "BROWSER-LANG; browser-schemas:MotionCommand:GLIDE",
+      "selftest": "CORE catalog MotionCommand:GOTO_PART; TEST-BLOCK-SCHEMA MotionCommand:GOTO_PART; LANG statement roundtrip MotionCommand:GOTO_PART",
+      "browser": "BROWSER-LANG; browser-schemas:MotionCommand:GOTO_PART",
       "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
     },
     {
       "id": "command:MotionCommand:TURN_RIGHT",
-      "capability": "右に15度回る",
+      "capability": "右に15度回る（「1秒かけて、」で時間をかけて回る）",
       "ast": "MotionCommand op=TURN_RIGHT",
       "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:TURN_RIGHT`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
+      "gui": "GUI-EDIT-STMT schema `MotionCommand:TURN_RIGHT`; fields=なし; inputs=args[], seconds; bodies=なし; annotations=inlineComment",
       "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
       "runtime": "EventScheduler.execMotion",
       "selftest": "CORE catalog MotionCommand:TURN_RIGHT; TEST-BLOCK-SCHEMA MotionCommand:TURN_RIGHT; LANG statement roundtrip MotionCommand:TURN_RIGHT",
@@ -916,10 +926,10 @@
     },
     {
       "id": "command:MotionCommand:TURN_LEFT",
-      "capability": "左に15度回る",
+      "capability": "左に15度回る（「1秒かけて、」で時間をかけて回る）",
       "ast": "MotionCommand op=TURN_LEFT",
       "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:TURN_LEFT`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
+      "gui": "GUI-EDIT-STMT schema `MotionCommand:TURN_LEFT`; fields=なし; inputs=args[], seconds; bodies=なし; annotations=inlineComment",
       "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
       "runtime": "EventScheduler.execMotion",
       "selftest": "CORE catalog MotionCommand:TURN_LEFT; TEST-BLOCK-SCHEMA MotionCommand:TURN_LEFT; LANG statement roundtrip MotionCommand:TURN_LEFT",
@@ -939,30 +949,6 @@
       "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
     },
     {
-      "id": "command:MotionCommand:SET_X",
-      "capability": "横位置を100にする",
-      "ast": "MotionCommand op=SET_X",
-      "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:SET_X`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
-      "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
-      "runtime": "EventScheduler.execMotion",
-      "selftest": "CORE catalog MotionCommand:SET_X; TEST-BLOCK-SCHEMA MotionCommand:SET_X; LANG statement roundtrip MotionCommand:SET_X",
-      "browser": "BROWSER-LANG; browser-schemas:MotionCommand:SET_X",
-      "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
-    },
-    {
-      "id": "command:MotionCommand:SET_Y",
-      "capability": "縦位置を50にする",
-      "ast": "MotionCommand op=SET_Y",
-      "cui": "CODE-STMT",
-      "gui": "GUI-EDIT-STMT schema `MotionCommand:SET_Y`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
-      "semantic": "部品のみ。数値・対象名・範囲は共通意味検査とruntimeで検査",
-      "runtime": "EventScheduler.execMotion",
-      "selftest": "CORE catalog MotionCommand:SET_Y; TEST-BLOCK-SCHEMA MotionCommand:SET_Y; LANG statement roundtrip MotionCommand:SET_Y",
-      "browser": "BROWSER-LANG; browser-schemas:MotionCommand:SET_Y",
-      "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
-    },
-    {
       "id": "command:MotionCommand:POINT_TO",
       "capability": "「マウス」の方向を向く",
       "ast": "MotionCommand op=POINT_TO",
@@ -976,7 +962,7 @@
     },
     {
       "id": "command:MotionCommand:BOUNCE",
-      "capability": "端に触れていれば跳ね返る",
+      "capability": "画面の端に触れていれば跳ね返る",
       "ast": "MotionCommand op=BOUNCE",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `MotionCommand:BOUNCE`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -1428,6 +1414,18 @@
       "runtime": "EventScheduler.execStop",
       "selftest": "CORE catalog StopCommand:OTHERS; TEST-BLOCK-SCHEMA StopCommand:OTHERS; LANG statement roundtrip StopCommand:OTHERS",
       "browser": "BROWSER-LANG; browser-schemas:StopCommand:OTHERS",
+      "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
+    },
+    {
+      "id": "command:StopCommand:OWN_OTHERS",
+      "capability": "自分のほかの動きを止める",
+      "ast": "StopCommand op=OWN_OTHERS",
+      "cui": "CODE-STMT",
+      "gui": "GUI-EDIT-STMT schema `StopCommand:OWN_OTHERS`; fields=なし; inputs=なし; bodies=なし; annotations=inlineComment",
+      "semantic": "求値では禁止; 値の型・待機条件・範囲は既存runtime",
+      "runtime": "EventScheduler.execStop",
+      "selftest": "CORE catalog StopCommand:OWN_OTHERS; TEST-BLOCK-SCHEMA StopCommand:OWN_OTHERS; LANG statement roundtrip StopCommand:OWN_OTHERS",
+      "browser": "BROWSER-LANG; browser-schemas:StopCommand:OWN_OTHERS",
       "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
     },
     {
@@ -2542,7 +2540,7 @@
       "gui": "GUI-EDIT-EXPR schema `SensorRead:TOUCHING`; fields=なし; inputs=arg; bodies=なし; annotations=なし",
       "semantic": "部品のみ; 対象文字列; マウス/端可",
       "runtime": "evalSensor",
-      "selftest": "CORE sensor 端に触れている; TEST-BLOCK-SCHEMA SensorRead:TOUCHING; LANG generated expression and comment roundtrips",
+      "selftest": "CORE sensor 画面の端に触れている; TEST-BLOCK-SCHEMA SensorRead:TOUCHING; LANG generated expression and comment roundtrips",
       "browser": "BROWSER-LANG; browser-schemas:SensorRead:TOUCHING",
       "guarantee": "引数付きsensorの代表値をself-testで検査。動的引数とGUI全slotはschema suiteで別検査; GUI-SCHEMA"
     },
@@ -2667,6 +2665,18 @@
       "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
     },
     {
+      "id": "event:label:touchStart",
+      "capability": "labelのtouchStart",
+      "ast": "Script + owner event=touchStart + filter.target",
+      "cui": "EVENT_BY_TYPE / event selector / compileProject",
+      "gui": "objectSelect / eventSelect → owner付きsession / loadEditor; 同じScript.bodyを両モードで編集",
+      "semantic": "EVENT_BY_TYPEで許可; 相手は部品・端・端:上/下/右/左（filter.target）",
+      "runtime": "EventScheduler.initializeWatches / pollWatches",
+      "selftest": "CORE event label:touchStart",
+      "browser": "BROWSER-EVENT; browser-events:event:label:touchStart; browser-event-traces:event-trace:label:touchStart",
+      "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
+    },
+    {
       "id": "event:button:start",
       "capability": "buttonのstart",
       "ast": "Script + owner event=start",
@@ -2727,6 +2737,18 @@
       "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
     },
     {
+      "id": "event:button:touchStart",
+      "capability": "buttonのtouchStart",
+      "ast": "Script + owner event=touchStart + filter.target",
+      "cui": "EVENT_BY_TYPE / event selector / compileProject",
+      "gui": "objectSelect / eventSelect → owner付きsession / loadEditor; 同じScript.bodyを両モードで編集",
+      "semantic": "EVENT_BY_TYPEで許可; 相手は部品・端・端:上/下/右/左（filter.target）",
+      "runtime": "EventScheduler.initializeWatches / pollWatches",
+      "selftest": "CORE event button:touchStart",
+      "browser": "BROWSER-EVENT; browser-events:event:button:touchStart; browser-event-traces:event-trace:button:touchStart",
+      "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
+    },
+    {
       "id": "event:box:start",
       "capability": "boxのstart",
       "ast": "Script + owner event=start",
@@ -2784,6 +2806,18 @@
       "runtime": "EventScheduler.spawnForRuntime / spawnDistributed",
       "selftest": "CORE event box:backdropChanged",
       "browser": "BROWSER-EVENT; browser-events:event:box:backdropChanged; browser-event-traces:event-trace:box:backdropChanged",
+      "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
+    },
+    {
+      "id": "event:box:touchStart",
+      "capability": "boxのtouchStart",
+      "ast": "Script + owner event=touchStart + filter.target",
+      "cui": "EVENT_BY_TYPE / event selector / compileProject",
+      "gui": "objectSelect / eventSelect → owner付きsession / loadEditor; 同じScript.bodyを両モードで編集",
+      "semantic": "EVENT_BY_TYPEで許可; 相手は部品・端・端:上/下/右/左（filter.target）",
+      "runtime": "EventScheduler.initializeWatches / pollWatches",
+      "selftest": "CORE event box:touchStart",
+      "browser": "BROWSER-EVENT; browser-events:event:box:touchStart; browser-event-traces:event-trace:box:touchStart",
       "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
     },
     {
@@ -2859,6 +2893,18 @@
       "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
     },
     {
+      "id": "event:input:touchStart",
+      "capability": "inputのtouchStart",
+      "ast": "Script + owner event=touchStart + filter.target",
+      "cui": "EVENT_BY_TYPE / event selector / compileProject",
+      "gui": "objectSelect / eventSelect → owner付きsession / loadEditor; 同じScript.bodyを両モードで編集",
+      "semantic": "EVENT_BY_TYPEで許可; 相手は部品・端・端:上/下/右/左（filter.target）",
+      "runtime": "EventScheduler.initializeWatches / pollWatches",
+      "selftest": "CORE event input:touchStart",
+      "browser": "BROWSER-EVENT; browser-events:event:input:touchStart; browser-event-traces:event-trace:input:touchStart",
+      "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
+    },
+    {
       "id": "event:sprite:start",
       "capability": "spriteのstart",
       "ast": "Script + owner event=start",
@@ -2928,6 +2974,18 @@
       "runtime": "EventScheduler.spawnForRuntime / spawnDistributed",
       "selftest": "CORE event sprite:cloneStart",
       "browser": "BROWSER-EVENT; browser-events:event:sprite:cloneStart; browser-event-traces:event-trace:sprite:cloneStart",
+      "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
+    },
+    {
+      "id": "event:sprite:touchStart",
+      "capability": "spriteのtouchStart",
+      "ast": "Script + owner event=touchStart + filter.target",
+      "cui": "EVENT_BY_TYPE / event selector / compileProject",
+      "gui": "objectSelect / eventSelect → owner付きsession / loadEditor; 同じScript.bodyを両モードで編集",
+      "semantic": "EVENT_BY_TYPEで許可; 相手は部品・端・端:上/下/右/左（filter.target）",
+      "runtime": "EventScheduler.initializeWatches / pollWatches",
+      "selftest": "CORE event sprite:touchStart",
+      "browser": "BROWSER-EVENT; browser-events:event:sprite:touchStart; browser-event-traces:event-trace:sprite:touchStart",
       "guarantee": "self-testはcompileとschedulerへの直接event投入を検査。実DOM発火と固定時計の全観測列はbrowser-events/event-tracesで別検査"
     },
     {
@@ -3052,10 +3110,10 @@
     },
     {
       "id": "runtime:glide",
-      "capability": "滑走と他taskの並行実行",
-      "ast": "MotionCommand:GLIDE",
+      "capability": "「〇秒かけて、」の移動・回転と他taskの並行実行",
+      "ast": "MotionCommand seconds (GOTO / MOVE_BY / MOVE / GOTO_PART / TURN_RIGHT / TURN_LEFT)",
       "cui": "compileProject",
-      "gui": "MotionCommand:GLIDE.args slot → 共通 execMotion",
+      "gui": "MotionCommand の seconds slot（なおす「時間をかけて…」）→ 共通 execMotion",
       "semantic": "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」",
       "runtime": "execMotion / recheckBlocked",
       "selftest": "CORE runtime motion; TEST-CONTRACT glide midpoint completion and concurrent task trace",

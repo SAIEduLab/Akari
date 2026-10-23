@@ -6,9 +6,9 @@ import {browserEnvironment} from './browser-environment.mjs';
 import {fixedValues} from '../fixtures/fixed-values.mjs';
 
 export const fixturePins=Object.freeze({
-  'audit/fixtures/composition-acceptance.json':'54ee2bd97ad40ad5fa2997c4853c9673c78e7bae5e04429fe3e5d67c72f8c039',
-  'audit/fixtures/actions-transfer-plan.json':'00ee3ad7f8714497120af61b204b8887e7d7f1c2cb3da6fe7ff2280e86d3b1b9',
-  'audit/fixtures/fixed-values.mjs':'a9e6b568b8abe1fd23534702d495f14988b5aa6213cecc5e4de41e6b0004abcb',
+  'audit/fixtures/composition-acceptance.json':'0798fc13121f7c082a76e0dcca85a036621e79efc9678e064b7ced26bff4c9d9',
+  'audit/fixtures/actions-transfer-plan.json':'c657970fdd1999ee9d048aff1cb1a2779da26cbb6f15e2099f5e251c520df932',
+  'audit/fixtures/fixed-values.mjs':'748a6c8dc02d5986222d0f3eaeef8e2728115e2030c889bcfac7ef191efadf16',
 });
 export function transferFixtures(){
   for(const [file,hash]of Object.entries(fixturePins))assert.equal(sha(fs.readFileSync(file)),hash,'unchanged independent fixture '+file);
@@ -88,8 +88,12 @@ export function verifyCompositionMeaning(d,r){
     assert.deepEqual(speech.map(x=>x.text),['はる「青空」さん、こんにちは']);
   }
   if(d.id==='I10'){
-    assert.deepEqual(r.trace.filter(x=>x.kind==='motion').map(x=>x.after.direction),[15,0,15,0]);
-    assert.deepEqual(speech.map(x=>x.text),['250']);assert.equal(actor.direction,0);
+    // 右に15度回る lowers the angle and keeps it in 0〜360 (LANGUAGE.md 移動量と座標の意味).
+    assert.deepEqual(r.trace.filter(x=>x.kind==='motion').map(x=>x.after.direction),[345,0,345,0]);
+    // The repeat never waits, so its second turn waits for the next こま (observed at 17 ms).
+    assert.deepEqual(r.trace.filter(x=>x.kind==='motion').map(x=>x.time),[0,0,17,17]);
+    // The last round turned without waiting too, so the sentence after the repeat says 250 on the next こま (34 ms).
+    assert.deepEqual(speech.map(x=>[x.text,x.time]),[['250',34]]);assert.equal(at(17).speech.length,0);assert.equal(actor.direction,0);
     assert.deepEqual(last.variables,[['点数',0]]);assert.equal(actor.x,100);assert.equal(actor.y,100);
   }
   if(d.id==='I11'){

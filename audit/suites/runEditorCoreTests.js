@@ -79,7 +79,7 @@ function runEditorCoreTests() {
           ok(path.startsWith('M ') && path.endsWith('Z') && !/NaN|undefined|Infinity/.test(path));
         }
       ok(blockShapePath(120, 48).includes('L 26 6'));
-      ok(blockZoomCore(20) === 2 && blockZoomCore(0.01) === 0.2);
+      ok(blockZoomCore(20) === 2 && blockZoomCore(0.01) === 0.5);
       ok(blockZoomScroll(100, 50, 1, 2) === 250 && blockZoomScroll(250, 50, 2, 1) === 100);
       ok(blockShapeKind(BLOCK_SCHEMA_BY_ID.get('CompareExpression:EQ')) === 'boolean');
       for (const schema of BLOCK_SCHEMAS.filter((s) =>
@@ -652,22 +652,31 @@ function runEditorCoreTests() {
     });
     // LANGUAGE.md 数・単位・発言: a new block starts with the movement 10歩. The palette
     // inserts the node that blockInsertionAvailability prepares for the chosen place.
+    // LANGUAGE.md 動きの文: 前へ進む starts with 10歩 and いまのばしょから動く with 右へ10歩 (one direction);
+    // 決めたばしょへ行く starts at the part's centre, and 〜のところへ行く at マウス when no other part exists.
     test('palette motion blocks start at ten steps', () => {
       const context = { targetId: 'sprite-1', event: 'start' },
         project = makeDefaultProject(),
-        tenSteps = [{ kind: 'QuantityLiteral', value: { kind: 'NumberLiteral', value: 10 }, unit: '歩' }];
+        steps = (n) => ({ kind: 'QuantityLiteral', value: { kind: 'NumberLiteral', value: n }, unit: '歩' }),
+        plain = (value) => JSON.parse(JSON.stringify(value ?? null, (key, v) => (key === 'sourceSpan' ? undefined : v))),
+        sprite = project.components.find((c) => c.id === 'sprite-1');
       project.scripts = [{ targetId: 'sprite-1', event: 'start', source: '' }];
-      for (const [schemaId, op] of [['MotionCommand:MOVE', 'MOVE'], ['MotionCommand:MOVE_DIRECTION', 'MOVE_DIRECTION']]) {
+      ok(project.components.length === 1, 'the default work has one part');
+      for (const [schemaId, op, check, text] of [
+        ['MotionCommand:MOVE', 'MOVE', (n) => stableJson(plain(n.args)) === stableJson([steps(10)]) && n.direction === 'forward', '前へ10歩進む。'],
+        ['MotionCommand:MOVE_BY', 'MOVE_BY', (n) => stableJson(plain(n.x)) === stableJson(steps(10)) && n.xDir === 'right' && n.y === undefined, 'いまのばしょから、右へ10歩動く。'],
+        ['MotionCommand:GOTO', 'GOTO', (n) => stableJson(plain(n.x)) === stableJson(steps(sprite.x)) && stableJson(plain(n.y)) === stableJson(steps(sprite.y)) && n.xDir === 'right' && n.yDir === 'up', '画面の左下のはしから、右へ' + sprite.x + '歩、上へ' + sprite.y + '歩のばしょへ行く。'],
+        ['MotionCommand:GOTO_PART', 'GOTO_PART', (n) => stableJson(plain(n.args)) === stableJson([{ kind: 'StringLiteral', value: 'マウス' }]), 'マウスのところへ行く。'],
+      ]) {
         const session = createEditorSession('script:sprite-1:start', '', context, project, 1),
           location = { parentId: session.blockView.id, body: 'body', index: 0 },
           available = blockInsertionAvailability(session, schemaId, location, { project, context });
         ok(available.enabled && available.node?.schemaId === schemaId, schemaId + ' palette insertion: ' + available.reason);
         const result = prepare(session, { type: 'insert', ...location, node: available.node }),
-          body = parseScript(result.source, buildSymbols(project), context).body,
-          args = JSON.parse(JSON.stringify(body[0]?.args ?? null, (key, value) => (key === 'sourceSpan' ? undefined : value)));
+          body = parseScript(result.source, buildSymbols(project), context).body;
         ok(body.length === 1 && body[0].kind === 'MotionCommand' && body[0].op === op, schemaId + ' inserted statement');
-        ok(stableJson(args) === stableJson(tenSteps), schemaId + ' default distance: ' + result.source);
-        ok(result.source.includes('10歩'), schemaId + ' source shows 10歩: ' + result.source);
+        ok(check(body[0]), schemaId + ' default: ' + result.source);
+        ok(result.source.trim() === text, schemaId + ' source: ' + result.source);
       }
     });
     return {

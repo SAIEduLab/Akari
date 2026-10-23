@@ -40,6 +40,12 @@ const show=(actorRef=self)=>command('LooksCommand','SHOW',[],{},actorRef);
 const wait=(seconds,actorRef=everyone)=>statement('WaitTime',{seconds:quantity(seconds,'秒')},actorRef);
 const steps=n=>quantity(n,'歩'),degrees=n=>quantity(n,'度'),times=n=>quantity(n,'回');
 const update=(op,value,name='点数')=>statement('NumericUpdate',{op,target:target(name),value});
+// 前へ進む goes in the facing direction (前へ or 後ろへ).
+const forward=(n,props={},actorRef=self)=>command('MotionCommand','MOVE',[steps(n)],{direction:'forward',...props},actorRef);
+// 決めたばしょへ行く and いまのばしょから動く: a horizontal leg (右/左) and a vertical leg (上/下). Both direction
+// words are fields of the block; a leg that is not written keeps its word (右/上) and has no amount (動きの文).
+const legs=(op,{xDir='right',yDir='up',x,y,seconds}={},actorRef=self)=>({kind:'MotionCommand',op,xDir,yDir,
+  ...(x===undefined?{}:{x}),...(y===undefined?{}:{y}),...(seconds===undefined?{}:{seconds}),actorRef});
 
 // 条件述語の有限活用: every predicate in every position of a sentence. Each row is
 // written from LANGUAGE.md; `yes` is the meaning of the plain (affirmative) predicate.
@@ -63,9 +69,9 @@ const predicateRows=[
     forms:{plain:'押されている',ifYes:'押されていれば',ifNo:'押されていなければ',whileYes:'押されているあいだ',untilYes:'押されるまで',andYes:'押されていて',andNo:'押されていなくて',plainNo:'押されていない'}},
   {plain:'おされている',operand:'「空白」キーが',yes:sensor('KEY_DOWN',str('空白')),
     forms:{plain:'おされている',ifYes:'おされていれば',ifNo:'おされていなければ',whileYes:'おされているあいだ',untilYes:'おされるまで',andYes:'おされていて',andNo:'おされていなくて',plainNo:'おされていない'}},
-  {plain:'ふれている',operand:'端に',yes:sensor('TOUCHING',str('端')),
+  {plain:'ふれている',operand:'画面の端に',yes:sensor('TOUCHING',str('端')),
     forms:{plain:'ふれている',ifYes:'ふれていれば',ifNo:'ふれていなければ',whileYes:'ふれているあいだ',untilYes:'ふれるまで',andYes:'ふれていて',andNo:'ふれていなくて',plainNo:'ふれていない'}},
-  {plain:'触れている',operand:'端に',yes:sensor('TOUCHING',str('端')),
+  {plain:'触れている',operand:'画面の端に',yes:sensor('TOUCHING',str('端')),
     forms:{plain:'触れている',ifYes:'触れていれば',ifNo:'触れていなければ',whileYes:'触れているあいだ',untilYes:'触れるまで',andYes:'触れていて',andNo:'触れていなくて',plainNo:'触れていない'}},
   {plain:'入っている',operand:'名前一覧に「あかり」が',yes:contains(names,str('あかり')),
     forms:{plain:'入っている',ifYes:'入っていれば',ifNo:'入っていなければ',whileYes:'入っているあいだ',untilYes:'入るまで',andYes:'入っていて',andNo:'入っていなくて',plainNo:'入っていない'}},
@@ -133,12 +139,12 @@ export const sentenceFormCases=[
     expected:script([statement('WaitUntil',{condition:not(contains(exactNames,str('あかり')))})]),
     claims:{'until-negative:含まれている':'【名前一覧】に「あかり」が含まれなくなるまで'},
   },
-  // 本文の「て」形は命令を順に接続します: すべって.
+  // 本文の「て」形は命令を順に接続します: 時間をかけて動いて、次の文へ (動きの文).
   {
     id:'SF-glide-te',
-    source:'右へ1秒で10歩すべって、姿をかくす',
-    expected:script([command('MotionCommand','GLIDE_DIRECTION',[quantity(1,'秒'),steps(10)],{direction:'right'}),hide()]),
-    claims:{'te:すべって':'右へ1秒で10歩すべって','sentence:MotionCommand:GLIDE_DIRECTION':'右へ1秒で10歩すべって','sentence:LooksCommand:HIDE':'姿をかくす'},
+    source:'1秒かけて、いまのばしょから、右へ10歩動いて、姿をかくす',
+    expected:script([legs('MOVE_BY',{x:steps(10),seconds:quantity(1,'秒')}),hide()]),
+    claims:{'te:動いて':'1秒かけて、いまのばしょから、右へ10歩動いて','sentence:MotionCommand:MOVE_BY':'1秒かけて、いまのばしょから、右へ10歩動いて','sentence:LooksCommand:HIDE':'姿をかくす'},
   },
   {
     id:'SF-wait-polite',
@@ -183,11 +189,12 @@ export const sentenceFormCases=[
     expected:script([statement('RepeatCount',{count:times(2),body:[hide()]})]),
     claims:{'sentence:RepeatCount':'これを2回繰り返します'},
   },
+  // よこのばしょだけを変えるときは、たてに今のばしょを書きます (動きの文).
   {
     id:'SF-set-x',
-    source:'横位置を100にする',
-    expected:script([command('MotionCommand','SET_X',[num(100)])]),
-    claims:{'sentence:MotionCommand:SET_X':'横位置を100にする'},
+    source:'画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く',
+    expected:script([legs('GOTO',{x:steps(100),y:quantity(sensor('縦位置'),'歩')})]),
+    claims:{'sentence:MotionCommand:GOTO':'画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く'},
   },
   // タイマーを0にする: the timer counts again from 0 (LANGUAGE.md タイマー).
   {
@@ -241,30 +248,38 @@ export const sentenceFormCases=[
     expected:script([statement('UserActionCall',{name:'ジャンプ',args:[]})]),
     claims:{'sentence:UserActionCall':'【ジャンプ】という手順を行う'},
   },
-  // 前・後ろは現在の向き、右・左・上・下は画面の軸 (役割と語順、移動量と座標の意味).
+  // 前・後ろは現在の向き、右・左・上・下は画面の軸 (役割と語順、移動量と座標の意味、動きの文).
   {
     id:'SF-move-forward',
     source:'前へ10歩進む',
-    expected:script([command('MotionCommand','MOVE',[steps(10)])]),
+    expected:script([forward(10)]),
     claims:{'sentence:MotionCommand:MOVE':'前へ10歩進む'},
   },
   {
     id:'SF-goto',
-    source:'横100、縦50の位置へ行く',
-    expected:script([command('MotionCommand','GOTO',[steps(100),steps(50)])]),
-    claims:{'sentence:MotionCommand:GOTO':'横100、縦50の位置へ行く'},
+    source:'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く',
+    expected:script([legs('GOTO',{x:steps(100),y:steps(50)})]),
+    claims:{'sentence:MotionCommand:GOTO':'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く'},
   },
+  // The time may follow the place, and 動く is read as 行く for a fixed place.
   {
     id:'SF-glide',
-    source:'横100、縦50の位置へ1秒かけて動く',
-    expected:script([command('MotionCommand','GLIDE',[quantity(1,'秒'),steps(100),steps(50)])]),
-    claims:{'sentence:MotionCommand:GLIDE':'横100、縦50の位置へ1秒かけて動く'},
+    source:'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ1秒かけて動く',
+    expected:script([legs('GOTO',{x:steps(100),y:steps(50),seconds:quantity(1,'秒')})]),
+    claims:{'sentence:MotionCommand:GOTO':'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ1秒かけて動く'},
   },
   {
     id:'SF-move-direction',
-    source:'画面の右へ10歩動く',
-    expected:script([command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'})]),
-    claims:{'sentence:MotionCommand:MOVE_DIRECTION':'画面の右へ10歩動く'},
+    source:'いまのばしょから、右へ10歩動く',
+    expected:script([legs('MOVE_BY',{x:steps(10)})]),
+    claims:{'sentence:MotionCommand:MOVE_BY':'いまのばしょから、右へ10歩動く'},
+  },
+  // 〜のところへ行く: a part or the mouse.
+  {
+    id:'SF-goto-part',
+    source:'「ねこ」のところへ行く\nマウスのところへ行く',
+    expected:script([command('MotionCommand','GOTO_PART',[str('ねこ')]),command('MotionCommand','GOTO_PART',[str('マウス')])]),
+    claims:{'sentence:MotionCommand:GOTO_PART':'マウスのところへ行く'},
   },
   {
     id:'SF-set-input',
@@ -274,17 +289,17 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-continuous-rule',
-    source:'点数が0以上のあいだ、自分は画面の右へ1秒に60歩の速さで動き続ける',
+    source:'点数が0以上のあいだ、自分は右へ1秒に60歩の速さで動き続ける',
     expected:script([],{rules:[statement('ContinuousRule',{condition:compare('GTE',score,num(0)),direction:'right',seconds:quantity(1,'秒'),distance:steps(60)})]}),
-    claims:{'sentence:ContinuousRule':'点数が0以上のあいだ、自分は画面の右へ1秒に60歩の速さで動き続ける'},
+    claims:{'sentence:ContinuousRule':'点数が0以上のあいだ、自分は右へ1秒に60歩の速さで動き続ける'},
   },
 
   // ── Fixed sentences ──
   {
     id:'SF-control-sentences',
-    source:'何もしない\nこの実行を止める\nほかの実行をすべて止める\n作品全体を止める',
-    expected:script([nothing(),statement('StopCommand',{op:'THIS'}),statement('StopCommand',{op:'OTHERS'}),statement('StopCommand',{op:'ALL'})]),
-    claims:{'sentence:NoOperation':'何もしない','sentence:StopCommand:THIS':'この実行を止める','sentence:StopCommand:OTHERS':'ほかの実行をすべて止める','sentence:StopCommand:ALL':'作品全体を止める'},
+    source:'何もしない\nこの実行を止める\nほかの実行をすべて止める\n自分のほかの動きを止める\n作品全体を止める',
+    expected:script([nothing(),statement('StopCommand',{op:'THIS'}),statement('StopCommand',{op:'OTHERS'}),statement('StopCommand',{op:'OWN_OTHERS'}),statement('StopCommand',{op:'ALL'})]),
+    claims:{'sentence:NoOperation':'何もしない','sentence:StopCommand:THIS':'この実行を止める','sentence:StopCommand:OTHERS':'ほかの実行をすべて止める','sentence:StopCommand:OWN_OTHERS':'自分のほかの動きを止める','sentence:StopCommand:ALL':'作品全体を止める'},
   },
   {
     id:'SF-looks-sentences',
@@ -295,11 +310,11 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-motion-sentences',
-    source:'画面の端にふれていれば、はね返る\n向きを90度にする\n右に15度回る\n左へ15度回る\n横位置を100にする\n縦位置を50に変える\nマウスの方を向く',
+    source:'画面の端にふれていれば、はね返る\n向きを90度にする\n右に15度回る\n左へ15度回る\n画面の左下のはしから、右へ（よこのばしょ）歩、上へ50歩のばしょへ行く\n1秒かけて、右に90度回る\nマウスの方を向く',
     expected:script([command('MotionCommand','BOUNCE'),command('MotionCommand','SET_DIRECTION',[degrees(90)]),command('MotionCommand','TURN_RIGHT',[degrees(15)]),
-      command('MotionCommand','TURN_LEFT',[degrees(15)]),command('MotionCommand','SET_X',[num(100)]),command('MotionCommand','SET_Y',[num(50)]),command('MotionCommand','POINT_TO',[str('マウス')])]),
+      command('MotionCommand','TURN_LEFT',[degrees(15)]),legs('GOTO',{x:quantity(sensor('横位置'),'歩'),y:steps(50)}),command('MotionCommand','TURN_RIGHT',[degrees(90)],{seconds:quantity(1,'秒')}),command('MotionCommand','POINT_TO',[str('マウス')])]),
     claims:{'sentence:MotionCommand:BOUNCE':'画面の端にふれていれば、はね返る','sentence:MotionCommand:SET_DIRECTION':'向きを90度にする','sentence:MotionCommand:TURN_RIGHT':'右に15度回る',
-      'sentence:MotionCommand:TURN_LEFT':'左へ15度回る','sentence:MotionCommand:SET_X':'横位置を100にする','sentence:MotionCommand:SET_Y':'縦位置を50に変える','sentence:MotionCommand:POINT_TO':'マウスの方を向く'},
+      'sentence:MotionCommand:TURN_LEFT':'左へ15度回る','sentence:MotionCommand:GOTO':'画面の左下のはしから、右へ（よこのばしょ）歩、上へ50歩のばしょへ行く','sentence:MotionCommand:POINT_TO':'マウスの方を向く'},
   },
   {
     id:'SF-pen-sound-sentences',
@@ -397,16 +412,15 @@ export const sentenceFormCases=[
   // A wait without a subject does not take the one before it, and the topic goes on after it.
   {
     id:'SF-wait-topic',
-    source:'ねこは画面の右へ10歩動く\n1秒待つ\n画面の右へ10歩動く',
-    expected:script([command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'},named('ねこ')),wait(1),
-      command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'},named('ねこ'))]),
+    source:'ねこは、いまのばしょから、右へ10歩動く\n1秒待つ\nいまのばしょから、右へ10歩動く',
+    expected:script([legs('MOVE_BY',{x:steps(10)},named('ねこ')),wait(1),legs('MOVE_BY',{x:steps(10)},named('ねこ'))]),
     claims:{'sentence:WaitTime':'1秒待つ'},
   },
   // 自分が／自分も are 自分は; まず・それから・すばやく after the subject only say the order or how.
   {
     id:'SF-subject-self-and-lead',
     source:"自分が1秒待つ\n自分も1秒待つ\nねこは、まず1秒待つ\nそれからねこだけ1秒待つ\nねこはすばやく10歩進む",
-    expected:{"kind":"Script","body":[{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":10},"unit":"歩"}],"op":"MOVE","actorRef":{"kind":"named","name":"ねこ"}}]},
+    expected:{"kind":"Script","body":[{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":10},"unit":"歩"}],"op":"MOVE","direction":"forward","actorRef":{"kind":"named","name":"ねこ"}}]},
     claims:{"sentence:WaitTime":"自分が1秒待つ","sentence:MotionCommand:MOVE":"ねこはすばやく10歩進む"},
   },
   // 2こ counts like 2つ.
@@ -433,40 +447,54 @@ export const sentenceFormCases=[
   {
     id:'SF-te-repeat-inline',
     source:'10歩進んで、1秒待つことを3回くり返す',
-    expected:script([statement('RepeatCount',{count:times(3),body:[command('MotionCommand','MOVE',[steps(10)]),wait(1)]})]),
+    expected:script([statement('RepeatCount',{count:times(3),body:[forward(10),wait(1)]})]),
     claims:{'te:進んで':'10歩進んで'},
   },
   {
     id:'SF-te-turn-then-move',
     source:'右を向いて、10歩進む',
-    expected:script([command('MotionCommand','SET_DIRECTION',[degrees(0)]),command('MotionCommand','MOVE',[steps(10)])]),
+    expected:script([command('MotionCommand','SET_DIRECTION',[degrees(0)]),forward(10)]),
     claims:{'te:向いて':'右を向いて'},
   },
   {
     id:'SF-te-turns',
     source:'画面の右をむいて、前へ10歩すすんで、右に15度まわって、左へ15度回って、姿をかくす',
-    expected:script([command('MotionCommand','SET_DIRECTION',[degrees(0)]),command('MotionCommand','MOVE',[steps(10)]),command('MotionCommand','TURN_RIGHT',[degrees(15)]),
+    expected:script([command('MotionCommand','SET_DIRECTION',[degrees(0)]),forward(10),command('MotionCommand','TURN_RIGHT',[degrees(15)]),
       command('MotionCommand','TURN_LEFT',[degrees(15)]),hide()]),
     claims:{'te:むいて':'画面の右をむいて','te:すすんで':'前へ10歩すすんで','te:まわって':'右に15度まわって','te:回って':'左へ15度回って'},
   },
   {
     id:'SF-te-moves',
-    source:'ねこを右へ10歩うごかして、ねこを左へ10歩動かして、右へ10歩うごいて、左へ10歩動いて、姿を見せる',
-    expected:script([command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'},named('ねこ')),command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'left'},named('ねこ')),
-      command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'},named('ねこ')),command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'left'},named('ねこ')),show(named('ねこ'))]),
-    claims:{'te:うごかして':'ねこを右へ10歩うごかして','te:動かして':'ねこを左へ10歩動かして','te:うごいて':'右へ10歩うごいて','te:動いて':'左へ10歩動いて'},
+    source:'ねこを、いまのばしょから、右へ10歩うごかして、ねこを、いまのばしょから、左へ10歩動かして、いまのばしょから、右へ10歩うごいて、いまのばしょから、左へ10歩動いて、姿を見せる',
+    expected:script([legs('MOVE_BY',{x:steps(10)},named('ねこ')),legs('MOVE_BY',{xDir:'left',x:steps(10)},named('ねこ')),
+      legs('MOVE_BY',{x:steps(10)},named('ねこ')),legs('MOVE_BY',{xDir:'left',x:steps(10)},named('ねこ')),show(named('ねこ'))]),
+    claims:{'te:うごかして':'ねこを、いまのばしょから、右へ10歩うごかして','te:動かして':'ねこを、いまのばしょから、左へ10歩動かして','te:うごいて':'いまのばしょから、右へ10歩うごいて','te:動いて':'いまのばしょから、左へ10歩動いて'},
+  },
+  // 歩く is read as 動く for いまのばしょから and as 進む for 前へ (動きの文).
+  {
+    id:'SF-te-walk',
+    source:'いまのばしょから、上へ10歩歩いて、前へ10歩あるいて、姿を見せる',
+    expected:script([legs('MOVE_BY',{y:steps(10)}),forward(10),show()]),
+    claims:{'te:歩いて':'いまのばしょから、上へ10歩歩いて','te:あるいて':'前へ10歩あるいて'},
   },
   {
     id:'SF-te-goto',
-    source:'横100、縦50の位置へ行って、姿を隠す',
-    expected:script([command('MotionCommand','GOTO',[steps(100),steps(50)]),hide()]),
-    claims:{'te:行って':'横100、縦50の位置へ行って','sentence:LooksCommand:HIDE':'姿を隠す'},
+    source:'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行って、姿を隠す',
+    expected:script([legs('GOTO',{x:steps(100),y:steps(50)}),hide()]),
+    claims:{'te:行って':'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行って','sentence:LooksCommand:HIDE':'姿を隠す'},
+  },
+  // The kana verbs of the move sentences read in です・ます and in the て形 too (LANGUAGE.md 動きの文).
+  {
+    id:'SF-move-kana-verbs',
+    source:'いまのばしょから、右へ10歩うごきます\n後ろへ10歩さがります\n後ろへ10歩さがって、姿を見せる',
+    expected:script([legs('MOVE_BY',{x:steps(10)}),forward(10,{direction:'backward'}),forward(10,{direction:'backward'}),show()]),
+    claims:{'polite:うごきます':'いまのばしょから、右へ10歩うごきます','polite:さがります':'後ろへ10歩さがります','te:さがって':'後ろへ10歩さがって'},
   },
   {
     id:'SF-te-glide-hide-show-wait',
-    source:'1秒で横200、縦100の位置へ滑って、姿を隠して、姿をみせて、1秒まって、姿を見せる',
-    expected:script([command('MotionCommand','GLIDE',[quantity(1,'秒'),steps(200),steps(100)]),hide(),show(),wait(1),show()]),
-    claims:{'te:滑って':'1秒で横200、縦100の位置へ滑って','te:隠して':'姿を隠して','te:みせて':'姿をみせて','te:まって':'1秒まって'},
+    source:'1秒かけて、画面の左下のはしから、右へ200歩、上へ100歩のばしょへ行って、姿を隠して、姿をみせて、1秒まって、姿を見せる',
+    expected:script([legs('GOTO',{x:steps(200),y:steps(100),seconds:quantity(1,'秒')}),hide(),show(),wait(1),show()]),
+    claims:{'te:行って':'1秒かけて、画面の左下のはしから、右へ200歩、上へ100歩のばしょへ行って','te:隠して':'姿を隠して','te:みせて':'姿をみせて','te:まって':'1秒まって'},
   },
   {
     id:'SF-te-change-say',
@@ -524,18 +552,18 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-polite-actions',
-    source:'1秒まちます\n点数を1増やします\n点数を1減らします\n右へ10歩動きます\n前へ10歩進みます\n右に15度回ります\n点数を0にします',
-    expected:script([wait(1),update('ADD',num(1)),update('SUB',num(1)),command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'}),command('MotionCommand','MOVE',[steps(10)]),
+    source:'1秒まちます\n点数を1増やします\n点数を1減らします\nいまのばしょから、右へ10歩動きます\n前へ10歩進みます\n右に15度回ります\n点数を0にします',
+    expected:script([wait(1),update('ADD',num(1)),update('SUB',num(1)),legs('MOVE_BY',{x:steps(10)}),forward(10),
       command('MotionCommand','TURN_RIGHT',[degrees(15)]),statement('Assignment',{target:target('点数'),value:num(0)})]),
-    claims:{'polite:まちます':'1秒まちます','polite:増やします':'点数を1増やします','polite:減らします':'点数を1減らします','polite:動きます':'右へ10歩動きます',
+    claims:{'polite:まちます':'1秒まちます','polite:増やします':'点数を1増やします','polite:減らします':'点数を1減らします','polite:動きます':'いまのばしょから、右へ10歩動きます',
       'polite:進みます':'前へ10歩進みます','polite:回ります':'右に15度回ります','polite:します':'点数を0にします'},
   },
   // 1.3.1: every action reads in です・ます; each polite entry is the one that reads its sentence.
   {
     id:'SF-polite-every-action',
-    source:"「マウス」の方を向きます\nよこ100、たて50のばしょへ行きます\n1秒で横200、縦100の位置へすべります\nいちばんおくへ下がります\n画面のはしにふれていれば、はね返ります\nすがたをかくします\n姿を隠します\nすがたを見せます\nいちばん手前へ出ます\n次のすがたにかえます\n次の背景に変えます\n「ベル」を鳴らし始めます\n「ベル」を鳴らします\nこの動きを止めます\n「開始」の合図を送ります\n自分のコピーを作ります\nこのコピーだけを消します\nこのコピーだけをけします\n名前一覧の最後に「あ」を入れます\n点数に1を足します\n点数から1を引きます\nペンを下ろします\nペンを上げます\n今のすがたのスタンプをおします\nスタンプを押します\n点数を答えとして返します\n【増やす】という手順を行います\n何もしません",
-    expected:{"kind":"Script","body":[{"kind":"MotionCommand","args":[{"kind":"StringLiteral","value":"マウス"}],"op":"POINT_TO","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":100},"unit":"歩"},{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":50},"unit":"歩"}],"op":"GOTO","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":200},"unit":"歩"},{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":100},"unit":"歩"}],"op":"GLIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"BACK","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[],"op":"BOUNCE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"HIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"HIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"SHOW","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"FRONT","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"NEXT_COSTUME","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"NEXT_BACKDROP","actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"StringLiteral","value":"ベル"}],"op":"SAMPLE","actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"StringLiteral","value":"ベル"}],"op":"SAMPLE_WAIT","actorRef":{"kind":"self"}},{"kind":"StopCommand","op":"THIS","actorRef":{"kind":"self"}},{"kind":"Broadcast","message":{"kind":"StringLiteral","value":"開始"},"actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"CREATE_SELF","actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"DELETE_SELF","actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"DELETE_SELF","actorRef":{"kind":"self"}},{"kind":"ListAppend","target":{"name":"名前一覧","qualifier":null},"value":{"kind":"StringLiteral","value":"あ"},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"ADD","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"SUB","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"DOWN","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"UP","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"ReturnStatement","value":{"kind":"VariableRead","name":"点数","qualifier":null},"actorRef":{"kind":"self"}},{"kind":"UserActionCall","name":"増やす","args":[],"actorRef":{"kind":"self"}},{"kind":"NoOperation","actorRef":{"kind":"self"}}]},
-    claims:{"polite:向きます":"「マウス」の方を向きます","polite:行きます":"よこ100、たて50のばしょへ行きます","polite:すべります":"1秒で横200、縦100の位置へすべります","polite:下がります":"いちばんおくへ下がります","polite:はね返ります":"画面のはしにふれていれば、はね返ります","polite:かくします":"すがたをかくします","polite:隠します":"姿を隠します","polite:見せます":"すがたを見せます","polite:出ます":"いちばん手前へ出ます","polite:かえます":"次のすがたにかえます","polite:変えます":"次の背景に変えます","polite:鳴らし始めます":"「ベル」を鳴らし始めます","polite:鳴らします":"「ベル」を鳴らします","polite:止めます":"この動きを止めます","polite:送ります":"「開始」の合図を送ります","polite:作ります":"自分のコピーを作ります","polite:消します":"このコピーだけを消します","polite:けします":"このコピーだけをけします","polite:入れます":"名前一覧の最後に「あ」を入れます","polite:足します":"点数に1を足します","polite:引きます":"点数から1を引きます","polite:下ろします":"ペンを下ろします","polite:上げます":"ペンを上げます","polite:おします":"今のすがたのスタンプをおします","polite:押します":"スタンプを押します","polite:返します":"点数を答えとして返します","polite:行います":"【増やす】という手順を行います","polite:しません":"何もしません"},
+    source:"「マウス」の方を向きます\n画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行きます\n画面の左下のはしから、右へ200歩、上へ100歩のばしょへいきます\nいまのばしょから、右へ10歩歩きます\n前へ10歩あるきます\nいちばんおくへ下がります\n画面のはしにふれていれば、はね返ります\nすがたをかくします\n姿を隠します\nすがたを見せます\nいちばん手前へ出ます\n次のすがたにかえます\n次の背景に変えます\n「ベル」を鳴らし始めます\n「ベル」を鳴らします\nこの動きを止めます\n「開始」の合図を送ります\n自分のコピーを作ります\nこのコピーだけを消します\nこのコピーだけをけします\n名前一覧の最後に「あ」を入れます\n点数に1を足します\n点数から1を引きます\nペンを下ろします\nペンを上げます\n今のすがたのスタンプをおします\nスタンプを押します\n点数を答えとして返します\n【増やす】という手順を行います\n何もしません",
+    expected:{"kind":"Script","body":[{"kind":"MotionCommand","args":[{"kind":"StringLiteral","value":"マウス"}],"op":"POINT_TO","actorRef":{"kind":"self"}},{"kind":"MotionCommand","op":"GOTO","xDir":"right","yDir":"up","x":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":100},"unit":"歩"},"y":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":50},"unit":"歩"},"actorRef":{"kind":"self"}},{"kind":"MotionCommand","op":"GOTO","xDir":"right","yDir":"up","x":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":200},"unit":"歩"},"y":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":100},"unit":"歩"},"actorRef":{"kind":"self"}},{"kind":"MotionCommand","op":"MOVE_BY","xDir":"right","yDir":"up","x":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":10},"unit":"歩"},"actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":10},"unit":"歩"}],"op":"MOVE","direction":"forward","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"BACK","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[],"op":"BOUNCE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"HIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"HIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"SHOW","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"FRONT","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"NEXT_COSTUME","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"NEXT_BACKDROP","actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"StringLiteral","value":"ベル"}],"op":"SAMPLE","actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"StringLiteral","value":"ベル"}],"op":"SAMPLE_WAIT","actorRef":{"kind":"self"}},{"kind":"StopCommand","op":"THIS","actorRef":{"kind":"self"}},{"kind":"Broadcast","message":{"kind":"StringLiteral","value":"開始"},"actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"CREATE_SELF","actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"DELETE_SELF","actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"DELETE_SELF","actorRef":{"kind":"self"}},{"kind":"ListAppend","target":{"name":"名前一覧","qualifier":null},"value":{"kind":"StringLiteral","value":"あ"},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"ADD","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"SUB","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"DOWN","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"UP","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"ReturnStatement","value":{"kind":"VariableRead","name":"点数","qualifier":null},"actorRef":{"kind":"self"}},{"kind":"UserActionCall","name":"増やす","args":[],"actorRef":{"kind":"self"}},{"kind":"NoOperation","actorRef":{"kind":"self"}}]},
+    claims:{"polite:向きます":"「マウス」の方を向きます","polite:行きます":"画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行きます","polite:いきます":"画面の左下のはしから、右へ200歩、上へ100歩のばしょへいきます","polite:歩きます":"いまのばしょから、右へ10歩歩きます","polite:あるきます":"前へ10歩あるきます","polite:下がります":"いちばんおくへ下がります","polite:はね返ります":"画面のはしにふれていれば、はね返ります","polite:かくします":"すがたをかくします","polite:隠します":"姿を隠します","polite:見せます":"すがたを見せます","polite:出ます":"いちばん手前へ出ます","polite:かえます":"次のすがたにかえます","polite:変えます":"次の背景に変えます","polite:鳴らし始めます":"「ベル」を鳴らし始めます","polite:鳴らします":"「ベル」を鳴らします","polite:止めます":"この動きを止めます","polite:送ります":"「開始」の合図を送ります","polite:作ります":"自分のコピーを作ります","polite:消します":"このコピーだけを消します","polite:けします":"このコピーだけをけします","polite:入れます":"名前一覧の最後に「あ」を入れます","polite:足します":"点数に1を足します","polite:引きます":"点数から1を引きます","polite:下ろします":"ペンを下ろします","polite:上げます":"ペンを上げます","polite:おします":"今のすがたのスタンプをおします","polite:押します":"スタンプを押します","polite:返します":"点数を答えとして返します","polite:行います":"【増やす】という手順を行います","polite:しません":"何もしません"},
   },
 
   // はね返って、: the bounce goes on to the next action.
@@ -652,10 +680,10 @@ export const sentenceFormCases=[
   // ── 「〜なくなるまで」 ──
   {
     id:'SF-until-negative',
-    source:'「空白」キーが押されなくなるまで待つ\n「空白」キーがおされなくなるまで待つ\n端にふれなくなるまで待つ\n端に触れなくなるまで待つ\n名前一覧に「あかり」が入らなくなるまで待つ',
+    source:'「空白」キーが押されなくなるまで待つ\n「空白」キーがおされなくなるまで待つ\n画面の端にふれなくなるまで待つ\n画面の端に触れなくなるまで待つ\n名前一覧に「あかり」が入らなくなるまで待つ',
     expected:script([statement('WaitUntil',{condition:not(sensor('KEY_DOWN',str('空白')))}),statement('WaitUntil',{condition:not(sensor('KEY_DOWN',str('空白')))}),statement('WaitUntil',{condition:not(sensor('TOUCHING',str('端')))}),
       statement('WaitUntil',{condition:not(sensor('TOUCHING',str('端')))}),statement('WaitUntil',{condition:not(contains(names,str('あかり')))})]),
-    claims:{'until-negative:押されている':'「空白」キーが押されなくなるまで','until-negative:おされている':'「空白」キーがおされなくなるまで','until-negative:ふれている':'端にふれなくなるまで','until-negative:触れている':'端に触れなくなるまで','until-negative:入っている':'名前一覧に「あかり」が入らなくなるまで'},
+    claims:{'until-negative:押されている':'「空白」キーが押されなくなるまで','until-negative:おされている':'「空白」キーがおされなくなるまで','until-negative:ふれている':'画面の端にふれなくなるまで','until-negative:触れている':'画面の端に触れなくなるまで','until-negative:入っている':'名前一覧に「あかり」が入らなくなるまで'},
   },
 
   // ── 旧基準表記の語尾 (基準機能を追跡する旧表記一覧) ──

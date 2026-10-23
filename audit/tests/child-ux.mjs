@@ -79,7 +79,9 @@ try{
       r=>{const nodes=display(r,'B16').nodes;nodes.find(n=>n.schema==='NumberLiteral'&&n.slot==='left').fields.value='0';nodes.find(n=>n.schema==='NumberLiteral'&&n.slot==='right').fields.value='5';},
       r=>{const nodes=display(r,'B17').nodes;nodes.find(n=>n.schema==='NumberLiteral'&&n.slot==='left').fields.value='5';nodes.find(n=>n.schema==='NumberLiteral'&&n.slot==='right').fields.value='2';},
       r=>{const nodes=display(r,'B18').nodes;nodes.find(n=>n.schema==='NumberLiteral'&&n.slot==='left').fields.value='3';nodes.find(n=>n.schema==='NumberLiteral'&&n.slot==='right').fields.value='2';},
-      r=>display(r).nodes.find(n=>n.schema==='Say').title='待つ',r=>display(r,'B16').nodes.find(n=>n.schema==='BinaryExpression:ADD').title='引く'];
+      r=>display(r).nodes.find(n=>n.schema==='Say').title='待つ',r=>display(r,'B16').nodes.find(n=>n.schema==='BinaryExpression:ADD').title='引く',
+      r=>display(r,'B07').nodes.find(n=>n.schema==='Script').title='あかり・「動かす」を おしたとき',
+      r=>delete display(r).nodes.find(n=>n.schema==='Say').units,r=>display(r).nodes.find(n=>n.schema==='Say').units[0].text='歩',r=>display(r).nodes.find(n=>n.schema==='Say').units[0].rendered=false,r=>display(r,'B04').nodes.find(n=>n.schema==='RepeatCount').units[0].text='秒'];
     const rows=controls(matrixControlIds.slice(0,-1),mutations,r,b=>verifyChildMatrix(b,snapshot,provenance,input));
     assert.throws(()=>verifyChildMatrix(r,snapshot,provenance,input+'.missing-root'));rows.push({id:matrixControlIds.at(-1),rejected:true});
     write(output,{...proof('akari-child-ux-matrix-proof-v1',result,rows),inputSha256:sha(fs.readFileSync(input))});

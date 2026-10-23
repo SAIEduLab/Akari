@@ -4,6 +4,8 @@ import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {autosaveSources,autosaveSuffix,autosaveCallable,verifyAutosaveStateReport} from '../lib/autosave-state-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),product=currentProductFile(),artifacts=output+'.artifacts';
 fs.mkdirSync(artifacts,{recursive:true});
@@ -19,11 +21,13 @@ const events=p=>p.evaluate(()=>window.autosaveAudit.events);
 const settled=p=>p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:10000});
 const edit=async(p,source)=>{await p.locator('#codeEditor').fill(source);await p.locator('#codeEditor').press('Tab');};
 const restore=async p=>{await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
-async function record(p){return p.evaluate(async()=>{
-  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f4',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
+// The autosave database carries the saved-file format number of the release record (features.json).
+const autosaveDatabase='akari-workspace-f'+JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT.projectFormatVersion;
+async function record(p){return p.evaluate(async autosaveDatabase=>{
+  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open(autosaveDatabase,1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
   if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace),frame=decoded.frames[decoded.cursor];
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
-});}
+},autosaveDatabase);}
 const setupRecords=new WeakMap();
 const setupPhase=(p,phase)=>setupRecords.get(p)?.push({phase,at:Date.now()});
 async function fixture(p,source,document,{actions=[],extraScripts=[]}={}){
@@ -38,7 +42,7 @@ async function fixture(p,source,document,{actions=[],extraScripts=[]}={}){
   setupPhase(p,'fixture-import');await p.locator('#fileInput').setInputFiles({name:'autosave-state.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   setupPhase(p,'fixture-wait-project');await p.waitForFunction(()=>Akari.app.project.name==='自動保存状態の検証');setupPhase(p,'fixture-project-loaded');await p.locator('#uiLevel').selectOption('advanced');
   await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');
-  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModecode').click();setupPhase(p,'fixture-complete');
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'code');setupPhase(p,'fixture-complete');
   }catch(error){setupRecords.get(p)?.push({phase:'fixture-failed',at:Date.now(),state:await Promise.race([p.evaluate(()=>({ready:document.readyState,state:globalThis.Akari?.app?.editorState?.state,name:globalThis.Akari?.app?.project?.name,input:document.querySelector('#fileInput')?.value,console:document.querySelector('#console')?.textContent})).catch(e=>({error:e.message})),new Promise(resolve=>setTimeout(()=>resolve({unavailable:'diagnostic timeout after 2 seconds'}),2000))])});throw error;}
   finally{p.setDefaultTimeout(8000);}
 }
@@ -94,7 +98,7 @@ try{await withBrowser(chrome,async browser=>{
     const o=await pausedScenario(p,'second',{document:{revision:7,unitIds:['first-event','second-event']},restored:true});
     await p.locator('#failureEditList').click();o.opened=await state(p);await p.locator('#listRepairChoice').selectOption('0');await p.locator('#listRepairApply').click();o.applied=await state(p);
     await p.locator('#undoBtn').click();o.undo=await state(p);await p.locator('#redoBtn').click();o.redo=await state(p);
-    await p.locator('#runBtn').click();await p.waitForFunction(()=>[...document.querySelectorAll('#runtimeMonitor .monitor-row')].some(r=>r.querySelector('.monitor-key')?.textContent==='点数'&&r.querySelector('.monitor-value')?.textContent==='パン'));o.rerun=await state(p);await p.locator('#stopBtn').click();await settled(p);o.afterRecord=await record(p);
+    await p.locator('#runBtn').click();await p.waitForFunction(()=>[...document.querySelectorAll('#runtimeMonitor .monitor-row')].some(r=>r.querySelector('.monitor-key')?.textContent==='点数'&&r.querySelector('.monitor-value')?.textContent==='パン'));o.rerun=await state(p);await pressStop(p.locator('#stopBtn'));await settled(p);o.afterRecord=await record(p);
     await restore(p);o.finalRestore=await state(p);await p.locator('#undoBtn').click();o.restoredUndo=await state(p);await p.locator('#redoBtn').click();o.restoredRedo=await state(p);return o;
   });
   await run('paused/plain-script',p=>pausedScenario(p,'plain'));
@@ -124,6 +128,9 @@ try{await withBrowser(chrome,async browser=>{
     await p.locator('#projectName').fill('自動保存状態の検証・手順');await p.locator('#projectName').press('Tab');await settled(p);await restore(p);await instrument(p);
     const o={restoredFromStorage:true,before:await state(p),paused:await pause(p)};await settled(p);o.settled=await state(p);o.record=await record(p);
     await p.locator('#failureClose').click();
+    // 保存 cannot be pressed on the run screen (1.5.0, LANGUAGE.md 「作る画面と動かす画面」): stop first, then save.
+    o.saveDisabledWhilePaused=await p.locator('#saveBtn').isDisabled();if(!o.saveDisabledWhilePaused)throw Error('保存 can be pressed while paused');
+    await pressStop(p.locator('#stopBtn'));await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
     const [download]=await Promise.all([p.waitForEvent('download'),p.locator('#saveBtn').click()]),file=await download.path();
     if(!file)throw Error('Manual project download did not complete');
     o.exported=await p.evaluate(async text=>{const parsed=await Akari.parseProjectFile(text);return{project:parsed.project,editorState:parsed.editorState};},fs.readFileSync(file,'utf8'));

@@ -13,26 +13,36 @@ p.actions=[{id:'bow',ownerId:'stage',name:'おじぎ',args:[],source:'右へ15�
 p.functions=[{id:'price',ownerId:'stage',name:'代金',args:['個数','ねだん'],source:'個数とねだんをかけた数を答えとして返す。'}];
 const ctx={targetId:'sprite-1',event:'start'},hints=A.hintCandidates(p,'sprite-1',{source:'',...ctx});
 const find=q=>A.blockSearchCandidates(p,ctx,q,hints), code=q=>A.searchHintCandidates(hints,q,p,ctx);
-const cases=[['右に行きたい','MotionCommand:MOVE_DIRECTION'],['小さくしたい','LooksCommand:SET_SCALE'],['おおきさ','LooksCommand:SET_SCALE'],['2番目に入れたい','ListInsert'],['点数','VariableRead'],['てんすう','VariableRead'],['おじぎ','UserActionCall'],['代金','UserFunctionCall']];
+const cases=[['右に行きたい','MotionCommand:MOVE_BY'],['小さくしたい','LooksCommand:SET_SCALE'],['おおきさ','LooksCommand:SET_SCALE'],['2番目に入れたい','ListInsert'],['点数','VariableRead'],['てんすう','VariableRead'],['おじぎ','UserActionCall'],['代金','UserFunctionCall']];
 for(const [query,schema]of cases)check('search/required/'+query,()=>{
  const blocks=find(query),texts=code(query);assert.ok(blocks.some(b=>b.id===schema));assert.ok(texts.length);
  for(const b of blocks)if(b.candidateNode)A.blockDecode(b.candidateNode);
  return{schema,code:texts.length,block:blocks.length};
 });
 for(const [query,direction]of [['ひだりにすすみたい','left'],['上へ動かしたい','up'],['シタへイキタイ','down'],['画面の右へ移動したい','right']])check('search/direction/'+query,()=>{
- const b=find(query)[0];assert.equal(b.id,'MotionCommand:MOVE_DIRECTION');assert.equal(b.candidateNode.fields.direction,direction);
+ // いまのばしょから動く with one direction: よこ (右・左) or たて (上・下), the other step left out (LANGUAGE.md 動きの文).
+ const b=find(query)[0],[axis,other,key]=['right','left'].includes(direction)?['x','y','xDir']:['y','x','yDir'];assert.equal(b.id,'MotionCommand:MOVE_BY');
+ const node=A.blockDecode(b.candidateNode);assert.equal(node[key],direction);assert.ok(node[axis]&&node[other]===undefined);
  const parsed=A.parseSyntax(code(query)[0].text,{symbols:A.buildSymbols(p)});assert.equal(parsed.syntaxDiagnostics.length,0);
- assert.equal(parsed.ast.body[0].direction,direction);return{direction};
+ const n=parsed.ast.body[0];assert.equal(n.op,'MOVE_BY');assert.equal(n[key],direction);assert.ok(n[axis]&&n[other]===undefined);return{direction};
 });
 for(const [query,index]of [['５番目に入れたい',5],['3ばんめにいれたい',3],['10番目へ挿入',10]])check('search/ordinal/'+query,()=>{
  const b=find(query)[0];assert.equal(b.id,'ListInsert');assert.equal(b.candidateNode.inputs.index.fields.value,index);
  assert.equal(b.candidateNode.inputs.target.fields.name,'持ち物');assert.match(code(query)[0].text,new RegExp(index+'番目'));return{index,boundList:'持ち物'};
 });
+// E1-R1-07 (E-13; LANGUAGE.md lists くらべる among the かんたん 計算 blocks): words a child uses for a block find it, and
+// 「ひく」 puts a subtraction first, not an addition.
+for(const [query,wanted]of [['くらべる',id=>id.startsWith('CompareExpression:')],['ランダム',id=>id==='BuiltinCall:乱数'],['まわす',id=>id.startsWith('MotionCommand:TURN_')],
+ ['やめる',id=>id.startsWith('StopCommand:')],['とまる',id=>id.startsWith('StopCommand:')],['へる',id=>id==='NumericUpdate:SUB'],
+ ['クリック',id=>id==='SensorRead:マウスが押されている'],['タッチ',id=>['SensorRead:マウスが押されている','SensorRead:TOUCHING'].includes(id)]])check('search/child-words/'+query,()=>{
+ const ids=find(query).map(b=>b.id);assert.ok(ids.some(wanted),query+' finds its block: '+ids.slice(0,5).join(', '));return{first:ids[0]};
+});
+check('search/child-words/ひく-subtracts-first',()=>{const ids=find('ひく').map(b=>b.id);assert.ok(['NumericUpdate:SUB','BinaryExpression:SUB'].includes(ids[0]),'ひく puts a subtraction first: '+ids.slice(0,5).join(', '));return{first:ids[0]};});
 check('search/scopes-remain-distinct',()=>{const reads=find('てんすう').filter(b=>b.id==='VariableRead');assert.deepEqual(plain(reads.map(b=>b.candidateNode.fields.qualifier)),['project','self']);
  assert.ok(!find('点数').some(b=>['UserActionCall','UserFunctionCall','ListInsert','ListReplace'].includes(b.id)));return{qualifiers:['project','self'],typed:true};});
 check('search/callable-arguments-and-kind',()=>{const f=find('だいきん')[0];assert.equal(f.id,'UserFunctionCall');assert.equal(f.candidateNode.fields.name,'代金');assert.deepEqual(plain(f.candidateNode.fields.argumentNames),['個数','ねだん']);assert.equal(f.candidateNode.inputs.args.length,2);return{name:'代金',args:2};});
 check('search/no-query-mutation',()=>{const before=JSON.stringify(p);for(const [q]of cases){find(q);code(q);}assert.equal(JSON.stringify(p),before);return{projectUnchanged:true};});
-check('search/rotation-and-replacement-distinct',()=>{assert.ok(!find('右に回る').some(b=>b.id==='MotionCommand:MOVE_DIRECTION'));assert.equal(A.searchIntent('2番目を置き換えたい'),null);return{moveNotRotation:true,insertNotReplace:true};});
+check('search/rotation-and-replacement-distinct',()=>{assert.ok(!find('右に回る').some(b=>b.id==='MotionCommand:MOVE_BY'));assert.equal(A.searchIntent('2番目を置き換えたい'),null);return{moveNotRotation:true,insertNotReplace:true};});
 check('search/unavailable-reason',()=>{const stage=A.hintCandidates(p,'stage',{source:''}),match=A.searchHintCandidates(stage,'右に行きたい',p)[0];assert.equal(match.enabled,false);assert.match(match.reason,/部品/);return{enabled:false,reason:match.reason};});
 check('search/bound-insertion-semantic',()=>{
  const session=A.createEditorSession('script:search-body','',ctx,p);

@@ -1,6 +1,7 @@
 // Explicit regression preconditions, entered through the real file-open and editor UI.
 // The production factory and every product API remain untouched.
 const {makeRegressionProject} = require('../../fixtures/regression-project.cjs');
+const {chooseView} = require('./view-toggle.cjs');
 const factorySource = `globalThis.makeAkariRegressionProject = (${makeRegressionProject.toString()});`;
 async function installRegressionFactory(page) {
   await page.addInitScript({content: factorySource});
@@ -29,7 +30,7 @@ async function openRegressionEditor(page, {target = 'stage', mode = 'code'} = {}
   if (target) await (await revealRegressionControl(page.locator('#objectSelect'))).selectOption(target);
   if (target) await (await revealRegressionControl(page.locator('#eventSelect'))).selectOption('start');
   if (await page.locator('#sourceOverview').isVisible()) await (await revealRegressionControl(page.locator('#sourceEditBtn'))).click();
-  if (mode) await (await revealRegressionControl(page.locator('#editorMode' + mode))).click();
+  if (mode) await chooseView(page, mode, {reveal: revealRegressionControl});
 }
 async function setupRegressionPage(page, options) {
   await page.waitForFunction(() => !!globalThis.Akari?.app);
@@ -89,21 +90,41 @@ async function completeRegressionHoles(page, rootSelector = '#blockEditor', topI
       await picker.selectOption(value);
     } else {
       const direct = root.locator('[data-expression-hole="true"][data-block-id="' + hole.node.id + '"]');
-      if (hole.node.schemaId === 'Hole:expression' && await direct.count() === 1) {
-        // Compact numeric holes expose the same expression destination through
-        // their owning command's visible Edit disclosure.
-        const owner = direct.locator('xpath=ancestor::article[1]');
-        await (await revealRegressionControl(owner.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="quantity-expression"]'))).click();
+      const compact = hole.node.schemaId === 'Hole:expression' && await direct.count() === 1;
+      const literal = expected.schemaId === 'NumberLiteral' ? expected
+        : expected.schemaId === 'QuantityLiteral' && expected.inputs?.value?.schemaId === 'NumberLiteral' ? expected.inputs.value : null;
+      if (compact && literal) {
+        // A compact numeric hole is a number field (1.5.0, E-02): the number is typed into it. Its
+        // 「計算で決める」／「計算を入れる」 take calculations, not a plain number.
+        await (await revealRegressionControl(direct)).fill(String(literal.fields.value));
+        await direct.press('Enter');
       } else {
-        await (await revealRegressionControl(node.locator('[data-blockui-action="hole-select-' + (hole.body ? 'statement' : 'expression') + '"]'))).click();
+        if (compact) {
+          // A calculation goes into a compact numeric hole through the owning command's 「計算で決める」
+          // (回・秒 of くり返す, 話す, 待つ) or, in a value slot, through the slot's own tools: choosing the
+          // number field shows them, and 「計算を入れる」 opens the expression palette (1.5.0).
+          const owner = direct.locator('xpath=ancestor::article[1]');
+          const quantity = owner.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="quantity-expression"]');
+          if (await quantity.count()) await (await revealRegressionControl(quantity.first())).click();
+          else {
+            const slot = direct.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-input-slot ")][1]');
+            await (await revealRegressionControl(direct)).click();
+            await (await revealRegressionControl(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'))).click();
+          }
+        } else {
+          await (await revealRegressionControl(node.locator('[data-blockui-action="hole-select-' + (hole.body ? 'statement' : 'expression') + '"]'))).click();
+        }
+        await (await revealRegressionControl(root.locator('[data-blockui-search]'))).fill(expected.schemaId);
+        await (await revealRegressionControl(root.locator('[data-blockui-schema="' + expected.schemaId + '"]'))).click();
       }
-      await (await revealRegressionControl(root.locator('[data-blockui-search]'))).fill(expected.schemaId);
-      await (await revealRegressionControl(root.locator('[data-blockui-schema="' + expected.schemaId + '"]'))).click();
     }
     const parent = find(await tree(), hole.parent.id);
     let inserted = hole.body ? parent.bodies[hole.key][hole.index] : hole.index === null ? parent.inputs[hole.key] : parent.inputs[hole.key][hole.index];
     if (inserted?.schemaId === 'QuantityLiteral' && expected.schemaId !== 'QuantityLiteral') inserted = inserted.inputs.value;
     for (const [key, value] of Object.entries(expected.fields || {})) {
+      // The target picker above already chose an existing target of the work; its name field (a typed name
+      // with suggestions in 1.5.0) must not be overwritten with the fixture's name when that target is absent.
+      if (hole.node.schemaId === 'Hole:target' && key === 'name') continue;
       const control = root.locator('[data-block-id="' + inserted.id + '"][data-blockui-field="' + key + '"]');
       if (!await control.count()) continue;
       const tag = await control.evaluate(el => el.tagName);

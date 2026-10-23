@@ -10,7 +10,7 @@ import {verifyCapabilityContract,corpusPath,corpusMarkdownPath} from '../lib/cap
 // A changed oracle needs an explicit, reviewed contract change, never a refresh
 // from candidate observations. Static success is not a product execution PASS.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const frozenFixtureSha256 = '193da249c365f39b835cfba0172da2246a7074f7e525dbe7815c7b314d61dfbc';
+const frozenFixtureSha256 = '394876a56697c737ec71bf7544d7fe79ddd6fa07717668215bd35cb4eb4f2fa0';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const unique = (values, label) => assert.equal(new Set(values).size, values.length, label + ': duplicate');
 const sameSet = (actual, expected, label) => {
@@ -42,8 +42,9 @@ export function verifyOracleCurrentLists(oracle, features, language) {
   sameSet(documentedBuiltins.map(name => 'builtin:' + name),
     oracle.categories.builtins.filter(id => !/^builtin:[A-Z_]+$/.test(id)), 'LANGUAGE.md builtin list');
   // Every registered state name that the language reads is documented; 「＝」 joins it with the written form.
-  // クローンである is a registered name the language no longer reads, so it must not be documented.
-  const documentedStates = new Set(documentedSensors.map(name => 'state:' + name)), unreadStates = ['state:クローンである'];
+  // クローンである, and 横位置・縦位置 with the mouse's (1.5.0 writes よこのばしょ・たてのばしょ, B-11), are registered names
+  // the language no longer reads, so they must not be documented.
+  const documentedStates = new Set(documentedSensors.map(name => 'state:' + name)), unreadStates = ['state:クローンである', 'state:横位置', 'state:縦位置', 'state:マウスの横位置', 'state:マウスの縦位置'];
   for (const id of oracle.categories.fixedSensors) assert.equal(documentedStates.has(id), !unreadStates.includes(id), 'LANGUAGE.md fixed sensor list: ' + id);
   sameSet(schemaNames('SensorRead:').filter(name => !/^[A-Z_]+$/.test(name)).map(name => 'state:' + name), oracle.categories.fixedSensors, 'fixed sensor schemas');
 }

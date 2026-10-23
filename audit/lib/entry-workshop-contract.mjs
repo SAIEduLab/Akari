@@ -11,8 +11,8 @@ export const entryProvenance=productFile=>{
  return {commitSha,workingTreeDirty:!!records.length,publicInputsDirty,committedProductSha256};
 };
 // Independent expectations from the approved order, not copied from the live allow list.
-export const entrySchemas=Object.freeze(['MotionCommand:MOVE_DIRECTION','MotionCommand:TURN_RIGHT','MotionCommand:TURN_LEFT',
- 'MotionCommand:GOTO','MotionCommand:GLIDE','MotionCommand:GLIDE_DIRECTION','Say','WaitTime','RepeatCount',
+export const entrySchemas=Object.freeze(['MotionCommand:GOTO','MotionCommand:MOVE_BY','MotionCommand:MOVE','MotionCommand:TURN_RIGHT','MotionCommand:TURN_LEFT',
+ 'Say','WaitTime','RepeatCount',
  'LooksCommand:SET_COSTUME','LooksCommand:SET_BACKDROP','SoundCommand:TONE_WAIT','SoundCommand:SAMPLE_WAIT']);
 export const tutorialSteps=Object.freeze(auditRoute());
 

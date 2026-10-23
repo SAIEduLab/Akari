@@ -110,7 +110,8 @@ function runCoreTests() {
       [2, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n 点数を1にする', 3],
       [3, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n    点数を1にする', 3],
       [4, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n\t点数を1にする', 2],
-      [5, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n　点数を1にする', 2],
+      // A full-width space at a line's start reads as two spaces (LANGUAGE.md); two of them are one indent too deep here.
+      [5, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n　　点数を1にする', 3],
       [6, 'そうでなければ、次のことをする。\n  何もしない', 1],
       [7,
         'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない\n点数を1にする\nそうでなければ、次のことをする。\n  何もしない',
@@ -128,6 +129,28 @@ function runCoreTests() {
       [11, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  ※ コメントだけ', 1],
       [13, '3回くり返す。\n  何もしない\nここまで', 3],
     ];
+    // One full-width space at a line's start is the indent of two spaces, and 整える writes the two spaces (LANGUAGE.md).
+    // LANGUAGE.md 読めない文の案内: when a nearer way of writing is shown (れい：…), that example is itself a readable
+    // sentence, also when the child wrote two よこ or two たて directions (一つの文には、よこを一つ、たてを一つまで書けます).
+    test('a move message example is itself readable', () => {
+      for (const source of ['右へ10歩動く。', '右へ左へ20歩動く。', '右へ20歩左へ動く。', '上へ下へ5歩動く。', 'いまのばしょから、右へ20歩、左へ10歩動く。']) {
+        const diagnostics = parseSyntax(source, { symbols: sy }).syntaxDiagnostics || [];
+        ok(diagnostics.length, source + ' is refused');
+        for (const d of diagnostics) {
+          const example = String(d.message).split('れい：')[1];
+          if (!example) continue;
+          const sentence = example.replace(/。$/, '') + '。', again = parseSyntax(sentence, { symbols: sy });
+          eq({ source, sentence, codes: (again.syntaxDiagnostics || []).map((x) => x.code) }, { source, sentence, codes: [] });
+        }
+      }
+    });
+    test('indent full-width space reads as two spaces', () => {
+      const wide = parseScript('もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n　点数を1にする', sy),
+        narrow = parseScript('もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  点数を1にする', sy);
+      eq(clean(wide), clean(narrow));
+      eq(formatScript(wide), formatScript(narrow));
+      ok(!formatScript(wide).includes('\u3000'), 'the formatted text keeps a full-width space');
+    });
     for (const [i, source, line] of invalid)
       test('indent reject ' + i, () => {
         let e;
@@ -209,14 +232,23 @@ function runCoreTests() {
         if (command.op) eq(ast.body[0].op, command.op);
         eq(clean(parseScript(formatScript(ast), sy, ctx)), clean(ast));
       });
+    // LANGUAGE.md 動きの文 and 移動量と座標の意味: places are centres from the bottom-left, y grows upward,
+    // 右に〇度回る lowers the angle and 左に〇度回る raises it.
     test('runtime motion', () => {
       const h = run(
-        '横100、縦50の位置へ行く。\n方向を90度にする。\n10歩動く。\n右に15度回る。\n左に5度回る。\n横位置を30にする。\n縦位置を40にする。\n1秒で横200、縦100の位置へ滑る。',
+        '画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。\n方向を90度にする。\n10歩動く。\n右に15度回る。\n左に5度回る。\n画面の左下のはしから、右へ30歩、上へ（たてのばしょ）歩のばしょへ行く。\n画面の左下のはしから、右へ（よこのばしょ）歩、上へ40歩のばしょへ行く。\n1秒かけて、画面の左下のはしから、右へ200歩、上へ100歩のばしょへ行く。',
         'sprite-1',
       );
       const a = h.r.actor('sprite-1');
-      eq([a.x, a.y, a.direction], [200, 100, 100]);
+      eq([a.x, a.y, a.direction], [200, 100, 80]);
       h.stop();
+      const m = run('いまのばしょから、右へ10歩、上へ5歩動く。\nいまのばしょから、左へ3歩動く。\n1秒かけて、いまのばしょから、下へ25歩動く。\n1秒かけて、右に90度回る。', 'sprite-1');
+      const b = m.r.actor('sprite-1');
+      eq([b.x, b.y, b.direction], [327, 180, 270]);
+      m.stop();
+      const g = run('「ボタン1」のところへ行く。', 'sprite-1');
+      eq([g.r.actor('sprite-1').x, g.r.actor('sprite-1').y], [g.r.actor('button-1').x, g.r.actor('button-1').y]);
+      g.stop();
     });
     test('runtime looks layers text backdrop costumes', () => {
       const h = run(
@@ -304,7 +336,8 @@ function runCoreTests() {
             valueChanged: '新しい値',
           }[event];
           p.scripts = [
-            { targetId: id, event, source: value ? value + 'の値を言う。' : '点数に1を足す。' },
+            // A touch body names what it touches (the stage edge here).
+            { targetId: id, event, source: value ? value + 'の値を言う。' : '点数に1を足す。', ...(event === 'touchStart' ? { filter: { target: '端' } } : {}) },
           ];
           const compiled = compileProject(p);
           ok(!compiled.errors.length, JSON.stringify(compiled.errors));
@@ -334,6 +367,14 @@ function runCoreTests() {
           else eq(r.projectVars.get('点数'), 1);
           q.stop();
         });
+    // A test is named by its sensor (the block schema SensorRead:<name>). 1.5.0 no longer reads 位置, so the four
+    // position sensors are read through their LANGUAGE.md spellings (読み取れる状態の一覧).
+    const spellings = {
+      マウスの横位置: ['マウスのよこのばしょ', 'マウスの横のばしょ'],
+      マウスの縦位置: ['マウスのたてのばしょ', 'マウスの縦のばしょ'],
+      横位置: ['横のばしょ', '横の場所'],
+      縦位置: ['縦のばしょ', '縦の場所'],
+    };
     const sensors = {
       マウスが押されている: true,
       マウスの横位置: 35,
@@ -347,10 +388,11 @@ function runCoreTests() {
       背景名: '空色',
       衣装番号: 1,
       衣装名: '星',
-      横位置: 230,
-      縦位置: 110,
-      よこのばしょ: 230,
-      たてのばしょ: 110,
+      // The regression actor's centre, measured from the bottom-left.
+      横位置: 320,
+      縦位置: 200,
+      よこのばしょ: 320,
+      たてのばしょ: 200,
       方向: 0,
       大きさ: 100,
       タイマー: 2,
@@ -360,7 +402,7 @@ function runCoreTests() {
       以前の値: '旧',
       新しい値: '新',
       空白キーが押されている: true,
-      端に触れている: false,
+      画面の端に触れている: false,
       '「赤」の色に触れている': false,
       マウスまでの距離: Math.hypot(320 - 35, 200 - 45),
     };
@@ -388,19 +430,29 @@ function runCoreTests() {
             newValue: '新',
           },
         };
-        const actual = evalExpression(parseExpression(source, sy), ctx),
-          expectedUnit = {
+        const expectedUnit = {
             マウスの横位置: '歩', マウスの縦位置: '歩', 横位置: '歩', 縦位置: '歩', よこのばしょ: '歩', たてのばしょ: '歩',
             方向: '度', 大きさ: '％', タイマー: '秒', 音量: '％', マウスまでの距離: '歩',
           }[source];
-        if (expectedUnit) {
-          eq(actual.unit, expectedUnit);
-          ok(Math.abs(actual.magnitude - wanted) < 1e-9, source + ': ' + actual.magnitude);
-          eq(Object.keys(actual).sort(), ['magnitude', 'unit']);
-        } else if (typeof wanted === 'number')
-          ok(Math.abs(actual - wanted) < 1e-9, source + ': ' + actual);
-        else eq(actual, wanted);
+        for (const text of spellings[source] || [source]) {
+          const actual = evalExpression(parseExpression(text, sy), ctx);
+          if (expectedUnit) {
+            eq(actual.unit, expectedUnit);
+            ok(Math.abs(actual.magnitude - wanted) < 1e-9, text + ': ' + actual.magnitude);
+            eq(Object.keys(actual).sort(), ['magnitude', 'unit']);
+          } else if (typeof wanted === 'number')
+            ok(Math.abs(actual - wanted) < 1e-9, text + ': ' + actual);
+          else eq(actual, wanted);
+        }
       });
+    // LANGUAGE.md 読めない書き方: 「位置」 is not read, and the guidance names the word to write.
+    test('sensor 位置 is not read', () => {
+      for (const [source, word] of [['横位置', 'よこのばしょ'], ['縦位置', 'たてのばしょ'], ['マウスの横位置', 'よこのばしょ'], ['マウスの縦位置', 'たてのばしょ']]) {
+        let error = null;
+        try { parseExpression(source, sy); } catch (e) { error = e; }
+        ok(error?.code === 'P205' && error.message.includes('「' + word + '」'), source + ': ' + (error ? error.code + ' ' + error.message : 'read'));
+      }
+    });
     // 名人 runtime: parts as values and lanes started together in one flow. The 名人 sentences that make these
     // nodes are read by the 名人 parser; here the nodes are built from common sentences, so the runtime is
     // tested on its own.
@@ -442,7 +494,7 @@ function runCoreTests() {
     };
     test('meijin part in a variable is the subject', () => {
       const p = laneProject(['主役']), set = name => ({ ...laneParse(p, '主役を0にする。')[0], value: partRef(name) });
-      const out = laneRun(p, [set('ねこ'), bySubject(laneParse(p, 'ねこは画面の右へ10歩動く。')[0], variableRead('主役')),
+      const out = laneRun(p, [set('ねこ'), bySubject(laneParse(p, 'ねこは、いまのばしょから、右へ10歩動く。')[0], variableRead('主役')),
         bySubject(laneParse(p, 'ねこは「出番だ」と言う。')[0], variableRead('主役')), set('犬'),
         bySubject(laneParse(p, 'ねこは「次はぼく」と言う。')[0], variableRead('主役'))], { until: 100, samples: [100] });
       eq([out.x[100]['core-cat'], out.x[100]['core-dog']], [10, 40]);
@@ -458,7 +510,7 @@ function runCoreTests() {
     });
     test('meijin lanes glide at the same time and the flow waits for both', () => {
       const p = laneProject();
-      const out = laneRun(p, [{ kind: 'Parallel', lanes: [laneParse(p, 'ねこは2秒かけて画面の右へ40歩動く。'), laneParse(p, '犬は2秒かけて画面の右へ40歩動く。')] },
+      const out = laneRun(p, [{ kind: 'Parallel', lanes: [laneParse(p, 'ねこは2秒かけて、いまのばしょから、右へ40歩動く。'), laneParse(p, '犬は2秒かけて、いまのばしょから、右へ40歩動く。')] },
         laneParse(p, '犬は「ついた」と言う。')[0]], { samples: [1000] });
       eq([out.x[1000]['core-cat'], out.x[1000]['core-dog']], [20, 60]);
       ok(out.speech[0][0] >= 2000 && out.speech[0][0] <= 2020, 'next sentence at ' + out.speech[0][0]);
@@ -468,14 +520,14 @@ function runCoreTests() {
       const p = laneProject(), append = name => ({ ...laneParse(p, 'なかまの最後に0を入れる。')[0], value: partRef(name) });
       const each = laneParse(p, 'なかまの中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【だれ】と呼ぶ。\n  何もしない。')[0];
       const out = laneRun(p, [append('ねこ'), append('犬'), append('鳥'),
-        { kind: 'ParallelEach', list: each.list, binder: each.binder, body: [bySubject(laneParse(p, 'ねこは1秒かけて画面の右へ30歩動く。')[0], variableRead(each.binder))] },
+        { kind: 'ParallelEach', list: each.list, binder: each.binder, body: [bySubject(laneParse(p, 'ねこは1秒かけて、いまのばしょから、右へ30歩動く。')[0], variableRead(each.binder))] },
         laneParse(p, 'ねこは「そろった」と言う。')[0]], { samples: [500] });
       eq(Object.values(out.x[500]), [15, 55, 95]);
       ok(out.speech[0][0] >= 1000 && out.speech[0][0] <= 1020, 'next sentence at ' + out.speech[0][0]);
     });
     test('meijin stopping in a lane stops the whole flow', () => {
       const p = laneProject();
-      const out = laneRun(p, [{ kind: 'Parallel', lanes: [laneParse(p, 'ねこは2秒かけて画面の右へ40歩動く。'), laneParse(p, '1秒待つ。\nこの動きを止める。')] },
+      const out = laneRun(p, [{ kind: 'Parallel', lanes: [laneParse(p, 'ねこは2秒かけて、いまのばしょから、右へ40歩動く。'), laneParse(p, '1秒待つ。\nこの動きを止める。')] },
         laneParse(p, '犬は「あと」と言う。')[0]], { samples: [1500, 3000] });
       eq([out.x[1500]['core-cat'], out.x[3000]['core-cat']], [20, 20]);
       eq([out.speech, out.tasks, out.waitGroups], [[], 0, 0]);
@@ -502,7 +554,7 @@ function runCoreTests() {
     });
     test('meijin an error in a lane ends the flow', () => {
       const p = laneProject(), bad = { ...laneParse(p, 'ねこは前へ10歩進む。')[0], args: [{ kind: 'QuantityLiteral', unit: '歩', value: partRef('ねこ') }] };
-      const out = laneRun(p, [{ kind: 'Parallel', lanes: [[bad], laneParse(p, 'ねこは2秒かけて画面の右へ40歩動く。')] }, laneParse(p, '犬は「あと」と言う。')[0]], { until: 3000 });
+      const out = laneRun(p, [{ kind: 'Parallel', lanes: [[bad], laneParse(p, 'ねこは2秒かけて、いまのばしょから、右へ40歩動く。')] }, laneParse(p, '犬は「あと」と言う。')[0]], { until: 3000 });
       ok(out.errors.length > 0, 'the error is reported');
       eq(out.speech, []);
     });
@@ -524,13 +576,13 @@ function runCoreTests() {
       return p;
     };
     test('meijin script is saved without owner or event', () => {
-      const p = meijinProject('ねこは右へ10歩動く。'), text = serializeProject(p, new AssetStore());
+      const p = meijinProject('ねこは、いまのばしょから、右へ10歩動く。'), text = serializeProject(p, new AssetStore());
       const saved = JSON.parse(text.split('```json\n').pop().split('\n```')[0]).scripts;
-      eq(saved, [{ id: 'core-meijin', mode: 'meijin', source: 'ねこは右へ10歩動く。' }]);
+      eq(saved, [{ id: 'core-meijin', mode: 'meijin', source: 'ねこは、いまのばしょから、右へ10歩動く。' }]);
       ok(text.includes('### 名人の本文'), 'the readable body names 名人の本文');
     });
     test('meijin script compiles as the stage and its headings name the parts', () => {
-      const compiled = compileProject(meijinProject('ねこは右へ10歩動く。\n犬がおされたとき、\n  犬は「いたい」と言う。'));
+      const compiled = compileProject(meijinProject('ねこは、いまのばしょから、右へ10歩動く。\n犬がおされたとき、\n  犬は「いたい」と言う。'));
       eq(compiled.errors, []);
       eq(compiled.items.filter(i => i.key.startsWith('script:')).map(i => [i.targetId, i.event]), [['stage', 'start'], ['core-dog', 'click']]);
     });
@@ -540,8 +592,8 @@ function runCoreTests() {
       ok(errors[0].message.startsWith('名人の 本文では、だれが するかを'), errors[0].message);
     });
     test('meijin script follows a renamed part', () => {
-      const renamed = Akari.prepareResourceRename(meijinProject('ねこは右へ10歩動く。\n犬がおされたとき、\n  ねこは「いたい」と言う。'), 'component:core-cat', 'みけ', {});
-      eq(renamed.scripts[0].source, 'みけは右へ10歩動く。\n犬がおされたとき、\n  みけは「いたい」と言う。');
+      const renamed = Akari.prepareResourceRename(meijinProject('ねこは、いまのばしょから、右へ10歩動く。\n犬がおされたとき、\n  ねこは「いたい」と言う。'), 'component:core-cat', 'みけ', {});
+      eq(renamed.scripts[0].source, 'みけは、いまのばしょから、右へ10歩動く。\n犬がおされたとき、\n  みけは「いたい」と言う。');
     });
     test('meijin script in memory keeps the pseudo owner', () => {
       for (const bad of [{ id: 'x', mode: 'meijin', targetId: 'stage', event: 'start', source: '' }, { id: 'x', mode: 'other', targetId: 'meijin', event: 'start', source: '' }]) {
@@ -582,7 +634,7 @@ function runCoreTests() {
       eq(out.speech, ['0:ねこ:ねこ', '0:犬:そう']);
     });
     test('meijin everyone of a set starts at once, in turn one after another', () => {
-      const all = meijinRun('なかまを、ねこと犬と鳥にする。\nなかまは、みんな1秒かけて画面の右へ30歩動く。\nねこは「そろった」と言う。', { until: 1200, samples: [500] });
+      const all = meijinRun('なかまを、ねこと犬と鳥にする。\nなかまは、みんな1秒かけて、いまのばしょから、右へ30歩動く。\nねこは「そろった」と言う。', { until: 1200, samples: [500] });
       eq([all.x[500], all.speech], [[15, 215, 415], ['1010:ねこ:そろった']]);
       eq(meijinRun('なかまを、ねこと犬と鳥にする。\nなかまは、順番に「やあ」と1秒話す。\n犬は「おわり」と言う。', { until: 3500 }).speech,
         ['0:ねこ:やあ', '1010:犬:やあ', '2020:鳥:やあ', '3030:犬:おわり']);
@@ -603,15 +655,15 @@ function runCoreTests() {
       eq([all.vars.合計, all.vars.点数, all.copies, all.speech, all.errors], [3, 0, 0, [], []]);
     });
     test('meijin parts touching, nearest, distance and going to another', () => {
-      const out = meijinRun('ねこのよこのばしょを0にする。\n犬のよこのばしょを10にする。\nねこにふれているものは、みんな「いたい」と言う。\n点数を、ねこから鳥までのきょりにする。\nなかまを、犬と鳥にする。\nねこは、いちばん近いなかまの方を向く。\nねこは、鳥のところへ行く。\n合計を、ねこのよこのばしょにする。', { until: 50 });
+      const out = meijinRun('ねこは画面の左下のはしから、右へ0歩、上へ100歩のばしょへ行く。\n犬は画面の左下のはしから、右へ10歩、上へ100歩のばしょへ行く。\nねこにふれているものは、みんな「いたい」と言う。\n点数を、ねこから鳥までのきょりにする。\nなかまを、犬と鳥にする。\nねこは、いちばん近いなかまの方を向く。\nねこは、鳥のところへ行く。\n合計を、ねこのよこのばしょにする。', { until: 50 });
       eq([out.speech, out.vars.点数, out.vars.合計, out.errors], [['0:犬:いたい'], 400, 400, []]);
       ok(Math.abs(out.direction) < 1e-9, 'ねこ faces 犬, the nearest: ' + out.direction);
     });
     test('meijin sentences of several subjects, あいだ, ながら and 次のことを同時に始める start together', () => {
-      eq(meijinRun('ねこと犬は、2秒かけて画面の右へ40歩動く。\nねこも犬も、「やった」と言う。', { until: 2500, samples: [1000] }).x[1000], [20, 220, 400]);
-      eq(meijinRun('ねこが2秒かけて画面の右へ40歩動くあいだ、犬は「がんばれ」と1秒話す。\nねこが2秒かけて画面の右へ40歩動いているうちに、犬は「まって」と言う。\nねこは「まってー」と2秒話しながら、2秒かけて画面の右へ40歩動く。\n鳥は「おわり」と言う。', { until: 7000 }).speech,
+      eq(meijinRun('ねこと犬は、2秒かけて、いまのばしょから、右へ40歩動く。\nねこも犬も、「やった」と言う。', { until: 2500, samples: [1000] }).x[1000], [20, 220, 400]);
+      eq(meijinRun('ねこが2秒かけて、いまのばしょから、右へ40歩動くあいだ、犬は「がんばれ」と1秒話す。\nねこが2秒かけて、いまのばしょから、右へ40歩動いているうちに、犬は「まって」と言う。\nねこは「まってー」と2秒話しながら、2秒かけて、いまのばしょから、右へ40歩動く。\n鳥は「おわり」と言う。', { until: 7000 }).speech,
         ['0:犬:がんばれ', '2010:犬:まって', '4020:ねこ:まってー', '6030:鳥:おわり']);
-      const together = meijinRun('次のことを同時に始める。\n  ねこは2秒かけて画面の右へ40歩動く。\n  犬は「ぼくも」と1秒話す。\n犬は「ついた」と言う。', { until: 3000, samples: [1000] });
+      const together = meijinRun('次のことを同時に始める。\n  ねこは2秒かけて、いまのばしょから、右へ40歩動く。\n  犬は「ぼくも」と1秒話す。\n犬は「ついた」と言う。', { until: 3000, samples: [1000] });
       eq([together.x[1000][0], together.speech], [20, ['0:犬:ぼくも', '2010:犬:ついた']]);
     });
     test('meijin moving until a condition or for a time, and repeating for a time', () => {
@@ -637,7 +689,7 @@ function runCoreTests() {
       eq(meijinRun('犬と鳥に「出発」と知らせて、その合図で始まったことが全部終わるまで待つ。\nねこは「みんな」と言う。', { until: 50, extra }).speech, ['0:犬:いくよ', '0:鳥:ぼくも', '0:ねこ:みんな']);
     });
     test('meijin one part is stopped, and its timed speech is waited for', () => {
-      const stop = meijinRun('1秒待つ。\nねこの動きを止める。\n点数を、ねこのよこのばしょにする。', { until: 2500, extra: [{ id: 'core-cat-go', targetId: 'core-cat', event: 'start', source: '2秒かけて画面の右へ100歩動く。\n「ついた」と言う。' }] });
+      const stop = meijinRun('1秒待つ。\nねこの動きを止める。\n点数を、ねこのよこのばしょにする。', { until: 2500, extra: [{ id: 'core-cat-go', targetId: 'core-cat', event: 'start', source: '2秒かけて、いまのばしょから、右へ100歩動く。\n「ついた」と言う。' }] });
       ok(Math.abs(stop.vars.点数 - 50) <= 1 && stop.speech.length === 0, JSON.stringify(stop));
       eq(meijinRun('0.1秒待つ。\nねこが話し終わるまで待つ。\n犬は「おわった」と言う。', { until: 3000, extra: [{ id: 'core-cat-say', targetId: 'core-cat', event: 'start', source: '「やあ」と2秒話す。' }] }).speech,
         ['0:ねこ:やあ', '2010:犬:おわった']);
@@ -647,17 +699,17 @@ function runCoreTests() {
       eq([out.vars.合計, out.lists.持ち物, out.speech], [2, ['ぼうし'], ['0:ねこ:偶', '0:ねこ:倍', '0:ねこ:ぼうし']]);
     });
     test('meijin a procedure made in the text is a procedure of the work', () => {
-      const out = meijinRun('【あいさつ】という手順を、相手を受け取って、次のように作る。\n  相手は「こんにちは」と言う。\n相手を犬として、【あいさつ】という手順を行う。\n【ジャンプ】という手順を、次のように作る。\n  画面の上へ20歩動く。\nねこは【ジャンプ】という手順を行う。\n点数を、ねこのたてのばしょにする。', { until: 50 });
-      eq([out.speech, out.vars.点数, out.errors], [['0:犬:こんにちは'], 80, []]);
-      const errors = compileProject(meijinWork('ねこは「a」と言う。\n【とぶ】という手順を、次のように作る。\n  画面の上へ【高さ】歩動く。')).errors;
+      const out = meijinRun('【あいさつ】という手順を、相手を受け取って、次のように作る。\n  相手は「こんにちは」と言う。\n相手を犬として、【あいさつ】という手順を行う。\n【ジャンプ】という手順を、次のように作る。\n  いまのばしょから、上へ20歩動く。\nねこは【ジャンプ】という手順を行う。\n点数を、ねこのたてのばしょにする。', { until: 50 });
+      eq([out.speech, out.vars.点数, out.errors], [['0:犬:こんにちは'], 120, []]);
+      const errors = compileProject(meijinWork('ねこは「a」と言う。\n【とぶ】という手順を、次のように作る。\n  いまのばしょから、上へ【高さ】歩動く。')).errors;
       eq(errors.map(e => [e.code, e.line, e.where]), [['S301', 3, 'script:core-meijin']]);
     });
     test('meijin words that give no single meaning are guided', () => {
       const symbols = buildSymbols(meijinWork(''));
       for (const text of ['点数が10以上なので、ねこは「やった」と言う。', 'キーがおされても、ねこは動かない。', 'ねこは右へ動いたり、左へ動いたりする。', 'ねこは、犬の近くへ行く。',
-        'その子は右へ10歩動く。', 'ねこは犬に「やあ」と言ってあげる。', 'ねこは3回目に「やった」と言う。', 'ねこは右へ動き始める。', '持ち物から「本」を消す。',
-        '点数が10なのに、ねこは「やった」と言う。', 'しばらく待つ。', 'ねこは、犬のとなりへ行く。', 'それは右へ10歩動く。', 'ねこは犬に話しかける。', 'ねこがおされると、犬は「いたい」と言う。',
-        'ねこははしまで進む。', '犬は、ねこのように動く。', 'ねこは右へ10歩動いてください。']) {
+        'その子は、いまのばしょから、右へ10歩動く。', 'ねこは犬に「やあ」と言ってあげる。', 'ねこは3回目に「やった」と言う。', 'ねこは右へ動き始める。', '持ち物から「本」を消す。',
+        '点数が10なのに、ねこは「やった」と言う。', 'しばらく待つ。', 'ねこは、犬のとなりへ行く。', 'それは、いまのばしょから、右へ10歩動く。', 'ねこは犬に話しかける。', 'ねこがおされると、犬は「いたい」と言う。',
+        'ねこははしまで進む。', '犬は、ねこのように動く。', 'ねこは、いまのばしょから、右へ10歩動いてください。']) {
         let code = null; try { parseScript(text, symbols, { targetId: 'stage', event: 'start', meijin: true }); } catch (e) { code = e.code; }
         eq([text, code], [text, 'P205']);
       }
@@ -674,7 +726,7 @@ function runCoreTests() {
       eq(meijinRun('次のことを同時に始める。\n  ねこは「a」と1秒話して、「b」と言う。\n  犬は「c」と言う。', { until: 1500 }).speech, ['0:ねこ:a', '0:犬:c', '1010:ねこ:b']);
     });
     test('meijin the nearest of a tie turns no one', () => {
-      const out = meijinRun('ねこのよこのばしょを0にする。\n犬のよこのばしょを100にする。\n鳥のよこのばしょを-100にする。\nねこの向きを45度にする。\nなかまを、犬と鳥にする。\nねこは、いちばん近いなかまの方を向く。', { until: 50 });
+      const out = meijinRun('ねこは画面の左下のはしから、右へ0歩、上へ100歩のばしょへ行く。\n犬は画面の左下のはしから、右へ100歩、上へ100歩のばしょへ行く。\n鳥は画面の左下のはしから、左へ100歩、上へ100歩のばしょへ行く。\nねこの向きを45度にする。\nなかまを、犬と鳥にする。\nねこは、いちばん近いなかまの方を向く。', { until: 50 });
       ok(Math.abs(out.direction - 45) < 1e-9 && out.errors.length === 0, 'direction ' + out.direction);
     });
     test('meijin a subject held in a value may be written with が, and copies of a part stop', () => {
@@ -689,11 +741,11 @@ function runCoreTests() {
         [['S304'], ['S304'], [], [], []]);
     });
     test('meijin uses of parts and data are found for renaming and deleting', () => {
-      const p = meijinWork('主役をねこにする。\n主役は右へ10歩動く。\n犬は、ねこの方を向く。\n鳥のコピーを2つ作る。\n【とぶ】という手順を、次のように作る。\n  ねこは画面の上へ20歩動く。');
+      const p = meijinWork('主役をねこにする。\n主役は、いまのばしょから、右へ10歩動く。\n犬は、ねこの方を向く。\n鳥のコピーを2つ作る。\n【とぶ】という手順を、次のように作る。\n  ねこは、いまのばしょから、上へ20歩動く。');
       const lines = key => Akari.resourceChangeImpact(p, key, {}).references.map(r => r.line).sort((a, b) => a - b);
       eq([lines('component:core-cat'), lines('component:core-bird'), lines('data:core-lane-v0')], [[1, 3, 6], [4], [1, 2]]);
       const renamed = Akari.prepareResourceRename(p, 'component:core-cat', 'みけ', {});
-      eq(renamed.scripts[0].source, '主役をみけにする。\n主役は右へ10歩動く。\n犬は、みけの方を向く。\n鳥のコピーを2つ作る。\n【とぶ】という手順を、次のように作る。\n  みけは画面の上へ20歩動く。');
+      eq(renamed.scripts[0].source, '主役をみけにする。\n主役は、いまのばしょから、右へ10歩動く。\n犬は、みけの方を向く。\n鳥のコピーを2つ作る。\n【とぶ】という手順を、次のように作る。\n  みけは、いまのばしょから、上へ20歩動く。');
     });
     test('an answer or a state is written into a variable as 答えを名前に入れる and reads back for every kind of variable', () => {
       const p = laneProject(['名前', '点数']), symbols = buildSymbols(p);
@@ -714,19 +766,22 @@ function runCoreTests() {
       eq([first('ねこが動いているうちに、犬は「まって」と言う。'), first('主役を、いちばん近い星にする。'), first('もし主役がいちばん近いなかまなら、ねこは「a」と言う。'),
         first('点数を、いちばん近いなかままでのきょりにする。'), first('間隔秒ごとに、点数を1増やす。'), first('ねこは、一辺が20歩の四角をかく。'), first('ねこは前へ十歩進む。')],
         ['P205:「〜しているうちに」は、同時に ', 'P205:「いちばん近い」は「〜の方を向く', 'P205:「いちばん近い」は「〜の方を向く', 'S304:「いちばん近い」は、だれから 近',
-          'P205:「〜秒ごとに」の 時間は、作品を', 'P205:「一辺が20歩の四角をかく」では', 'P205:「十歩」は 漢数字です。名人モー']);
-      const tie = meijinRun('ねこのよこのばしょを0にする。\n犬のよこのばしょを100にする。\n鳥のよこのばしょを-100にする。\nなかまを、犬と鳥にする。\nねこは、いちばん近いなかままでのきょりを言う。', { until: 50 });
+          'P205:「〜秒ごとに」の 時間は、作品を', 'P205:「一辺が20歩の四角をかく」では', 'P205:「十歩」は 漢数字です。名人の本']);
+      // LANGUAGE.md: 漢数字には数字の書き方（「十歩」→「10歩」）を示します; the name is 「名人」, never 「名人モード」 (final call 23).
+      const kanji = compileProject(meijinWork('ねこは前へ十歩進む。')).errors[0].message;
+      ok(kanji.includes('「10歩」') && !kanji.includes('名人モード'), kanji);
+      const tie = meijinRun('ねこは画面の左下のはしから、右へ0歩、上へ100歩のばしょへ行く。\n犬は画面の左下のはしから、右へ100歩、上へ100歩のばしょへ行く。\n鳥は画面の左下のはしから、左へ100歩、上へ100歩のばしょへ行く。\nなかまを、犬と鳥にする。\nねこは、いちばん近いなかままでのきょりを言う。', { until: 50 });
       eq(tie.speech, ['0:ねこ:100歩']);
     });
     test('meijin stopping a part ends its motion in another flow, which goes on', () => {
       const stopper = { id: 'core-meijin-stop', mode: 'meijin', targetId: 'meijin', event: 'start', source: '1秒待つ。\nねこの動きを止める。' };
-      const glide = meijinRun('ねこは2秒かけて画面の右へ100歩動く。\nねこは「ついた」と言う。\n犬は「つぎ」と言う。', { until: 2500, samples: [2500], extra: [stopper] });
+      const glide = meijinRun('ねこは2秒かけて、いまのばしょから、右へ100歩動く。\nねこは「ついた」と言う。\n犬は「つぎ」と言う。', { until: 2500, samples: [2500], extra: [stopper] });
       eq([glide.speech, glide.errors], [['1010:ねこ:ついた', '1010:犬:つぎ'], []]);
       ok(Math.abs(glide.x[2500][0] - 50) <= 1, 'ねこ stopped at ' + glide.x[2500][0]);
       const until = meijinRun('ねこは、1秒に50歩の速さで、鳥にふれるまで右へ動き続ける。\nねこは「ついた」と言う。', { until: 2500, samples: [2500], extra: [stopper] });
       eq(until.speech, ['1010:ねこ:ついた']);
       ok(Math.abs(until.x[2500][0] - 50) <= 1, 'ねこ stopped at ' + until.x[2500][0]);
-      const procedure = meijinRun('【すすむ】という手順を、次のように作る。\n  2秒かけて画面の右へ100歩動く。\n  「まだ」と言う。\nねこは【すすむ】という手順を行う。\nねこは「おわり」と言う。', { until: 2500, extra: [stopper] });
+      const procedure = meijinRun('【すすむ】という手順を、次のように作る。\n  2秒かけて、いまのばしょから、右へ100歩動く。\n  「まだ」と言う。\nねこは【すすむ】という手順を行う。\nねこは「おわり」と言う。', { until: 2500, extra: [stopper] });
       eq(procedure.speech, ['1010:ねこ:おわり']);
     });
     test('meijin moves stop on the clock of the continuous rules whatever the steps of the clock', () => {
@@ -742,11 +797,11 @@ function runCoreTests() {
       }
     });
     test('meijin a procedure made in the text is renamed with its calls, and a part used in 〜までのきょり does not stop the check', () => {
-      const p = meijinWork('【とぶ】という手順を、次のように作る。\n  画面の上へ20歩動く。\nねこは【とぶ】という手順を行う。');
+      const p = meijinWork('【とぶ】という手順を、次のように作る。\n  いまのばしょから、上へ20歩動く。\nねこは【とぶ】という手順を行う。');
       p.scripts.push({ id: 'core-dog-jump', targetId: 'core-dog', event: 'start', source: '【とぶ】という手順を行う。' });
       eq(compileProject(p).errors, []);
       const id = Akari.meijinProjectDefinitions(p)[0].id, next = Akari.prepareMeijinProcedureRename(p, id, 'はねる');
-      eq(next.scripts.map(s => s.source), ['【はねる】という手順を、次のように作る。\n  画面の上へ20歩動く。\nねこは【はねる】という手順を行う。', '【はねる】という手順を行う。']);
+      eq(next.scripts.map(s => s.source), ['【はねる】という手順を、次のように作る。\n  いまのばしょから、上へ20歩動く。\nねこは【はねる】という手順を行う。', '【はねる】という手順を行う。']);
       eq(compileProject(next).errors, []);
       p.actions = [{ id: 'core-hop', ownerId: 'stage', name: 'はねる', args: [], source: '何もしない。' }];
       let refused = null; try { Akari.prepareMeijinProcedureRename(p, id, 'はねる'); } catch (e) { refused = e.code; }
@@ -758,22 +813,226 @@ function runCoreTests() {
       eq(errors.map(e => e.code), ['S315']);
     });
     test('meijin script is never made into blocks', () => {
-      const p = meijinWork('なかまは、みんな右へ10歩動く。'), session = createEditorSession('script:core-meijin', p.scripts[0].source, { targetId: 'stage', event: 'start', meijin: true }, p);
+      const p = meijinWork('なかまは、みんな、いまのばしょから、右へ10歩動く。'), session = createEditorSession('script:core-meijin', p.scripts[0].source, { targetId: 'stage', event: 'start', meijin: true }, p);
       eq([!!session.syntaxAst, session.blockView, session.diagnostics], [true, null, []]);
     });
     test('meijin exported work keeps its procedures and events', () => {
       const p = meijinWork('');
-      Akari.updateScriptSource(p.scripts[0], '【ジャンプ】という手順を、次のように作る。\n  画面の上へ20歩動く。\nねこは【ジャンプ】という手順を行う。\n1秒ごとに、点数を1増やす。\nねこが犬にふれたとき、犬は「いたい」と言う。', p);
+      Akari.updateScriptSource(p.scripts[0], '【ジャンプ】という手順を、次のように作る。\n  いまのばしょから、上へ20歩動く。\nねこは【ジャンプ】という手順を行う。\n1秒ごとに、点数を1増やす。\nねこが犬にふれたとき、犬は「いたい」と言う。', p);
       eq(p.scripts[0].document?.unitIds?.length, 3);
       const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
       eq(restored.compiled.items.map(i => i.event || i.key.split(':')[0]).sort(), ['action', 'interval', 'start', 'touchStart']);
       ok(restored.compiled.symbols.actions.has('ジャンプ'), 'the procedure made in the text travels');
     });
+    // XR-01: the うごく作品 opens every 名人 work the editor runs. The 名人 reader marks some subjects for the work check
+    // only (a sentence after a group subject or after two named subjects, a sentence with no subject under 〜が〜にふれたとき).
+    for (const [name, source, variables] of [
+      ['two conditions', '点数を3にする。\nもし点数が奇数なら、ねこは「きすう」と2秒話す。\nもし点数が偶数なら、ねこは「ぐうすう」と2秒話す。', ['点数']],
+      ['touch body without a subject', '犬がねこにふれたとき、点数を1ふやす。', ['点数']],
+      ['after a group subject', 'なかまは、順番に「やあ」と1秒話す。\n点数を1ふやす。', ['点数']],
+    ]) test('meijin exported work opens: ' + name, () => {
+      const p = meijinWork('', { variables });
+      Akari.updateScriptSource(p.scripts[0], source, p);
+      eq(compileProject(p).errors.map(e => e.code), []);
+      const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
+      ok(restored.compiled.items.length > 0, 'restored');
+    });
+    // XR-03: a body with two headings opens in the うごく作品 also when its script has no document record (a file
+    // written by a tool, or a project given straight to the public API).
+    test('exported work opens a body with two headings and no document record', () => {
+      const p = makeRegressionProject();
+      p.scripts = [{ id: 'core-two-headings', targetId: 'sprite-1', event: 'start', source: '作品を動かしたとき、\n  「はじめ」と言う。\nおされたとき、\n  「おされた」と言う。' }];
+      eq(compileProject(p).errors.map(e => e.code), []);
+      ok(!p.scripts[0].document, 'no document record');
+      const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
+      eq(restored.compiled.items.filter(i => String(i.key).startsWith('script')).map(i => i.event).sort(), ['click', 'start']);
+    });
     test('exported work keeps a subject written with が', () => {
-      const p = laneProject(); p.scripts = [{ id: 'core-ga', targetId: 'stage', event: 'start', source: '犬が右へ10歩動く。\nタイマーを0にする。\n犬は、ねこが2回おされるまで待つ。' }];
+      const p = laneProject(); p.scripts = [{ id: 'core-ga', targetId: 'stage', event: 'start', source: '犬が、いまのばしょから、右へ10歩動く。\nタイマーを0にする。\n犬は、ねこが2回おされるまで待つ。' }];
       eq(compileProject(p).errors, []);
       const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
       ok(restored.compiled.items.length > 0, 'restored');
+    });
+    // Intent corrections preserve scope, offer usable choices and never silently choose another meaning.
+    const intentWork = (source, meijin = false) => {
+      const p = makeDefaultProject(), base = p.components.find(c => c.type === 'sprite');
+      p.components = ['ねこ', '星', 'ロケット', 'はし'].map((name, i) => ({ ...structuredClone(base), id: 'intent-part-' + i, name,
+        costumes: [{ id: 'intent-face-' + i, name: '顔', kind: 'text', value: '●' }], costumeId: 'intent-face-' + i,
+        localData: { variables: [], lists: [] } }));
+      p.projectData = { variables: [{ id: 'intent-score', name: '点数', initialValue: 0 }, { id: 'intent-name', name: '名前', initialValue: '' }, { id: 'intent-target', name: '相手', initialValue: 0 }], lists: [{ id: 'intent-list', name: '持ち物', initialValue: ['本'] }] };
+      p.scripts = [{ id: 'intent-body', targetId: meijin ? 'meijin' : p.components[0].id, ...(meijin ? { mode: 'meijin' } : {}), event: 'start', source }];
+      p.actions = []; p.functions = []; p.sounds = [];
+      return p;
+    };
+    const intentCheck = (source, meijin = false, edit = () => {}) => { const p = intentWork(source, meijin); edit(p); return { p, compiled: compileProject(p) }; };
+    const applyIntentFix = (source, proposal) => source.slice(0, proposal.start) + proposal.source + source.slice(proposal.end);
+    test('intent corrections keep nested chains and inline if bodies in their block', () => {
+      for (const source of [
+        '3回くり返す\n  右に90ど回って、1秒待つ。',
+        '作品を動かしたとき、\n  ずっとくり返す\n    みぎに90度回って、1秒待つ。',
+        '作品を動かしたとき、\n  もし「星」にふれていれば「いたい」と言う。',
+        '3回くり返す\n  もし点数が10をこえたら、「あ」と言う。',
+      ]) {
+        const first = intentCheck(source).compiled.errors[0]; ok(first?.proposals?.length, source);
+        for (const proposal of first.proposals) { const fixed = applyIntentFix(source, proposal); eq(intentCheck(fixed).compiled.errors, []); ok(!/\n1秒待つ/.test(fixed), fixed); }
+      }
+    });
+    test('intent corrections keep an unrelated second error fixable', () => {
+      const source = '右に90ど回る。\n左に90ど回る。', first = intentCheck(source).compiled.errors[0];
+      ok(first.proposals?.length); const next = intentCheck(applyIntentFix(source, first.proposals[0])).compiled.errors[0];
+      eq(next.line, 2); ok(next.proposals?.length);
+    });
+    test('intent corrections preserve all three waits on the logical clock', () => {
+      const source = '3回くり返す\n  右に90ど回って、1秒待つ。\n「おわり」と言う。', first = intentCheck(source).compiled.errors[0], fixed = applyIntentFix(source, first.proposals[0]), { p, compiled } = intentCheck(fixed), r = new RuntimeModel(p), speech = [];
+      let now = 0; r.now = () => now;
+      const q = new EventScheduler(p, compiled, r, { say: (id, text) => speech.push([now, text]) }); q.schedule = () => {};
+      try { q.start(); for (now = 0; now <= 3100; now++) { q.recheckBlocked(); for (let n = 0; n < 500 && q.ready.length; n++) q.runTurn(); q.recheckBlocked(); } eq(speech.map(x => x[1]), ['おわり']); ok(Math.abs(speech[0][0] - 3000) <= 20); } finally { q.stop(); }
+    });
+    test('slow near forms keep their time across all connective spellings', () => {
+      for (const [source, meijin] of [
+        ['ゆっくり右に90度回り、1秒待つ。', false], ['ゆっくり右に90度回って1秒待つ。', false],
+        ['もし点数が1なら、ゆっくり右に90度回って、1秒待つ。', false],
+        ['ねこは、ゆっくり右に90度回り、1秒待つ。', true], ['右に90度、1秒かけて回り、1秒待つ。', false],
+      ]) { const first = intentCheck(source, meijin).compiled.errors[0]; ok(first.proposals?.length, source); const fixed = applyIntentFix(source, first.proposals[0]); ok(fixed.includes('1秒かけて、'), fixed); eq(intentCheck(fixed, meijin).compiled.errors, []); }
+    });
+    test('movement guidance examples read and preserve the written direction', () => {
+      for (const source of ['よこのばしょを、200にする。', 'よこのばしょを、10増やす。']) {
+        const message = intentCheck(source).compiled.errors[0].message, example = /「(画面の左下[^」]+|いまのばしょから[^」]+)」/.exec(message)?.[1];
+        ok(example, message); eq(intentCheck(example + '。').compiled.errors, []);
+      }
+      for (const source of ['いまのばしょから、右へゆっくり10歩動く。', 'みぎに90度回る。', 'ねこは、ひだりに90度回る。', '右へ10歩ずつ動く。', '左に（点数）ど回る。', '「ロケット」まで1秒かけて行く。', 'はしまで行く。', 'みぎへ10歩動く。', '「星」のところまで2秒で行く。']) {
+        const first = intentCheck(source).compiled.errors[0]; ok(first.proposals?.length, source); for (const proposal of first.proposals) eq(intentCheck(applyIntentFix(source, proposal)).compiled.errors, []);
+      }
+      ok(intentCheck('右へ10歩、右へ5歩、上へ3歩動く。').compiled.errors[0].message.includes('1つずつ'));
+    });
+    test('chain axis notices retain both readable choices', () => {
+      const source = '画面の左下のはしから、右へ320歩のばしょへ1秒かけて行って、1秒待つ。', result = intentCheck(source).compiled;
+      eq(result.errors, []); const notice = result.notes.find(n => n.code === 'I120'); eq(notice.proposals.length, 2);
+      for (const proposal of notice.proposals) eq(intentCheck(applyIntentFix(source, proposal)).compiled.errors, []);
+    });
+    test('quiz spelling guidance does not redirect text answers into part values', () => {
+      for (const word of ['星', 'はい', 'はなこ', 'にんじん', 'とまと']) {
+        const source = 'もし答えが' + word + 'なら、\n  「あ」と言う。', first = intentCheck(source).compiled.errors[0];
+        eq(first.code, 'P205'); ok(first.proposals?.length, word); ok(first.proposals[0].source.includes('「' + word + '」'));
+      }
+      ok(intentCheck('もしりんごが答えなら、\n  「あ」と言う。').compiled.errors[0].proposals?.length);
+      const meijin = intentCheck('ねこは「なに？」とたずねて、答えを待つ。\nもし答えが星なら、\n  ねこは「あ」と言う。', true).compiled;
+      eq(meijin.errors, []); ok(meijin.notes.some(n => n.code === 'I123'));
+    });
+    test('ambiguous bare compound answers are not silently quoted as one word', () => {
+      const result = intentCheck('もし答えがりんごかみかんなら、\n  「あ」と言う。').compiled;
+      ok(result.errors.length); ok(!result.errors[0].proposals?.some(p => p.source.includes('「りんごかみかん」')));
+      for (const head of ['もし答えが「りんごかみかん」なら、', 'もし答えが「りんご」と同じか、答えが「みかん」と同じなら、']) eq(intentCheck(head + '\n  「あ」と言う。').compiled.errors, []);
+    });
+    test('touch choices keep the following else associated with its if', () => {
+      const source = 'もし「星」にふれたら、\n  「あ」と言う。\nそうでなければ、\n  「い」と言う。', first = intentCheck(source).compiled.errors[0];
+      ok(first.proposals?.length); for (const p of first.proposals) { ok(p.source.startsWith('もし')); eq(intentCheck(applyIntentFix(source, p)).compiled.errors, []); }
+    });
+    test('touch partner diagnostics preserve mutable values and never suggest making data', () => {
+      eq(intentCheck('相手を「星」にする。\nもし相手にふれていれば、\n  「あ」と言う。').compiled.errors, []);
+      for (const partner of ['画面', '画面のまん中', '見つからない相手']) { const c = intentCheck('もし' + partner + 'にふれていれば、\n  「あ」と言う。').compiled; ok(c.errors.length); ok(!c.errors.some(e => /へんすうか リストを 作/.test(e.message))); }
+      ok(intentCheck('もし画面のまん中にふれていれば、\n  「あ」と言う。').compiled.errors[0].message.includes('ばしょ'));
+    });
+    test('flow notices account for procedure effects and possible branch shows', () => {
+      const shown = intentCheck('すがたをかくす。\n【見せる】というてじゅんを行う。\n「やあ」と言う。', false, p => p.actions = [{ id: 'intent-show', ownerId: 'stage', name: '見せる', args: [], source: 'すがたを見せる。' }]).compiled;
+      eq(shown.errors, []); ok(!shown.notes.some(n => n.code === 'I133'));
+      const moving = intentCheck('「星」にふれるまで待つ。\n前へ10歩進む。', false, p => { p.actions = [{ id: 'intent-move', ownerId: 'stage', name: '動く', args: [], source: '前へ10歩進む。' }]; p.scripts.push({ id: 'intent-key', targetId: p.components[0].id, event: 'keyDown', filter: { key: '空白' }, source: '【動く】というてじゅんを行う。' }); }).compiled;
+      eq(moving.errors, []); ok(!moving.notes.some(n => n.code === 'I134'));
+      ok(!intentCheck('すがたをかくす。\nもし点数が1なら、\n  すがたを見せる。\n「やあ」と言う。').compiled.notes.some(n => n.code === 'I133'));
+    });
+    test('notice and refusal guidance names the actual context', () => {
+      const timer = intentCheck('ずっとくり返す\n  もしタイマーが5なら、\n    「あ」と言う。').compiled.notes.find(n => n.code === 'I124'); ok(timer.message.includes('くり返しの 前'));
+      const first = intentCheck('もし「スペース」キーがおされてれば、\n  「あ」と言う。').compiled.errors[0]; ok(first.proposals?.length); eq(intentCheck(applyIntentFix('もし「スペース」キーがおされてれば、\n  「あ」と言う。', first.proposals[0])).compiled.errors, []);
+      const heading = intentCheck('作品を動かしたとき、前へ10歩進む。\n1秒待つ。').compiled.errors[0].message; ok(heading.includes('「作品を動かしたとき、」')); ok(!heading.includes('「作品を動かしたとき、前へ'));
+      const otherwise = intentCheck('作品を動かしたとき、\n  「あ」と言う。\n    そうでなければ、\n      「い」と言う。').compiled.errors[0].message; ok(otherwise.includes('ありません'));
+      ok(intentCheck('10こ作る。').compiled.errors[0].message.includes('「10こ作る」'));
+      ok(!intentCheck('音を鳴らす。').compiled.errors[0].message.includes('ニャー'));
+      ok(intentCheck('点数のところへ行く。').compiled.errors[0].message.includes('「星」'));
+      const source = 'もし点数が10をこえたら、「あ」と言う。', d = intentCheck(source).compiled.errors[0]; ok(d.message.includes(d.proposals[0].source.split('\n')[0]));
+      eq(intentCheck('1秒ごとに、点数を1ふやす。').compiled.errors[0].code, 'S317');
+      ok(intentCheck('このキャラクターがおされたとき、\n  「あ」と言う。').compiled.errors[0].proposals?.length);
+      ok(intentCheck('「持ち物は」と持ち物をつなげて言う。').compiled.errors.some(e => e.code === 'S304'));
+    });
+    test('function statement hints compile without changing project data or untyped arguments', () => {
+      const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile'];
+      for (const args of [[], ['あいさつ']]) { const p = intentWork(''), hints = hintCandidates(p, 'stage', { definitionKind: 'function', args, source: '' }).filter(h => h.enabled && h.mode === 'statement');
+        for (const h of hints) { p.functions = [{ id: 'intent-function', ownerId: 'stage', name: '試す', args, source: h.text + (/を答えとして返す/.test(h.text) ? '' : '\n0を答えとして返す。') }]; eq(compileProject(p).errors, []); ok(!/あいさつが10|点数を1ふやす|点数を10にする/.test(h.text)); }
+      }
+      for (const [source, args, values, kept] of [
+        ['', [], [], null], ['', ['あいさつ'], ['こんにちは'], 'あいさつ'], ['', ['あいさつ'], [['本']], 'あいさつ'],
+        ['', ['数えた回数'], ['こんにちは'], '数えた回数'],
+        ['この中だけで使う変数あいさつを作り、最初は「こんにちは」にする。\n', [], [], 'あいさつ'],
+        ['この中だけで使う変数数えた回数を作り、最初は「こんにちは」にする。\n', [], [], '数えた回数'],
+        ['この中だけで使うリスト数えた回数を空で作る。\n', [], [], '数えた回数'],
+      ]) {
+        const p = intentWork(''), hints = hintCandidates(p, 'stage', { definitionKind: 'function', args, source }).filter(h => controls.includes(h.id));
+        eq(hints.length, 3); ok(hints.every(h => h.enabled));
+        for (const h of hints) {
+          const declaration = /^この中だけで使う変数(.+?)を作り、最初は(\d+)にする。\n/.exec(h.text); ok(declaration, h.text);
+          const counter = declaration[1]; ok(!args.includes(counter)); ok(!source.includes('変数' + counter + 'を')); ok(!source.includes('リスト' + counter + 'を'));
+          eq(Number(declaration[2]), h.id === 'IfStatement' ? 11 : 0);
+          const run = returned => { p.functions = [{ id: 'intent-function', ownerId: 'stage', name: '試す', args, source: source + h.text + '\n' + returned + 'を答えとして返す。' }]; const compiled = compileProject(p); eq(compiled.errors, []); return runUserFunction('試す', values, { runtime: new RuntimeModel(p), runtimeId: p.components[0].id, compiled }); };
+          eq(run(counter), h.id === 'RepeatCount' ? 3 : 10);
+          if (kept) eq(run(kept), args.includes(kept) ? values[args.indexOf(kept)] : source.includes('リスト' + kept) ? [] : 'こんにちは');
+          eq(p.projectData.variables.find(v => v.name === '点数').initialValue, 0);
+        }
+      }
+      for (const source of [
+        '何もしない。\n', 'もし1が1なら、\n  ',
+        'この中だけで使う変数あいさつを作り、最初は「こんにちは」にする。\n何もしない。\n',
+        'この中だけで使う変数回数を作り、最初は0にする。\n回数を1にする。\n',
+      ]) {
+        const hints = hintCandidates(intentWork(''), 'stage', { definitionKind: 'function', args: ['あいさつ'], source }).filter(h => controls.includes(h.id));
+        eq(hints.length, 3); ok(hints.every(h => !h.enabled && h.reason.includes('はじめ')));
+      }
+      for (const source of ['\nこの中だけで使う変数数えた回数を作り、最初は「こんにちは」にする。\n数えた回数を答えとして返す。', '\nこの中だけで使うリスト数えた回数を空で作る。\n数えた回数を答えとして返す。']) {
+        const hints = hintCandidates(intentWork(''), 'stage', { definitionKind: 'function', args: [], source, start: 0, end: 0 }).filter(h => controls.includes(h.id));
+        eq(hints.length, 3); ok(hints.every(h => !h.enabled && h.reason.includes('行の あと')));
+      }
+    });
+    test('procedure examples use explicit string comparisons while unknown arguments keep the numeric default', () => {
+      const p = intentWork(''), definition = { id: 'intent-direction', ownerId: 'stage', name: '進む', args: ['進む方向', '歩数'], source: 'もし進む方向が「右」なら、\n  前へ10歩進む。' }; p.actions = [definition];
+      ok(hintCandidates(p, p.components[0].id).some(h => h.binding?.id === definition.id && h.text.includes('進む方向を「右」') && h.text.includes('歩数を1')));
+    });
+    test('body identity includes its key and signal on every runtime label', () => {
+      const p = intentWork('何もしない。');
+      for (const [event, filter, expected] of [['keyDown', { key: '空白' }, '「スペース」キーを おした とき'], ['message', { message: '出発' }, '「出発」という 合図を 受けた とき'], ['touchStart', { target: '星' }, '「星」に ふれた とき']]) {
+        Object.assign(p.scripts[0], { event, filter }); const compiled = compileProject(p); eq(compiled.errors, []);
+        const scheduler = new EventScheduler(p, compiled, new RuntimeModel(p)); eq(scheduler.flowName({ scriptId: p.scripts[0].id, eventType: event, targetId: p.components[0].id }), 'ねこ / ' + expected);
+      }
+      for (const [event, filter] of [['keyDown', 'スペース'], ['message', '出発']]) { Object.assign(p.scripts[0], { event, filter }); let rejected = false; try { validateDesignProject(p); } catch (e) { rejected = e.code === 'F503'; } ok(rejected, 'String filters are rejected by the existing project format'); ok(compileProject(p).errors.some(e => e.code === 'F503')); }
+    });
+    test('turned opaque picture cells do not fall between sample points', () => {
+      const p = intentWork(''), r = new RuntimeModel(p), a = r.actor(p.components[0].id), b = r.actor(p.components[1].id), cells = new Uint8Array(4096), counts = new Uint32Array(4225); cells[31 * 64 + 31] = 1;
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) counts[(y + 1) * 65 + x + 1] = cells[y * 64 + x] + counts[y * 65 + x + 1] + counts[(y + 1) * 65 + x] - counts[y * 65 + x];
+      r.pictureMask = () => ({ w: 64, h: 64, cells, counts, seen: { left: 31, right: 32, top: 31, bottom: 32 } });
+      Object.assign(a, { x: 200, y: 200, w: 640, h: 640, direction: 30, scalePercent: 100 }); Object.assign(b, { x: 180, y: 205, w: 640, h: 640, direction: 150, scalePercent: 100 });
+      // The two opaque 10×10 cells overlap at a turned corner; the independently derived polygon fixture is positive.
+      eq(r.partsTouch(a, b), true);
+      Object.assign(a, { direction: 0 }); Object.assign(b, { x: 210, y: 200, direction: 0 }); r.touchCache.clear(); eq(r.partsTouch(a, b), false);
+      b.x = 211; r.touchCache.clear(); eq(r.partsTouch(a, b), false);
+      r.mouseX = 195; r.mouseY = 205; r.mouseAt.entered = false; eq(r.touching(a.runtimeId, 'マウス'), false); r.mouseAt.entered = true; eq(r.touching(a.runtimeId, 'マウス'), true); r.mouseX = 205; eq(r.touching(a.runtimeId, 'マウス'), false);
+    });
+    test('positive opaque overlap has no fixed spatial dead band', () => {
+      const p=intentWork(''),r=new RuntimeModel(p),a=r.actor(p.components[0].id),b=r.actor(p.components[1].id);
+      r.pictureMask=()=>({w:1,h:1,cells:new Uint8Array([1]),counts:new Uint32Array([0,0,0,1]),seen:{left:0,right:1,top:0,bottom:1}});
+      Object.assign(a,{x:100,y:100,w:10,h:10,direction:0,scalePercent:100});
+      Object.assign(b,{y:100,w:10,h:10,direction:0,scalePercent:100});
+      for(const overlap of [1e-6,1e-7,1e-10,0,-1e-7]){b.x=110-overlap;r.touchCache.clear();eq(r.partsTouch(a,b),overlap>0);}
+    });
+    test('screen touch guidance preserves a component named screen', () => {
+      const p=intentWork('');p.components[1].name='画面';
+      for(const source of ['もし画面にふれていれば、\n  何もしない。','画面にふれるまで待つ。']){
+        p.scripts[0].source=source;eq(compileProject(p).errors,[]);
+      }
+      p.components[1].name='星';p.scripts[0].source='もし画面にふれていれば、\n  何もしない。';ok(compileProject(p).errors.some(e=>e.code==='P205'));
+    });
+    test('packed asset validation cannot be certified by caller supplied fields', () => {
+      const p = makeDefaultProject(), store = makeDefaultAssetStore(), data = packExecutable(p, store), asset = data.assets[0], record = store.get(asset.id);
+      ok(AKARI_RUNTIME.restoreExecutable(data, { packed: new Map([[asset.id, { text: asset.dataBase64, record }]]) }));
+      for (const [field, value] of [['dataBase64', 'not-valid-base64'], ['sha256', '0'.repeat(64)], ['byteLength', asset.byteLength + 1]]) { const bad = structuredClone(data); bad.assets[0][field] = value;
+        let error; try { AKARI_RUNTIME.restoreExecutable(bad, { packed: new Map([[asset.id, { text: bad.assets[0].dataBase64, record: { ...record, sha256: bad.assets[0].sha256, byteLength: bad.assets[0].byteLength } }]]) }); } catch (caught) { error = caught; } eq(error?.code, 'X602');
+      }
     });
     return {
       passed: results.filter((x) => x.pass).length,

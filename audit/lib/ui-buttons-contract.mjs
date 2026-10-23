@@ -2,6 +2,8 @@ import { currentProductFile } from "./product-path.cjs";
 import assert from 'node:assert/strict';
 
 export const uiButtonIds = Object.freeze([
+  'UI-BUTTON-CURRENT-MODE-REFUSAL',
+  'UI-BUTTON-GUIDED-CHOICES',
   'UI-BUTTON-SOURCE-NAV',
   'UI-BUTTON-BASIC-HISTORY',
   'UI-BUTTON-SIDE-ACTIONS',
@@ -29,16 +31,49 @@ export function verifyUiButtons(report, currentSnapshot) {
     assert.ok(row.evidence && typeof row.evidence === 'object' && Object.keys(row.evidence).length, row.id);
   }
   assert.deepEqual(report.results.find(row=>row.id==='UI-BUTTON-PENDING').evidence.observationControls,[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}],'bounded UI observation controls');
+  const mode=report.results.find(row=>row.id==='UI-BUTTON-CURRENT-MODE-REFUSAL').evidence;
+  assert.equal(mode.previousRefusals.length,2);assert.equal(mode.previousRefusals[0],'error');assert.ok(mode.previousRefusals[1]===null||mode.previousRefusals[1]==='error');
+  for(const key of ['immediateRepairSwitch','newErrorRefused','sourceAndHistoryPreserved'])assert.equal(mode[key],true);
+  verifyGuidedChoices(report.results.find(row=>row.id==='UI-BUTTON-GUIDED-CHOICES').evidence);
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.networkRequests, []);
   return true;
 }
 
+const guided=[
+  {id:'repeat-both',choice:0,source:'4回くり返す。※回数 メモ\n  10歩進む。※前のメモ  \n  ※〔角度をえらぶ〕は メモ\n\n  右に90度回る。※回るメモ\r\n「おわり」と言う。',position:[0,0]},
+  {id:'repeat-turn',choice:1,source:'10歩進む。\n4回くり返す。\n  右に90度回る。\n「おわり」と言う。',position:[10,0]},
+  {id:'list-append',choice:0,source:'持ち物の最後に「かさ」を入れる。',list:['本','ぼうし','かさ']},
+  {id:'list-replace',choice:1,source:'持ち物の2番目を「かさ」にかえる。',list:['本','かさ']},
+];
+const guidedLabels=id=>id.startsWith('repeat')?['前の 文と 回る 文の 両方を くり返す','前の 文は 一度、回る 文だけを くり返す']:['さいごに入れる','どれかと 入れかえる（何番目かを えらぶ）'];
+const guidedInvalid=id=>id==='list-append'?[]:['','Infinity','1e2','0/0',...(id==='list-replace'?['0','-1','1.5','2.0000000000000001','9007199254740993']:[])];
+const callableRepaired='4回くり返す。\n  10歩進む。\n  右に90度回る。\r\n「おわり」と言う。';
+const callableHistoryFixture=()=>({sourceBefore:'1を言う。',sourceAfter:callableRepaired,sourceUndo:'1を言う。',sourceRedo:callableRepaired,oneEdit:true,bothInside:true,returnedHome:true,unchangedMain:true});
+function verifyGuidedChoices(evidence){
+  assert.equal(evidence.callableFirstNativeClick,true);assert.equal(evidence.callableCancelPreserved,true);
+  assert.deepEqual(evidence.callableHistory,callableHistoryFixture());
+  assert.deepEqual(evidence.variants.map(v=>v.id),guided.map(v=>v.id));
+  for(const [i,v]of evidence.variants.entries()){
+    const e=guided[i];assert.equal(v.choice,e.choice);assert.equal(v.source,e.source);assert.deepEqual(v.labels,guidedLabels(e.id));
+    assert.equal(v.beforeProject.scripts.length,1);assert.equal(v.beforeProject.scripts[0].source,'10歩進む。');
+    const project=structuredClone(v.beforeProject);project.scripts[0].source=e.source;assert.deepEqual(v.afterProject,project);
+    for(const key of ['noAutomaticExecution','undoRedo','modeRoundtrip'])assert.equal(v[key],true);
+    assert.equal(v.directChoice,e.id==='repeat-turn'||e.id==='list-replace');
+    for(const key of ['cancelled','detachedRefused'])assert.equal(v[key],e.id!=='list-append');
+    assert.deepEqual(v.invalidRejected,guidedInvalid(e.id));
+    assert.deepEqual(v.runtime.list,e.list||['本','ぼうし']);
+    assert.deepEqual(v.runtime.said,e.id.startsWith('repeat')?[{id:'sprite-1',text:'おわり'}]:[]);
+    const point=e.position||[0,0];assert.equal(v.runtime.position.length,2);point.forEach((n,k)=>assert.ok(Number.isFinite(v.runtime.position[k])&&Math.abs(v.runtime.position[k]-n)<1e-7));
+  }
+}
+function guidedFixture(){return {callableFirstNativeClick:true,callableCancelPreserved:true,callableHistory:callableHistoryFixture(),variants:guided.map(e=>{const beforeProject={scripts:[{id:'guided-main',targetId:'sprite-1',event:'start',source:'10歩進む。'}]},afterProject=structuredClone(beforeProject);afterProject.scripts[0].source=e.source;return {...e,labels:guidedLabels(e.id),beforeProject,afterProject,noAutomaticExecution:true,directChoice:e.id==='repeat-turn'||e.id==='list-replace',cancelled:e.id!=='list-append',detachedRefused:e.id!=='list-append',invalidRejected:guidedInvalid(e.id),undoRedo:true,modeRoundtrip:true,runtime:{position:e.position||[0,0],list:e.list||['本','ぼうし'],said:e.id.startsWith('repeat')?[{id:'sprite-1',text:'おわり'}]:[]}};})};}
+
 export function checkUiButtonValidatorNegatives() {
   const inputs = {productSha256:'a'.repeat(64), files:{[currentProductFile()]:'a'.repeat(64)}};
   const valid = () => ({schema:'akari-ui-buttons-v1', status:'PASS', snapshot:structuredClone(inputs),
     environment:'chromium', browser:'fixture-browser', total:uiButtonIds.length,
-    results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:id==='UI-BUTTON-PENDING'?{checked:true,observationControls:[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}]}:{checked:true}})),
+    results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:id==='UI-BUTTON-PENDING'?{checked:true,observationControls:[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}]}:id==='UI-BUTTON-GUIDED-CHOICES'?guidedFixture():id==='UI-BUTTON-CURRENT-MODE-REFUSAL'?{previousRefusals:['error',null],immediateRepairSwitch:true,newErrorRefused:true,sourceAndHistoryPreserved:true}:{checked:true}})),
     pageErrors:[], networkRequests:[]});
   verifyUiButtons(valid(), inputs);
   for (const mutate of [
@@ -58,6 +93,20 @@ export function checkUiButtonValidatorNegatives() {
     r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[2].rejected=false,
     r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls.push({id:'extra',rejected:true}),
     r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[1].timeoutMs=30000,
+    r => r.results.find(x=>x.id==='UI-BUTTON-CURRENT-MODE-REFUSAL').evidence.previousRefusals[0]=null,
+    r => r.results.find(x=>x.id==='UI-BUTTON-CURRENT-MODE-REFUSAL').evidence.newErrorRefused=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].runtime.position=[10,0],
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[3].source='持ち物のさいごに「かさ」を入れる。',
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[1].detachedRefused=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[3].invalidRejected.pop(),
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.callableFirstNativeClick=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.callableCancelPreserved=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[3].directChoice=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[1].runtime.said.push({id:'sprite-1',text:'おわり'}),
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source=r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source.replace('※前のメモ  ',''),
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.callableHistory.bothInside=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.callableHistory.sourceRedo='1を言う。',
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source=r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source.replace('メモ\r\n','メモ\n'),
   ]) {
     const report = valid();
     mutate(report);

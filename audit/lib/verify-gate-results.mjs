@@ -1,4 +1,6 @@
 import {verifySamples,verifySamplesNegative} from './samples-contract.mjs';
+import {verifyLanguageBoundaries,checkLanguageBoundaryNegatives} from './language-boundaries-contract.mjs';
+import {verifyManualDocs,checkManualDocsNegatives} from './manual-docs-contract.mjs';
 import {verifyEntryReport} from './entry-workshop-contract.mjs';
 import {verifyDisplay,rejectionIds} from './speech-display-contract.mjs';
 import {verifyContractReport,verifyExpectationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
@@ -51,7 +53,11 @@ export function verifyGateResults(dir,inputs){
   verifyBlockFields(read('block-fields'),inputs);
   const ids=['OWNER-COMPLETE-REGISTRY','OWNER-REJECT-UNOWNED-AT-BOUNDARIES','OWNER-SAVE-ROUNDTRIP','OWNER-FORMAT-REJECTION','OWNER-CALLER-RECEIVER-AND-FUNCTION','OWNER-REFERENCES-INCLUDING-EXPRESSION','OWNER-INCOMPLETE-AND-UNUSED','OWNER-GUI-DIRECT-BUTTON','OWNER-GUI-ALL-EVENTS','OWNER-GUI-UNUSED-STAGE-DEFINITIONS','OWNER-GUI-SYNTAX-ERROR-RAW-BODY','OWNER-GUI-DRAFT-OWNERSHIP','OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT','OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY'];
   const ownership=read('ownership/report');assert.equal(ownership.status,'PASS');assert.deepEqual(ownership.snapshot,inputs);assert.ok(ownership.browser);assert.deepEqual(ownership.results.map(r=>r.id),ids);for(const r of ownership.results)assert.equal(r.pass,true,r.id);
-  for(const name of ['static','integrity','normal','language-boundaries','manual/manual-docs']){const r=read(name);assert.equal(r.status,'PASS');assert.deepEqual(r.snapshot,inputs);}
+  for(const name of ['static','integrity','normal']){const r=read(name);assert.equal(r.status,'PASS');assert.deepEqual(r.snapshot,inputs);}
+  const boundaries=read('language-boundaries');verifyLanguageBoundaries(boundaries,inputs);
+  assert.deepEqual(boundaries.validatorNegatives,checkLanguageBoundaryNegatives(boundaries,inputs));
+  const manual=read('manual/manual-docs');verifyManualDocs(manual,inputs,path.join(dir,'manual'));
+  assert.deepEqual(manual.validatorNegatives,checkManualDocsNegatives(manual,inputs,path.join(dir,'manual')));
   const integrity=read('integrity');assert.deepEqual(integrity.results.map(r=>r.id),integrityControlIds);assert.equal(new Set(integrity.results.map(r=>r.id)).size,integrityControlIds.length);for(const r of integrity.results)assert.equal(r.pass,true);
   verifyContractReport(read('japanese-contract-static'),inputs);
   verifyExpectationReport(read('language-expectations-static'),inputs);

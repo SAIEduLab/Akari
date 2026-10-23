@@ -12,8 +12,9 @@ const p=A.makeDefaultProject(),runtime=new A.RuntimeModel(p,{}),symbols=A.buildS
 for(const [source,expected]of [['正弦（30）','0.5'],['余弦（60）','0.5'],['正接（45）','1'],['逆正弦（0.5）','30度'],['逆余弦（0.5）','60度']])check('display/trigonometry/'+source,()=>{
  const ast=A.parseExpression(source,symbols),value=A.evalExpression(ast,ctx),before=JSON.stringify(value),view=plain(R.displayValue(value));
  assert.equal(view.text,expected);assert.equal(view.rawText,R.valueText(value));assert.equal(JSON.stringify(value),before);
- const converted=A.evalExpression(A.parseExpression('文字（'+source+'）',symbols),ctx);assert.equal(converted,view.rawText);assert.equal(R.displayValue(converted).text,view.rawText);
- const concatenated=A.evalExpression(A.parseExpression('つなぐ（「実値：」、'+source+'）',symbols),ctx);assert.equal(concatenated,'実値：'+view.rawText);
+ // 数を文字にするとき (文字（ ）, つなぐ) the text is the same 12-digit text as the display (LANGUAGE.md; final call 18).
+ const converted=A.evalExpression(A.parseExpression('文字（'+source+'）',symbols),ctx);assert.equal(converted,view.text);assert.equal(R.displayValue(converted).text,view.text);
+ const concatenated=A.evalExpression(A.parseExpression('つなぐ（「実値：」、'+source+'）',symbols),ctx);assert.equal(concatenated,'実値：'+view.text);
  const encoded=A.blockDecode(A.blockEncode(ast).tree);assert.equal(A.astEquivalent(ast,encoded),true);assert.deepEqual(plain(A.evalExpression(encoded,ctx)),plain(value));
  return{source,...view,textConversion:converted,concat:concatenated,valueUnchanged:true};
 });

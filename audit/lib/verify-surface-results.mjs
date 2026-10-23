@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 // Acceptance IDs are independent of the executing suites and their reported totals.
 export const editorIds = ['value-first','assign','target-first','increase','decrease','subtract','append',
   'insert-index','insert-value','delete-index','input','turn','goto-x','goto-y','glide-x','glide-y','glide-time',
-  'tone-frequency','tone-time','wait','compare-left','compare-right','nested-expression','inline-body',
+  'move-by-x','move-by-y','move-by-time','turn-time','tone-frequency','tone-time','wait','compare-left','compare-right','nested-expression','inline-body',
   'inline-condition','target-role','crlf-unicode','all-forms-noop','inline-expand','insert-remove-move',
   'atomic-stale-ime-limit','inline-comments-and-position','batch-role-offsets','predicate-in-expression-slot',
   'condition-connective-operands','condition-wait-and-inline-ranges','inline-finite-statement-composition','condition-replacement-keeps-body']

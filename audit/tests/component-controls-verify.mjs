@@ -18,9 +18,9 @@ for(const artifact of report.artifacts){
 const negatives=[
   ['missing-case',r=>r.results.pop()],['duplicate-case',r=>r.results[1]=structuredClone(r.results[0])],
   ['false-pass',r=>r.results[0].status='FAIL'],['stale-product',r=>r.snapshot.productSha256='0'.repeat(64)],
-  ['clipped-button',r=>r.results[0].observed[0].targets[6].rect.height+=500],
-  ['clipped-ruby',r=>r.results[0].observed[0].targets[5].ink[0].y-=100],
-  ['not-clickable',r=>r.results[0].observed[0].targets[6].hit=false],
+  ['clipped-button',r=>r.results[0].observed[0].targets[5].rect.height+=500],
+  ['clipped-ruby',r=>r.results[0].observed[0].targets[4].ink[0].y-=100],
+  ['not-clickable',r=>r.results[0].observed[0].targets[5].hit=false],
   ['missing-viewport',r=>r.results[0].observed.pop()],['not-opened',r=>r.results[0].observed[0].clicks.assetDialog=false],
   ['changed-history',r=>r.results[0].observed[0].after.history++],
   ['keyboard-unreachable',r=>r.results[1].observed[0].forward=[]],

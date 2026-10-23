@@ -2,6 +2,13 @@ import {auditRoute,auditOperation,routeLeaves} from '../lib/entry-lesson-routes.
 import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';import crypto from 'node:crypto';import assert from 'node:assert/strict';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';import {currentProductFile} from '../lib/product-path.cjs';
 import {tutorialSteps,browserIds,deniedRoutes,verifyEntryReport,entryProvenance} from '../lib/entry-workshop-contract.mjs';
+import {pressStop,DOUBLE_PRESS_MS} from '../lib/stop-press.cjs';
+import {chooseView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
+// はじめて's 作品 menu, touched during the tutorial. The run screen keeps its place but does not show it (final call 21),
+// so a touch there lands on what is under that place and still opens nothing.
+async function tapEntryProjectMenu(p){const menu=p.locator('#entryProjectMenu > summary');if(await menu.isVisible()){await menu.tap();return;}
+ const at=await menu.evaluate(e=>{const r=e.getBoundingClientRect(),hidden=n=>getComputedStyle(n).visibility==='hidden';return{x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,hidden:hidden(e),running:document.body.classList.contains('runtime')};});
+ assert.ok(at.running&&at.hidden&&at.width>0,'the 作品 menu is hidden only on the run screen, with its place kept');await p.touchscreen.tap(at.x,at.y);}
 const [chrome,out]=process.argv.slice(2);if(!chrome||!out)throw Error('browser and fresh report are required');
 const product=currentProductFile(),output=path.resolve(out),artifacts=output+'.artifacts';
 assert.ok(!fs.existsSync(output)&&!fs.existsSync(artifacts),'fresh evidence');fs.mkdirSync(artifacts,{recursive:true});
@@ -21,7 +28,7 @@ const waitStep=async(p,id)=>{try{await p.waitForFunction(id=>document.body.datas
 async function loseQuestion(p){await p.locator('#loseConfirmModal.show').waitFor();
  const shown=await p.evaluate(()=>{const m=document.querySelector('#loseConfirmModal');return{role:m.getAttribute('role'),modal:m.getAttribute('aria-modal'),label:m.getAttribute('aria-labelledby'),message:document.querySelector('#loseConfirmMessage').textContent,proceed:document.querySelector('#loseConfirmProceed').textContent,cancel:document.querySelector('#loseConfirmCancel').textContent,focus:document.activeElement?.id};});
  assert.deepEqual({role:shown.role,modal:shown.modal,label:shown.label,proceed:shown.proceed,cancel:shown.cancel},{role:'dialog',modal:'true',label:'loseConfirmMessage',proceed:'すてて つづける',cancel:'やめる'});
- assert.match(shown.message,/まだ ほぞんしていない/,'the question names the unsaved work');assert.equal(shown.focus,'loseConfirmCancel','the safe answer has focus');return shown;}
+ assert.match(shown.message,/まだ ほぞんして いない/,'the question names the unsaved work');assert.equal(shown.focus,'loseConfirmCancel','the safe answer has focus');return shown;}
 // The guided number is fully inside the editor's scroll viewport.
 const fieldInView=id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;};
 const picture=async(p,name)=>{const file=name+'.png';await p.screenshot({path:path.join(artifacts,file)});return file;};
@@ -44,7 +51,8 @@ async function positive(p,id){
  if(op.kind==='choice'){await activate(p,p.locator(op.key==='finish'?'#tutorialFinish':'#tutorialChoices [data-tutorial-choice="'+op.key+'"]'));return null;}
  if(op.kind==='insert'){
   const parent=await p.evaluate(ref=>{let n=Akari.app.editorState.main.blockView;for(const k of ref)n=n[k];return n.id;},op.parent);
-  const insertion=p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first();
+  // The place is a 「＋ ここに入れる」, or the hole of an empty enclosure, its only place (E-03).
+  const insertion=p.locator('#blockEditor :is([data-blockui-action="body-insert"],.blockui-hole-target)[data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first();
   const candidate=p.locator('#blockEditor [data-lesson-block="'+op.key+'"]');
   assert.ok(await p.locator('#blockEditor [data-blockui-action="palette-add"]').count()>1,'lesson preserves a visible choice of blocks');
   assert.equal(await candidate.getAttribute('data-tutorial-blocked'),'true','insertion must be chosen before the block');
@@ -65,7 +73,8 @@ async function positive(p,id){
   await p.waitForFunction(fieldInView,ref.id);
   if(id.endsWith('-change'))p.entryOldValue=ref.value;await edit(p,ref.id,op.value);if(id.endsWith('-change'))assert.equal((await fieldAt(p,op.ref)).value,op.value);return null;}
  if(id.startsWith('run-')){await activate(p,p.locator('#runBtn'));return null;}
- if(id.startsWith('stop-')){await activate(p,p.locator('#stopBtn'));return null;}
+ // ■ (a click or a tap) comes after the 0.5 s in which it would be the second press of a double press of ▶.
+ if(id.startsWith('stop-')){await p.waitForTimeout(DOUBLE_PRESS_MS+50);await activate(p,p.locator('#stopBtn'));return null;}
  if(id.endsWith('-undo')){await activate(p,p.locator('#undoBtn'));const change=auditOperation(course+'-'+leaf+'-change',course,leaf);assert.equal((await fieldAt(p,change.ref)).value,p.entryOldValue,'ordinary Undo restores the freely chosen numeric edit');return null;}
  if(id.startsWith('try-')){
   const count=id==='try-original'?3:id==='try-'+course?2:course==='score'?6:2,actor=p.locator('#formSurface .component[data-id="sprite-1"]');
@@ -113,7 +122,7 @@ async function exitAndResume(p,id){
  return {record:{id,before,retained,after,remainingGuards},downloaded};
 }
 async function deny(p,route){
- const ids={new:'newBtn',sample:'sampleBtn',open:'openBtn',export:'exportBtn',redo:'redoBtn',dialog:'openConfirmProceed'};
+ const ids={new:'newBtn',sample:'sampleBtn',open:'openBtn',export:'exportBtn',redo:'redoBtn',dialog:'loseConfirmProceed'};
  if(route==='sample')await p.locator('#sampleBtn').click({force:true});
  else if(route==='mouse-menu')await p.locator('#entryProjectMenu > summary').click({force:true});
  else if(route==='keyboard-enter'||route==='keyboard-space')await p.locator('#newBtn').evaluate((el,route)=>{const event=new KeyboardEvent('keydown',{key:route==='keyboard-enter'?'Enter':' ',bubbles:true,cancelable:true});el.dispatchEvent(event);if(!event.defaultPrevented)throw Error('Forbidden keyboard activation was not canceled');el.click();},route);
@@ -142,14 +151,15 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   }await p.setViewportSize({width:390,height:844});const narrow={size:{width:390,height:844},screenshot:await picture(p,'entry-narrow')};return{viewports,narrow,autoStarted:false};});
  await row(browser,browserIds[1],async p=>{const before=await read(p),states=[];
   assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1,'display level stays in the top toolbar');
-  assert.equal(await p.locator('#editorModecode').isDisabled(),true,'entry is block-only');
-  await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
-  // option disabled is a native HTML property; Playwright's generic enabled predicate does not model it.
-  assert.equal(await p.locator('#uiLevel option[value="entry"]').evaluate(el=>el.disabled),true,'entry cannot be selected in code mode');
+  // はじめて is blocks only (LANGUAGE.md 画面の見方, final call 22): the toggle shows 「ブロックモード ⇄」, a press keeps the
+  // blocks and says to choose かんたん or くわしく, and the code view does not offer はじめて at all.
+  await refusedViewPress(p,'entry');assert.deepEqual(await read(p),before,'a refused view press changes nothing');
+  await p.locator('#uiLevel').selectOption('basic');await chooseView(p,'code');
+  assert.equal(await p.locator('#uiLevel option[value="entry"]').count(),0,'entry is not offered in code view');
   await p.locator('#uiLevel').evaluate(el=>{el.value='entry';el.dispatchEvent(new Event('change',{bubbles:true}));});
   assert.equal(await p.locator('#uiLevel').inputValue(),'basic','synthetic selection cannot create an entry/code mismatch');
-  await p.locator('#editorModeblocks').click();
-  assert.equal(await p.locator('#uiLevel option[value="entry"]').evaluate(el=>el.disabled),false);
+  await chooseView(p,'blocks');
+  assert.equal(await p.locator('#uiLevel option[value="entry"]').count(),1);
   await p.locator('#uiLevel').selectOption('entry');
 
   for(const mode of ['advanced','basic','entry']){await p.locator('#uiLevel').selectOption(mode);assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1);const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);assert.equal(after.dirty,before.dirty);states.push(after);}
@@ -198,10 +208,10 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   return{unchangedResume:old,changed,asked,cancelledRestart:await read(p)};});
  await row(browser,browserIds[7],async p=>{const downloaded=await reach(p,'verify-save');const before=await read(p);
   await p.locator('#tutorialSavedFile').dispatchEvent('cancel');assert.equal((await read(p)).step,'verify-save');
-  await p.locator('#tutorialSavedFile').setInputFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('not a project')});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('ほぞんを たしかめた けっか'));
+  await p.locator('#tutorialSavedFile').setInputFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('not a project')});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('ほぞんを たしかめられなかったよ'));
   assert.equal((await read(p)).step,'verify-save');assert.deepEqual(content(await read(p)),content(before));
   const different=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='違う作品';return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
-  await p.locator('#tutorialSavedFile').setInputFiles({name:'same-name.akari.md',mimeType:'text/plain',buffer:Buffer.from(different)});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('中身が ちがいます'));
+  await p.locator('#tutorialSavedFile').setInputFiles({name:'same-name.akari.md',mimeType:'text/plain',buffer:Buffer.from(different)});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('中身が ちがうよ'));
   const refused=await read(p);assert.equal(refused.step,'verify-save');assert.deepEqual(content(refused),content(before));
   await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);assert.equal((await read(p)).project,before.project);
   return{before,refused,retried:await read(p),cancelDidNotComplete:true,parseFailureDidNotComplete:true,mismatchDidNotComplete:true};});
@@ -209,13 +219,13 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   const file=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='座標取り込みの実操作';
    const first=project.components[0];Object.assign(first,{x:123.75,y:80.25,direction:35,scalePercent:65});
    const second=structuredClone(first);Object.assign(second,{id:'sprite-2',name:'二人目',x:-20.5,y:130.125});second.costumes=second.costumes.map(c=>({...c,id:c.id+'-second'}));second.costumeId+='-second';project.components.push(second);
-   project.scripts=[{id:'position-main',targetId:'sprite-1',event:'start',source:'横25.5、縦－33.25の位置に行く。'}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
+   project.scripts=[{id:'position-main',targetId:'sprite-1',event:'start',source:'画面の左下のはしから、右へ25.5歩、上へ－33.25歩のばしょへ行く。'}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
   await p.locator('#fileInput').setInputFiles({name:'position.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   await p.waitForFunction(()=>Akari.app.project.name==='座標取り込みの実操作');await p.locator('#objectSelect').selectOption('sprite-1');
   const positions=async()=>p.evaluate(()=>Akari.app.project.components.map(c=>({id:c.id,x:c.x,y:c.y}))),before=await positions(),observations=[];
   const blockValues=()=>p.evaluate(()=>{const s=Akari.app.editorState.main,scalar=n=>n.schemaId==='QuantityLiteral'?scalar(n.inputs.value):n.schemaId.startsWith('UnaryExpression')?-scalar(n.inputs.value):n.fields.value;
-   return s.blockView.bodies.body.filter(n=>['MotionCommand:GOTO','MotionCommand:GLIDE'].includes(n.schemaId)).map(n=>({schema:n.schemaId,values:n.inputs.args.map(scalar)}));});
-  for(const schema of ['MotionCommand:GOTO','MotionCommand:GLIDE']){await p.locator('#blockEditor [data-blockui-schema="'+schema+'"]').click();const values=await blockValues();assert.deepEqual(values[0].values,[25.5,-33.25]);assert.deepEqual(values.at(-1).values.slice(-2),[123.75,80.25]);observations.push({schema,values});}
+   return s.blockView.bodies.body.filter(n=>n.schemaId==='MotionCommand:GOTO').map(n=>({schema:n.schemaId,values:[n.inputs.x,n.inputs.y].map(scalar)}));});
+  for(const schema of ['MotionCommand:GOTO']){await p.locator('#blockEditor [data-blockui-schema="'+schema+'"]').click();const values=await blockValues();assert.deepEqual(values[0].values,[25.5,-33.25]);assert.deepEqual(values.at(-1).values.slice(-2),[123.75,80.25]);observations.push({schema,values});}
   assert.deepEqual(await positions(),before);await p.locator('#stageZoomOut').click();
   const sprite=p.locator('#formSurface .component[data-id="sprite-1"]');await sprite.scrollIntoViewIfNeeded();let box=await sprite.boundingBox();
   await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.mouse.move(box.x+box.width/2+14,box.y+box.height/2+9,{steps:3});await p.keyboard.press('Escape');await p.mouse.up();assert.deepEqual(await positions(),before,'cancel restores confirmed decimals');
@@ -227,16 +237,18 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
  });
  await row(browser,browserIds[9],async p=>{
   await reach(p,'speech-text');const r=await roles(p),input=field(p,r.text),before=await read(p);
-  await input.fill('違う言葉');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
-  await input.fill('つかまった！');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
+  // F-04: the child's own words go on; empty text stays on the step with 「ことばを 入れてね」.
+  await input.fill('');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');assert.match(await p.locator('#tutorialText').innerText(),/ことばを 入れてね/);
+  await input.fill('ぼくの ことば');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
   await input.dispatchEvent('compositionend');await input.press('Enter');await waitStep(p,'add-escape');
+  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body[1]?.inputs?.value?.fields?.value),'ぼくの ことば','the work keeps the child\'s own words');
   const wrong=await read(p),destination=await roles(p);
   await p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+destination.root+'"][data-blockui-body="body"][data-insert-index="2"]').first().click();
   await p.locator('#blockEditor [data-lesson-block="escape"]').dblclick();await waitStep(p,'run-original');
   assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body.filter(n=>n.schemaId==='MotionCommand:GOTO').length),1);
   await p.locator('#tutorialExit').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.dataset.tutorialBlocked!=='true'&&document.activeElement.getClientRects().length>0),true);
   const pending=await read(p);await p.locator('#tutorialExit').click();assert.equal((await read(p)).step,null);
-  return{before,wrong,pending,afterExit:await read(p),wrongTextDidNotAdvance:true,unconfirmedIMEDidNotAdvance:true,doubleClickInsertedOnce:true};
+  return{before,wrong,pending,afterExit:await read(p),emptyTextDidNotAdvance:true,ownWordsKept:true,unconfirmedIMEDidNotAdvance:true,doubleClickInsertedOnce:true};
  });
  await row(browser,browserIds[10],async p=>{
   await reach(p,'save-work');const before=await read(p);await p.evaluate(()=>{window.originalCreateURL=URL.createObjectURL;URL.createObjectURL=()=>{throw Error('Injected download preparation failure');};});
@@ -256,7 +268,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   return{exited,restored:await read(p),staleCallbackIgnored:true,progressNotPersisted:true};
  });
  await row(browser,browserIds[12],async p=>{p.entryTouch=true;await p.locator('#tutorialStart').tap();const steps=[];let downloaded=null;
-  for(const id of tutorialSteps){await waitStep(p,id);const resumed=await exitAndResume(p,id);if(resumed.downloaded)downloaded=resumed.downloaded;const before=await read(p);await p.locator('#entryProjectMenu > summary').tap();assert.deepEqual(content(await read(p)),content(before),'touch cannot open unrelated menu '+id);
+  for(const id of tutorialSteps){await waitStep(p,id);const resumed=await exitAndResume(p,id);if(resumed.downloaded)downloaded=resumed.downloaded;const before=await read(p);await tapEntryProjectMenu(p);assert.deepEqual(content(await read(p)),content(before),'touch cannot open unrelated menu '+id);
    if(id==='verify-save'){const choosing=p.waitForEvent('filechooser');await p.locator('#tutorialVerifySave').tap();await (await choosing).setFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
    else {const file=await positive(p,id);if(file)downloaded=file;await waitStep(p,tutorialSteps[tutorialSteps.indexOf(id)+1]);}
    steps.push({id,before,after:await read(p)});
@@ -270,7 +282,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   const before=await read(p);await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
   const actor=p.locator('#formSurface .component[data-id="sprite-1"]');assert.equal(await actor.getAttribute('role'),'button');assert.equal(await actor.getAttribute('tabindex'),'0');await actor.focus();await actor.press('Enter');
   await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キーボードで起動');const observed=await read(p);assert.equal(observed.project,before.project);assert.equal(observed.source,before.source);
-  await p.locator('#stopBtn').click();return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
+  await pressStop(p.locator('#stopBtn'));return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
  });
  await row(browser,browserIds[14],async()=>{const routes=[];
   for(const [course,leaves]of Object.entries(routeLeaves))for(const leaf of leaves){
@@ -289,7 +301,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
      await p.waitForFunction(fieldInView,ref.id);
      for(const bad of ['', '-', '999999']){
       await control.fill(bad);await control.press('Enter');assert.equal((await read(p)).step,id,'invalid numeric input cannot advance');
-      if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る数は.+から.+の中でえらぼう/,'range error explains the permitted numbers');
+      if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る 数は .+から.+の 中で えらぼう/,'range error explains the permitted numbers');
       await control.press('Escape');assert.equal((await fieldAt(p,op.ref)).value,ref.value,'cancel restores only the edited value');
       const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);
       assert.equal(await p.locator('#editorPending').isHidden(),true,'a cancelled edit leaves no message to fix');

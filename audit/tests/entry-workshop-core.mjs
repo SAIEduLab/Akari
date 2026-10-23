@@ -18,7 +18,7 @@ function lessonRoute(course='score',leaf='goal'){
  steps.push(...d.tutorialExtensionSteps(course,leaf,offset,course+'-'+leaf),
  d.tutorialDefine({id:'save-work',action:'save',message:'save'}),d.tutorialDefine({id:'verify-save',action:'verify-save',message:'verify'}));return steps;
 }
-test(unitIds[0],()=>{const cases=[[null,'entry'],['entry','entry'],['basic','basic'],['advanced','advanced'],['all','advanced'],['unknown','basic'],['','basic']];
+test(unitIds[0],()=>{const cases=[[null,'entry'],['entry','entry'],['basic','basic'],['advanced','advanced'],['all','basic'],['unknown','basic'],['','basic']];
  for(const [input,expected]of cases)assert.equal(d.normalizeEntryUiLevel(input),expected);return{cases};});
 test(unitIds[1],()=>{assert.deepEqual([...d.ENTRY_BLOCK_SCHEMA_IDS],entrySchemas);
  for(const id of [...d.ENTRY_BLOCK_SCHEMA_IDS,...d.BASIC_BLOCK_SCHEMA_IDS]){assert.ok(a.BLOCK_SCHEMA_BY_ID.has(id),id);assert.notEqual(a.BLOCK_SCHEMA_BY_ID.get(id).draftOnly,true,id);}
@@ -32,7 +32,8 @@ test(unitIds[2],()=>{
   assert.deepEqual(steps.map(s=>s.id),auditRoute(course,leaf));
   for(const s of steps){for(const k of ['id','goal','message','target','start','allowed','input','ime','success','recovery','next','exit'])assert.ok(k in s,s.id+'/'+k);assert.ok(s.allowed.includes('exit')&&s.allowed.includes('stop'));}
   const states=d.tutorialExpectedTrees(practice,steps);assert.equal(states.length,steps.length+1);
-  assert.equal(practice.scripts[0].source,'ほかの動きを全部止める。','only the visible click guard is provided');
+  // F-29: the guard stops only the part's own other movements (自分のほかの動きを止める), not every other body.
+  assert.equal(practice.scripts[0].source,'自分のほかの動きを止める。','only the visible click guard is provided');
   const finalSource=a.formatScript(a.blockDecode(states.at(-1)));practice.scripts[0].source=finalSource;
   const compiled=a.compileProject(practice);assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors));
   const runtime=new a.RuntimeModel(practice,{});let clock=0,serial=0,pending=[];const says=[],tones=[],turns=[];
@@ -55,7 +56,8 @@ test(unitIds[2],()=>{
   if(leaf==='goal')assert.equal(says.filter(x=>x==='クリア！').length,2);
   if(leaf==='bonus')assert.equal(says.filter(x=>x==='クリア！').length,1);
   if(leaf==='remaining')assert.equal(runtime.actor('practice-board').text,'あと：4');
-  if(leaf==='zigzag')assert.ok(Math.abs(catches.at(-1).x-430)<1e-8,'floating-point glide returns to its start');
+  // The swim block's place is the fish's centre, counted from the bottom-left corner (1.5.0): よこ480.
+  if(leaf==='zigzag')assert.ok(Math.abs(catches.at(-1).x-480)<1e-8,'floating-point glide returns to its start');
   scheduler.stop();runtime.reset(1);scheduler.start();for(let i=0;i<20;i++)scheduler.spawnForRuntime('sprite-1','click');drain();
   assert.equal(runtime.projectVars.get('点数'),course==='score'?1:0,'burst cannot duplicate the score');scheduler.stop();
   const change=steps.find(s=>s.free),chosen=auditOperation(change.id,course,leaf).value;
@@ -93,14 +95,16 @@ test(unitIds[3],()=>{const cases=[];
 const value=n=>n.kind==='UnaryExpression'?-value(n.value):n.value;
 test(unitIds[4],()=>{const cases=[];for(const [x,y]of [[34,56],[-25.5,76.125],[1234.125,-1234.75],[0,0]]){
  const p=a.makeEmptyProject();Object.assign(p.components[0],{x,y});const c={targetId:'sprite-1',event:'start'},s=a.createEditorSession('script:sprite-1:start','',c,p);
- for(const [schema,positions]of [['MotionCommand:GOTO',[[0,x],[1,y]]],['MotionCommand:GLIDE',[[1,x],[2,y]]],['MotionCommand:SET_X',[[0,x]]],['MotionCommand:SET_Y',[[0,y]]]]){
+ // 決めたばしょへ行く takes the part's centre (its two legs); the other move blocks start from fixed amounts.
+ for(const [schema,positions]of [['MotionCommand:GOTO',[['x',x],['y',y]]]]){
   const before=JSON.stringify(p),r=a.blockInsertionAvailability(s,schema,{parentId:s.blockView.id,body:'body',index:0},{project:p,context:c});
-  assert.equal(r.enabled,true,r.reason);const decoded=a.blockDecode(r.node,{expected:'statement'});for(const [index,expected]of positions)assert.equal(value(decoded.args[index]),expected);
+  assert.equal(r.enabled,true,r.reason);const decoded=a.blockDecode(r.node,{expected:'statement'});for(const [key,expected]of positions)assert.equal(value(decoded[key]),expected);
   assert.equal(JSON.stringify(p),before);cases.push({schema,x,y,source:a.formatScript({kind:'Script',body:[decoded]})});
  }}return{cases,decimalPreserved:true,designNotMutated:true};});
 test(unitIds[5],()=>{const p=a.makeEmptyProject();Object.assign(p.components[0],{x:35.5,y:-48.25});
- for(const schema of ['MotionCommand:GOTO','MotionCommand:GLIDE'])assert.ok(a.blockDecode(a.createBlock(schema,{project:p,targetId:'sprite-1'}),{expected:'statement'}).args.every(n=>value(n)===0));
- for(const targetId of ['stage','absent']){const c={targetId,event:'start'},s=a.createEditorSession('script:'+targetId+':start','',c,p);const r=a.blockInsertionAvailability(s,'MotionCommand:GOTO',{parentId:s.blockView.id,body:'body',index:0},{project:p,context:c});if(r.node)assert.ok(a.blockDecode(r.node,{expected:'statement'}).args.every(n=>value(n)===0));}
+ const legs=n=>[n.x,n.y];
+ assert.ok(legs(a.blockDecode(a.createBlock('MotionCommand:GOTO',{project:p,targetId:'sprite-1'}),{expected:'statement'})).every(n=>value(n)===0));
+ for(const targetId of ['stage','absent']){const c={targetId,event:'start'},s=a.createEditorSession('script:'+targetId+':start','',c,p);const r=a.blockInsertionAvailability(s,'MotionCommand:GOTO',{parentId:s.blockView.id,body:'body',index:0},{project:p,context:c});if(r.node)assert.ok(legs(a.blockDecode(r.node,{expected:'statement'})).every(n=>value(n)===0));}
  return{apiDefault:[0,0],missingTargetDefault:[0,0],stageDefault:[0,0]};});
 test(unitIds[6],()=>{const bytes=cp.execFileSync('git',['show','HEAD:'+product],{maxBuffer:64*1024*1024});assert.ok(bytes.length>1024*1024,'actual single HTML exceeds the old child-process buffer');const expected=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(entryProvenance(product).committedProductSha256,expected);return{bytes:bytes.length,committedProductSha256:expected,fullGitBlobRead:true};});
 report.status=report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';fs.mkdirSync('audit-evidence',{recursive:true});fs.writeFileSync(process.argv[2]||'audit-evidence/entry-workshop-core.json',JSON.stringify(report,null,2)+'\n');

@@ -1,4 +1,6 @@
+const {DOUBLE_PRESS_MS}=require('../../lib/stop-press.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Targeted UI regression check, not a substitute for the complete product audit.
@@ -18,7 +20,8 @@ async function state(page){return page.evaluate(()=>{
  const app=Akari.app,session=app.editorState.main,c=app.project.components.find(x=>x.id==='sprite-1'),r=document.querySelector('#formSurface').getBoundingClientRect();
  return {owner:session.ownerKey,mode:session.mode,shell:document.body.dataset.editorMode,source:session.sourceText,textarea:document.querySelector('#codeEditor').value,
   sources:JSON.stringify({scripts:app.project.scripts,actions:app.project.actions,functions:app.project.functions}),x:c.x,y:c.y,stageWidth:app.project.stage.width,stageHeight:app.project.stage.height,
-  preview:{x:parseFloat(document.querySelector('.component[data-id="sprite-1"]').style.left),y:parseFloat(document.querySelector('.component[data-id="sprite-1"]').style.top)},rect:{left:r.left,top:r.top,width:r.width,height:r.height},history:app.editorState.history,redo:app.editorState.redo,state:app.editorState.state,events:window.__gestureEvents.slice()};
+  // The part on the screen, read as its centre from the bottom-left corner (the frame x and y use).
+  preview:(()=>{const e=document.querySelector('.component[data-id="sprite-1"]');return{x:parseFloat(e.style.left)+parseFloat(e.style.width)/2,y:app.project.stage.height-(parseFloat(e.style.top)+parseFloat(e.style.height)/2)};})(),rect:{left:r.left,top:r.top,width:r.width,height:r.height},history:app.editorState.history,redo:app.editorState.redo,state:app.editorState.state,events:window.__gestureEvents.slice()};
  });}
 async function setup(browser,id){
  const context=await browser.newContext({viewport:{width:1440,height:900},hasTouch:true});
@@ -27,7 +30,7 @@ async function setup(browser,id){
  await page.goto(pathToFileURL(file).href);await setupRegressionPage(page);
  await (await reveal(page.locator('#objectSelect'))).selectOption('sprite-1');await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「SPRITE」と言う。');})();
  await (await reveal(page.locator('#objectSelect'))).selectOption('stage');await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「STAGE」と言う。\n20秒待つ。');})();
- await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();
+ await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});
  // fitStage uses ResizeObserver. Wait for the visible stage scale to settle.
  await page.waitForFunction(()=>{const r=document.querySelector('#formSurface').getBoundingClientRect();return r.width>0&&r.width<400;});
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -43,7 +46,7 @@ async function runCase(browser,id,fn){let t;const evidence={};try{t=await setup(
  try{
  await runCase(browser,'stage-gesture:drag-owner-layout-and-coordinates',async(t,e)=>{
   e.down=await downMouse(t);await t.page.mouse.move(t.point.x+10,t.point.y+10);e.moved=await state(t.page);sameRect(e.moved.rect,e.down.rect);
-  assert.equal(e.moved.x,t.before.x);assert.equal(e.moved.y,t.before.y);assert.equal(e.moved.history,e.down.history);assert.equal(e.moved.preview.x,Math.round(t.before.x+10*t.before.stageWidth/t.before.rect.width));assert.equal(e.moved.preview.y,Math.round(t.before.y+10*t.before.stageHeight/t.before.rect.height));
+  assert.equal(e.moved.x,t.before.x);assert.equal(e.moved.y,t.before.y);assert.equal(e.moved.history,e.down.history);assert.equal(e.moved.preview.x,Math.round(t.before.x+10*t.before.stageWidth/t.before.rect.width));assert.equal(e.moved.preview.y,Math.round(t.before.y-10*t.before.stageHeight/t.before.rect.height),'a drag down the screen lowers たてのばしょ');
   await t.page.mouse.up();await t.page.waitForFunction(()=>document.body.dataset.editorMode==='blocks');await t.page.waitForFunction(expected=>Akari.app.editorState.history===expected,e.moved.history+1);e.released=await state(t.page);assert.equal(e.released.x,e.moved.preview.x);assert.equal(e.released.y,e.moved.preview.y);
   assert.equal(e.released.history,e.moved.history+1,'one drag creates one undo entry');
   await t.page.keyboard.press('Control+z');e.undo=await assertSources(t);assert.equal(e.undo.x,t.before.x);assert.equal(e.undo.y,t.before.y);
@@ -90,7 +93,8 @@ async function runCase(browser,id,fn){let t;const evidence={};try{t=await setup(
   e.down=await downMouse(t);await t.page.locator('#runBtn').press('Enter');await t.page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');e.running=await assertSources(t);
   assert.equal(e.running.shell,'blocks','execution lock releases the deferred layout');
   await t.cdp.send('Input.dispatchMouseEvent',{type:'mouseMoved',x:t.point.x+10,y:t.point.y+10,buttons:0});e.moveWhileRunning=await assertSources(t);assert.equal(e.moveWhileRunning.x,t.before.x);assert.equal(e.moveWhileRunning.y,t.before.y);
-  await t.page.locator('#stopBtn').press('Enter');await t.page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await t.page.mouse.up();
+  // ■ by key, after the 0.5 s in which a press of ■ is the second press of a double press of ▶ (stop-press.cjs).
+  await t.page.waitForTimeout(DOUBLE_PRESS_MS+50);await t.page.locator('#stopBtn').press('Enter');await t.page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');await t.page.mouse.up();
  });
  }finally{await browser.close();}
  const finalSha=L.sha(L.fs.readFileSync(file)),report={file,sha,sha256:sha,finalSha,sourceFileUnchanged:sha===finalSha,sourceUnchanged:sha===finalSha&&results.every(r=>r.evidence?.sourceUnchanged===true),browser:browserVersion,scope:'Targeted real-browser stage gesture and source-owner regression checks; not a full release audit.',results,pageErrors,networkRequests};

@@ -6,6 +6,8 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {snapshot, withBrowser, pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView,shownView} from '../browser/cases/view-toggle.cjs';
 
 const [browserPath, productArg, outputArg] = process.argv.slice(2);
 assert.ok(browserPath && productArg && outputArg,
@@ -33,8 +35,9 @@ async function setup(page) {
   await page.waitForFunction(() => !!globalThis.Akari?.app);
   await installGreetingFixture(page);
   await page.locator('#uiLevel').selectOption('advanced');
-  await page.locator('#editorModeblocks').click();
-  await page.waitForFunction(() => document.querySelector('#editorModeblocks')?.getAttribute('aria-pressed') === 'true');
+  await chooseView(page,'blocks');
+  await page.waitForFunction(() => Akari.app.editorState.main.mode === 'blocks');
+  assert.equal(await shownView(page), 'blocks');
 }
 
 async function addBlock(page, searchText, schemaId) {
@@ -72,9 +75,9 @@ async function sourceFromModel(page) {
 }
 
 async function roundTrip(page, source) {
-  await page.locator('#editorModecode').click();
+  await chooseView(page,'code');
   const code = await page.locator('#codeEditor').inputValue();
-  await page.locator('#editorModeblocks').click();
+  await chooseView(page,'blocks');
   const after = await sourceFromModel(page);
   assert.equal(code, source, 'code view exposes the same source as the block edits');
   assert.equal(after, source, 'block round trip preserves canonical source');
@@ -133,7 +136,7 @@ async function reviewLevelAccess(page) {
 async function reviewCancelledDiagnosis(page) {
   const observations=[];
   for(const raw of ['あかりは右へ１０秒動く。','解釈できない命令。']) for(const [query,schemaId] of [['もし','IfStatement'],['ずっと','Forever']]) {
-    await page.locator('#editorModecode').click();
+    await chooseView(page,'code');
     const before=await sourceFromModel(page);
     await page.locator('#codeEditor').fill(raw);
     await page.waitForFunction(()=>Akari.app.editorState.main.pendingEdit?.kind==='code');
@@ -143,7 +146,7 @@ async function reviewCancelledDiagnosis(page) {
     await page.locator('#editorCancel').click();
     assert.equal(await sourceFromModel(page),before);
     assert.equal(await page.locator('#editorPending').textContent(),'','cancel removes the stored diagnosis');
-    await page.locator('#editorModeblocks').click();
+    await chooseView(page,'blocks');
     await addBlock(page,query,schemaId);
     const current=await page.locator('#editorPending').textContent();
     const diagnostics=await page.evaluate(()=>Akari.app.editorState.main.diagnostics);
@@ -159,9 +162,11 @@ async function reviewCancelledDiagnosis(page) {
 
 async function reviewModePreference(page) {
   const read=()=>page.evaluate(()=>{const a=Akari.app,s=a.editorState;return{project:JSON.stringify(a.project),source:s.main.sourceText,pending:s.main.pendingEdit,diagnostics:s.main.diagnostics,history:s.history,redo:s.redo,dirty:s.dirty};});
-  const selected=mode=>page.locator('#editorMode'+mode).getAttribute('aria-pressed');
+  // The toggle names the view on the screen (final call 22): 「ブロックモード ⇄」 or 「コードモード ⇄」.
+  const selected=()=>shownView(page);
   assert.equal(await page.evaluate(()=>localStorage.getItem('akari.editorMode.v1')),null,'empty storage has no editor preference');
-  assert.equal(await selected('blocks'),'true','first startup opens blocks');
+  assert.equal(await selected(),'blocks','first startup opens blocks');
+  // pageFor starts this check at かんたん (its saved level); はじめて's first start is checked by the entry suites.
   assert.equal(await page.locator('#uiLevel').inputValue(),'basic','detail level is a separate preference');
   const initial=await read(),observations=[];
   assert.equal(initial.source,'','first startup has an empty beginning; the sample is explicit');
@@ -172,36 +177,36 @@ async function reviewModePreference(page) {
   await toggle.press('Enter');assert.equal(await controls.isVisible(),false);assert.equal(await toggle.getAttribute('aria-expanded'),'false');assert.equal(await toggle.innerText(),'さがす・作るを ひらく');
   assert.deepEqual(await read(),initial,'opening and folding preserves project and history');
   for(const mode of ['code','blocks']) {
-    await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),initial,'mode selection preserves full design and history');
+    assert.equal(await chooseView(page,mode),true,'the toggle switches to '+mode);assert.equal(await selected(),mode);assert.deepEqual(await read(),initial,'mode selection preserves full design and history');
     assert.equal(await page.evaluate(()=>localStorage.getItem('akari.editorMode.v1')),mode,'successful explicit selection persists');
     await page.reload();await page.waitForFunction(()=>!!globalThis.Akari?.app);
-    assert.equal(await selected(mode),'true',mode+' survives restart');assert.deepEqual(await read(),initial,'restart with only a preference change preserves the initial design');
+    assert.equal(await selected(),mode,mode+' survives restart');assert.deepEqual(await read(),initial,'restart with only a preference change preserves the initial design');
     for(const level of ['advanced','basic']) {
-      await page.locator('#uiLevel').selectOption(level);assert.equal(await selected(mode),'true','detail level never switches code/blocks');assert.deepEqual(await read(),initial);
+      await page.locator('#uiLevel').selectOption(level);assert.equal(await selected(),mode,'detail level never switches code/blocks');assert.deepEqual(await read(),initial);
     }
     observations.push({mode,reloaded:true,source:initial.source,historyUnchanged:true});
   }
-  await page.locator('#editorModecode').click();const edited='画面の右へ12歩動く。';assert.notEqual(edited,initial.source);
+  await chooseView(page,'code');const edited='いまのばしょから、右へ12歩動く。';assert.notEqual(edited,initial.source);
   await page.locator('#codeEditor').fill(edited);
   await page.waitForFunction(source=>Akari.app.editorState.main.sourceText===source&&Akari.app.editorState.history>1,edited);
   const committed=await read();
   for(const mode of ['blocks','code']) {
-    await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),committed,'switching modes preserves the complete committed edit');
+    assert.equal(await chooseView(page,mode),true);assert.equal(await selected(),mode);assert.deepEqual(await read(),committed,'switching modes preserves the complete committed edit');
     await page.locator('#undoBtn').click();assert.equal((await read()).source,initial.source,'Undo remains available in '+mode);
     await page.locator('#redoBtn').click();assert.deepEqual(await read(),committed,'Redo restores full state in '+mode);
   }
   await page.locator('#undoBtn').click();assert.equal((await read()).source,initial.source);
-  await page.locator('#editorModeblocks').click();
+  await chooseView(page,'blocks');
   return {initial,observations,committed,undoRedoBothModes:true};
 }
 
 async function reviewBlockDiscoverability(page) {
-  await page.locator('#stopBtn').click();
-  await page.locator('#editorModecode').click();
+  await pressStop(page.locator('#stopBtn'));
+  await chooseView(page,'code');
   const original = '「おやつにしよう」と言う。\n「ただいま」と言う。';
   await page.locator('#codeEditor').fill(original);
   await page.waitForFunction(text => Akari.app.editorState.main.sourceText === text, original);
-  await page.locator('#editorModeblocks').click();
+  await chooseView(page,'blocks');
   await page.locator('#blockEditor [data-blockui-action="body-insert"]').last().click();
   await openPaletteTools(page.locator('#blockEditor'));
   await page.locator('#blockEditor [data-blockui-search]').fill('言う');
@@ -210,20 +215,24 @@ async function reviewBlockDiscoverability(page) {
     await page.setViewportSize({width,height});
     const root = page.locator('#blockEditor');
     const candidate = root.locator('[data-blockui-action="palette-add"][data-blockui-schema="Say:timed"]');
-    await candidate.scrollIntoViewIfNeeded();
+    // A new width lays the block list out again a frame later; the candidate is read once that is done (a node
+    // replaced while it is scrolled to is looked up again, once).
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    try { await candidate.scrollIntoViewIfNeeded(); } catch (error) { if (!/not attached/.test(error.message)) throw error; await candidate.scrollIntoViewIfNeeded(); }
     const hint = await candidate.evaluate(button => {
       const preview=button.querySelector('.blockui-preview').getBoundingClientRect();
       const label=button.querySelector('.blockui-bound-name'),box=label.getBoundingClientRect();
       return {text:label.textContent,previewBottom:preview.bottom,top:box.top,width:box.width,
         overflow:label.scrollWidth>label.clientWidth,display:getComputedStyle(label).display};
     });
-    assert.equal(hint.text,'言うことと 秒数を 決めて 話す');
+    // The かんたん caption of the timed speech block (FCB-16: a plain block name, not 言うことと 秒数を).
+    assert.equal(hint.text,'ことばと 時間を 決めて 話す');
     assert.equal(hint.display,'block');
     assert.ok(hint.top>=hint.previewBottom,'the complete explanation begins below its block');
     assert.equal(hint.overflow,false,'the explanation wraps within the candidate');
     const second=root.locator('.blockui-node[data-schema-id="Say"]').nth(1);
     const more=second.locator(':scope > .blockui-node-head [data-blockui-action="more"]');
-    assert.equal(await more.innerText(),'ほかのそうさ','selected block actions use the requested child-readable label');
+    assert.equal(await more.innerText(),'ほかの そうさ','selected block actions use the requested child-readable label');
     const before=await page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,history:Akari.app.editorState.history}));
     await U.clickNode(second);
     const up=second.locator('[data-blockui-action="move-up"]').first();
@@ -235,7 +244,7 @@ async function reviewBlockDiscoverability(page) {
     await page.locator('#undoBtn').click();assert.equal(await sourceFromModel(page),original);
     await page.locator('#redoBtn').click();assert.equal(await sourceFromModel(page),moved);
     await page.locator('#undoBtn').click();assert.equal(await sourceFromModel(page),original);
-    observations.push({width,height,hint,label:'ほかのそうさ',activationClicks:2,dragGestures:0,
+    observations.push({width,height,hint,label:'ほかの そうさ',activationClicks:2,dragGestures:0,
       before:original,after:moved,undoRedo:true});
   }
   return {humanChildTesting:'NOT_RUN',observations};
@@ -258,7 +267,8 @@ async function reviewDefaults(page, capture) {
   assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),0,'kana alias respects the expression category filter');
   await openPaletteOptions(page);await paletteMode.selectOption('statement');await closePaletteOptions(page);
   await page.locator('#blockEditor [data-blockui-category="motion"]:visible').click();
-  assert.equal(await page.locator('#blockEditor [data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),0,'kana respects a selected motion category');
+  // A chosen なかま does not narrow a search: the search looks in every なかま (LANGUAGE.md ブロックを さがす).
+  assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),1,'a search with 動き chosen still finds the size block');
   await page.locator('#blockEditor [data-blockui-category="look"]:visible').click();
   assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),1,'kana finds size in its appearance category');
   await page.locator('#blockEditor [data-blockui-category=""]:visible').click();
@@ -307,7 +317,9 @@ async function reviewDefaults(page, capture) {
   assert.equal(roundtrip.after, source, 'source and blocks round trip');
   assert.equal(runtime.failure, '', 'the new default scale executes without a runtime failure');
   assert.ok(runtime.bubbles.some(text => text.includes('こんにちは')), 'the program visibly speaks its greeting');
-  assert.match(runtime.finalSpriteTransform, /rotate\(15deg\)/, 'the new rotation value is reflected on the stage');
+  // 右に15度回る lowers the angle from 0 to 345 (LANGUAGE.md 向き); the stage draws rotate(−向き), 15 degrees clockwise.
+  const shown = Number(/rotate\((-?[0-9.]+)deg\)/.exec(runtime.finalSpriteTransform)?.[1]);
+  assert.equal(((shown % 360) + 360) % 360, 15, 'the new rotation value is reflected on the stage');
   evidence.blockDiscoverability = await reviewBlockDiscoverability(page);
   capture(evidence);
   return evidence;
@@ -315,7 +327,7 @@ async function reviewDefaults(page, capture) {
 
 async function reviewUnits(page, capture) {
   await setup(page);
-  await page.locator('#editorModecode').click();
+  await chooseView(page,'code');
   const initial = await sourceFromModel(page);
   const sourceInput = page.locator('#codeEditor');
   const afterUnits = '単位のあとまで動いたよ';
@@ -323,7 +335,7 @@ async function reviewUnits(page, capture) {
   const inputBaseline=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,target:document.querySelector('#objectSelect').value,event:document.querySelector('#eventSelect').value}));
   await sourceInput.fill(source);
   assert.deepEqual(await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,target:document.querySelector('#objectSelect').value,event:document.querySelector('#eventSelect').value})),inputBaseline);assert.equal(await sourceInput.inputValue(),source);
-  await page.locator('#editorModeblocks').click();
+  await chooseView(page,'blocks');
   await page.waitForFunction(text=>Akari.app.editorState.main.sourceText===text,source);
   await page.waitForFunction(()=>document.querySelector('#blockEditor .blockui-node[data-schema-id="LooksCommand:SET_SCALE"]'));
   const readPhrase = async schemaId => page.locator(`#blockEditor .blockui-node[data-schema-id="${schemaId}"]`).last().evaluate(node => ({
@@ -333,10 +345,6 @@ async function reviewUnits(page, capture) {
   }));
   const scalePhrase = await readPhrase('LooksCommand:SET_SCALE');
   const waitPhrase = await readPhrase('WaitTime');
-  const unitSelector=page.locator('#blockEditor .blockui-node[data-schema-id="WaitTime"] select[data-blockui-field="unit"]').last();
-  for(const details of await unitSelector.locator('xpath=ancestor::details[not(@open)]').all())await details.locator(':scope > summary').click();
-  assert.equal(await unitSelector.isVisible(),true,'the unit editor is reachable from the visible disclosure');
-  await unitSelector.selectOption('秒');
   const scaleSource = await sourceFromModel(page);
   const unitRoundtrip = await roundTrip(page, scaleSource);
   const state = await runUntilVisible(page, afterUnits);
@@ -346,8 +354,9 @@ async function reviewUnits(page, capture) {
     'a scale command presents its percent unit exactly once');
   assert.equal([...waitPhrase.staticPhrase].filter(char => char === '秒').length + waitPhrase.visibleUnits.filter(unit=>unit==='秒').length, 1,
     'a wait command presents its seconds unit exactly once');
-  assert.deepEqual(scalePhrase.selectedUnits,['％'],'the scale unit selector remains editable and keeps its unit');
-  assert.deepEqual(waitPhrase.selectedUnits,['秒'],'the wait unit selector remains editable and keeps its unit');
+  // A unit the sentence fixes is text, with no unit to choose (E-02).
+  assert.deepEqual(scalePhrase.selectedUnits,[],'the scale unit is text, with no unit selector');
+  assert.deepEqual(waitPhrase.selectedUnits,[],'the wait unit is text, with no unit selector');
   assert.match(scaleSource, /大きさを100％にする/);
   assert.match(scaleSource, /2秒待つ/);
   assert.equal(unitRoundtrip.after, scaleSource, 'unit metadata survives code/block conversion');

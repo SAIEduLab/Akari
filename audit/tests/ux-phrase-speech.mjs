@@ -6,6 +6,7 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {install} from '../lib/ux-normal-ui.mjs';
 import {speechTexts,multilineTexts,ordinaryNames,unicodeNames,speechViews,speechLayoutCases,speechIds,b10Source,verifySpeechObserved,verifySpeechReport} from '../lib/ux-phrase-speech-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output+'.artifacts';
 fs.mkdirSync(dir,{recursive:true});
 const report={schema:'akari-ux-phrase-speech-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,classification:'automated UI evidence; fixture preparation uses internal serialization; no independent UX audit claim',environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]};
@@ -17,7 +18,7 @@ async function prepare(p,{texts=speechTexts,names=ordinaryNames,scripts=null}={}
  await install(p,'',{mode:'code'});
  const name='発話契約03-'+(++serial),file=await p.evaluate(({texts,names,scripts,name})=>{
   const q=structuredClone(Akari.app.project);q.name=name;
-  q.components.forEach((c,i)=>{c.name=names[i];Object.assign(c,i===0?{x:80,y:180}:{x:420,y:180});});
+  q.components.forEach((c,i)=>{c.name=names[i];Object.assign(c,i===0?{x:170,y:130}:{x:510,y:130});});
   q.projectData.variables.push({id:'long-string',name:'文章',initialValue:'値'.repeat(170)});
   // Dedicated reading fixtures allow ten seconds; B10 below keeps its independent, exact two-second source.
   q.scripts=scripts||q.components.map((c,i)=>({id:'speech-'+i,targetId:c.id,event:'start',source:Akari.formatExpression({kind:'StringLiteral',value:texts[i]})+'と10秒話す。'}));
@@ -100,7 +101,7 @@ try{await withBrowser(chrome,async browser=>{
   return{viewport:{width:c.width,height:c.height},scale:parseInt(await p.locator('#stageZoomReset').textContent()),...await pair(p,c.id.replaceAll('/','-'))};
  });
  await run('speech/plain-78/switch-and-rerun',async p=>{
-  await prepare(p);await setView(p,speechViews[0]);const runs=[];for(let i=0;i<2;i++){await start(p);runs.push(await pair(p,'plain78-run'+i));await p.locator('#stopBtn').click();}return{lengths:speechTexts.map(t=>Array.from(t).length),runs};
+  await prepare(p);await setView(p,speechViews[0]);const runs=[];for(let i=0;i<2;i++){await start(p);runs.push(await pair(p,'plain78-run'+i));await pressStop(p.locator('#stopBtn'));}return{lengths:speechTexts.map(t=>Array.from(t).length),runs};
  });
  for(const v of speechViews)await run(`speech/B10/${v.width}x${v.height}/${v.scale}`,async p=>{
   await prepare(p,{scripts:[{id:'main',targetId:'sprite-1',event:'start',source:b10Source}]});await setView(p,v);
@@ -115,10 +116,12 @@ try{await withBrowser(chrome,async browser=>{
  });
  await run('speech/stop-and-rerun',async p=>{
   await prepare(p,{scripts:[{id:'first',targetId:'sprite-1',event:'start',source:say(speechTexts[0])+'\n1秒待つ。\nすべてを止める。'},{id:'second',targetId:'dango',event:'start',source:say(speechTexts[1])}]});await setView(p,speechViews[0]);await start(p);const initial=await open(p,'sprite-1');
-  // STOP_ALL changes scheduler state before its queued UI disposal. Await the
-  // completed visible stop within the existing timeout; retain every assertion.
-  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
-  await start(p);const rerun=await open(p,'dango');await p.keyboard.press('Escape');await p.locator('#stopBtn').click();return{initial,afterStop,rerun,afterUiStop:await stopped(p)};
+  // STOP_ALL ends the run: the run screen keeps its last picture (おわったよ) until ■ 止める goes back to the edit screen.
+  // The full-text dialog opened on the speech stays open over the ended run; it is closed before ■ 止める.
+  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='おわったよ');const afterFinish=await stopped(p);
+  if(afterFinish.open)await p.keyboard.press('Escape');await pressStop(p.locator('#stopBtn'));
+  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='止まって いるよ'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
+  await start(p);const rerun=await open(p,'dango');await p.keyboard.press('Escape');await pressStop(p.locator('#stopBtn'));return{initial,afterFinish,afterStop,rerun,afterUiStop:await stopped(p)};
  });
  await run('speech/clone-identity',async p=>{
   await prepare(p,{scripts:[{id:'first',targetId:'sprite-1',event:'start',source:'自分のコピーを作る。\n'+say(speechTexts[0]).replace('と言う。','と10秒話す。')},{id:'clone',targetId:'sprite-1',event:'cloneStart',source:say(speechTexts[1]).replace('と言う。','と10秒話す。')}]});await setView(p,speechViews[0]);await start(p);const b=(await bubbles(p)).sort((a,b)=>a.id.localeCompare(b.id)),original=await open(p,'sprite-1');await p.keyboard.press('Escape');const clone=await open(p,'sprite-1-clone-3','keyboard');await p.screenshot({path:path.join(dir,'clone-dialog.png')});return{bubbles:b,original,clone};

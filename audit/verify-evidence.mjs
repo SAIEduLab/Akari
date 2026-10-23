@@ -15,7 +15,7 @@ else {
   const kinds=auditBundleKinds;
   const results=[];
   for(const kind of kinds){
-    try{const expected={...provenance,platform:kind==='audio-codecs-win32'?'win32':'linux'};const selected=selectBundleDirectory(kind,kindOrDirectory,expected);const result=verifyBundle(kind,selected.directory,inputs,selected.provenance);results.push({kind,status:'PASS',provenance:selected.provenance,result:result.result});}
+    try{const expected={...provenance,platform:'win32'};const selected=selectBundleDirectory(kind,kindOrDirectory,expected);const result=verifyBundle(kind,selected.directory,inputs,selected.provenance);results.push({kind,status:'PASS',provenance:selected.provenance,result:result.result});}
     catch(e){results.push({kind,status:'FAIL',reason:e.message.slice(0,3000)});}
   }
   let jobsPassed=false;

@@ -6,6 +6,8 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {insertionSources,verifyInsertionContextObservation,verifyInsertionContextReport} from '../lib/insertion-context-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2);
 if(!chrome||!out)throw Error('Usage: ux-insertion-context-browser.mjs <browser> <fresh-report>');
 const output=path.resolve(out),artifacts=output+'.artifacts',product=currentProductFile(),started=performance.now();
@@ -33,7 +35,7 @@ async function install(p,source){
   const file=await p.evaluate(source=>{const project=Akari.makeEmptyProject();project.name='命令と値の追加先';project.scripts=[{id:'insertion-main',targetId:'sprite-1',event:'start',source}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());},source);
   await p.locator('#fileInput').setInputFiles({name:'insertion-context.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   await p.waitForFunction(()=>Akari.app.project.name==='命令と値の追加先');await p.locator('#objectSelect').selectOption('sprite-1');
-  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'blocks');
   await p.evaluate(()=>{globalThis.insertionContextTrace=[];let down=null;
     for(const kind of ['pointerdown','pointerup','click','focusin','blur','change','input','compositionstart','compositionend'])document.querySelector('#blockEditor').addEventListener(kind,event=>{
       if(kind==='pointerdown')down=event.target;
@@ -92,11 +94,16 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
   });
   await run(browser,'selection/value-unavailable',insertionSources.tail,async p=>{
     const before=await read(p),say=before.shape[0];const slot=p.locator('#blockEditor [data-parent-id="'+say.id+'"][data-blockui-input="value"]');
-    await field(p,say.valueId).click();await slot.locator('[data-blockui-action="slot-select"]').click();const selected=await read(p);
+    // A text field's editing surface lies over the rest of its sentence (E-12), so the child chooses the sentence by its
+    // words; at かんたん the value's 計算を入れる is in the 「…」 after the sentence (E-12).
+    await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first().click();
+    await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] > .blockui-node-content > .blockui-node-main > .blockui-extra > summary').click();
+    await p.locator('#blockEditor .blockui-node[data-block-id="'+say.id+'"] .blockui-extra [data-blockui-action="slot-select"]').first().click();const selected=await read(p);
     await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えないブロックも見せる"]').check();
+    await p.locator('#blockEditor [data-blockui-category=""]').click();
     const disabled=await candidate(p,'Say').evaluate(e=>{const reason=e.parentElement.querySelector('.blockui-unavailable');return{ariaDisabled:e.getAttribute('aria-disabled'),reason:reason?.textContent,reasonVisible:!!reason?.getClientRects().length};});
     await candidate(p,'Say').scrollIntoViewIfNeeded();const bounds=await candidate(p,'Say').boundingBox();await p.mouse.click(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
-    const after=await read(p);await plus(p,before.rootId).click();const commandChosen=await read(p);return{before,selected,disabled,after,commandChosen};
+    const after=await read(p);await p.locator('#blockEditor [data-blockui-category="basic"]').click();await plus(p,before.rootId).click();const commandChosen=await read(p);return{before,selected,disabled,after,commandChosen};
   });
   await run(browser,'input/composition-cancel',insertionSources.tail,async p=>{
     const before=await read(p),input=field(p,before.shape[0].valueId);await input.click();await input.dispatchEvent('compositionstart',{data:''});await input.press('ControlOrMeta+A');await p.keyboard.insertText('へんかん');
@@ -125,7 +132,7 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
       await p.locator('#runBtn').click();await p.waitForFunction(()=>insertionRuntimeCompleted.some(t=>t.scriptId==='insertion-main'&&t.state==='DONE'),null,{timeout:8000});
       const recorded=await p.evaluate(()=>({words:insertionRuntime.filter(r=>r.kind==='Say').map(r=>r.word),waits:insertionRuntime.filter(r=>r.kind==='WaitTime'),
         finished:insertionRuntimeCompleted.some(t=>t.scriptId==='insertion-main'&&t.state==='DONE'),error:insertionRuntimeErrors[0]||null}));
-      runs.push(recorded);await p.locator('#stopBtn').click();
+      runs.push(recorded);await pressStop(p.locator('#stopBtn'));
     }
     return{before,runs,after:await read(p)};
   });

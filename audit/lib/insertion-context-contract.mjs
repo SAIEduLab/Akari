@@ -56,13 +56,13 @@ export function verifyInsertionContextObservation(id,o){
     assert.equal(o.queried.query,'話す');assert.deepEqual(o.queried.category,['basic']);chosen(o);assert.equal(o.chosen.query,'話す');
     sameDocument(o.queried,o.before);sameDocument(o.chosen,o.before);sameDocument(o.cancelled,o.before);sameDocument(o.escaped,o.before);
     assert.deepEqual(o.cancelled.chosen,[]);assert.deepEqual(o.escaped.chosen,[]);assert.equal(o.cancelled.query,'話す');assert.equal(o.escaped.query,'話す');
-    assert.equal(o.chosen.scope,'よく使うの中を さがしています');assert.ok(o.chosen.candidates.includes('Say'));
+    assert.equal(o.chosen.scope,'すべての なかまから さがして いるよ');assert.ok(o.chosen.candidates.includes('Say'));
   }else if(id==='selection/empty-keyboard-mode'){
     assert.equal(o.before.source,'');chosen(o,'body',0,['']);sameDocument(o.chosen,o.before);assert.equal(o.chosen.mode,'all');assert.equal(o.chosen.query,'待つ');
-    assert.match(o.chosen.message,/見せるブロック/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
+    assert.match(o.chosen.message,/「ブロックの しゅるい」を「すべてのブロック」に/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
     assert.equal(o.after.history,o.before.history+1);clean(o.after);travel(o,1);
   }else if(id==='selection/value-unavailable'){
-    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/に 入れる ブロックを えらんでいます/);assert.match(o.selected.destination,/ここに入れる/);
+    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/に 入れる ブロックを えらんで いるよ/);assert.match(o.selected.destination,/ここに入れる/);
     assert.equal(o.disabled.ariaDisabled,'true');assert.equal(o.disabled.reasonVisible,true);assert.match(o.disabled.reason,/ここに入れる/);
     sameDocument(o.selected,o.before);sameDocument(o.after,o.before);assert.match(o.after.message,/ここに入れる/);
     assert.deepEqual(o.commandChosen.chosen,[{parentId:o.before.rootId,body:'body',index:1}]);assert.deepEqual(o.commandChosen.category,['basic']);

@@ -60,7 +60,7 @@ function runAkariSelfTests() {
     };
     test('FORMAT-PROJECT-METADATA-001 作成元と保存契約', () => {
       if (!/^\d+\.\d+\.\d+$/.test(PRODUCT_RELEASE)) throw Error('作成元ラベルが不正です');
-      eq([Akari.makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, 3, 4]);
+      eq([Akari.makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, AUDIT_EXECUTABLE_CONTRACT.languageContractId, AUDIT_EXECUTABLE_CONTRACT.projectFormatVersion]);
     });
     test('DEFAULT-001 初期作品', () => {
       const starter = Akari.makeDefaultProject();
@@ -201,12 +201,14 @@ function runAkariSelfTests() {
         ).r.projectLists.get('名前一覧'),
         [3],
       ));
+    // LANGUAGE.md 移動量と座標の意味: y grows upward and 右に90度回る turns 0 into 270 (down), so the second
+    // forward move lowers たてのばしょ.
     test('MOVE 移動と回転', () => {
       const h = run(
-        '横10、縦20の位置へ行く\n方向を0度にする\n10歩動く\n右に90度回る\n10歩動く',
+        '画面の左下のはしから、右へ10歩、上へ20歩のばしょへ行く\n方向を0度にする\n10歩動く\n右に90度回る\n10歩動く',
         'sprite-1',
       );
-      eq([Math.round(h.r.actor('sprite-1').x), Math.round(h.r.actor('sprite-1').y)], [20, 30]);
+      eq([Math.round(h.r.actor('sprite-1').x), Math.round(h.r.actor('sprite-1').y), h.r.actor('sprite-1').direction], [20, 10, 270]);
     });
     test('LOOK 衣装と拡大', () => {
       const h = run('次の衣装にする\n大きさを120％にする', 'sprite-1');
@@ -541,13 +543,21 @@ function runAkariSelfTests() {
         'すべてを止める',
         '「マスコット」のコピーを作る',
         'このコピーだけを消す',
-        '横100、縦50の位置へ行く',
-        '1秒で横200、縦100の位置へ滑る',
+        '画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く',
+        '1秒かけて、画面の左下のはしから、右へ200歩、上へ100歩のばしょへ行く',
+        '画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く',
+        '画面の左下のはしから、右へ（よこのばしょ）歩、上へ100歩のばしょへ行く',
+        '画面の左下のはしへ行く',
+        'いまのばしょから、右へ10歩動く',
+        'いまのばしょから、左へ10歩、下へ5歩動く',
+        '2秒かけて、いまのばしょから、右へ10歩、上へ5歩動く',
+        '「マスコット」のところへ行く',
+        '1秒かけて、マウスのところへ行く',
         '左に15度回る',
+        '1秒かけて、右に90度回る',
         '方向を90度にする',
-        '横位置を100にする',
-        '縦位置を100にする',
         '「マウス」の方向を向く',
+        '自分のほかの動きを止める',
       ];
       for (const source of sources) {
         const f = formatScript(parseScript(source, sy));

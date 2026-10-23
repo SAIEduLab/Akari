@@ -14,7 +14,7 @@ export const plan=read('audit/fixtures/child-ux-plan.json');
 const matrix=read('audit/fixtures/ux-normal-matrix.json').cases;
 export const currentInputs=()=>snapshot(currentProductFile());
 export function verifyFrozenInputs(){
-  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'9f4edd6a0ec9de7566e10f87f429c138a2f53a8436f6ef2ab0670df73a7e590c','independent supplemental task plan');
+  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'01cbeb08089aa27c92805eb87674eb1dd3063977923bab9f8a3ad6e6439fd5a2','independent supplemental task plan');
   const benchmark=read('audit/fixtures/ux-edit-benchmark.json');
   assert.deepEqual(plan.taskIds,taskIds);assert.deepEqual(plan.order,benchmark.order);assert.deepEqual(plan.tasks.map(t=>t.id),taskIds);
   for(const [i,t]of plan.tasks.entries()){
@@ -89,8 +89,9 @@ export function verifyChildLanguage(r,inputs,provenance,file,inventory){
     'child-block-words-open':editor,'child-paint-transparent':['paintShape','paintUndo','paintRedo','paintCancel','paintCommit'],
     'child-materials':['imageObjectAdd','paintAdd','soundQuickAdd'],
     'child-words-1180':editor,'child-words-1188':editor,'child-words-390':editor,
-    'child-touch-help-top':['saveActionHelp','exportActionHelp','dataActionHelp'],
-    'child-touch-help-tail':['bodyActionHelp','dataActionHelp'],
+    // The I5 help panel ends with the three size helps (画面・部品・作業台の 大きさ); 本文 now shows in its first screen.
+    'child-touch-help-top':['saveActionHelp','exportActionHelp','dataActionHelp','bodyActionHelp'],
+    'child-touch-help-tail':['stageSizeHelp','resizeHelp','workspaceSizeHelp'],
   };
   for(const [name,ids]of Object.entries(regions)){
     const frames=r.uiInventoryFrames.filter(f=>f.name===name);assert.equal(frames.length,1,'fixed observed UI region '+name);

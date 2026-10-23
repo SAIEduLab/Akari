@@ -9,6 +9,8 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {editorAssetIds,verifyEditorAssets} from '../lib/feature-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView,shownView} from '../browser/cases/view-toggle.cjs';
 
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh feature evidence required');
@@ -19,6 +21,8 @@ const fixtureApi = loadApi(fs.readFileSync(currentProductFile(),'utf8'));
 const savedProject = makeRegressionProject(fixtureApi);
 savedProject.name = '作品の保存確認';
 const savedFile = fixtureApi.serializeProject(savedProject, fixtureApi.makeDefaultAssetStore());
+// The contract numbers are the release record's (features.json), not copies in this test.
+const contract = JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT;
 async function reveal(locator) {
   if (!await locator.isVisible()) for (const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())
     await panel.locator('.blockui-side-toggle').click();
@@ -35,7 +39,8 @@ const newWork = async p => {
   await p.evaluate(() => document.querySelector('#loseConfirmModal.show #loseConfirmProceed')?.click());
   await p.waitForFunction(() => document.querySelector('#uiLevel').value === 'entry');
   if (level !== 'entry') await p.locator('#uiLevel').selectOption(level);
-  if (mode === 'code' && level !== 'entry') await click(p, '#editorModecode');
+  // The one view toggle is pressed only when the other view is on the screen (final call 22).
+  if (mode === 'code' && level !== 'entry') await chooseView(p, 'code', {reveal});
 };
 const state = p => p.evaluate(() => ({project:JSON.stringify(Akari.app.project),assets:Akari.app.assetStore.ids(),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
 const current = p => p.evaluate(() => structuredClone(Akari.app.project.components.find(c => c.id === document.querySelector('#objectSelect').value)));
@@ -149,7 +154,7 @@ const cases = {
   },
   async 'paint-entry-empty-focus'(p) {
     for(const mode of ['code','blocks']) {
-      await click(p,'#editorMode'+mode);
+      await chooseView(p,mode,{reveal});assert.equal(await shownView(p),mode);
       assert.equal(await p.locator('#paintAdd').evaluate(e=>e.previousElementSibling.id),'imageObjectAdd');
       await open(p);assert.equal(await p.locator('#paintCommit').isDisabled(),true);
       assert.equal(await p.locator('#paintModal .dialog-body').evaluate(e=>e.scrollHeight<=e.clientHeight+1),true,'desktop drawing tools and canvas fit together');
@@ -194,7 +199,12 @@ const cases = {
     await open(p);await draw(p,'rectangle',[100,100],[120,115],true);await commit(p);
     let c=await current(p), image=await imageInfo(p);assert.equal(c.w,image.width);assert.equal(c.h,image.height);assert.equal(c.scalePercent,100);
     assert.ok(image.width>=20&&image.width<=21);assert.ok(image.height>=15&&image.height<=16);
-    assert.ok(image.count>250);assert.ok(c.x>200&&c.y>100);
+    // The regression work's ボタン1 (centre 88/355, 120×34) blocks that row up to its right side 148 plus the 10-step gap,
+    // so the first free left side on the 20-step grid from 10 is 170.
+    const button=JSON.parse((await state(p)).project).components.find(b=>b.id==='button-1');
+    assert.deepEqual([button.x,button.w],[88,120]);
+    const blocked=button.x+button.w/2+10,left=10+20*Math.ceil((blocked-10)/20);
+    assert.ok(image.count>250);assert.equal(c.x,Math.round(left+c.w/2));assert.equal(c.y,Math.round(400-10-c.h/2));
     await open(p);await draw(p,'rectangle',[100,100],[101,101],true);await commit(p);
     c=await current(p);image=await imageInfo(p);assert.equal(c.w,8);assert.equal(c.h,8);assert.equal(image.width,8);assert.equal(image.height,8);
     assert.equal(c.scalePercent,100);assert.ok(image.count<=4);assert.deepEqual(image.first,[0,0,0,0]);assert.ok(image.left>=2&&image.top>=2);
@@ -202,10 +212,10 @@ const cases = {
   async 'paint-large-stage-fit'(p) {
     await open(p);await draw(p,'fill',[10,10]);await commit(p);
     const c=await current(p);assert.equal(c.w,500);assert.equal(c.h,500);assert.equal(c.scalePercent,80);
-    assert.equal(c.x+c.w/2,320);assert.equal(c.y+c.h/2,200);
+    assert.equal(c.x,320+16);assert.equal(c.y,200-16);
     assert.equal((await imageInfo(p)).count,250000);
     await click(p,'.prop-duplicate');const copy=await current(p);
-    assert.equal(copy.scalePercent,80);assert.equal(copy.y+c.h/2,200,'scaled duplicate stays within stage');
+    assert.equal(copy.scalePercent,80);assert.equal(copy.y,200,'scaled duplicate stays within stage');
     assert.equal(copy.x,c.x+16);assert.equal(copy.costumes[0].assetId,c.costumes[0].assetId);
   },
   async 'paint-discard'(p) {
@@ -240,7 +250,7 @@ const cases = {
     await select(p,'sprite-1');const duplicate=await reveal(p.locator('.prop-duplicate'));assert.equal(await duplicate.isEnabled(),true);
     await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
     assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await duplicate.isDisabled(),true);assert.equal(await duplicate.isVisible(),false);
-    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);
+    await pressStop(await reveal(p.locator('#stopBtn')));assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);
   },
   async 'paint-small-viewport-touch'(p) {
     await p.setViewportSize({width:390,height:844});await open(p);
@@ -255,7 +265,7 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'format-contract-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),contract);
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
@@ -264,7 +274,9 @@ const cases = {
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 3','"languageContractId": 1'),savedFile.replace('"formatVersion": 4','"formatVersion": "4"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": '+contract.languageContractId,'"languageContractId": 1'),
+      savedFile.replace('"formatVersion": '+contract.projectFormatVersion,'"formatVersion": "'+contract.projectFormatVersion+'"')]) {
+      assert.notEqual(text,savedFile,'each malformed file differs from the saved one');
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }
@@ -273,12 +285,13 @@ const cases = {
     // Keep this stable case ID and every save/reload/export check. The embedded PNG
     // is intentionally resized to 180x180; see AUDIT.md for the contract migration.
     const expected='35eea719e70c3f4ec196c800e107232cee7a16408b44cb04f6094d9c622d7158';
-    const mascot=p.locator('[data-sprite-preset="akariMascot"]'),dango=p.locator('[data-sprite-preset="dango"]');
+    // The toolbox choices; はじめて's ＋ buttons (#entryAddRow) carry the same preset names and are not counted here.
+    const mascot=p.locator('.tool.sprite-preset[data-sprite-preset="akariMascot"]'),dango=p.locator('.tool.sprite-preset[data-sprite-preset="dango"]');
     assert.equal(await mascot.count(),1,'the original mascot choice is retained');
     assert.equal(await dango.count(),1);
     assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2しゅるい');
     await p.waitForFunction(()=>{
-      const i=document.querySelector('[data-sprite-preset="dango"] img');
+      const i=document.querySelector('.tool.sprite-preset[data-sprite-preset="dango"] img');
       return i?.complete&&i.naturalWidth===180&&i.naturalHeight===180;
     });
     const thumbnailPixels=await dango.locator('img').evaluate(async i=>{

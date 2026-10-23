@@ -30,3 +30,7 @@ print(executable)
 if os.environ.get('GITHUB_ENV'):
     with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as env:
         env.write(f'AKARI_CODEC_BROWSER={executable}\n')
+        env.write(f'AKARI_BROWSER={executable}\n')
+        if '--media' in sys.argv[2:]:
+            import imageio_ffmpeg
+            env.write(f'AKARI_FFMPEG={imageio_ffmpeg.get_ffmpeg_exe()}\n')
