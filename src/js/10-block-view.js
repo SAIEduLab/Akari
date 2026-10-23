@@ -4957,7 +4957,8 @@
       cancelDrag(); endPan(); moving=null; destination=null; replacement=null;
       updateControls(); if (!pending) render({force:true});
     }
-    return { render, flush, cancel, destroy, highlight, focus, restorePending, releaseInteraction };
+    return { render, flush, cancel, destroy, highlight, focus, restorePending, releaseInteraction,
+      interactionActive: () => !!(moving || replacement || drag) && !destroyed && root.isConnected && root.getClientRects().length > 0 };
   }
   createBlockEditorView.sequence = 0;
 

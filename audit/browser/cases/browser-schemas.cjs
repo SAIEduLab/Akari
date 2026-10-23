@@ -114,6 +114,36 @@ const bodyPosition=(id,body,position)=>({click:async()=>keyboardActivate(root().
 const slot=(id,input)=>({click:async()=>selectSlot(root().locator('[data-parent-id="'+id+'"][data-blockui-input="'+input+'"]').first())});
 const append=async(schema)=>{const state=await session(),r=state.blockView,position=state.context.definitionKind==='function'&&r.bodies.body.at(-1)?.schemaId==='ReturnStatement'?r.bodies.body.length-1:r.bodies.body.length;await bodyPosition(r.id,'body',position).click();await add(schema);return(await session()).blockView.bodies.body[position];};
 const historyRoundtrip=async before=>{const after=await session();assert.notEqual(after.sourceText,before.sourceText,'operation changes source');await p.keyboard.press('Control+z');assert.equal((await session()).sourceText,before.sourceText,'undo exact source');await p.keyboard.press('Control+y');assert.equal((await session()).sourceText,after.sourceText,'redo exact source');};
+// Hold only the asynchronous work check so its arrival is deterministic. The
+// real compiler and UI still produce the notice; no project or editor state is set.
+const holdWorkChecks=()=>p.evaluate(()=>{
+ const native=window.setTimeout.bind(window),waiting=[];
+ window.schemaHeldNotices={waiting,hold:true,release(){this.hold=false;window.setTimeout=native;for(const fn of waiting.splice(0))fn();}};
+ window.setTimeout=(fn,ms,...args)=>native(fn?.name==='checkNotices'?()=>{
+  if(schemaHeldNotices.hold)waiting.push(()=>fn(...args));else fn(...args);
+ }:fn,ms,...args);
+});
+const checkNoticeDuringMove=async()=>{
+ const before=await session(),history=await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,project:JSON.stringify(Akari.app.project)}));
+ await p.waitForFunction(()=>schemaHeldNotices.waiting.length>0);
+ await p.evaluate(()=>schemaHeldNotices.release());
+ // Keep carrying across the existing 400ms busy-check retry, within the original case timeout.
+ await p.waitForTimeout(450);
+ const after=await session();
+ assert.equal(after.sourceText,before.sourceText,'a waiting work check does not edit source');
+ assert.equal(after.sourceRevision,before.sourceRevision);assert.equal(after.contextRevision,before.contextRevision);
+ assert.deepEqual(await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,project:JSON.stringify(Akari.app.project)})),history);
+ assert.deepEqual(after.notices,[],'the work check waits until carrying ends');
+ assert.deepEqual(await root().locator('[data-blockui-action="cancel"]').allTextContents(),['もって いくのを やめる']);
+};
+const checkNoticeAfterModeChange=async id=>{
+ const before=await session(),history=await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
+ await mode('code');
+ await p.waitForFunction(()=>Akari.app.editorState.main.notices.some(n=>n.code==='I135'));
+ assert.equal((await session()).sourceText,before.sourceText,'the hidden block view does not hold back the notice');
+ assert.deepEqual(await p.evaluate(()=>({history:Akari.app.editorState.history,redo:Akari.app.editorState.redo})),history);
+ await mode('blocks');await action(id,'move').click();
+};
 // The code is read again with the work's names, as the editor reads it: block→code writes 「点数を言う。」 for a
 // variable's value (E2E-R1-03), which only the names tell from the words 点数 or a sound 点数.
 const blockSourceAgreement=async()=>{const before=await session();assert.equal(before.pendingEdit,null);assert.ok(before.syntaxAst);const equivalent=await p.evaluate(d=>{const A=Akari,s=d?A.app.editorState.draft:A.app.editorState.main;const parsed=A.parseSyntax(s.sourceText,{...s.context,symbols:A.buildSymbols(A.app.project)});return !!parsed.ast&&A.astEquivalent(s.syntaxAst,parsed.ast)&&A.astEquivalent(A.blockDecode(s.blockView),parsed.ast);},draft);assert.equal(equivalent,true,'block/source AST');await mode('code');const text=await p.locator(draft?'#callableCode':'#codeEditor').inputValue();assert.equal(text,before.sourceText);await mode('blocks');assert.equal((await session()).sourceText,text);return{before,text};};
@@ -141,7 +171,8 @@ const structuralOperations=async(s,id)=>{
   nodeAt=(view,path)=>path.reduce((node,[key,i])=>node?.bodies?.[key]?.[i],view),
   alike=view=>{let n=0;const walk=node=>{if(treeShape(node)===treeShape(original))n++;for(const children of Object.values(node.bodies||{}))children.forEach(walk);};for(const children of Object.values(view.bodies||{}))children.forEach(walk);return n;},
   originalPath=pathOf(current.blockView,originalId),alikeBefore=alike(current.blockView);
- assert.ok(copy,'duplicate present');assert.ok(originalPath,'the original is in the body');assert.ok(alikeBefore>=2,'the original and its copy are both there');await action(copy.id,'move').click();await bodyPosition(container.id,'body',1).click();current=await session();const containerIndex=current.blockView.bodies.body.findIndex(n=>n.id===container.id),moved=current.blockView.bodies.body[containerIndex].bodies.body;assert.equal(treeShape(moved.at(-1)),treeShape(copy),'the duplicate is now the last sentence of the loop (a committed move may give it a new id)');assert.equal(treeShape(nodeAt(current.blockView,originalPath)),treeShape(original),'the original stays where it was; only the copy moved');assert.equal(alike(current.blockView),alikeBefore,'the move neither copies nor drops a block');
+ assert.ok(copy,'duplicate present');assert.ok(originalPath,'the original is in the body');assert.ok(alikeBefore>=2,'the original and its copy are both there');await action(copy.id,'move').click();if(s.id==='Continue'){await checkNoticeDuringMove();await checkNoticeAfterModeChange(copy.id);}await bodyPosition(container.id,'body',1).click();current=await session();const containerIndex=current.blockView.bodies.body.findIndex(n=>n.id===container.id),moved=current.blockView.bodies.body[containerIndex].bodies.body;assert.equal(treeShape(moved.at(-1)),treeShape(copy),'the duplicate is now the last sentence of the loop (a committed move may give it a new id)');assert.equal(treeShape(nodeAt(current.blockView,originalPath)),treeShape(original),'the original stays where it was; only the copy moved');assert.equal(alike(current.blockView),alikeBefore,'the move neither copies nor drops a block');
+ if(s.id==='Continue'){await p.waitForFunction(()=>Akari.app.editorState.main.notices.some(n=>n.code==='I135'));assert.equal((await session()).sourceText,current.sourceText,'the deferred notice arrives without changing the moved source');}
  // A committed edit may give the blocks new ids (1.5.0), so the copy is found again by its place after each move.
  const shape=treeShape(moved.at(-1)),inner=async()=>(await session()).blockView.bodies.body[containerIndex].bodies.body;
  await action(copy.id,'move-up').click();const up=(await inner()).at(-2);assert.equal(treeShape(up),shape,'move-up moves the copy one place up');
@@ -211,7 +242,7 @@ const fieldChoice=(s,f)=>semanticRows[s.id]?.edits?.[f.key];
 const numberChoice=(s,input,index)=>{const edits=semanticRows[s.id]?.edits||{};if(input.key==='args'&&index===0&&['SoundCommand:TONE','SoundCommand:TONE_WAIT'].includes(s.id))return 441;if(input.key==='args'&&Array.isArray(edits.args))return edits.args[index];return typeof edits[input.key]==='number'?edits[input.key]:undefined;};
 const genericRow=async(s,evidence)=>{
  await ensureCallDefinition(s.id);
- await reset(s);let id;if(s.id==='Script'){id=(await session()).blockView.id;await add('NoOperation');evidence.creation='Implicit root with palette-created body';}else if(s.category==='target'){await add('Assignment');id=(await locate(s.id))[0].id;evidence.creation='Assignment target slot';}else if(s.category==='expression'){const holder=s.kind==='EventCount'?{statement:'WaitUntil',input:'condition'}:{statement:'Say',input:'value'};await add(holder.statement);const owner=(await locate(holder.statement))[0];await selectSlot(root().locator('[data-blockui-input="'+holder.input+'"][data-parent-id="'+owner.id+'"]').first());await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Expression palette into '+holder.statement+'.'+holder.input;}else{if(['Break','Continue'].includes(s.id)){await add('Forever');const owner=(await locate('Forever'))[0];await root().locator('[data-blockui-body="body"][data-parent-id="'+owner.id+'"]').last().click();}await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Statement palette';}
+ await reset(s);if(s.id==='Continue')await holdWorkChecks();let id;if(s.id==='Script'){id=(await session()).blockView.id;await add('NoOperation');evidence.creation='Implicit root with palette-created body';}else if(s.category==='target'){await add('Assignment');id=(await locate(s.id))[0].id;evidence.creation='Assignment target slot';}else if(s.category==='expression'){const holder=s.kind==='EventCount'?{statement:'WaitUntil',input:'condition'}:{statement:'Say',input:'value'};await add(holder.statement);const owner=(await locate(holder.statement))[0];await selectSlot(root().locator('[data-blockui-input="'+holder.input+'"][data-parent-id="'+owner.id+'"]').first());await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Expression palette into '+holder.statement+'.'+holder.input;}else{if(['Break','Continue'].includes(s.id)){await add('Forever');const owner=(await locate('Forever'))[0];await root().locator('[data-blockui-body="body"][data-parent-id="'+owner.id+'"]').last().click();}await add(s.id);id=(await locate(s.id))[0].id;evidence.creation='Statement palette';}
  assert.ok(await node(id).count()||s.id==='Script','Created node visible '+s.id);
  for(const f of s.fields.filter(f=>f.type!=='argument-names')){evidence.fields.push(await editField(id,f,false,fieldChoice(s,f)));id=(await locate(s.id))[0].id;}
  // Edit every value slot through its own child controls, including fixed arity arguments.

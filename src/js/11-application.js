@@ -5378,7 +5378,7 @@
       noticeTimer = 0;
       // Not while the work runs (its text does not change), and not while the child is in the middle of something in a
       // body (a field, a word being typed, a block carried): a little later.
-      const busy = modelLocked() || [mainEditor, draftEditor].some(b => b.session?.pendingEdit || b.session?.blockDraft)
+      const busy = modelLocked() || [mainEditor, draftEditor].some(b => b.session?.pendingEdit || b.session?.blockDraft || b.view?.interactionActive())
         || composingEditors.has(el.editor) || composingEditors.has(draftEditor.textarea) || document.querySelector('.blockui-dragging');
       if (busy) { noticeTimer = setTimeout(checkNotices, 400); return; }
       noticeWanted = null;
