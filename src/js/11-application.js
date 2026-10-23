@@ -2525,6 +2525,8 @@
       assetStore = assetStore.retainOnly(collectReachableAssetIds(project));
     }
     function pushHistoryNow(e = snapshot()) {
+      // An immediate snapshot supersedes the queued edit's older view state.
+      clearTimeout(historyTimer);
       lastObservedFingerprint = e.stateFingerprint;
       if (!history.length || history.at(-1).stateFingerprint !== e.stateFingerprint) {
         history.push(e);

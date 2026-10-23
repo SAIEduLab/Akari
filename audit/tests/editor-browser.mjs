@@ -216,13 +216,32 @@ await withBrowser(browser,async b=>{
       await click(p,type==='action'?'callableNewAction':'callableNewFunction');await chooseView(p,'code',{prefix:'callable',reveal});
       await set('callableName',type==='action'?'戻る手順':'戻る計算');
       await set('callableCode',type==='action'?'「元」と言う。':'1を答えとして返す。');
+      if(type==='function')await p.evaluate(()=>{
+        const schedule=window.setTimeout;
+        // Exercise a queued history write arriving after the next definition
+        // was selected. Preserve native timeout cancellation and other timers.
+        window.__delayedCallableHistory={scheduled:0,fired:0,enabled:true};
+        window.setTimeout=(fn,delay,...args)=>{
+          const probe=window.__delayedCallableHistory;
+          if(probe.enabled&&typeof fn==='function'&&String(fn).includes('pushHistoryNow(queued)')){
+            probe.scheduled++;
+            return schedule(()=>{probe.fired++;fn(...args);},1000);
+          }
+          return schedule(fn,delay,...args);
+        };
+      });
       await click(p,'callableSave');definitions.push({type,key:await p.locator('#callableSelect').inputValue()});
+      if(type==='function')await p.evaluate(()=>{window.__delayedCallableHistory.enabled=false;});
     }
     const callableHistory=[];
     for(const editorMode of ['code','blocks'])for(const definition of definitions){
       const other=definitions.find(d=>d!==definition);
       await p.locator('#callableSelect').selectOption(other.key);await p.locator('#callableSelect').selectOption(definition.key);
       await chooseView(p,editorMode,{prefix:'callable',reveal});
+      if(editorMode==='code'&&definition.type==='action'){
+        assert.ok(await p.evaluate(()=>window.__delayedCallableHistory.scheduled>0),'a real queued history write was delayed');
+        await p.waitForTimeout(1100);
+      }
       const beforeEdit=await state(p),original=beforeEdit.draft.source;
       const changed=definition.type==='action'?'「新 '+editorMode+'」と言う。':(editorMode==='code'?'2':'3')+'を答えとして返す。';
       if(editorMode==='code')await set('callableCode',changed);
