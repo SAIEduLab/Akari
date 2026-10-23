@@ -303,7 +303,21 @@ const cases = {
     assert.match(await p.locator('#callableConceptHelp').innerText(),/あいさつ.*おじぎ/s);
     assert.match(await p.locator('#callableConceptHelp').innerText(),/点数を 2倍/);
     const concept=await textFits(p.locator('#callableConceptHelp p'));
-    const tailReach=await keyboardPanelTail(p,'#callableConceptHelp');await summary.press('Enter');
+    const panel=p.locator('#callableConceptHelp > .child-help-panel');await reachable(panel);
+    const readingStateBefore=await state(p),desktopReading=await panelMetrics(panel);
+    desktopReading.paragraphInk=await panel.locator(':scope > p').evaluateAll(paragraphs=>paragraphs.map(p=>{
+      const range=document.createRange();range.selectNodeContents(p);const r=range.getBoundingClientRect();
+      return {text:p.textContent,ink:{x:r.x,y:r.y,width:r.width,height:r.height}};
+    }));
+    // End on an already fully visible panel navigates its scrollable ancestor.
+    // Keep the desktop reading proof, then test inner scrolling where it exists.
+    if(desktopReading.maxScroll===0){tailFits(desktopReading);await p.setViewportSize({width:390,height:520});}
+    assert.ok((await panelMetrics(panel)).maxScroll>0,'keyboard reading fixture needs actual inner overflow');
+    const tailReach=await keyboardPanelTail(p,'#callableConceptHelp');
+    assert.ok(tailReach.afterArrow.scrollTop<tailReach.afterArrow.maxScroll-1,'End must have remaining text to reach');
+    if(desktopReading.maxScroll===0)await p.setViewportSize({width:1180,height:757});
+    const readingStateAfter=await state(p);assert.deepEqual(readingStateAfter,readingStateBefore,'viewport preparation preserves editing state');
+    await summary.press('Enter');
     await click(p,'#callableNewAction');
     assert.match(await p.locator('#callableArgsHelp').innerText(),/点数として 10、名前として「あかり」/);
     assert.match(await p.locator('#callableArgs').getAttribute('placeholder'),/歩数、あいさつ/);
@@ -315,7 +329,7 @@ const cases = {
     const action=await p.evaluate(()=>Akari.app.project.actions.find(a=>a.name==='あいさつ'));
     assert.ok(action); assert.deepEqual(action.args,['点数','名前']); assert.equal(action.source,'名前を言う。');
     await shot(p,'child-procedure-examples');
-    return {advancedOnly:true,concept,tailReach,concreteValueExample:true,existingArgumentPlaceholder:true,
+    return {advancedOnly:true,concept,desktopReading,tailReach,readingStateBefore,readingStateAfter,concreteValueExample:true,existingArgumentPlaceholder:true,
       definitionArgsPreserved:action.args,registeredSource:action.source};
   },
   async 'CHILD-UI-BLOCK-WORDS'(p) {

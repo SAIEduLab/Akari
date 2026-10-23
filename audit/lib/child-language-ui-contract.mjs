@@ -153,6 +153,19 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.match(data.variablePlaceholder,/0、0点、こんにちは/); assert.equal(data.variableValue,'あかり');
   assert.deepEqual(data.listValue,['本','かさ','ぼうし'],'ordered list matches the visible example');
   const procedure=rows['CHILD-UI-PROCEDURE-EXAMPLES']; readable(procedure.concept,4);panelReach(procedure.tailReach,'native-keyboard');
+  const desktop=procedure.desktopReading;panelMeasurement(desktop);
+  assert.deepEqual(desktop.viewport,{width:1180,height:757});
+  assert.equal(desktop.paragraphInk?.length,desktop.paragraphs);
+  for(const row of desktop.paragraphInk){
+    assert.ok(typeof row.text==='string'&&row.text.trim());assert.ok(row.ink.width>0&&row.ink.height>0);
+    if(desktop.maxScroll===0){const r=row.ink,c=desktop.clip;
+      assert.ok(r.x>=c.x-1&&r.y>=c.y-1&&r.x+r.width<=c.x+c.width+1&&r.y+r.height<=c.y+c.height+1,'all desktop explanations remain readable');}
+  }
+  assert.deepEqual(procedure.tailReach.initial.viewport,desktop.maxScroll===0?{width:390,height:520}:desktop.viewport);
+  assert.ok(procedure.tailReach.initial.maxScroll>0,'procedure keyboard proof needs actual inner overflow');
+  assert.ok(procedure.tailReach.afterArrow.scrollTop<procedure.tailReach.afterArrow.maxScroll-1,'End has remaining scroll distance');
+  assert.deepEqual(procedure.tailReach.stateBefore,procedure.readingStateBefore);
+  assert.deepEqual(procedure.readingStateAfter,procedure.readingStateBefore,'viewport preparation/restoration preserves editing state');
   for(const key of ['advancedOnly','concreteValueExample','existingArgumentPlaceholder'])assert.equal(procedure[key],true);
   assert.deepEqual(procedure.definitionArgsPreserved,['点数','名前']); assert.equal(procedure.registeredSource,'名前を言う。');
   const block=rows['CHILD-UI-BLOCK-WORDS']; readable(block.help,9);
@@ -216,6 +229,12 @@ export function verifyChildLanguageUiNegatives(report,inputs,environment) {
     ['copy-help-aria-changed',r=>r.results[1].evidence.copyHelpModes.steps[1].ariaDescription='コードもコピーします'],
     ['wrong-data-value',r=>r.results[2].evidence.variableValue=10],
     ['reordered-list',r=>r.results[2].evidence.listValue.reverse()],
+    ['missing-desktop-reading',r=>delete r.results[3].evidence.desktopReading],
+    ['unreadable-desktop-ink',r=>r.results[3].evidence.desktopReading.paragraphInk[0].ink.width=0],
+    ['wrong-procedure-reading-viewport',r=>{const o=r.results[3].evidence.tailReach;for(const key of ['initial','afterArrow','bottom','beforeHome'])o[key].viewport.width+=10;}],
+    ['procedure-without-inner-overflow',r=>{const o=r.results[3].evidence.tailReach;for(const key of ['initial','afterArrow','bottom','beforeHome'])Object.assign(o[key],{scrollTop:0,maxScroll:0,scrollHeight:o[key].clientHeight});}],
+    ['missing-procedure-end-completion',r=>{const o=r.results[3].evidence.tailReach;for(const e of o.scrollEvents.slice(o.markers.end))if(e.type==='scrollend')e.type='scroll';}],
+    ['reading-resize-changes-state',r=>r.results[3].evidence.readingStateAfter.history++],
     ['operator-loses-value',r=>r.results[4].evidence.newValues[0]='0'],
     ['wrong-truth-example',r=>r.results[4].evidence.truthExample='条件の「はい・いいえ」'],
     ['missing-insertion-concepts',r=>delete r.results[4].evidence.insertionConceptHints],
