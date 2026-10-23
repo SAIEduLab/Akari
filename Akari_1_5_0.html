@@ -25941,13 +25941,14 @@ function createAkariExtensionHost(options) {
   // Whether a part's body reads with no error as a 名人 text: as written (its own headings and procedures), or as the
   // part's sentences, which a 名人 text writes under a heading that names the part.
   function meijinTrialReads(project, source, targetId) {
+    source = source.replace(/\r\n?/g, '\n');
     const owner = project.components.find(c => c.id === targetId)?.name, sources = [source];
     if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
       sources.push(`作品を動かしたとき、${owner}は、\n` + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
       // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
       const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
       sources.push(source.split('\n').map(line => {
-        const [, indent, text] = /^(\s*)(.*)$/.exec(line);
+        const [, indent, text] = /^(\s*)([\s\S]*)$/.exec(line);
         if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
         return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
       }).join('\n'));

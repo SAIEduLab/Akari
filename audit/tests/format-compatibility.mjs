@@ -48,6 +48,8 @@ const fixture=()=>{
   return p;
 };
 const priorProject=fixture(),savedPrior=priorApi.serializeProject(priorProject);
+const unfinishedSources=[['LF','\n'],['CRLF','\r\n'],['CR','\r'],['LS','\u2028'],['PS','\u2029']].map(([separator,nl])=>({separator,source:'右に曲がる。'+nl+'4回くり返す。'}));
+const unfinishedProject=({separator,source})=>{const project=fixture();project.name='未完成の作品-'+separator;project.scripts=[{id:'unfinished',targetId:'button-1',event:'start',source}];return project;};
 const results=[],pageErrors=[],networkRequests=[];
 async function run(id,fn){
   try{const evidence=await fn();results.push({id,status:'PASS',pass:true,evidence});}
@@ -75,7 +77,15 @@ await run('FORMAT-PROJECT-PRODUCER-INDEPENDENT',async()=>{
   assert.ok(currentFile.startsWith(`# あかり ${currentRelease} の作品`));
   assert.equal((await api.parseProjectFile(currentFile)).project.appVersion,currentRelease);
   assert.deepEqual(plain((await api.parseProjectFile(currentFile)).project.scripts),plain(priorProject.scripts));
-  return {priorProducer:priorRelease,currentProducer:currentRelease,priorFileSha256:sha(savedPrior),savedFileSha256:sha(currentFile),sourceExact:true};
+  const unfinished=[];
+  for(const c of unfinishedSources){
+    const loaded=await api.parseProjectFile(api.serializeProject(unfinishedProject(c),api.makeDefaultAssetStore()));
+    assert.equal(loaded.project.scripts[0].source,c.source);
+    assert.equal(api.compileProject(loaded.project).errors[0].code,'P205');
+    assert.equal(reject(()=>api.packExecutable(loaded.project)),'X601');
+    unfinished.push({separator:c.separator,sourceExact:true,diagnostic:'P205',exportCode:'X601'});
+  }
+  return {priorProducer:priorRelease,currentProducer:currentRelease,priorFileSha256:sha(savedPrior),savedFileSha256:sha(currentFile),sourceExact:true,unfinished};
 });
 await run('FORMAT-PROJECT-CONTRACT-REJECTION',async()=>{
   const codes=[];
@@ -196,7 +206,24 @@ await withBrowser(browserPath,async browser=>{
     const saved=fs.readFileSync(file,'utf8'),loaded=await api.parseProjectFile(saved);
     assert.equal(loaded.project.appVersion,currentRelease);
     assert.equal(loaded.project.scripts[0].source,priorProject.scripts[0].source);
-    return {importedProducer:priorRelease,savedProducer:currentRelease,savedSha256:sha(saved)};
+    const unfinished=[];
+    for(const c of unfinishedSources){
+      const project=unfinishedProject(c),text=api.serializeProject(project,api.makeDefaultAssetStore());
+      await p.locator('#fileInput').setInputFiles({name:'unfinished-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(text)});
+      await p.waitForFunction(name=>Akari.app.project.name===name,project.name);
+      assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),c.source);
+      await chooseView(p,'code');assert.equal(await p.locator('#codeEditor').isEditable(),true);
+      const download=p.waitForEvent('download');await p.locator('#saveBtn').click();
+      const target=path.join(path.dirname(output),'unfinished-'+c.separator+'.akari.md');await(await download).saveAs(target);
+      const saved=fs.readFileSync(target,'utf8'),reopened=await api.parseProjectFile(saved),expected=c.source;
+      assert.equal(reopened.project.scripts[0].source,expected,'saving an unchanged unfinished body preserves its source');
+      assert.equal(api.compileProject(reopened.project).errors[0].code,'P205');assert.equal(reject(()=>api.packExecutable(reopened.project)),'X601');
+      await p.locator('#fileInput').setInputFiles({name:'resaved-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(saved)});
+      await p.waitForFunction(()=>!document.querySelector('#fileInput').value);
+      assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),expected);
+      unfinished.push({separator:c.separator,importedSource:c.source,savedSource:expected,reopened:true,editable:true,diagnostic:'P205',exportCode:'X601'});
+    }
+    return {importedProducer:priorRelease,savedProducer:currentRelease,savedSha256:sha(saved),unfinished};
   });
   await browserCase('FORMAT-BROWSER-IMPORT-ATOMICITY',async p=>{
     const unsaved='「未保存のまま」と言う ※ 保持  ';

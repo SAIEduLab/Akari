@@ -34,6 +34,8 @@ export function verifyFormatCompatibility(report, currentSnapshot) {
     assert.equal(row.pass, true, row.id);
     assert.ok(row.evidence && typeof row.evidence === 'object', row.id + ': missing evidence');
   }
+  const unfinished=report.results.find(r=>r.id==='FORMAT-BROWSER-FILE-ROUNDTRIP').evidence.unfinished;
+  assert.deepEqual(unfinished,[['LF','\n'],['CRLF','\r\n'],['CR','\r'],['LS','\u2028'],['PS','\u2029']].map(([separator,nl])=>({separator,importedSource:'右に曲がる。'+nl+'4回くり返す。',savedSource:'右に曲がる。'+nl+'4回くり返す。',reopened:true,editable:true,diagnostic:'P205',exportCode:'X601'})));
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.networkRequests, []);
   return true;
@@ -44,7 +46,7 @@ export function checkFormatValidatorNegatives() {
   const valid = () => ({schema:'akari-format-compatibility-v1',status:'PASS',snapshot:structuredClone(snapshot),
     environment:'chromium',browser:'fixed-browser',total:formatCompatibilityIds.length,
     fixture:{currentRelease:'1.0.0',priorRelease:'9.8.7',priorProductSha256:'b'.repeat(64),priorFileSha256:'c'.repeat(64)},
-    results:formatCompatibilityIds.map(id=>({id,status:'PASS',pass:true,evidence:{checked:true}})),
+    results:formatCompatibilityIds.map(id=>({id,status:'PASS',pass:true,evidence:id==='FORMAT-BROWSER-FILE-ROUNDTRIP'?{unfinished:[['LF','\n'],['CRLF','\r\n'],['CR','\r'],['LS','\u2028'],['PS','\u2029']].map(([separator,nl])=>({separator,importedSource:'右に曲がる。'+nl+'4回くり返す。',savedSource:'右に曲がる。'+nl+'4回くり返す。',reopened:true,editable:true,diagnostic:'P205',exportCode:'X601'}))}:{checked:true}})),
     pageErrors:[],networkRequests:[]});
   verifyFormatCompatibility(valid(),snapshot);
   const reject = change => {const r=valid();change(r);assert.throws(()=>verifyFormatCompatibility(r,snapshot));};
@@ -58,5 +60,10 @@ export function checkFormatValidatorNegatives() {
   reject(r=>r.browser='');
   reject(r=>r.fixture.priorRelease=r.fixture.currentRelease);
   reject(r=>r.fixture.priorProductSha256='invalid');
+  reject(r=>delete r.results.find(x=>x.id==='FORMAT-BROWSER-FILE-ROUNDTRIP').evidence.unfinished);
+  reject(r=>r.results.find(x=>x.id==='FORMAT-BROWSER-FILE-ROUNDTRIP').evidence.unfinished.pop());
+  reject(r=>r.results.find(x=>x.id==='FORMAT-BROWSER-FILE-ROUNDTRIP').evidence.unfinished[1].reopened=false);
+  reject(r=>r.results.find(x=>x.id==='FORMAT-BROWSER-FILE-ROUNDTRIP').evidence.unfinished[3].savedSource='右に曲がる。\n4回くり返す。');
+  reject(r=>r.results.find(x=>x.id==='FORMAT-BROWSER-FILE-ROUNDTRIP').evidence.unfinished[4].exportCode='TypeError');
   return true;
 }
