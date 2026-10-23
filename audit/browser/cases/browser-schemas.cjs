@@ -19,7 +19,15 @@ const ARGUMENT_NAMES=['高さ','幅','速さ'];
 C.verifySchemaContract({fixture:contract.fixture,schemaIds:contract.schemaIds,productSchemas:api.BLOCK_SCHEMAS});
 const schemas=contract.fixture.schemas,semanticRows=contract.fixture.semanticRows,results=[],errors=[],network=[],browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
 let p=null,setupComplete=false,primaryError=null;
-try{const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(p);
+// These are Node receipt times, not renderer execution times. Keep passive setup
+// events even when a stalled renderer cannot answer the failure-state query.
+const setupStarted=Date.now(),setupEvents=[];let omittedSetupEvents=0;
+const setupEvent=(name,detail={})=>{if(setupComplete)return;if(setupEvents.length>=256){omittedSetupEvents++;return;}setupEvents.push({atMs:Date.now()-setupStarted,name,...detail});};
+try{const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>{setupEvent('dialog',{type:d.type()});return d.accept(d.type()==='prompt'?d.defaultValue():undefined).then(()=>setupEvent('dialog-accepted'));});await answerProductConfirms(p);
+for(const event of ['domcontentloaded','load','crash','close'])p.on(event,()=>setupEvent(event));
+p.on('framenavigated',frame=>setupEvent('framenavigated',{main:frame===p.mainFrame(),url:frame.url().slice(0,240)}));
+for(const event of ['request','requestfinished','requestfailed'])p.on(event,request=>setupEvent(event,{url:request.url().slice(0,240),resourceType:request.resourceType(),navigation:request.isNavigationRequest(),...(event==='requestfailed'?{failure:request.failure()}: {})}));
+p.on('response',response=>setupEvent('response',{url:response.url().slice(0,240),status:response.status()}));
 const openPage=async()=>{await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);await (await reveal(p.locator('#assetBtn'))).click();await p.locator('#soundInput').setInputFiles(L.path.join(__dirname,'media','tone.wav'));await p.waitForFunction(()=>Akari.app.project.sounds.length>=1);await (await reveal(p.locator('#assetClose'))).click();await (await reveal(p.locator('.tool[data-type="input"]'))).click();return p.locator('#objectSelect').inputValue();};
 let inputId=await openPage();setupComplete=true;let draft=false,rootId='#blockEditor';
 const session=()=>p.evaluate(d=>(d?Akari.app.editorState.draft:Akari.app.editorState.main),draft);
@@ -345,10 +353,16 @@ L.result(L.path.join(output,filter?'browser-schemas-selected.json':'browser-sche
 }catch(error){
  primaryError=error;
  if(!setupComplete){
-  const failure={schema:'akari-schema-setup-failure-v1',error:error.stack,page:null};let timer;
-  if(p)try{failure.page=await Promise.race([p.evaluate(()=>({readyState:document.readyState,appAvailable:!!globalThis.Akari?.app,fontStatus:document.fonts?.status,
-   pendingImages:[...document.images].filter(image=>!image.complete).length,navigation:performance.getEntriesByType('navigation').map(entry=>entry.toJSON())})),
-   new Promise(resolve=>{timer=setTimeout(()=>resolve({unavailable:'failure-state-timeout'}),1000);})]);}catch(captureError){failure.page={unavailable:captureError.message};}finally{clearTimeout(timer);}
+  const failure={schema:'akari-schema-setup-failure-v1',error:error.stack,events:setupEvents,omittedEvents:omittedSetupEvents,
+   client:{observedAtMs:Date.now()-setupStarted,browserConnected:browser.isConnected(),pageUrl:p?.url(),pageClosed:p?.isClosed()},pageErrors:errors,networkRequests:network,page:null};
+  const capture=async read=>{let timer;try{return await Promise.race([Promise.resolve().then(read),new Promise(resolve=>{timer=setTimeout(()=>resolve({unavailable:'failure-state-timeout'}),1000);})]);}catch(captureError){return{unavailable:captureError.message};}finally{clearTimeout(timer);}};
+  // Start DevTools only after the original failure. Its browser-level response
+  // can survive a blocked renderer. cpuTime is a process-lifetime total; it does
+  // not by itself attribute work to this page or to the product's JavaScript.
+  [failure.page,failure.processes]=await Promise.all([
+   p?capture(()=>p.evaluate(()=>({readyState:document.readyState,appAvailable:!!globalThis.Akari?.app,fontStatus:document.fonts?.status,
+    pendingImages:[...document.images].filter(image=>!image.complete).length,navigation:performance.getEntriesByType('navigation').map(entry=>entry.toJSON())}))):null,
+   capture(async()=>{const session=await browser.newBrowserCDPSession(),info=await session.send('SystemInfo.getProcessInfo');return{observedAtMs:Date.now()-setupStarted,...info};})]);
   try{L.result(L.path.join(output,'schema-setup-failure.json'),failure);}catch(captureError){console.error('Setup failure evidence could not be written:',captureError);}
  }
  throw error;
