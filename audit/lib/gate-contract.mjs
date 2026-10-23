@@ -1,7 +1,7 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 import assert from 'node:assert/strict';
-export const auditBundleKinds=['selftest','audio-codecs-linux','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
+export const auditBundleKinds=['selftest','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
@@ -146,8 +146,8 @@ export const workflowContract=Object.freeze({
       {run:'node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" "audit-evidence/full-browser-${{ matrix.group }}"',if:'always()'}]},
     'audio-codecs':{if:sameRepository,needs:[],entries:[
       {run:'node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json'},
-      {run:'node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json',if:"matrix.platform == 'win32'"},
-      {run:'node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio',if:'always()'}]},
+      {run:'node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json'},
+      {run:'node audit/verify-evidence.mjs seal audio-codecs-win32 audit-evidence/audio',if:'always()'}]},
     aggregate:{if:afterNeeds,needs:auditJobIds,entries:[
       {run:'node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json',env:{AKARI_NEEDS:'${{ toJSON(needs) }}'}}]},
   }},
@@ -165,4 +165,4 @@ export const workflowContract=Object.freeze({
 });
 export const changeGuardLabel='owner-approved-audit-change';
 
-export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure'),...['valid','wrong-schema','wrong-step','failed-status','stale-snapshot','missing-results','missing-case','extra-case','duplicate-case','failed-case','release-record-changed','release-record-missing','node-product-suite-missing'].map(n=>'gate-cases:'+n)];
+export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','wrong-platform','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure'),...['valid','wrong-schema','wrong-step','failed-status','stale-snapshot','missing-results','missing-case','extra-case','duplicate-case','failed-case','release-record-changed','release-record-missing','node-product-suite-missing'].map(n=>'gate-cases:'+n)];

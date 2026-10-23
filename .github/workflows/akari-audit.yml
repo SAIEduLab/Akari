@@ -15,8 +15,11 @@ concurrency:
 jobs:
   selftest:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -24,10 +27,9 @@ jobs:
           node-version: '24'
       - run: |
           npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 jsdom@26.1.0 @babel/parser@7.28.4
-          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
-          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --no-shell chromium
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
-          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("path").join(process.env.RUNNER_TEMP,"functional-browser/chrome-linux64/chrome")+"\n")'
       - run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
       - run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest
         if: always()
@@ -41,8 +43,11 @@ jobs:
           include-hidden-files: true
   full-browser-gate:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -57,13 +62,10 @@ jobs:
           python-version: '3.12'
       - run: |
           npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4
-          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
-          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
-          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
-          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("path").join(process.env.RUNNER_TEMP,"functional-browser/chrome-linux64/chrome")+"\n")'
-          python -m pip install Pillow
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ffmpeg fonts-noto-cjk xvfb xauth
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --no-shell chromium
+          python -m pip install Pillow imageio-ffmpeg==0.6.0
+          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser" --media
           echo "AKARI_PYTHON=python" >> "$GITHUB_ENV"
       - run: node audit/browser/run-full-browser-audit.mjs --group "${{ matrix.group }}" --evidence "audit-evidence/full-browser-${{ matrix.group }}"
       - run: node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" "audit-evidence/full-browser-${{ matrix.group }}"
@@ -78,16 +80,8 @@ jobs:
           include-hidden-files: true
   audio-codecs:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-          - os: windows-latest
-            platform: win32
     defaults:
       run:
         shell: bash
@@ -102,19 +96,15 @@ jobs:
       - run: |
           npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
-          if [ "${{ matrix.platform }}" = linux ]; then
-            "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
-          fi
           python audit/install-codec-browser.py "$RUNNER_TEMP/codec-browser"
       - run: node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json
       - run: node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json
-        if: matrix.platform == 'win32'
-      - run: node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio
+      - run: node audit/verify-evidence.mjs seal audio-codecs-win32 audit-evidence/audio
         if: always()
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: akari-audio-codecs-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: akari-audio-codecs-win32-${{ github.run_id }}-${{ github.run_attempt }}
           path: audit-evidence/audio/
           if-no-files-found: error
           retention-days: 3
@@ -122,8 +112,11 @@ jobs:
   aggregate:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     needs: [selftest, full-browser-gate, audio-codecs]
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4

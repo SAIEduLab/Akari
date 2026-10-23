@@ -1608,7 +1608,7 @@
       "real": "UNVERIFIED; fixed manual protocol"
     },
     "platforms": {
-      "ci": "linux",
+      "ci": "win32",
       "local": "win32",
       "eachReportOwnEnvironment": true
     }

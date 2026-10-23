@@ -140,17 +140,12 @@ export const workflowActions=Object.freeze(['actions/checkout@v5','actions/setup
 // Setup lines may install pinned tools and export their paths; they never run an audit check.
 export const workflowSetupLines=Object.freeze([
   /^npm install --prefix "\$RUNNER_TEMP\/audit-deps" --no-package-lock --no-audit --no-fund(?: (?:@[a-z0-9-]+\/)?[a-z0-9-]+@\d+\.\d+\.\d+)+$/,
-  /^echo "NODE_PATH=\$RUNNER_TEMP\/audit-deps\/node_modules" >> "\$GITHUB_ENV"$/,
   /^echo "AKARI_PYTHON=python" >> "\$GITHUB_ENV"$/,
   /^node -e 'require\("fs"\)\.appendFileSync\(process\.env\.GITHUB_ENV,"(?:NODE_PATH|AKARI_BROWSER)="\+require\("path"\)\.join\(process\.env\.RUNNER_TEMP,"[A-Za-z0-9_\/.-]+"\)\+"\\n"\)'$/,
-  /^"\$RUNNER_TEMP\/audit-deps\/node_modules\/\.bin\/playwright" install(?:-deps)?(?: --with-deps)?(?: --no-shell)? chromium$/,
-  /^python audit\/install-codec-browser\.py "\$RUNNER_TEMP\/[a-z-]+"$/,
-  /^python -m pip install Pillow$/,
-  /^sudo apt-get update(?: -qq)?$/,
-  /^sudo apt-get install -y(?: -qq)?(?: [a-z0-9-]+)+$/,
+  /^"\$RUNNER_TEMP\/audit-deps\/node_modules\/\.bin\/playwright" install --no-shell chromium$/,
+  /^python audit\/install-codec-browser\.py "\$RUNNER_TEMP\/[a-z-]+"(?: --media)?$/,
+  /^python -m pip install Pillow imageio-ffmpeg==0\.6\.0$/,
   /^mkdir -p audit-evidence\/[a-z-]+$/,
-  /^if \[ "\$\{\{ matrix\.platform \}\}" = linux \]; then$/,
-  /^fi$/,
 ]);
 export const concurrencyCancel="${{ github.event_name == 'pull_request' }}";
 export const concurrencyGroup=file=>file.replace(/\.yml$/,'')+'-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}';
@@ -198,6 +193,8 @@ export function workflowIssues(files,contract=workflowContract){
       if(!/^[1-9][0-9]*$/.test(String(job['timeout-minutes']??'')))issue('timeout',file,id+'.timeout-minutes','every job needs a positive integer timeout');
       if(job.permissions!==undefined&&(!job.permissions||typeof job.permissions!=='object'||Object.values(job.permissions).some(v=>v!=='read')))issue('permissions',file,id+'.permissions','job permissions must be read-only');
       if(job.defaults!==undefined&&!same(job.defaults,{run:{shell:'bash'}}))issue('job-keys',file,id+'.defaults','only defaults.run.shell: bash is allowed');
+      if(job['runs-on']!=='windows-latest')issue('runner',file,id+'.runs-on','every CI job must use windows-latest');
+      if(!same(job.defaults,{run:{shell:'bash'}}))issue('runner',file,id+'.defaults','Windows CI entry commands require the declared bash shell');
       const rows=matrixRows(job.strategy?.matrix);
       if(!rows)issue('job-keys',file,id+'.strategy','unsupported matrix form');
       const steps=Array.isArray(job.steps)?job.steps:[];

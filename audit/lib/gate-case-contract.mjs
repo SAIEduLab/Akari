@@ -24,6 +24,7 @@ export const workflowRejectionIds=Object.freeze([
   'permissions/write-contents','permissions/job-write',
   'concurrency/cancels-main','concurrency/shared-main-group','concurrency/missing',
   'jobs/missing-job','jobs/extra-job','jobs/condition-changed','job-keys/reusable-workflow',
+  'runner/wrong-platform','runner/missing-bash',
   'needs/dropped-job','needs/without-always',
   'continue-on-error/job','continue-on-error/step',
   'timeout/missing','timeout/not-integer',
