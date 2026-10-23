@@ -70,10 +70,10 @@ const cases = {
   async 'UI-BUTTON-GUIDED-CHOICES'(p) {
     const variants=[];
     await p.removeLocatorHandler(p.locator('#loseConfirmModal.show'));
-    await p.evaluate(()=>{window.choiceStarts=0;const start=Akari.EventScheduler.prototype.start;Akari.EventScheduler.prototype.start=function(...args){choiceStarts++;window.choiceScheduler=this;return start.apply(this,args);};});
+    await p.evaluate(()=>{window.choiceStarts=0;window.choiceSaid=[];const start=Akari.EventScheduler.prototype.start;Akari.EventScheduler.prototype.start=function(...args){choiceStarts++;window.choiceScheduler=this;const say=this.ui.say;this.ui.say=(...said)=>{choiceSaid.push({id:said[0],text:said[1]});return say?.apply(this.ui,said);};return start.apply(this,args);};});
     const scenarios=[
-      {id:'repeat-both',source:'10歩進む。右に曲がる。4回くり返す。',choice:0,value:'９０',expected:'4回くり返す。\n  10歩進む。\n  右に90度回る。',position:[0,0]},
-      {id:'repeat-turn',source:'10歩進む。右に曲がる。4回くり返す。',choice:1,value:'90',expected:'10歩進む。\n4回くり返す。\n  右に90度回る。',position:[10,0]},
+      {id:'repeat-both',source:'10歩進む。※前のメモ  \n※〔角度をえらぶ〕は メモ\n\n右に曲がる。※回るメモ\n4回くり返す。※回数メモ\n「おわり」と言う。',choice:0,value:'９０',expected:'4回くり返す。※回数メモ\n  10歩進む。※前のメモ  \n  ※〔角度をえらぶ〕は メモ\n\n  右に90度回る。※回るメモ\n「おわり」と言う。',position:[0,0]},
+      {id:'repeat-turn',source:'10歩進む。右に曲がる。4回くり返す。「おわり」と言う。',choice:1,value:'90',expected:'10歩進む。\n4回くり返す。\n  右に90度回る。\n「おわり」と言う。',position:[10,0]},
       {id:'list-append',source:'持ち物に「かさ」を入れる。',choice:0,expected:'持ち物の最後に「かさ」を入れる。',list:['本','ぼうし','かさ']},
       {id:'list-replace',source:'持ち物に「かさ」を入れる。',choice:1,value:'２',expected:'持ち物の2番目を「かさ」にかえる。',list:['本','かさ']},
     ];
@@ -83,8 +83,10 @@ const cases = {
       await p.waitForFunction(id=>document.querySelector('#loseConfirmModal.show')||Akari.app.project.name==='意味の入力 '+id,c.id);
       if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();
       await p.waitForFunction(id=>Akari.app.project.name==='意味の入力 '+id&&Akari.app.editorState.state==='DESIGN'&&!document.querySelector('#fileInput').value,c.id);
-      await p.locator('#uiLevel').selectOption('advanced');await select(p,'sprite-1');await mode(p,'code');await p.evaluate(()=>window.choiceStarts=0);
-      await p.locator('#codeEditor').fill(c.source);await p.waitForTimeout(400);await p.locator('#runBtn').click();
+      await p.locator('#uiLevel').selectOption('advanced');await select(p,'sprite-1');await mode(p,'code');await p.evaluate(()=>{window.choiceStarts=0;window.choiceSaid=[];});
+      await p.locator('#codeEditor').fill(c.source);await p.waitForTimeout(400);
+      const directChoice=c.id==='repeat-turn'||c.id==='list-replace';
+      if(!directChoice)await p.locator('#runBtn').click();
       const pending=await fingerprint(p),choices=p.locator('[data-intent-choice]'),labels=await choices.allTextContents();assert.equal(labels.length,2);assert.equal(await p.evaluate(()=>choiceStarts),0);
       const chosen=choices.nth(c.choice);await chosen.click();let cancelled=false,detachedRefused=false,invalidRejected=[];
       if(c.value){
@@ -102,12 +104,20 @@ const cases = {
       await p.locator('#undoBtn').click();assert.equal((await fingerprint(p)).project,pending.project);await p.locator('#redoBtn').click();assert.equal((await fingerprint(p)).project,after.project);
       await mode(p,'blocks');await mode(p,'code');assert.equal((await fingerprint(p)).project,after.project);
       await p.locator('#runBtn').click();await p.waitForFunction(()=>choiceStarts===1&&window.choiceScheduler&&choiceScheduler.tasks.size===0);
-      const runtime=await p.evaluate(()=>{const r=choiceScheduler.runtime,a=r.actor('sprite-1');return {position:[a.x,a.y],list:structuredClone(r.projectLists.get('持ち物'))};});
+      const runtime=await p.evaluate(()=>{const r=choiceScheduler.runtime,a=r.actor('sprite-1');return {position:[a.x,a.y],list:structuredClone(r.projectLists.get('持ち物')),said:structuredClone(choiceSaid)};});
       if(c.position)c.position.forEach((v,i)=>assert.ok(Math.abs(runtime.position[i]-v)<1e-7));if(c.list)assert.deepEqual(runtime.list,c.list);
+      assert.deepEqual(runtime.said,c.id.startsWith('repeat')?[{id:'sprite-1',text:'おわり'}]:[],'a following statement executes once outside the chosen repeat');
       await pressStop(await reveal(p.locator('#stopBtn')));assert.equal((await fingerprint(p)).project,after.project);
-      variants.push({id:c.id,labels,choice:c.choice,source:c.expected,beforeProject:JSON.parse(pending.project),afterProject:JSON.parse(after.project),noAutomaticExecution:true,cancelled,detachedRefused,invalidRejected,undoRedo:true,modeRoundtrip:true,runtime});
+      variants.push({id:c.id,labels,choice:c.choice,directChoice,source:c.expected,beforeProject:JSON.parse(pending.project),afterProject:JSON.parse(after.project),noAutomaticExecution:true,cancelled,detachedRefused,invalidRejected,undoRedo:true,modeRoundtrip:true,runtime});
     }
-    return {variants};
+    await callable(p,'Action');await p.locator('#callableCode').fill('持ち物に「かさ」を入れる。');
+    const draftChoices=p.locator('#callablePending [data-intent-choice]');await draftChoices.nth(1).waitFor();
+    const draftPending=await fingerprint(p);await draftChoices.nth(1).click();
+    const draftInput=p.locator('#callablePending [data-intent-input] input');assert.equal(await draftInput.inputValue(),'');
+    assert.equal(await draftInput.evaluate(e=>document.activeElement===e),true);assert.deepEqual(await fingerprint(p),draftPending);
+    await p.locator('#callablePending [data-intent-input-cancel]').click();assert.deepEqual(await fingerprint(p),draftPending);
+    assert.equal(await p.locator('#callableCode').inputValue(),'持ち物に「かさ」を入れる。');
+    return {variants,callableFirstNativeClick:true,callableCancelPreserved:true};
   },
   async 'UI-BUTTON-SOURCE-NAV'(p) {
     for(const m of ['code','blocks']) {

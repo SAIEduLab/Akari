@@ -31,7 +31,7 @@ export function blockMeaning(views,project,runs,taskId){
     for(const n of nodes.filter(n=>n.schema==='Script')){
       const actor=ref(n,v.selectedOwner,'heading.actorRef.'),event=field(n,'heading.event');
       assert.ok(['start','click'].includes(event),'fixed task event');
-      assert.ok(n.title.includes(actorName(actor))&&n.title.includes(event==='start'?'「動かす」を おしたとき':'おされたとき'),'displayed actor and event');
+      assert.ok(n.title.includes(actorName(actor))&&n.title.includes(event==='start'?'「動かす」を おしたとき':'おされた とき'),'displayed actor and event');
       programs.push({actor,event,n,children,field,ref,nodes});
     }
   }

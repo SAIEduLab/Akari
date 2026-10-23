@@ -1159,8 +1159,16 @@
       : role?.kind === 'ListMutation' && role.missing?.includes('indexIfReplace')
         ? {kind:'index', marker:'〔番号を入れる〕', label:'入れかえる 番号', probe:'1'} : null;
     if (!spec) return null;
-    const mask=surfaceMask(proposal.source), offset=mask.indexOf(spec.marker);
-    return offset>=0 && mask.indexOf(spec.marker,offset+spec.marker.length)<0 ? {...spec,offset} : null;
+    const offsets=[];
+    for(const line of normalizeSource(proposal.source).lines){
+      if(line.continuation)continue;
+      const mask=surfaceMask(line.mapped.text);
+      for(let at=mask.indexOf(spec.marker);at>=0;at=mask.indexOf(spec.marker,at+spec.marker.length)){
+        const offset=line.mapped.positions[at];
+        if(proposal.source.slice(offset,offset+spec.marker.length)===spec.marker)offsets.push(offset);
+      }
+    }
+    return offsets.length===1 ? {...spec,offset:offsets[0]} : null;
   }
   let checkingSentenceProposals = false;
   function parseSyntax(source, context = {}) {
@@ -2522,7 +2530,30 @@
     return pair?text.slice(0,-pair[0].length)+pair[1]:text;
   }
   let diagnosingNaturalIntent=false;
-  function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
+  function repeatChoiceSources(source,previousLine,line,nextLine,turn) {
+    const firstRange=sourceRange(previousLine.mapped.positions),turnRange=sourceRange(line.mapped.positions),lastRange=sourceRange(nextLine.mapped.positions);
+    if(typeof source!=='string'||!firstRange||!turnRange||!lastRange||firstRange.end>turnRange.start||turnRange.end>lastRange.start||lastRange.end>nextLine.end)return null;
+    const tail=source.slice(lastRange.end,nextLine.end),complete=/^[ \t　]*(?:。[ \t　]*)?(?:※[^\r\n]*)?$/u.test(tail),
+      end=complete?nextLine.end:lastRange.end+(/^[ \t　]*。[ \t　]*/u.exec(tail)?.[0].length||0),
+      eol=source.slice(firstRange.start,end).match(/\r\n|\r|\n/)?.[0]||'\n',indent=' '.repeat(line.indent||0);
+    // Only the statement boundary and indentation change. Quoted multiline contents and memo text stay verbatim.
+    const fragment=(code,trivia,shift=0)=>{
+      if(!/^[ \t　]*。/u.test(trivia))trivia='。'+trivia;
+      trivia=trivia.replace(/(?:\r\n|\r|\n)[ 　]*$/u,'');
+      trivia=trivia.replace(/(\r\n|\r|\n)([ 　]*)(?=※)/gu,(_,nl,lead)=>nl+' '.repeat(shift)+lead);
+      return code+trivia;
+    };
+    const count=fragment(source.slice(lastRange.start,lastRange.end),source.slice(lastRange.end,end));
+    return [0,1].map(choice=>{
+      const first=fragment(source.slice(firstRange.start,firstRange.end),source.slice(firstRange.end,turnRange.start),choice===0?2:0),
+        turned=fragment(turn,source.slice(turnRange.end,lastRange.start),2);
+      let replacement=choice===0?count+eol+indent+'  '+first+eol+indent+'  '+turned:first+eol+indent+count+eol+indent+'  '+turned;
+      // A following statement on the same physical line stays outside the newly chosen repeat.
+      if(end<nextLine.end)replacement+=eol+indent;
+      return {label:choice===0?'前の 文と 回る 文の 両方を くり返す':'前の 文は 一度、回る 文だけを くり返す',source:replacement,start:firstRange.start,end};
+    });
+  }
+  function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null,source=null) {
     const code=line.code,mask=surfaceMask(code);let p;
     const inlineIf=/^(もし[^、]+?、)(.+)$/.exec(mask);
     if(inlineIf&&/ゆっくり|度、?[^、。]*?秒(?:間)?(?:かけて|で)|のところ(?:へ|に)、?[^、。]*?秒(?:間)?(?:かけて|で)/.test(mask)){
@@ -3230,12 +3261,10 @@
       const names=(symbols?.project?.components||[]).map(component=>component.name);
       throw sentenceDiagnostic('「それ」などでは、だれを 動かすのか 分かりません。動かす キャラクターの 名前を えらんで ください',line,names.map(name=>({label:`${name}を 動かす`,source:canonicalStatementSource(`${nameSource(name)}を${p[1].text}`,symbols)})),{kind:'MotionCommand',missing:['actorRef']});
     }
-    if((p=surfaceCapture(/^(右|左)に曲がる$/d,code,mask))&&previousLine&&nextLine){
+    if((p=surfaceCapture(/^(右|左)に曲がる$/d,code,mask))&&previousLine?.code&&nextLine){
       const count=surfaceCapture(/^(.+)回(?:くり返す|繰り返す|くりかえす)$/d,nextLine.code);
-      if(count){const turn=`${p[0].text}に〔角度をえらぶ〕度回る`,first=previousLine.code,amount=count[0].text,indent='',error=sentenceDiagnostic('進むと 回るの、どこまでを くり返すのか 分かりません。えらんで ください',line,[
-        {label:'進む・回るの 両方を くり返す',source:`${amount}回くり返す。\n${indent}  ${first}。\n${indent}  ${turn}`},
-        {label:'進むのは 一度、回るだけを くり返す',source:`${first}。\n${indent}${amount}回くり返す。\n${indent}  ${turn}`},
-      ],{kind:'RepeatCount',missing:['scope','angle']});const firstRange=sourceRange(previousLine.mapped.positions),lastRange=sourceRange(nextLine.mapped.positions);for(const proposal of error.proposals){proposal.start=firstRange.start;proposal.end=lastRange.end;}throw error;}
+      const choices=count&&repeatChoiceSources(source,previousLine,line,nextLine,`${p[0].text}に〔角度をえらぶ〕度回る`);
+      if(choices){const error=sentenceDiagnostic('前の 文と 回る 文の、どこまでを くり返すのか 分かりません。えらんで ください',line,[],{kind:'RepeatCount',missing:['scope','angle']});error.proposals=choices;throw error;}
     }
   }
   // 「「海」は何と読みますか」と言う: a かぎ inside a かぎ ends the outer one (final call 12). Inside 「 」 a quote is written
@@ -3414,7 +3443,8 @@
         if(orderWord){const under=lines[nextCode(i+1)];
           if(depth===0&&!heading&&!ctx.definitionKind&&!ctx.definition&&under&&under.indent>indent)throw sentenceDiagnostic(`「${orderWord[1]}、」は 見出しでは ありません。「▶ 動かす」を おした ときに 始める ときは、「作品を動かしたとき、」と 書きます`,line,[{label:'「作品を動かしたとき、」に する',source:'作品を動かしたとき、'}],{kind:'Script'});
           throw sentenceDiagnostic(`「${orderWord[1]}、」の あとに、する ことを 同じ 行に 書きます。れい：${orderWord[1]}、前へ10歩進む。`,line,[],{kind:'Sequence'});}
-        try{parseAt(line,()=>diagnoseSentenceIntent(line,symbols,local,lines[i-1]?.indent===indent?lines[i-1]:null,lines[nextCode(i+1)]?.indent===indent?lines[nextCode(i+1)]:null));}
+        let previousCode=i-1;while(previousCode>=0&&!lines[previousCode].code)previousCode--;
+        try{parseAt(line,()=>diagnoseSentenceIntent(line,symbols,local,lines[previousCode]?.indent===indent?lines[previousCode]:null,lines[nextCode(i+1)]?.indent===indent?lines[nextCode(i+1)]:null,source));}
         catch(error){
           // 点数が10になったら、 with its body on the lines below (CC-266): the wait is offered for the whole block, the
           // heading line becoming the wait and the body lines moving out one level, so the result reads.

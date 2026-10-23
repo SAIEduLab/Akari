@@ -698,7 +698,7 @@
       }
     }
     for(const event of ['pointerdown','touchstart','click','keydown','keyup','focusin','input','change','compositionstart','compositionend','dragstart','dragover','drop','contextmenu'])window.addEventListener(event,tutorialCapture,{capture:true,passive:false});
-    let flushingEditor = false;
+    let flushingEditor = false, intentInputFocus = null;
     let shellPointer = null;
     function draftOwner() {
       return callableDraftCore.editId
@@ -1080,7 +1080,10 @@
             const field=document.createElement('input');field.type='text';field.inputMode='decimal';field.setAttribute('aria-label',input.label);field.required=true;label.append(field);guide.append(label);
             const confirm=document.createElement('button');confirm.type='button';confirm.textContent='この 数で なおす';confirm.dataset.intentApply='';confirm.disabled=true;
             field.oninput=()=>{confirm.disabled=!valid(field.value);};confirm.onclick=()=>{if(guide.isConnected&&valid(field.value))apply(filled(field.value));};guide.append(confirm);
-            const cancel=document.createElement('button');cancel.type='button';cancel.dataset.intentInputCancel='';cancel.textContent='数を 入れるのを やめる';cancel.onclick=()=>{guide.remove();button.focus();};guide.append(cancel);choices.append(guide);field.focus();
+            const cancel=document.createElement('button');cancel.type='button';cancel.dataset.intentInputCancel='';cancel.textContent='数を 入れるのを やめる';cancel.onclick=()=>{guide.remove();button.focus();};guide.append(cancel);choices.append(guide);
+            // Focusing this recovery input blurs the pending code. Its native change must not redraw the guide just opened.
+            const previousFocus=intentInputFocus;intentInputFocus={textarea:binding.textarea,current};
+            try {field.focus();} finally {intentInputFocus=previousFocus;}
           };
           choices.append(button);
         }
@@ -8559,6 +8562,7 @@
       (event) => {
         if (
           modelLocked() ||
+          (event.target===intentInputFocus?.textarea&&intentInputFocus.current()) ||
           event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal,[data-intent-input]') ||
           (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
           event.target.matches('#uiLevel,#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
