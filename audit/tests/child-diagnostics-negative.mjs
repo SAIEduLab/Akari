@@ -30,7 +30,11 @@ for(const [id,mutate]of [
   ['quoted-source-misrouted',r=>r.results.find(x=>x.id==='semantic/function-effects').observed.quotedSources[0].primary='「 」などの とじる しるしを 足します'],
   ['scalar-list-offered',r=>r.results.find(x=>x.id==='semantic/scalar-guidance').observed.listPrimary='【買うもの】を言う'],
   ['touch-actor-lost',r=>r.results.find(x=>x.id==='semantic/touch-heading').observed.contexts[2].copied.items[0].targetId='stage'],
+  ['history-proof-missing',r=>delete r.results.find(x=>x.id==='semantic/function-effects').observed.history],
+  ['cancelled-draft-restored',r=>r.results.find(x=>x.id==='semantic/function-effects').observed.history[0].undo.pending={kind:'code',value:'「x」とじるしるしを書いてください。'}],
+  ['prior-valid-edit-lost',r=>r.results.find(x=>x.id==='semantic/function-effects').observed.history[1].undo.source='「もとの動き」と言う。'],
+  ['redo-source-lost',r=>r.results.find(x=>x.id==='semantic/function-effects').observed.history[1].redo.input='「A」と言う。'],
 ]){const altered=structuredClone(positive);mutate(altered);assert.throws(()=>verifyChildDiagnosticsReport(altered,inputs),id);results.push({id,status:'PASS',result:'REJECTED'});}
 fs.mkdirSync(path.dirname(output),{recursive:true});
-fs.writeFileSync(output,JSON.stringify({schema:'akari-child-diagnostics-validator-negative-v1',status:'PASS',snapshot:inputs,required:23,results},null,2)+'\n');
-console.log('Child diagnostics validator negative: 23 refused PASS');
+fs.writeFileSync(output,JSON.stringify({schema:'akari-child-diagnostics-validator-negative-v1',status:'PASS',snapshot:inputs,required:27,results},null,2)+'\n');
+console.log('Child diagnostics validator negative: 27 refused PASS');

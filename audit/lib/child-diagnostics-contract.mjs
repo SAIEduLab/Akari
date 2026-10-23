@@ -52,6 +52,10 @@ export function verifyChildDiagnosticsReport(report,inputs) {
   assert.match(effects.primary,/音を 出す・待つ/);assert.match(effects.primary,/「てじゅん」へ 入れます/);assert.match(effects.primary,/足す/);
   assert.doesNotMatch(effects.primary,/function:diagnostic-function/);assert.match(effects.detail,/S305/);assert.ok(meaning(effects.detail).includes('やることは使えません'));
   assert.deepEqual(effects.after,effects.before);
+  assert.deepEqual(effects.history,[false,true].map(nextValid=>({nextValid,
+    cancelled:{source:'「A」と言う。',input:'「A」と言う。',pending:null},
+    undo:{source:nextValid?'「A」と言う。':'「もとの動き」と言う。',input:nextValid?'「A」と言う。':'「もとの動き」と言う。',pending:null},
+    redo:{source:nextValid?'「C」と言う。':'「A」と言う。',input:nextValid?'「C」と言う。':'「A」と言う。',pending:null}})));
   assert.deepEqual(effects.quotedNames.map(r=>r.name),['を2回書いています','とじるしるしを書いてください','入れるものの名前をたしかめてください']);
   for(const row of effects.quotedNames){assert.ok(row.primary.includes(row.name));assert.doesNotMatch(row.primary,/入れて使う 数や 文字|とじる しるしを 足します/);assert.match(row.detail,/S301/);assert.equal(row.preserved,true);}
   assert.deepEqual(effects.quotedSources.map(r=>r.source),['「x」とじるしるしを書いてください。','「x」を2回書いています。','「x」」とじるしるしを書いてください。']);

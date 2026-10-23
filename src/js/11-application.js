@@ -1823,12 +1823,12 @@
         value:d.pending.value??null,field:d.pending.field??null,nodePath:d.pending.nodePath??null,
         draftSource:d.draftTree?formatScript(blockDecode(d.draftTree,{allowHoles:true}),{allowHoles:true}):null}))]);
     }
-    function stateFingerprintCore() {
+    function stateFingerprintCore(fingerprint = currentFingerprint()) {
       const pending=[mainEditor,draftEditor].filter(b=>b.session?.blockDraft||b.session?.pendingEdit&&!b.session.pendingEdit.rejected&&(!b.session.pendingEdit.field||b.session.pendingEdit.invalid)).map(b=>({kind:b.kind,ownerKey:bindingOwner(b),source:b.textarea.value,
         pending:b.session.pendingEdit||{},draftTree:b.session.blockDraft?b.session.blockView:null}));
       const draft=headerPending?{...callableDraftCore,name:$('#callableName').value,argsText:$('#callableArgs').value,
         ...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})}:hasCallableDraft()?callableDraftCore:null;
-      return JSON.stringify([currentFingerprint(),editorContentFingerprint({callableDraft:draft,pendingEditors:pending})]);
+      return JSON.stringify([fingerprint,editorContentFingerprint({callableDraft:draft,pendingEditors:pending})]);
     }
     function renderCallableOptions(prefer = '') {
       const sel = $('#callableSelect');
@@ -2524,8 +2524,7 @@
     function compactCurrentAssets() {
       assetStore = assetStore.retainOnly(collectReachableAssetIds(project));
     }
-    function pushHistoryNow() {
-      const e = snapshot();
+    function pushHistoryNow(e = snapshot()) {
       lastObservedFingerprint = e.stateFingerprint;
       if (!history.length || history.at(-1).stateFingerprint !== e.stateFingerprint) {
         history.push(e);
@@ -2738,15 +2737,15 @@
       return id;
     }
 
-    function snapshot() {
+    function snapshot(fingerprint = currentFingerprint(), stateFingerprint = stateFingerprintCore(fingerprint)) {
       return {
         project: cloneDesignProject(project),
         assets: assetStore.snapshotRefs(collectReachableAssetIds(project)),
         selectedId,
         currentEvent,
         selectedScriptId,
-        fingerprint: currentFingerprint(),
-        stateFingerprint: stateFingerprintCore(),
+        fingerprint,
+        stateFingerprint,
         editorState: captureEditorState(),
         draft: { ...callableDraftCore },
         callableBaseline,
@@ -2766,17 +2765,18 @@
       dirty = false;
       updateDirty();
     }
-    function queueHistory() {
+    function queueHistory(fingerprint, stateFingerprint) {
       if (modelLocked()) return;
       clearTimeout(historyTimer);
+      const queued = snapshot(fingerprint, stateFingerprint);
       historyTimer = setTimeout(() => {
-        pushHistoryNow();
+        pushHistoryNow(queued);
       }, 250);
     }
     function markDirty() {
       if (modelLocked()) return;
       invalidateEditors();
-      const fp = stateFingerprintCore();
+      const fingerprint = currentFingerprint(), fp = stateFingerprintCore(fingerprint);
       if (fp === lastObservedFingerprint) return;
       lastObservedFingerprint = fp;
       keptFail = null;
@@ -2789,7 +2789,7 @@
       recoveryEpoch++;
       if (history.at(-1)?.stateFingerprint !== fp) redo = [];
       updateDirty();
-      queueHistory();
+      queueHistory(fingerprint, fp);
       scheduleAutosave();
     }
     function updateDirty() {

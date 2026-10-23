@@ -62,6 +62,28 @@ async function install(p,{source='「もとの動き」と言う。',args=[]}={}
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
   await chooseView(p,'code');
 }
+async function cancelledHistory(browser){
+  const rows=[];
+  for(const nextValid of [false,true])rows.push(await pageFor(browser,product,async p=>{
+    p.setDefaultTimeout(8000);p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
+    await install(p);
+    const read=()=>p.evaluate(()=>({source:Akari.app.project.scripts[0].source,input:document.querySelector('#codeEditor').value,pending:Akari.app.editorState.main.pendingEdit})),
+      settle=()=>p.evaluate(()=>new Promise(resolve=>setTimeout(resolve,350)));
+    await settle();
+    await p.locator('#codeEditor').fill('「A」と言う。');await p.waitForFunction(()=>Akari.app.project.scripts[0].source==='「A」と言う。');
+    await p.locator('#codeEditor').fill('「x」とじるしるしを書いてください。');await p.waitForFunction(()=>document.querySelector('#codeIssue').classList.contains('issue-error'));
+    // The preceding valid edit's 250ms coalescing timer must fire while this rejected input is still present.
+    await settle();await p.locator('#editorCancel').click();const cancelled=await read();
+    assert.deepEqual(cancelled,{source:'「A」と言う。',input:'「A」と言う。',pending:null});
+    if(nextValid){await p.locator('#codeEditor').fill('「C」と言う。');await p.waitForFunction(()=>Akari.app.project.scripts[0].source==='「C」と言う。');await settle();}
+    await p.locator('#undoBtn').click();const undo=await read(),expected=nextValid?'「A」と言う。':'「もとの動き」と言う。';
+    assert.deepEqual(undo,{source:expected,input:expected,pending:null},'Undo preserves the preceding valid edit and never restores cancelled input');
+    await p.locator('#redoBtn').click();const redo=await read(),redone=nextValid?'「C」と言う。':'「A」と言う。';
+    assert.deepEqual(redo,{source:redone,input:redone,pending:null});
+    return {nextValid,cancelled,undo,redo};
+  }));
+  return rows;
+}
 async function openOutputWithWheel(p) {
   const observations=[],panel=p.locator('.monitor-window'),output=panel.locator('.output-disclosure'),summary=output.locator('> summary');
   const geometry=()=>summary.evaluate(e=>{const r=e.getBoundingClientRect(),panel=e.closest('.monitor-window'),box=panel.getBoundingClientRect(),side=panel.closest('.side'),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{hit:!!hit&&(e===hit||e.contains(hit)),inside:r.top>=box.top&&r.bottom<=box.bottom,inViewport:r.top>=0&&r.bottom<=innerHeight,scrollTop:panel.scrollTop,sideScrollTop:side?.scrollTop||0,overflow:getComputedStyle(panel).overflowY,center:{x:r.x+r.width/2,y:r.y+r.height/2}};});
@@ -205,7 +227,8 @@ try {await withBrowser(chrome,async browser=>{
       const primary=await p.locator('#codeIssue > .diagnostic-help').innerText();assert.equal(primary,'1行目：'+original.message);
       await p.locator('#editorCancel').click();assert.deepEqual(await state(p),beforeSource);quotedSources.push({source,primary,original:original.message,preserved:true});
     }
-    return {errors,primary,detail,before,after,meijinLocations:locations,unknownName,quotedNames,quotedSources};
+    const history=await cancelledHistory(browser);
+    return {errors,primary,detail,before,after,meijinLocations:locations,unknownName,quotedNames,quotedSources,history};
   });
   await run('runtime/list-reference',async p=>{
     await install(p,{source:'「買うもの」の2番目を2秒話す。'});const before=await state(p);
