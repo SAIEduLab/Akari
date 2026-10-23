@@ -198,7 +198,9 @@ await withBrowser(browserPath,async browser=>{
   const browserCase=(id,fn)=>run(id,()=>browserPage(id,fn));
   await browserCase('FORMAT-BROWSER-FILE-ROUNDTRIP',async p=>{
     await p.locator('#fileInput').setInputFiles({name:'prior.akari.md',mimeType:'text/markdown',buffer:Buffer.from(savedPrior)});
-    await p.waitForFunction(v=>Akari.app.project.appVersion===v,priorRelease);
+    // The model changes before asynchronous import cleanup has unlocked editing.
+    // Check the existing editable assertion after the input handler has completed.
+    await p.waitForFunction(v=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN'&&Akari.app.project.appVersion===v,priorRelease);
     assert.equal((await editorState(p)).source,priorProject.scripts[0].source);
     assert.deepEqual(await p.evaluate(()=>Akari.app.project.actions),plain(priorProject.actions));
     const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();
@@ -210,7 +212,7 @@ await withBrowser(browserPath,async browser=>{
     for(const c of unfinishedSources){
       const project=unfinishedProject(c),text=api.serializeProject(project,api.makeDefaultAssetStore());
       await p.locator('#fileInput').setInputFiles({name:'unfinished-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(text)});
-      await p.waitForFunction(name=>Akari.app.project.name===name,project.name);
+      await p.waitForFunction(name=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN'&&Akari.app.project.name===name,project.name);
       assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),c.source);
       await chooseView(p,'code');assert.equal(await p.locator('#codeEditor').isEditable(),true);
       const download=p.waitForEvent('download');await p.locator('#saveBtn').click();
@@ -219,7 +221,7 @@ await withBrowser(browserPath,async browser=>{
       assert.equal(reopened.project.scripts[0].source,expected,'saving an unchanged unfinished body preserves its source');
       assert.equal(api.compileProject(reopened.project).errors[0].code,'P205');assert.equal(reject(()=>api.packExecutable(reopened.project)),'X601');
       await p.locator('#fileInput').setInputFiles({name:'resaved-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(saved)});
-      await p.waitForFunction(()=>!document.querySelector('#fileInput').value);
+      await p.waitForFunction(()=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN');
       assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),expected);
       unfinished.push({separator:c.separator,importedSource:c.source,savedSource:expected,reopened:true,editable:true,diagnostic:'P205',exportCode:'X601'});
     }
