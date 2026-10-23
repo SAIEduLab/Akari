@@ -36594,6 +36594,7 @@ function createAkariExtensionHost(options) {
     let sourceOverviewOpen = false, sourceOverviewViews = [], sourceOverviewObserver = null, sourceOverviewSignature = '';
     let entryLayoutPlaced=false;
     const entryControlHomes=new Map();
+    let placeHistoryButtons=()=>{};
     // tutorialNotice: a short answer to the child's last try on one step (ことばを 入れてね), shown until the step changes.
     let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0, tutorialNotice=null,
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null, tutorialInsertion=null;
@@ -36665,6 +36666,7 @@ function createAkariExtensionHost(options) {
         ['statement','rule'].includes(BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category)&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId)))||
         (project?.scripts||[]).some(s=>!['start','click'].includes(s.event)&&!isMeijinScript(s)&&String(s.source||'').trim());
       $('#entryOutside').hidden=!entry||!outside||!!tutorial;
+      placeHistoryButtons();
     }
     function selectEntryEvent(event) {
       if (!tutorialAllows(tutorial,'event:'+event)||modelLocked()||!eventsFor(selectedId).includes(event)||!flushActiveEditor()) return;
@@ -37125,6 +37127,7 @@ function createAkariExtensionHost(options) {
         const error = new AkariError(first.code, first.message, first.line, first.column);
         error.diagnostics = parsed.syntaxDiagnostics;
         error.proposals = first.proposals || first.choices || [];
+        error.proposalSource = source;
         throw error;
       }
       const scaleErrors = staticScaleDiagnostics(parsed.ast, ownerKey);
@@ -37292,7 +37295,17 @@ function createAkariExtensionHost(options) {
       n.querySelector('.intent-choices')?.remove();
       const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
       if (proposals.length) {
-        const original = binding.textarea.value;
+        const original = binding.textarea.value, basis=error.proposalSource,
+          sameSource=typeof basis==='string'&&basis.replace(/\r\n?/g,'\n')===original.replace(/\r\n?/g,'\n');
+        const boundary=at=>Number.isInteger(at)&&at>=0&&at<=basis.length&&
+          !(basis[at-1]==='\r'&&basis[at]==='\n')&&
+          !(basis.charCodeAt(at-1)>=0xD800&&basis.charCodeAt(at-1)<=0xDBFF&&basis.charCodeAt(at)>=0xDC00&&basis.charCodeAt(at)<=0xDFFF);
+        // Diagnostic ranges count the parsed source. Native input may retain a different newline representation.
+        const sourceOffset=at=>{
+          let parsed=0,raw=0;
+          while(parsed<at){parsed+=basis[parsed]==='\r'&&basis[parsed+1]==='\n'?2:1;raw+=original[raw]==='\r'&&original[raw+1]==='\n'?2:1;}
+          return raw;
+        };
         const choices = document.createElement('span');
         choices.className = 'intent-choices';
         choices.setAttribute('role', 'group');
@@ -37300,7 +37313,9 @@ function createAkariExtensionHost(options) {
         // A mouse press keeps the focus in the code, so the note is not drawn again (taking its button away) before the click.
         choices.addEventListener('mousedown', (event) => {if(!event.target.closest('[data-intent-input] label'))event.preventDefault();});
         for (const proposal of proposals) {
-          if (typeof proposal.source !== 'string') continue;
+          if(typeof proposal.source!=='string'||!sameSource||!boundary(proposal.start)||!boundary(proposal.end)||proposal.start>proposal.end)continue;
+          const range={start:sourceOffset(proposal.start),end:sourceOffset(proposal.end)};
+          if(proposal.input&&(!['angle','index'].includes(proposal.input.kind)||typeof proposal.input.marker!=='string'||!proposal.input.marker||!Number.isInteger(proposal.input.offset)||proposal.input.offset<0||proposal.source.slice(proposal.input.offset,proposal.input.offset+proposal.input.marker.length)!==proposal.input.marker))continue;
           const button = document.createElement('button');
           button.type = 'button'; button.dataset.intentChoice = '';
           button.textContent = proposal.label || proposal.source;
@@ -37311,8 +37326,7 @@ function createAkariExtensionHost(options) {
             if(!current())return;
             const apply=replacement=>{
               if(!current())return;
-              const source=Number.isInteger(proposal.start)&&Number.isInteger(proposal.end)
-                ? original.slice(0,proposal.start)+replacement+original.slice(proposal.end) : replacement;
+              const source=original.slice(0,range.start)+replacement+original.slice(range.end);
               try {commitSource(binding,source,{atomic:true});binding.textarea.value=source;n.hidden=true;renderEditorBinding(binding);refreshEditor();}
               catch(nextError){binding.textarea.value=source;if(binding.session)binding.session.pendingEdit={ownerKey:bindingOwner(binding),kind:'code',value:source,originalSource:original,reason:nextError.message};scheduleAutosave();showEditorFailure(binding,nextError);}
             };
@@ -38270,17 +38284,19 @@ function createAkariExtensionHost(options) {
       // A button shown or put away (a level, the list of all bodies) changes what the groups need, as a new width does.
       const sourceRowObserver = new ResizeObserver(placeSourceRow);
       for (const box of [code, sourceNav, debugbar, ...sourceNav.children, ...debugbar.children]) sourceRowObserver.observe(box);
-      const undoButton = $('#undoBtn'), undoHome = document.createElement('span'),
+      const historyHomes=[$('#undoBtn'),$('#redoBtn')].map(button=>{const marker=document.createElement('span');button.before(marker);return {button,marker};}),
         callableTitle = $('#procModal > .dialog > .win-title');
-      undoButton.before(undoHome);
-      const placeUndo = () => {
-        if ($('#procModal').classList.contains('show')) callableTitle.append(undoButton);
-        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))
-          toolbar.insertBefore(undoButton,$('#redoBtn').parentElement===toolbar?$('#redoBtn'):$('#tutorialStart'));
-        else undoHome.after(undoButton);
+      placeHistoryButtons=()=>{
+        for(const {button,marker}of historyHomes){
+          if($('#procModal').classList.contains('show')){if(button.parentElement!==callableTitle)callableTitle.append(button);}
+          else if(document.body.dataset.uiLevel==='entry'){
+            const anchor=button.id==='undoBtn'&&$('#redoBtn').parentElement===toolbar?$('#redoBtn'):$('#tutorialStart');
+            if(button.parentElement!==toolbar||button.nextElementSibling!==anchor)toolbar.insertBefore(button,anchor);
+          }else if(marker.nextSibling!==button)marker.after(button);
+        }
       };
-      new MutationObserver(placeUndo).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
-      placeUndo();
+      new MutationObserver(placeHistoryButtons).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
+      placeHistoryButtons();
       const tools = document.createElement('div');
       tools.className = 'project-tools';
       const title = document.createElement('div');

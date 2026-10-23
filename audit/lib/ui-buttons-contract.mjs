@@ -41,15 +41,18 @@ export function verifyUiButtons(report, currentSnapshot) {
 }
 
 const guided=[
-  {id:'repeat-both',choice:0,source:'4回くり返す。※回数メモ\n  10歩進む。※前のメモ  \n  ※〔角度をえらぶ〕は メモ\n\n  右に90度回る。※回るメモ\n「おわり」と言う。',position:[0,0]},
+  {id:'repeat-both',choice:0,source:'4回くり返す。※回数 メモ\n  10歩進む。※前のメモ  \n  ※〔角度をえらぶ〕は メモ\n\n  右に90度回る。※回るメモ\r\n「おわり」と言う。',position:[0,0]},
   {id:'repeat-turn',choice:1,source:'10歩進む。\n4回くり返す。\n  右に90度回る。\n「おわり」と言う。',position:[10,0]},
   {id:'list-append',choice:0,source:'持ち物の最後に「かさ」を入れる。',list:['本','ぼうし','かさ']},
   {id:'list-replace',choice:1,source:'持ち物の2番目を「かさ」にかえる。',list:['本','かさ']},
 ];
 const guidedLabels=id=>id.startsWith('repeat')?['前の 文と 回る 文の 両方を くり返す','前の 文は 一度、回る 文だけを くり返す']:['さいごに入れる','どれかと 入れかえる（何番目かを えらぶ）'];
 const guidedInvalid=id=>id==='list-append'?[]:['','Infinity','1e2','0/0',...(id==='list-replace'?['0','-1','1.5','2.0000000000000001','9007199254740993']:[])];
+const callableRepaired='4回くり返す。\n  10歩進む。\n  右に90度回る。\r\n「おわり」と言う。';
+const callableHistoryFixture=()=>({sourceBefore:'1を言う。',sourceAfter:callableRepaired,sourceUndo:'1を言う。',sourceRedo:callableRepaired,oneEdit:true,bothInside:true,returnedHome:true,unchangedMain:true});
 function verifyGuidedChoices(evidence){
   assert.equal(evidence.callableFirstNativeClick,true);assert.equal(evidence.callableCancelPreserved,true);
+  assert.deepEqual(evidence.callableHistory,callableHistoryFixture());
   assert.deepEqual(evidence.variants.map(v=>v.id),guided.map(v=>v.id));
   for(const [i,v]of evidence.variants.entries()){
     const e=guided[i];assert.equal(v.choice,e.choice);assert.equal(v.source,e.source);assert.deepEqual(v.labels,guidedLabels(e.id));
@@ -64,7 +67,7 @@ function verifyGuidedChoices(evidence){
     const point=e.position||[0,0];assert.equal(v.runtime.position.length,2);point.forEach((n,k)=>assert.ok(Number.isFinite(v.runtime.position[k])&&Math.abs(v.runtime.position[k]-n)<1e-7));
   }
 }
-function guidedFixture(){return {callableFirstNativeClick:true,callableCancelPreserved:true,variants:guided.map(e=>{const beforeProject={scripts:[{id:'guided-main',targetId:'sprite-1',event:'start',source:'10歩進む。'}]},afterProject=structuredClone(beforeProject);afterProject.scripts[0].source=e.source;return {...e,labels:guidedLabels(e.id),beforeProject,afterProject,noAutomaticExecution:true,directChoice:e.id==='repeat-turn'||e.id==='list-replace',cancelled:e.id!=='list-append',detachedRefused:e.id!=='list-append',invalidRejected:guidedInvalid(e.id),undoRedo:true,modeRoundtrip:true,runtime:{position:e.position||[0,0],list:e.list||['本','ぼうし'],said:e.id.startsWith('repeat')?[{id:'sprite-1',text:'おわり'}]:[]}};})};}
+function guidedFixture(){return {callableFirstNativeClick:true,callableCancelPreserved:true,callableHistory:callableHistoryFixture(),variants:guided.map(e=>{const beforeProject={scripts:[{id:'guided-main',targetId:'sprite-1',event:'start',source:'10歩進む。'}]},afterProject=structuredClone(beforeProject);afterProject.scripts[0].source=e.source;return {...e,labels:guidedLabels(e.id),beforeProject,afterProject,noAutomaticExecution:true,directChoice:e.id==='repeat-turn'||e.id==='list-replace',cancelled:e.id!=='list-append',detachedRefused:e.id!=='list-append',invalidRejected:guidedInvalid(e.id),undoRedo:true,modeRoundtrip:true,runtime:{position:e.position||[0,0],list:e.list||['本','ぼうし'],said:e.id.startsWith('repeat')?[{id:'sprite-1',text:'おわり'}]:[]}};})};}
 
 export function checkUiButtonValidatorNegatives() {
   const inputs = {productSha256:'a'.repeat(64), files:{[currentProductFile()]:'a'.repeat(64)}};
@@ -101,6 +104,9 @@ export function checkUiButtonValidatorNegatives() {
     r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[3].directChoice=false,
     r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[1].runtime.said.push({id:'sprite-1',text:'おわり'}),
     r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source=r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source.replace('※前のメモ  ',''),
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.callableHistory.bothInside=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.callableHistory.sourceRedo='1を言う。',
+    r => r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source=r.results.find(x=>x.id==='UI-BUTTON-GUIDED-CHOICES').evidence.variants[0].source.replace('メモ\r\n','メモ\n'),
   ]) {
     const report = valid();
     mutate(report);

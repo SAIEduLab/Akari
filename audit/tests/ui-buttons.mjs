@@ -72,7 +72,7 @@ const cases = {
     await p.removeLocatorHandler(p.locator('#loseConfirmModal.show'));
     await p.evaluate(()=>{window.choiceStarts=0;window.choiceSaid=[];const start=Akari.EventScheduler.prototype.start;Akari.EventScheduler.prototype.start=function(...args){choiceStarts++;window.choiceScheduler=this;const say=this.ui.say;this.ui.say=(...said)=>{choiceSaid.push({id:said[0],text:said[1]});return say?.apply(this.ui,said);};return start.apply(this,args);};});
     const scenarios=[
-      {id:'repeat-both',source:'10歩進む。※前のメモ  \n※〔角度をえらぶ〕は メモ\n\n右に曲がる。※回るメモ\n4回くり返す。※回数メモ\n「おわり」と言う。',choice:0,value:'９０',expected:'4回くり返す。※回数メモ\n  10歩進む。※前のメモ  \n  ※〔角度をえらぶ〕は メモ\n\n  右に90度回る。※回るメモ\n「おわり」と言う。',position:[0,0]},
+      {id:'repeat-both',source:'10歩進む。※前のメモ  \r\n※〔角度をえらぶ〕は メモ\r\n\r\n右に曲がる。※回るメモ\r\n4回くり返す。※回数 メモ\r\n「おわり」と言う。',choice:0,value:'９０',expected:'4回くり返す。※回数 メモ\n  10歩進む。※前のメモ  \n  ※〔角度をえらぶ〕は メモ\n\n  右に90度回る。※回るメモ\r\n「おわり」と言う。',position:[0,0]},
       {id:'repeat-turn',source:'10歩進む。右に曲がる。4回くり返す。「おわり」と言う。',choice:1,value:'90',expected:'10歩進む。\n4回くり返す。\n  右に90度回る。\n「おわり」と言う。',position:[10,0]},
       {id:'list-append',source:'持ち物に「かさ」を入れる。',choice:0,expected:'持ち物の最後に「かさ」を入れる。',list:['本','ぼうし','かさ']},
       {id:'list-replace',source:'持ち物に「かさ」を入れる。',choice:1,value:'２',expected:'持ち物の2番目を「かさ」にかえる。',list:['本','かさ']},
@@ -110,14 +110,23 @@ const cases = {
       await pressStop(await reveal(p.locator('#stopBtn')));assert.equal((await fingerprint(p)).project,after.project);
       variants.push({id:c.id,labels,choice:c.choice,directChoice,source:c.expected,beforeProject:JSON.parse(pending.project),afterProject:JSON.parse(after.project),noAutomaticExecution:true,cancelled,detachedRefused,invalidRejected,undoRedo:true,modeRoundtrip:true,runtime});
     }
-    await callable(p,'Action');await p.locator('#callableCode').fill('持ち物に「かさ」を入れる。');
+    await callable(p,'Action');await p.locator('#callableCode').press('Tab');await p.locator('#callableCode').fill('持ち物に「かさ」を入れる。');
     const draftChoices=p.locator('#callablePending [data-intent-choice]');await draftChoices.nth(1).waitFor();
     const draftPending=await fingerprint(p);await draftChoices.nth(1).click();
     const draftInput=p.locator('#callablePending [data-intent-input] input');assert.equal(await draftInput.inputValue(),'');
     assert.equal(await draftInput.evaluate(e=>document.activeElement===e),true);assert.deepEqual(await fingerprint(p),draftPending);
     await p.locator('#callablePending [data-intent-input-cancel]').click();assert.deepEqual(await fingerprint(p),draftPending);
     assert.equal(await p.locator('#callableCode').inputValue(),'持ち物に「かさ」を入れる。');
-    return {variants,callableFirstNativeClick:true,callableCancelPreserved:true};
+    const beforeRepair=await fingerprint(p),draftSource='10歩進む。\r\n右に曲がる。\r\n4回くり返す。\r\n「おわり」と言う。',
+      repairedDraft='4回くり返す。\n  10歩進む。\n  右に90度回る。\r\n「おわり」と言う。';
+    await p.locator('#callableCode').fill(draftSource);await draftChoices.first().click();
+    await draftInput.fill('90');await p.locator('#callablePending [data-intent-apply]').click();
+    const applied=await fingerprint(p);assert.equal(applied.draft.source,repairedDraft);assert.equal(applied.history,beforeRepair.history+1);assert.equal(applied.project,beforeRepair.project);
+    assert.equal(await p.locator('#procModal #undoBtn').count(),1);assert.equal(await p.locator('#procModal #redoBtn').count(),1);
+    await p.locator('#undoBtn').click();const undone=await fingerprint(p);assert.deepEqual(undone.draft,beforeRepair.draft);assert.equal(undone.project,beforeRepair.project);
+    await p.locator('#redoBtn').click();const redone=await fingerprint(p);assert.deepEqual(redone.draft,applied.draft);assert.equal(redone.project,applied.project);
+    await p.locator('#procClose').click();assert.equal(await p.locator('#procModal :is(#undoBtn,#redoBtn)').count(),0);assert.equal(await p.locator('#undoBtn').count(),1);assert.equal(await p.locator('#redoBtn').count(),1);
+    return {variants,callableFirstNativeClick:true,callableCancelPreserved:true,callableHistory:{sourceBefore:beforeRepair.draft.source,sourceAfter:applied.draft.source,sourceUndo:undone.draft.source,sourceRedo:redone.draft.source,oneEdit:true,bothInside:true,returnedHome:true,unchangedMain:true}};
   },
   async 'UI-BUTTON-SOURCE-NAV'(p) {
     for(const m of ['code','blocks']) {
