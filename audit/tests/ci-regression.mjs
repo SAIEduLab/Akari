@@ -7,7 +7,7 @@ import {createRequire} from 'node:module';
 import {selectBundleDirectory,verifyBundle,sealBundle} from '../lib/evidence-bundle.mjs';
 import {sha,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {installRegressionProject} from '../lib/gate-ui-fixture.mjs';
-import {editorAssetIds,audioIds,codecBrowser} from '../lib/feature-contract.mjs';
+import {editorAssetIds,audioIds,codecBrowser,verifyRunStageCorners} from '../lib/feature-contract.mjs';
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 import {caseRecorder,writeCaseReport} from '../lib/gate-case-contract.mjs';
@@ -261,4 +261,16 @@ for(const initialValue of [3,'文字',true,{magnitude:3,unit:'点'}]){
 guidanceProject.projectData.variables=[{id:'guide-global',name:'点数',initialValue:7}];guidanceOwner.localData.lists=[{id:'guide-shadow',name:'点数',initialValue:[]}];
 const globalExample=guidanceApi.diagnosticExampleNames(guidanceProject);assert.match(globalExample.value,/^作品の/);assert.equal(globalExample.comparisonValue,'作品の【点数】');
 pass('diagnostic-guidance/typed-comparison');
+// Independent rectangle protocol examples; no product execution is claimed by these fixtures.
+const cornerFixture=(w,h)=>['top-left','top-right','bottom-left','bottom-right'].map(corner=>{
+ const x=w>100?(corner.endsWith('left')?1:99-w):10,y=h>100?(corner.startsWith('top')?1:99-h):10,inset=Math.min(8,w/4,h/4);
+ return{corner,frame:{x,y,w,h},viewport:{x:0,y:0,w:100,h:100},scroll:{x:corner.endsWith('left')?0:Math.max(0,w-98),y:corner.startsWith('top')?0:Math.max(0,h-98),maxX:Math.max(0,w-98),maxY:Math.max(0,h-98)},hitPoint:{x:corner.endsWith('left')?x+inset:x+w-inset,y:corner.startsWith('top')?y+inset:y+h-inset},hitOwnsCorner:true};
+});
+for(const [w,h]of [[80,60],[80,184],[160,60],[160,184]])verifyRunStageCorners(cornerFixture(w,h),[w,h]);pass('stage-reach/accepted');
+for(const [id,mutate]of [
+ ['missing-corner',r=>r.pop()],['duplicate-corner',r=>r[1].corner=r[0].corner],
+ ['wrong-edge',r=>r[2].frame.y=-300],['clipped',r=>r[2].hitOwnsCorner=false],
+ ['nonfinite',r=>r[0].viewport.w=NaN],['changed-dimensions',r=>r[0].frame.h--],
+ ['scroll-outside-range',r=>r[0].scroll.y=999],['forged-hit',r=>r[0].hitPoint.x=0]
+]){const raw=cornerFixture(80,184);mutate(raw);assert.throws(()=>verifyRunStageCorners(raw,[80,184]));pass('stage-reach/reject-'+id);}
 writeCaseReport(output,'ci-regression',results);

@@ -25,7 +25,23 @@ async function observeRunStageMinimum(browser,product){
    if(run.main.totalW>run.main.w)assert.ok((await touchDrag(-60,0)).main.left>0,'native touch on stage heading scrolls horizontally');
    await p.evaluate(()=>{const m=document.querySelector('.main');m.scrollLeft=0;m.scrollTop=0});await p.locator('.main').focus();await p.keyboard.press('ArrowRight');await p.keyboard.press('PageDown');await p.waitForTimeout(180);const keyed=await read();if(run.main.totalH>run.main.h)assert.ok(keyed.main.top>0,'PageDown scrolls the focused workspace');if(run.main.totalW>run.main.w)assert.ok(keyed.main.left>0,'Right scrolls the focused workspace');assert.equal(await p.evaluate(()=>document.querySelectorAll('.sprite-bubble').length),0);
    await p.evaluate(()=>{const m=document.querySelector('.main'),r=document.querySelector('#formFrame').getBoundingClientRect(),s=m.getBoundingClientRect();m.scrollLeft+=r.right>s.right?r.right-s.right+1:r.left<s.left?r.left-s.left-1:0;m.scrollTop+=r.bottom>s.bottom?r.bottom-s.bottom+1:r.top<s.top?r.top-s.top-1:0;});
-   const reached=await read();assert.ok(reached.frame.x>=reached.main.x&&reached.frame.x+reached.frame.w<=reached.main.x+reached.main.w+.1&&reached.frame.y>=reached.main.y&&reached.frame.y+reached.frame.h<=reached.main.y+reached.main.h+.1,'the whole fitted stage can be brought into the visible workspace');
+   // A stage taller than the finite workspace keeps its edit dimensions (LANGUAGE.md).
+   // Reach every corner; simultaneous containment is required only along axes that fit.
+   const corners=[];
+   for(const corner of ['top-left','top-right','bottom-left','bottom-right']){
+    await p.evaluate(corner=>{const m=document.querySelector('.main'),f=document.querySelector('#formFrame').getBoundingClientRect(),s=m.getBoundingClientRect(),x=s.x+m.clientLeft,y=s.y+m.clientTop,
+     maxX=m.scrollWidth-m.clientWidth,maxY=m.scrollHeight-m.clientHeight;
+     const left=f.width>m.clientWidth+.1?(corner.endsWith('left')?0:maxX):m.scrollLeft+f.x-x-(m.clientWidth-f.width)/2,
+      top=f.height>m.clientHeight+.1?(corner.startsWith('top')?0:maxY):m.scrollTop+f.y-y-(m.clientHeight-f.height)/2;
+     m.scrollTo({left,top,behavior:'instant'});},corner);
+    await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    const raw=await p.evaluate(corner=>{const m=document.querySelector('.main'),f=document.querySelector('#formFrame'),r=f.getBoundingClientRect(),s=m.getBoundingClientRect(),inset=Math.min(8,r.width/4,r.height/4),x=corner.endsWith('left')?r.left+inset:r.right-inset,y=corner.startsWith('top')?r.top+inset:r.bottom-inset,hit=document.elementFromPoint(x,y);
+     return{corner,frame:{x:r.x,y:r.y,w:r.width,h:r.height},viewport:{x:s.x+m.clientLeft,y:s.y+m.clientTop,w:m.clientWidth,h:m.clientHeight},scroll:{x:m.scrollLeft,y:m.scrollTop,maxX:m.scrollWidth-m.clientWidth,maxY:m.scrollHeight-m.clientHeight},hitPoint:{x,y},hitOwnsCorner:hit===f||f.contains(hit),hit:hit?.tagName+':'+hit?.id};},corner);
+    const f=raw.frame,v=raw.viewport,right=f.x+f.w,bottom=f.y+f.h,
+     x=f.w<=v.w+.1?f.x>=v.x&&right<=v.x+v.w+.1:(corner.endsWith('left')?f.x:right)>=v.x&&(corner.endsWith('left')?f.x:right)<=v.x+v.w+.1,
+     y=f.h<=v.h+.1?f.y>=v.y&&bottom<=v.y+v.h+.1:(corner.startsWith('top')?f.y:bottom)>=v.y&&(corner.startsWith('top')?f.y:bottom)<=v.y+v.h+.1;
+    assert.ok(x&&y&&raw.hitOwnsCorner,'each stage corner is visible through the finite workspace '+JSON.stringify({width,height,w,h,edit,run,corner:raw}));corners.push(raw);
+   }
    const reach=async selector=>{await p.locator(selector).scrollIntoViewIfNeeded();await p.locator(selector).evaluate(e=>{const m=document.querySelector('.main'),r=e.getBoundingClientRect(),s=m.getBoundingClientRect();if(r.right>s.right)m.scrollLeft+=Math.ceil(r.right-s.right);if(r.bottom>s.bottom)m.scrollTop+=Math.ceil(r.bottom-s.bottom);});await p.waitForTimeout(80);return p.locator(selector).evaluate(e=>{const r=e.getBoundingClientRect(),m=document.querySelector('.main').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.left>=m.left&&r.right<=m.right+.1&&r.top>=m.top&&r.bottom<=m.bottom+.1&&(hit===e||e.contains(hit));});};
    assert.equal(await reach('#pauseBtn'),true,'Pause is completely visible and clickable '+JSON.stringify({width,height,w,h,state:await read(),button:await p.locator('#pauseBtn').evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{rect:r.toJSON(),hit:hit?.outerHTML.slice(0,120)}})}));await p.locator('#pauseBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');const paused=await read();
    assert.equal(await reach('#continueBtn'),true);await p.waitForTimeout(550);await p.locator('#continueBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');const continued=await read();
@@ -34,7 +50,7 @@ async function observeRunStageMinimum(browser,product){
    await p.evaluate(()=>document.querySelector('#formSurface').focus({preventScroll:true}));await p.keyboard.press('ArrowRight');await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キー');
    assert.equal(await p.evaluate(()=>document.querySelector('#formSurface').style.touchAction),'none');
    await p.locator('#stopBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),project);assert.equal(await p.locator('.main').getAttribute('tabindex'),null);assert.equal(await p.locator('body').getAttribute('data-run-stage-minimum'),null);assert.deepEqual(errors,[]);
-   results.push({viewport:[width,height],stage:[w,h],edit:[edit.frame.w,edit.frame.h],run:[run.frame.w,run.frame.h],stageMinimum:true,parentContains:true,wholeStageReachable:true,rootFits:true,stopFixed:true,wheel:true,touch:true,keyboard:true,gameKeysPreserved:true,controlsReachable:true,pauseStable:true,designPreserved:true});
+   results.push({viewport:[width,height],stage:[w,h],edit:[edit.frame.w,edit.frame.h],run:[run.frame.w,run.frame.h],corners,stageMinimum:true,parentContains:true,wholeStageReachable:true,rootFits:true,stopFixed:true,wheel:true,touch:true,keyboard:true,gameKeysPreserved:true,controlsReachable:true,pauseStable:true,designPreserved:true});
   }finally{await context.close();}
  }
  return results;

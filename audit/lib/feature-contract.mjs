@@ -54,6 +54,25 @@ export const designerZoomIds = [
   'DESIGN-ZOOM-STABLE-RESIZE', 'DESIGN-ZOOM-POINTER-HISTORY', 'DESIGN-ZOOM-RUNTIME',
   'DESIGN-ZOOM-SAVE-EXPORT', 'DESIGN-ZOOM-FORMAT', 'DESIGN-ZOOM-NARROW-TOUCH', 'DESIGN-ZOOM-HANDLE-KEYS',
 ];
+export function verifyRunStageCorners(corners, run) {
+  assert.ok(Array.isArray(corners));assert.deepEqual(corners.map(r=>r.corner),['top-left','top-right','bottom-left','bottom-right']);
+  assert.ok(Array.isArray(run)&&run.length===2&&run.every(n=>Number.isFinite(n)&&n>0));
+  for(const row of corners){
+    const f=row.frame,v=row.viewport,s=row.scroll;for(const rect of [f,v]){assert.ok(rect);for(const key of ['x','y','w','h'])assert.ok(Number.isFinite(rect[key]),'finite corner rectangle');assert.ok(rect.w>0&&rect.h>0);}
+    assert.ok(Math.abs(f.w-run[0])<.1&&Math.abs(f.h-run[1])<.1,'scrolling retains the run dimensions');
+    for(const key of ['x','y','maxX','maxY'])assert.ok(Number.isFinite(s?.[key])&&s[key]>=0,'finite scroll range');
+    assert.ok(s.x<=s.maxX+.1&&s.y<=s.maxY+.1,'scroll stays in its finite range');
+    const right=f.x+f.w,bottom=f.y+f.h,xEdge=row.corner.endsWith('left')?f.x:right,yEdge=row.corner.startsWith('top')?f.y:bottom;
+    if(f.w<=v.w+.1)assert.ok(f.x>=v.x&&right<=v.x+v.w+.1,'the fitting horizontal axis stays wholly visible');
+    else assert.ok(xEdge>=v.x&&xEdge<=v.x+v.w+.1,'the horizontal endpoint is inside both viewport bounds');
+    if(f.h<=v.h+.1)assert.ok(f.y>=v.y&&bottom<=v.y+v.h+.1,'the fitting vertical axis stays wholly visible');
+    else assert.ok(yEdge>=v.y&&yEdge<=v.y+v.h+.1,'the vertical endpoint is inside both viewport bounds');
+    assert.ok(Number.isFinite(row.hitPoint?.x)&&Number.isFinite(row.hitPoint?.y));
+    const inset=Math.min(8,f.w/4,f.h/4);assert.ok(Math.abs(row.hitPoint.x-(row.corner.endsWith('left')?f.x+inset:right-inset))<.1&&Math.abs(row.hitPoint.y-(row.corner.startsWith('top')?f.y+inset:bottom-inset))<.1,'hit point belongs to the observed rounded corner');
+    assert.equal(row.hitOwnsCorner,true,'the corner is not clipped or covered');
+  }
+  return true;
+}
 export function verifyDesignerZoom(report, inputs) {
   assert.equal(report.schema, 'akari-designer-v1');
   assert.equal(report.status, 'PASS');
@@ -68,7 +87,7 @@ export function verifyDesignerZoom(report, inputs) {
   const touch = report.results.find(r => r.id === 'DESIGN-ZOOM-NARROW-TOUCH').evidence.touchEditing;
   const runMinimum=report.results.find(r=>r.id==='DESIGN-ZOOM-RUNTIME').evidence.runMinimum;
   assert.deepEqual(runMinimum.map(r=>[...r.viewport,...r.stage]),[[740,360,640,400],[740,360,1200,200],[740,360,200,800],[844,390,640,400],[844,390,1200,200],[844,390,200,800],[1366,650,640,400],[650,700,640,400],[651,700,640,400]]);
-  for(const r of runMinimum){for(const key of ['stageMinimum','parentContains','wholeStageReachable','rootFits','stopFixed','wheel','touch','keyboard','gameKeysPreserved','controlsReachable','pauseStable','designPreserved'])assert.equal(r[key],true);assert.ok(r.run[0]>=r.edit[0]-.1&&r.run[1]>=r.edit[1]-.1);}
+  for(const r of runMinimum){for(const key of ['stageMinimum','parentContains','wholeStageReachable','rootFits','stopFixed','wheel','touch','keyboard','gameKeysPreserved','controlsReachable','pauseStable','designPreserved'])assert.equal(r[key],true);assert.ok(r.run[0]>=r.edit[0]-.1&&r.run[1]>=r.edit[1]-.1);verifyRunStageCorners(r.corners,r.run);}
   assert.deepEqual(touch.map(r => r.width),[1366,1024,760]);
   for (const r of touch) { assert.equal(r.centerHit,true);assert.equal(r.covered,false);assert.equal(r.wobblePreserved,true);assert.equal(r.dragged,true);assert.equal(r.ratioPreserved,true);assert.ok(r.panPixels>50);assert.equal(r.urlPreserved,true); }
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.networkRequests, []);

@@ -91,14 +91,14 @@ async function measure(p,selector) {
 }
 function visible(o) {try{verifyComponentControlReach(o);return true;}catch{return false;}}
 async function wheel(p,delta) {
-  const before=(await scrollerState(p)).top,v=await p.evaluate(()=>({width:innerWidth,height:innerHeight}));
+  const before=await p.evaluate(()=>({side:document.querySelector('.side').scrollTop,page:document.scrollingElement.scrollTop})),v=await p.evaluate(()=>({width:innerWidth,height:innerHeight}));
   const r=await p.locator('.side').evaluate(e=>{const b=e.getBoundingClientRect();return{x:b.x,y:b.y,width:b.width,height:b.height};});
   // The column's own scrollbar gutter (or its visible part of the page), avoiding the nested part chooser list.
   const top=Math.max(3,r.y),bottom=Math.min(v.height-3,r.y+r.height);
   await p.mouse.move(Math.min(v.width-3,r.x+r.width-4),Math.max(3,(top+bottom)/2));
   await p.mouse.wheel(0,delta);
-  await p.waitForFunction(before=>{const side=document.querySelector('.side'),own=/auto|scroll/.test(getComputedStyle(side).overflowY)&&side.scrollHeight>side.clientHeight+1;
-    return (own?side:document.scrollingElement).scrollTop!==before;},before,{timeout:2500});
+  await p.waitForFunction(before=>{const side=document.querySelector('.side');
+    return side.scrollTop!==before.side||document.scrollingElement.scrollTop!==before.page;},before,{timeout:2500});
   await frame(p);
 }
 async function reach(p,selector) {

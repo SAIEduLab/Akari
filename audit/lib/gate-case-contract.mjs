@@ -61,6 +61,7 @@ export const gateCaseIds=Object.freeze({
     'candidate/accepted','candidate/release-name-function','candidate/release-compare','candidate/producer-alias','candidate/release-name-object-method','candidate/release-name-class-method',
     'producer-metadata/reused-in-fingerprint','release-read/object-alias','release-read/destructured-alias'],
   'ci-regression':[
+    'stage-reach/accepted',...['missing-corner','duplicate-corner','wrong-edge','clipped','nonfinite','changed-dimensions','scroll-outside-range','forged-hit'].map(id=>'stage-reach/reject-'+id),
     'click-guard/cancel-sets-suppression','click-guard/next-click-suppressed',
     'fresh-context/isolated-pages','fresh-context/failure-propagated-once','fresh-context/page-error-recorded','fresh-context/network-aborted','fresh-context/startup-failure-closed',
     'browser-environment/accepted',...['status','snapshot','playwright','revision','browser','launch-timeout','executable-hash','executable-path','missing-launch','launch-id','launch-browser','slow-launch','negative-launch-time','launch-script-result','launch-mp3'].map(name=>'browser-environment/reject-'+name),
