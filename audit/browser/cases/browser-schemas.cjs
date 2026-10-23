@@ -18,7 +18,7 @@ const ARGUMENT_NAMES=['高さ','幅','速さ'];
 (async()=>{const dir=L.path.resolve(process.argv[2]||'audit-evidence/browser/candidate'),output=L.path.resolve(process.argv[4]||dir),manifest=L.verifyManifest(dir),filter=process.argv[3]?.split(','),api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),contract=C.currentInputs(dir);
 C.verifySchemaContract({fixture:contract.fixture,schemaIds:contract.schemaIds,productSchemas:api.BLOCK_SCHEMAS});
 const schemas=contract.fixture.schemas,semanticRows=contract.fixture.semanticRows,results=[],errors=[],network=[],browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
-const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});const p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(p);
+try{const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});const p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(p);
 const openPage=async()=>{await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);await (await reveal(p.locator('#assetBtn'))).click();await p.locator('#soundInput').setInputFiles(L.path.join(__dirname,'media','tone.wav'));await p.waitForFunction(()=>Akari.app.project.sounds.length>=1);await (await reveal(p.locator('#assetClose'))).click();await (await reveal(p.locator('.tool[data-type="input"]'))).click();return p.locator('#objectSelect').inputValue();};
 let inputId=await openPage();let draft=false,rootId='#blockEditor';
 const session=()=>p.evaluate(d=>(d?Akari.app.editorState.draft:Akari.app.editorState.main),draft);
@@ -336,7 +336,7 @@ const waitBroadcastGroupRow=async(s,evidence)=>{const row=semanticRows[s.id];
  evidence.structuralOperations={duplicateKeptBinding:true,delete:true,undoRedoExact:true};evidence.saveReopen=await saveReopen(schemas.indexOf(s));
  await setBody(row.receiver.target,row.receiver.event,'');};
 const DEDICATED={'Hole:expression':holeRow,'Hole:statement':holeRow,'Hole:target':holeRow,'Hole:rule':ruleHoleRow,ContinuousRule:continuousRuleRow,WaitBroadcastGroup:waitBroadcastGroupRow};
-try{for(const s of schemas){if(filter&&!filter.includes(s.id))continue;const evidence={category:s.category,fields:[],inputs:[],bodies:[],annotations:[]};try{
+for(const s of schemas){if(filter&&!filter.includes(s.id))continue;const evidence={category:s.category,fields:[],inputs:[],bodies:[],annotations:[]};try{
  await (DEDICATED[s.id]||genericRow)(s,evidence);results.push({id:s.id,pass:true,evidence});console.log('PASS '+s.id);
  }catch(e){results.push({id:s.id,pass:false,evidence,error:e.message.split('\n').slice(0,9).join('\n')});console.log('FAIL '+s.id+': '+e.stack);L.result(L.path.join(output,'schema-debug.json'),results);await p.screenshot({path:L.path.join(output,'schema-failure-'+results.length+'.png'),fullPage:true}).catch(()=>{});inputId=await openPage();draft=false;rootId='#blockEditor';}
  L.result(L.path.join(output,'schema-case-'+schemas.indexOf(s)+'.json'),results.at(-1));}
