@@ -28,7 +28,7 @@ const waitStep=async(p,id)=>{try{await p.waitForFunction(id=>document.body.datas
 async function loseQuestion(p){await p.locator('#loseConfirmModal.show').waitFor();
  const shown=await p.evaluate(()=>{const m=document.querySelector('#loseConfirmModal');return{role:m.getAttribute('role'),modal:m.getAttribute('aria-modal'),label:m.getAttribute('aria-labelledby'),message:document.querySelector('#loseConfirmMessage').textContent,proceed:document.querySelector('#loseConfirmProceed').textContent,cancel:document.querySelector('#loseConfirmCancel').textContent,focus:document.activeElement?.id};});
  assert.deepEqual({role:shown.role,modal:shown.modal,label:shown.label,proceed:shown.proceed,cancel:shown.cancel},{role:'dialog',modal:'true',label:'loseConfirmMessage',proceed:'すてて つづける',cancel:'やめる'});
- assert.match(shown.message,/まだ ほぞんしていない/,'the question names the unsaved work');assert.equal(shown.focus,'loseConfirmCancel','the safe answer has focus');return shown;}
+ assert.match(shown.message,/まだ ほぞんして いない/,'the question names the unsaved work');assert.equal(shown.focus,'loseConfirmCancel','the safe answer has focus');return shown;}
 // The guided number is fully inside the editor's scroll viewport.
 const fieldInView=id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;};
 const picture=async(p,name)=>{const file=name+'.png';await p.screenshot({path:path.join(artifacts,file)});return file;};
