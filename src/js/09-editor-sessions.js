@@ -178,7 +178,7 @@
     blockDecode(tree);
     return JSON.parse(JSON.stringify(tree));
   }
-  function editorCandidateProject(session, source, project, context) {
+  function editorCandidateProject(session, source, project, context, validatedAst = null) {
     if (!project) editorCheckError('作品の 文脈が ありません');
     const candidate = {
       ...project,
@@ -195,7 +195,15 @@
       if (!target || !EVENT_BY_TYPE[target.type]?.includes(event))
         editorError('だれが 動くか、いつ 動くかが かわったよ。もう一度 えらんでから やってね。');
       const row = existing || { ...(parts.length === 2 ? { id: parts[1] } : {}), targetId, event, source: '' };
-      updateScriptSource(row, source, candidate);
+      // The editor already parsed this exact source and checked its AST. Ordinary
+      // bodies retain their metadata; headed, document and changed contexts use
+      // the full updater to reconcile their headings and document unit IDs.
+      if (validatedAst && !validatedAst.heading && !validatedAst.units && !row.document && !isMeijinScript(row)
+        && context.targetId === row.targetId && context.event === row.event && !context.meijin
+        && !context.definitionKind && !context.definition && !(context.args || []).length) {
+        row.source = source;
+        if (row.filter === undefined) delete row.filter;
+      } else updateScriptSource(row, source, candidate);
       if (!existing) candidate.scripts.push(row);
     } else {
       const kind = context.definitionKind || session.ownerKind,
@@ -940,7 +948,7 @@
       }
       return { tree: encoded.tree, nodeMap, nodeIds };
     };
-    const candidateProject = editorCandidateProject(session, source, project, context),
+    const candidateProject = editorCandidateProject(session, source, project, context, parsed.ast),
       diagnostics = editorDiagnostics(parsed.ast, candidateProject, context),
       encoded = context.meijin ? { tree: null, nodeMap: new Map(), nodeIds: new WeakMap() }
         : session.blockDraft ? reidentifyDraft(blockEncode(parsed.ast))
