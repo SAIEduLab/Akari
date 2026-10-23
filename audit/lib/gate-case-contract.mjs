@@ -44,6 +44,7 @@ export const changeGuardCaseIds=Object.freeze([
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);
+import {boundaryRejectionIds} from './language-boundaries-contract.mjs';
 export const gateCaseIds=Object.freeze({
   'release-distribution':['current-distribution-recorded'],
   'workflow-contract':['current-workflows-accepted',...workflowRejectionIds],
@@ -67,7 +68,10 @@ export const gateCaseIds=Object.freeze({
     'ui-buttons/failures-retained-without-retry','ui-buttons/decreasing-budget','ui-buttons/validator-negatives',
     'partial-rerun/earlier-attempt-selected','partial-rerun/latest-attempt-selected',...['attempt-mismatch','snapshot-mismatch','newer-failure','unsealed-latest','different-run','missing-kind','future-attempt','noncanonical-attempt'].map(name=>'partial-rerun/reject-'+name),
     'asset-diagnostics/errors-persisted-before-stalled-screenshots','asset-diagnostics/later-cases-run-once','asset-diagnostics/decreasing-budget',
-    'fixture-readiness/offline-viewport-context','fixture-readiness/unfinished-import-rejected'],
+    'fixture-readiness/offline-viewport-context','fixture-readiness/unfinished-import-rejected',
+    'perf-report/accepted',...['error','input-missing','switch-missing','nonfinite','negative','total-deadline','false-pass','wrong-source','invalid-dom'].map(name=>'perf-report/reject-'+name),
+    'language-boundaries/accepted',...boundaryRejectionIds.map(name=>'language-boundaries/reject-'+name),
+    'diagnostic-guidance/list-and-scoped-scalar','diagnostic-guidance/typed-comparison'],
   'dom-regression':['normal-observation','latest-tree-defense-without-render-guards','reentrant-mutant-rejected'],
   'harness-negative':['valid-report-accepted','missing-id','duplicate-id','extra-id','missing-suite','duplicate-suite','empty-suite','missing-environment','wrong-environment','exception-status','timeout-status','false-pass','contradictory-status','forged-summary','forged-aggregate','missing-snapshot','changed-product-hash','incomplete','shrunk-manifest','missing-browser-executable','empty-registration','missing-suite-file','registration-exception','registration-syntax-error','nonsettling-evaluation-timeout'],
   'language-negative':['valid-report-accepted','missing-result','duplicate-result','unknown-id','failed-status','skipped-status','total-changed','failed-count','report-status-failed','completion-flag-flipped','missing-environment','snapshot-field-added','changed-product-hash'],

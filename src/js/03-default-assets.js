@@ -20,7 +20,7 @@
     if (DEFAULT_MASCOT_ASSET_RECORD) return DEFAULT_MASCOT_ASSET_RECORD;
     const bytes = decodeBase64(DEFAULT_MASCOT_PNG_BASE64);
     if (bytes.length !== 5476 || sha256Fallback(bytes) !== DEFAULT_MASCOT_SHA256)
-      throw new AkariError('F508', 'あかりに 入っている キャラクターの 絵が こわれています。先生に 知らせてください');
+      throw new AkariError('F508', 'あかりに 入って いる キャラクターの 絵が こわれて います。先生に 知らせて ください');
     DEFAULT_MASCOT_ASSET_RECORD = makeImmutableAssetRecord({
       id: DEFAULT_MASCOT_ASSET_ID,
       kind: 'image',
@@ -114,7 +114,7 @@
     if (dangoMascotRecord) return dangoMascotRecord;
     const bytes = decodeBase64(DANGO_MASCOT_PNG_BASE64);
     if (bytes.length !== 35664 || sha256Fallback(bytes) !== DANGO_MASCOT_SHA256)
-      throw new AkariError('F508', 'あかりに 入っている キャラクターの 絵が こわれています。先生に 知らせてください');
+      throw new AkariError('F508', 'あかりに 入って いる キャラクターの 絵が こわれて います。先生に 知らせて ください');
     checkImageLimits(180, 180);
     dangoMascotRecord = makeImmutableAssetRecord({
       id: DANGO_MASCOT_ASSET_ID, kind: 'image', mime: 'image/png',
@@ -243,7 +243,7 @@
           "visible": true,
           "direction": 0,
           "scalePercent": 100,
-          "text": "動きの じゅんばんを かえてみよう",
+          "text": "動きの じゅんばんを かえて みよう",
           "localData": {
             "variables": [],
             "lists": []
@@ -355,7 +355,7 @@
           "visible": true,
           "direction": 0,
           "scalePercent": 100,
-          "text": "くり返しの 中を かえてみよう",
+          "text": "くり返しの 中を かえて みよう",
           "localData": {
             "variables": [],
             "lists": []
@@ -707,7 +707,7 @@
           "y": 336,
           "w": 610,
           "h": 30,
-          "text": "「しゅっぱつ」で 動くよ。右の 道を たどってみよう！",
+          "text": "「しゅっぱつ」で 動くよ。右の 道を たどって みよう！",
           "bg": null,
           "fg": "#234337",
           "fontSize": 16,
@@ -1496,7 +1496,7 @@
           "y": 214,
           "w": 282,
           "h": 125,
-          "text": "ここに 動いた道が 出るよ。\n\n「しゅっぱつ」のブロックで\n向き・マス数・じゅんばんを\nかえてみよう。",
+          "text": "ここに 動いた道が 出るよ。\n\n「しゅっぱつ」のブロックで\n向き・マス数・じゅんばんを\nかえて みよう。",
           "bg": null,
           "fg": "#234337",
           "fontSize": 18,
@@ -1516,7 +1516,7 @@
           "y": 111,
           "w": 280,
           "h": 50,
-          "text": "まだ 動いていないよ",
+          "text": "まだ 動いて いないよ",
           "bg": "#fff0b6",
           "fg": "#234337",
           "fontSize": 18,
@@ -1787,7 +1787,7 @@
           "y": 336,
           "w": 610,
           "h": 32,
-          "text": "音をおして えらぶ → 「音を上げる」で かえてみよう",
+          "text": "音をおして えらぶ → 「音を上げる」で かえて みよう",
           "bg": null,
           "fg": "#234337",
           "fontSize": 16,
@@ -2581,7 +2581,7 @@
     "id": "story",
     "label": "ふたりの ふしぎな おさんぽ",
     "title": "ふたりの ふしぎな おさんぽ",
-    "description": "ふたりの 行き先を えらぼう。4つの おわりが 待っているよ。",
+    "description": "ふたりの 行き先を えらぼう。4つの おわりが 待って いるよ。",
     "targetId": "left",
     "event": "click",
     "project": {
@@ -2866,9 +2866,9 @@
   }
   function validateResourceName(name, label = '絵や音の 名前') {
     if (typeof name !== 'string' || cpLen(name) < 1 || cpLen(name) > 80)
-      throw new AkariError('F512', `${label}は 1〜80文字に してください`);
+      throw new AkariError('F512', `${label}は 1〜80文字に して ください`);
     if (/[\p{Cc}\p{Zl}\p{Zp}「」]/u.test(name))
-      throw new AkariError('F512', `${label}「${name}」には 名前に 使えない 文字（「 」や 行がえ など）が 入っています。その 文字を けしてください`);
+      throw new AkariError('F512', `${label}「${name}」には 名前に 使えない 文字（「 」や 行がえ など）が 入って います。その 文字を けして ください`);
     return name;
   }
   // 向き is kept in 0 ≤ 向き < 360. A work whose file brings 450 or −90 opens with 90 or 270, and is not refused.
@@ -2894,7 +2894,7 @@
         ...(Object.hasOwn(p || {}, 'extensions') ? ['extensions'] : []),
       ])
     )
-      throw new AkariError('F503', '作品ファイルの 中身が、あかりの ほぞんの 形と 合いません。あかりで ほぞんした ファイルを えらんでください');
+      throw new AkariError('F503', '作品ファイルの 中身が、あかりの ほぞんの 形と 合いません。あかりで ほぞんした ファイルを えらんで ください');
     if (Object.hasOwn(p, 'extensions')) AKARI_RUNTIME.validateExtensionEnvelope(p.extensions);
     if (
       p.schema !== 'akari-project' ||
@@ -2902,18 +2902,18 @@
       p.languageContractId !== LANGUAGE_CONTRACT_ID ||
       p.formatVersion !== PROJECT_FORMAT_ID
     )
-      throw new AkariError('F501', 'この 作品ファイルは 形が ちがうので、この あかりでは 開けません。この あかりで ほぞんした ファイルを えらんでください');
+      throw new AkariError('F501', 'この 作品ファイルは 形が ちがうので、この あかりでは 開けません。この あかりで ほぞんした ファイルを えらんで ください');
     if (typeof p.name !== 'string' || cpLen(p.name) < 1 || cpLen(p.name) > 80)
-      throw new AkariError('F503', '作品の 名前が 正しくありません。1〜80文字に してください');
+      throw new AkariError('F503', '作品の 名前が 正しく ありません。1〜80文字に して ください');
     if (
       !exactKeys(p.stage, ['id', 'name', 'width', 'height', 'backdrops', 'backdropId',
         ...(Object.hasOwn(p.stage || {}, 'showSpeechNames') ? ['showSpeechNames'] : [])]) ||
       (Object.hasOwn(p.stage, 'showSpeechNames') && typeof p.stage.showSpeechNames !== 'boolean') ||
       p.stage.id !== 'stage'
     )
-      throw new AkariError('F503', '画面の 中身が 正しくありません');
+      throw new AkariError('F503', '画面の 中身が 正しく ありません');
     if (typeof p.stage.name !== 'string' || cpLen(p.stage.name) < 1 || cpLen(p.stage.name) > 80)
-      throw new AkariError('F503', '画面の 名前が 正しくありません。1〜80文字に してください');
+      throw new AkariError('F503', '画面の 名前が 正しく ありません。1〜80文字に して ください');
     if (
       !Number.isInteger(p.stage.width) ||
       p.stage.width < 200 ||
@@ -2931,21 +2931,21 @@
       throw new AkariError('F504', 'はいけいの 数が 多すぎるか、1つも ありません');
     const ids = new Set(['stage']);
     const addId = (id) => {
-      if (!safeId(id)) throw new AkariError('F503', `ID「${id}」が 正しくありません`);
+      if (!safeId(id)) throw new AkariError('F503', `ID「${id}」が 正しく ありません`);
       if (ids.has(id)) throw new AkariError('F505', `ID「${id}」が 2つ いじょう あります`);
       ids.add(id);
     };
     const backdropNames = new Set();
     for (const b of p.stage.backdrops) {
       if (!b || typeof b !== 'object' || Array.isArray(b))
-        throw new AkariError('F503', 'はいけいの 中身が 正しくありません');
+        throw new AkariError('F503', 'はいけいの 中身が 正しく ありません');
       validateResourceName(b.name, 'はいけいの 名前');
-      if (backdropNames.has(b.name)) throw new AkariError('F503', '同じ 名前の はいけいが あります。ちがう 名前に してください');
+      if (backdropNames.has(b.name)) throw new AkariError('F503', '同じ 名前の はいけいが あります。ちがう 名前に して ください');
       backdropNames.add(b.name);
       addId(b.id);
       if (b.kind === 'color') {
         if (!exactKeys(b, ['id', 'name', 'kind', 'value']) || !validateColorHex(b.value, false))
-          throw new AkariError('F507', '色の はいけいの 中身が 正しくありません');
+          throw new AkariError('F507', '色の はいけいの 中身が 正しく ありません');
       } else if (b.kind === 'image') {
         if (
           !exactKeys(b, ['id', 'name', 'kind', 'assetId', 'fit', 'fill']) ||
@@ -2953,17 +2953,17 @@
           !['contain', 'cover', 'stretch'].includes(b.fit) ||
           !validateColorHex(b.fill, false)
         )
-          throw new AkariError('F503', '絵の はいけいの 中身が 正しくありません');
+          throw new AkariError('F503', '絵の はいけいの 中身が 正しく ありません');
       } else throw new AkariError('F509', 'この あかりでは 使えない しゅるいの はいけいです');
     }
     if (!p.stage.backdrops.some((b) => b.id === p.stage.backdropId))
-      throw new AkariError('F503', 'いま 使っている はいけいが 見つかりません');
+      throw new AkariError('F503', 'いま 使って いる はいけいが 見つかりません');
     if (
       !exactKeys(p.projectData, ['variables', 'lists']) ||
       !Array.isArray(p.projectData.variables) ||
       !Array.isArray(p.projectData.lists)
     )
-      throw new AkariError('F503', '作品の へんすう・リストの 中身が 正しくありません');
+      throw new AkariError('F503', '作品の へんすう・リストの 中身が 正しく ありません');
     if (
       p.projectData.variables.length > LIMITS.projectVars ||
       p.projectData.lists.length > LIMITS.projectLists
@@ -2973,7 +2973,7 @@
     const validateData = (d, isList) => {
       if (!exactKeys(d, ['id', 'name', 'initialValue',
         ...(!isList && Object.hasOwn(d || {}, 'expectedUnit') ? ['expectedUnit'] : [])]))
-        throw new AkariError('F503', 'へんすう・リストの 中身が 正しくありません');
+        throw new AkariError('F503', 'へんすう・リストの 中身が 正しく ありません');
       addId(d.id);
       validateName(d.name);
       if (isList) {
@@ -2984,12 +2984,12 @@
           d.initialValue.length > LIMITS.listItems ||
           d.initialValue.some((v) => !valueWithinLimit(v))
         )
-          throw new AkariError('F504', 'リストの はじめの 中身が 多すぎるか、正しくありません');
+          throw new AkariError('F504', 'リストの はじめの 中身が 多すぎるか、正しく ありません');
       } else if (!scalar(d.initialValue) || isPart(d.initialValue) || !valueWithinLimit(d.initialValue))
-        throw new AkariError('F504', 'へんすうの はじめの 中身が 大きすぎるか、正しくありません');
+        throw new AkariError('F504', 'へんすうの はじめの 中身が 大きすぎるか、正しく ありません');
       if (!isList) {
         if (d.expectedUnit != null && !UNIT_TAGS.includes(d.expectedUnit))
-          throw new AkariError('F503', 'へんすうの たんい（歩・秒・度 など）が 正しくありません');
+          throw new AkariError('F503', 'へんすうの たんい（歩・秒・度 など）が 正しく ありません');
         try { validateExpectedUnit(d.initialValue, d.expectedUnit); }
         catch (error) { throw new AkariError('F503', error.message); }
       }
@@ -2997,12 +2997,12 @@
     const pn = new Set();
     for (const d of p.projectData.variables) {
       validateData(d, false);
-      if (pn.has(d.name)) throw new AkariError('F503', '作品の へんすう・リストに 同じ 名前が あります。ちがう 名前に してください');
+      if (pn.has(d.name)) throw new AkariError('F503', '作品の へんすう・リストに 同じ 名前が あります。ちがう 名前に して ください');
       pn.add(d.name);
     }
     for (const d of p.projectData.lists) {
       validateData(d, true);
-      if (pn.has(d.name)) throw new AkariError('F503', '作品の へんすう・リストに 同じ 名前が あります。ちがう 名前に してください');
+      if (pn.has(d.name)) throw new AkariError('F503', '作品の へんすう・リストに 同じ 名前が あります。ちがう 名前に して ください');
       pn.add(d.name);
     }
     if (!Array.isArray(p.components) || p.components.length > LIMITS.components)
@@ -3010,7 +3010,7 @@
     const compNames = new Set();
     for (const c of p.components) {
       if (!c || typeof c !== 'object' || Array.isArray(c))
-        throw new AkariError('F503', '部品の 中身が 正しくありません');
+        throw new AkariError('F503', '部品の 中身が 正しく ありません');
       const common = [
         'id',
         'type',
@@ -3030,19 +3030,19 @@
       ];
       const expected = c.type === 'sprite' ? [...common, 'costumes', 'costumeId'] : common;
       if (!exactKeys(c, expected))
-        throw new AkariError('F503', `部品「${c.name || '?'}」の 中身が 正しくありません`);
+        throw new AkariError('F503', `部品「${c.name || '?'}」の 中身が 正しく ありません`);
       if (!Object.prototype.hasOwnProperty.call(EVENT_BY_TYPE, c.type) || c.type === 'stage')
         throw new AkariError('F506', `部品の しゅるい「${c.type}」は使えません`);
       addId(c.id);
       if (typeof c.name !== 'string' || !c.name || cpLen(c.name) > 80 || compNames.has(c.name))
-        throw new AkariError('F503', '部品の 名前が 正しくないか、ほかの 部品と 同じです');
+        throw new AkariError('F503', '部品の 名前が 正しく ないか、ほかの 部品と 同じです');
       validateResourceName(c.name, '部品の 名前');
       // マウス and the stage edges (端, 端:上 …) are touch targets that are no part.
       if (c.name === 'マウス' || isEdgeTarget(c.name))
-        throw new AkariError('F503', '部品の 名前に「マウス」「端（はし）」は 使えません。ちがう 名前に してください');
+        throw new AkariError('F503', '部品の 名前に「マウス」「端（はし）」は 使えません。ちがう 名前に して ください');
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
-        if (!finite(c[k])) throw new AkariError('F503', `部品「${c.name}」の 数が 正しくありません`);
+        if (!finite(c[k])) throw new AkariError('F503', `部品「${c.name}」の 数が 正しく ありません`);
       // Each size says which one it is and what it may be (the せってい row's refusal names it too).
       if (c.w < 8 || c.w > 1200 || c.h < 8 || c.h > 1200)
         throw new AkariError('F504', `部品「${c.name}」の はばと 高さは、8から1200までの 数に します`);
@@ -3056,7 +3056,7 @@
         typeof c.visible !== 'boolean' ||
         typeof c.text !== 'string'
       )
-        throw new AkariError('F503', `部品「${c.name}」の 色や 文字などが 正しくありません`);
+        throw new AkariError('F503', `部品「${c.name}」の 色や 文字などが 正しく ありません`);
       if (cpLen(c.text) > LIMITS.stringChars)
         throw new AkariError('F504', `部品「${c.name}」の文字が長すぎます`);
       if (
@@ -3064,7 +3064,7 @@
         !Array.isArray(c.localData.variables) ||
         !Array.isArray(c.localData.lists)
       )
-        throw new AkariError('F503', '部品ごとの へんすう・リストの 中身が 正しくありません');
+        throw new AkariError('F503', '部品ごとの へんすう・リストの 中身が 正しく ありません');
       if (
         c.localData.variables.length > LIMITS.projectVars ||
         c.localData.lists.length > LIMITS.projectLists
@@ -3073,12 +3073,12 @@
       const ln = new Set();
       for (const d of c.localData.variables) {
         validateData(d, false);
-        if (ln.has(d.name)) throw new AkariError('F503', '部品ごとの へんすう・リストに 同じ 名前が あります。ちがう 名前に してください');
+        if (ln.has(d.name)) throw new AkariError('F503', '部品ごとの へんすう・リストに 同じ 名前が あります。ちがう 名前に して ください');
         ln.add(d.name);
       }
       for (const d of c.localData.lists) {
         validateData(d, true);
-        if (ln.has(d.name)) throw new AkariError('F503', '部品ごとの へんすう・リストに 同じ 名前が あります。ちがう 名前に してください');
+        if (ln.has(d.name)) throw new AkariError('F503', '部品ごとの へんすう・リストに 同じ 名前が あります。ちがう 名前に して ください');
         ln.add(d.name);
       }
       if (c.type === 'sprite') {
@@ -3091,23 +3091,23 @@
         const cn = new Set();
         for (const co of c.costumes) {
           if (!co || typeof co !== 'object' || Array.isArray(co))
-            throw new AkariError('F503', 'すがたの 中身が 正しくありません');
+            throw new AkariError('F503', 'すがたの 中身が 正しく ありません');
           validateResourceName(co.name, 'すがたの 名前');
-          if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の すがたが あります。ちがう 名前に してください');
+          if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の すがたが あります。ちがう 名前に して ください');
           cn.add(co.name);
           addId(co.id);
           if (co.kind === 'text') {
             if (!exactKeys(co, ['id', 'name', 'kind', 'value']) || typeof co.value !== 'string')
-              throw new AkariError('F503', '文字の すがたの 中身が 正しくありません');
+              throw new AkariError('F503', '文字の すがたの 中身が 正しく ありません');
             if (cpLen(co.value) > LIMITS.stringChars)
               throw new AkariError('F504', 'すがたの 文字が 長すぎます');
           } else if (co.kind === 'image') {
             if (!exactKeys(co, ['id', 'name', 'kind', 'assetId']) || !safeId(co.assetId))
-              throw new AkariError('F503', '絵の すがたの 中身が 正しくありません');
+              throw new AkariError('F503', '絵の すがたの 中身が 正しく ありません');
           } else throw new AkariError('F509', 'この あかりでは 使えない しゅるいの すがたです');
         }
         if (!c.costumes.some((x) => x.id === c.costumeId))
-          throw new AkariError('F503', 'いま 使っている すがたが 見つかりません');
+          throw new AkariError('F503', 'いま 使って いる すがたが 見つかりません');
       }
     }
     if (!Array.isArray(p.scripts) || p.scripts.length > LIMITS.scripts)
@@ -3119,15 +3119,15 @@
       if (x?.mode !== undefined) {
         if (x.mode !== 'meijin' || !exactKeys(x, ['id', 'mode', 'targetId', 'event', 'source', ...(Object.hasOwn(x, 'document') ? ['document'] : [])]) ||
           x.targetId !== MEIJIN_OWNER || x.event !== 'start' || typeof x.source !== 'string')
-          throw new AkariError('F503', '名人の本文の 形が 正しくありません');
+          throw new AkariError('F503', '名人の本文の 形が 正しく ありません');
         addId(x.id);
         if (x.document !== undefined) {
           const d = x.document;
           if (!exactKeys(d, ['revision', 'unitIds']) || !Number.isSafeInteger(d.revision) || d.revision < 0 || !Array.isArray(d.unitIds) || !d.unitIds.length || d.unitIds.length > LIMITS.scripts)
-            throw new AkariError('F503', '本文の まとまりの きろくが 正しくありません');
+            throw new AkariError('F503', '本文の まとまりの きろくが 正しく ありません');
           for (const id of d.unitIds) addId(id);
         }
-        if (cpLen(x.source) > LIMITS.sourceEach) throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
+        if (cpLen(x.source) > LIMITS.sourceEach) throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらして ください');
         sourceTotal += cpLen(x.source);
         continue;
       }
@@ -3135,12 +3135,12 @@
         ...(Object.hasOwn(x || {}, 'id') ? ['id'] : []),
         ...(Object.hasOwn(x || {}, 'document') ? ['document'] : []),
         ...(Object.hasOwn(x || {}, 'filter') ? ['filter'] : [])]))
-        throw new AkariError('F503', '本文の 中身が 正しくありません');
+        throw new AkariError('F503', '本文の 中身が 正しく ありません');
       if (x.id !== undefined) addId(x.id);
       if(x.document!==undefined){
         const d=x.document;
         if(!x.id||!exactKeys(d,['revision','unitIds'])||!Number.isSafeInteger(d.revision)||d.revision<0||!Array.isArray(d.unitIds)||!d.unitIds.length||d.unitIds.length>LIMITS.scripts)
-          throw new AkariError('F503','本文の まとまりの きろくが 正しくありません');
+          throw new AkariError('F503','本文の まとまりの きろくが 正しく ありません');
         for(const id of d.unitIds)addId(id);
       }
       const target =
@@ -3153,15 +3153,15 @@
       sk.add(key);
       // A touch body names what it touches (filter.target: a part's name, or 端 and its sides).
       if (x.event === 'touchStart' && (x.filter == null || !x.filter.target))
-        throw new AkariError('F503', 'ふれたときの 本文に、ふれる 相手が ありません');
+        throw new AkariError('F503', 'ふれた ときの 本文に、ふれる 相手が ありません');
       if (x.filter !== undefined && x.filter !== null) {
         const filterKey = x.event === 'keyDown' ? 'key' : x.event === 'message' ? 'message' : x.event === 'touchStart' ? 'target' : null;
         if (!filterKey || !exactKeys(x.filter, [filterKey]) ||
           typeof x.filter[filterKey] !== 'string' || cpLen(x.filter[filterKey]) > LIMITS.stringChars)
-          throw new AkariError('F503', 'きっかけの きまり（どの キーか、どの 合図か、なにに ふれるか）が 正しくありません');
+          throw new AkariError('F503', 'きっかけの きまり（どの キーか、どの 合図か、なにに ふれるか）が 正しく ありません');
       }
       if (typeof x.source !== 'string' || cpLen(x.source) > LIMITS.sourceEach)
-        throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
+        throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらして ください');
       sourceTotal += cpLen(x.source);
     }
     if (
@@ -3177,23 +3177,23 @@
     ])
       for (const d of arr) {
         if (!exactKeys(d, ['id', 'ownerId', 'name', 'args', 'source', ...(kind === 'てじゅん' && Object.hasOwn(d || {}, 'callPhrase') ? ['callPhrase'] : [])]))
-          throw new AkariError('F503', `${kind}の 自分で 作った ブロックの 中身が 正しくありません`);
+          throw new AkariError('F503', `${kind}の 自分で 作った ブロックの 中身が 正しく ありません`);
         if (d.ownerId !== 'stage')
-          throw new AkariError('F503', `${kind}の 自分で 作った ブロックは 画面の ものに してください`);
+          throw new AkariError('F503', `${kind}の 自分で 作った ブロックは 画面の ものに して ください`);
         addId(d.id);
         validateName(d.name, { callable: true });
-        if (callNames.has(d.name)) throw new AkariError('F503', '自分で 作った ブロックに 同じ 名前が あります。ちがう 名前に してください');
+        if (callNames.has(d.name)) throw new AkariError('F503', '自分で 作った ブロックに 同じ 名前が あります。ちがう 名前に して ください');
         callNames.add(d.name);
         if (
           !Array.isArray(d.args) ||
           d.args.length > LIMITS.args ||
           d.args.some((a) => typeof a !== 'string')
         )
-          throw new AkariError('F503', 'ブロックに 入れるものの せっていが 正しくありません');
+          throw new AkariError('F503', 'ブロックに 入れる ものの せっていが 正しく ありません');
         const an = new Set();
         for (const a of d.args) {
           validateName(a);
-          if (an.has(a)) throw new AkariError('F503', '入れるものに 同じ 名前が あります。ちがう 名前に してください');
+          if (an.has(a)) throw new AkariError('F503', '入れる ものに 同じ 名前が あります。ちがう 名前に して ください');
           an.add(a);
         }
         if (typeof d.source !== 'string' || cpLen(d.source) > LIMITS.sourceEach)
@@ -3202,18 +3202,18 @@
       }
     validateActionCallPhrases(p);
     if (sourceTotal > LIMITS.sourceTotal)
-      throw new AkariError('F504', '作品全体の 本文の 文字が 多すぎます。文を へらしてください');
+      throw new AkariError('F504', '作品全体の 本文の 文字が 多すぎます。文を へらして ください');
     if (!Array.isArray(p.sounds) || p.sounds.length > LIMITS.sounds)
       throw new AkariError('F504', '音の 数が 多すぎます');
     const sn = new Set();
     for (const snd of p.sounds) {
       if (!exactKeys(snd, ['id', 'name', 'assetId']))
-        throw new AkariError('F503', '音の 中身が 正しくありません');
+        throw new AkariError('F503', '音の 中身が 正しく ありません');
       addId(snd.id);
       validateResourceName(snd.name, '音の 名前');
-      if (sn.has(snd.name)) throw new AkariError('F503', '同じ 名前の 音が あります。ちがう 名前に してください');
+      if (sn.has(snd.name)) throw new AkariError('F503', '同じ 名前の 音が あります。ちがう 名前に して ください');
       sn.add(snd.name);
-      if (!safeId(snd.assetId)) throw new AkariError('F503', '音の 中身が 正しくありません');
+      if (!safeId(snd.assetId)) throw new AkariError('F503', '音の 中身が 正しく ありません');
     }
     return p;
   }
@@ -3227,10 +3227,10 @@
     for(const definition of project.actions){
       if(definition.callPhrase===undefined||definition.callPhrase==='')continue;
       if(typeof definition.callPhrase!=='string'||cpLen(definition.callPhrase)>80||/[\p{Cc}\p{Zl}\p{Zp}。．.、,※]/u.test(definition.callPhrase))
-        throw new AkariError('F503','短い よび方は、「。」「、」や 行がえを 入れずに、80文字までの 1つの 文に してください');
+        throw new AkariError('F503','短い よび方は、「。」「、」や 行がえを 入れずに、80文字までの 1つの 文に して ください');
       const phrase=actionCallPhraseKey(definition.callPhrase);
-      if(!phrase)throw new AkariError('F503','短い よび方を 書いてください');
-      if(registered.has(phrase))throw new AkariError('F503','同じ 短い よび方が 2つ あります。ちがう よび方に してください');
+      if(!phrase)throw new AkariError('F503','短い よび方を 書いて ください');
+      if(registered.has(phrase))throw new AkariError('F503','同じ 短い よび方が 2つ あります。ちがう よび方に して ください');
       registered.add(phrase);
       let collision=false;
       try {
@@ -3238,7 +3238,7 @@
         collision=!!result.ast;
         if(!collision)collision=!!readBlockHead(phrase,symbols);
       }catch(error){if(!(error instanceof AkariError))throw error;}
-      if(collision)throw new AkariError('F503',`短い よび方「${definition.callPhrase}」は あかりに はじめから ある 文と 同じ 形です。ちがう よび方に してください`);
+      if(collision)throw new AkariError('F503',`短い よび方「${definition.callPhrase}」は あかりに はじめから ある 文と 同じ 形です。ちがう よび方に して ください`);
     }
   }
   function buildSymbols(project) {
@@ -3357,7 +3357,7 @@
       if (end < 0)
         throw new AkariError(
           'N104',
-          '【 の あとの 】が ありません。名前の おわりに 】を 書いてください。れい：【点数】',
+          '【 の あとの 】が ありません。名前の おわりに 】を 書いて ください。れい：【点数】',
         );
       const name = text.slice(pos + 1, end);
       validateName(name);
@@ -3393,7 +3393,7 @@
     if (s === name && !bareName(name))
       throw new AkariError(
         'P205',
-        'この 名前は 【 】で かこんでください。れい：【ねこの名前】',
+        'この 名前は 【 】で かこんで ください。れい：【ねこの名前】',
       );
     validateName(name);
     return name;

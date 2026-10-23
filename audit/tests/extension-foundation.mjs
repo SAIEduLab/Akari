@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -14,6 +15,7 @@ import { installGreetingFixture } from '../lib/gate-ui-fixture.mjs';
 import { browserEnvironment } from '../lib/browser-environment.mjs';
 import { extensionFoundationIds, extensionExpectedObservations, verifyExtensionFoundation } from '../lib/extension-foundation-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {observeExtensionRuntimeContracts} from '../lib/extension-runtime-observations.mjs';
 
 const require = createRequire(import.meta.url), [browserPath, output, productOverride] = process.argv.slice(2);
 assert.ok(browserPath && output, 'Usage: node extension-foundation.mjs <fixed browser> <new report.json>');
@@ -121,6 +123,8 @@ async function withOrdinaryFileBrowser(fn) {
   finally{clearTimeout(timer);await browser.close();}
 }
 await withOrdinaryFileBrowser(async browser=>{
+  let runtimeContractsPromise;
+  const runtimeContracts=()=>runtimeContractsPromise ||= observeExtensionRuntimeContracts(browser,candidate,directory);
   assert.equal(browser.version(),browserEnvironment.version);assert.equal(require('playwright/package.json').version,browserEnvironment.playwright);
   async function pageAt(file){const context=await browser.newContext();const page=await context.newPage();const requests=[],sockets=[],errors=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('websocket',s=>sockets.push(s.url()));page.on('pageerror',e=>errors.push(e.message));await page.goto(pathToFileURL(file).href);await page.waitForFunction(()=>!!globalThis.Akari?.app);return{context,page,requests,sockets,errors};}
   const standard=await pageAt(candidate),fork=derived?await pageAt(derived):null;
@@ -132,7 +136,7 @@ await withOrdinaryFileBrowser(async browser=>{
   // The first work has no sentence and does not run (LANGUAGE.md 新しい作品とお手本、吹出し), so a running work is opened first.
   await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await installGreetingFixture(standard.page,{keepRunning:true});await standard.page.locator('#runBtn').click();await pressStop(standard.page.locator('#stopBtn'));await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
   await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await installGreetingFixture(fork.page,{keepRunning:true});await fork.page.locator('#runBtn').click();await pressStop(fork.page.locator('#stopBtn'));await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
-  async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);return fork.page.evaluate(fn);});}
+  async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);const observed=await fork.page.evaluate(fn);return id==='EXTENSION-COMMAND-EVENT-STATE'?{...observed,handlerContext:(await runtimeContracts()).handlerContext}:observed;});}
   await evaluate('EXTENSION-REGISTRATION-COLLISION-TYPES',()=>{
     const R=Akari.createAkariRuntime({extensions:auditDefinitions}),host=R.extensions;let duplicateRejected=false,invalidNumberRejected=false,promiseCalculationRejected=false;
     try{host.register(auditDefinitions[0].manifest,auditDefinitions[0].factory);}catch(_){duplicateRejected=true;}host.beginSession();try{host.invokeCalculation('demo.offline/double',['wrong']);}catch(_){invalidNumberRejected=true;}host.endSession();
@@ -212,11 +216,11 @@ await withOrdinaryFileBrowser(async browser=>{
     return{sourceChars:loaded.project.scripts[0].source.length,parsed:loaded.diagnostics.length===0,runtimeList:100001,listRejected,capacityRejected};
   });
   await check('EXTENSION-GUI-HISTORY-AUTOSAVE',async()=>{
-    assert.ok(fork);const page=fork.page,source='拡張計算「demo.offline」「double」（7）を言う。';await page.locator('#uiLevel').selectOption('advanced');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModecode').click();await page.locator('#codeEditor').click();await page.locator('#codeEditor').press('ControlOrMeta+A');await page.keyboard.insertText(source);await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await page.waitForTimeout(400);
-    const typed=await page.locator('#codeEditor').inputValue()===source;await page.locator('#editorModeblocks').click();const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();await field.fill('8');await field.press('Enter');await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const blocks=await page.evaluate(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));await page.locator('#undoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（7）'));const undo=true;await page.locator('#redoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const redo=true;await page.waitForTimeout(1800);await page.reload();await page.waitForFunction(()=>!!Akari.app);await page.locator('#recoveryModal').waitFor({state:'visible'});await page.locator('#recoveryRestore').click();await page.waitForFunction(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));const reloaded=true;await page.evaluate(install);return{typed,blocks,undo,redo,reloaded};
+    assert.ok(fork);const page=fork.page,source='拡張計算「demo.offline」「double」（7）を言う。';await page.locator('#uiLevel').selectOption('advanced');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await chooseView(page,'code');await page.locator('#codeEditor').click();await page.locator('#codeEditor').press('ControlOrMeta+A');await page.keyboard.insertText(source);await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await page.waitForTimeout(400);
+    const typed=await page.locator('#codeEditor').inputValue()===source;await chooseView(page,'blocks');const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();await field.fill('8');await field.press('Enter');await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const blocks=await page.evaluate(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));await page.locator('#undoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（7）'));const undo=true;await page.locator('#redoBtn').click();await page.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('（8）'));const redo=true;await page.waitForTimeout(1800);await page.reload();await page.waitForFunction(()=>!!Akari.app);await page.locator('#recoveryModal').waitFor({state:'visible'});await page.locator('#recoveryRestore').click();await page.waitForFunction(()=>Akari.app.project.scripts.some(s=>s.source.includes('（8）')));const reloaded=true;await page.evaluate(install);return{typed,blocks,undo,redo,reloaded};
   });
   await check('EXTENSION-FAILED-IMPORT-PRESERVES-EDITOR',async()=>{
-    assert.ok(fork);await fork.page.locator('#editorModecode').click();const source=await fork.page.locator('#codeEditor').inputValue()+'\n「未保存」と言う。';await fork.page.locator('#codeEditor').fill(source);await fork.page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await fork.page.waitForTimeout(300);
+    assert.ok(fork);await chooseView(fork.page,'code');const source=await fork.page.locator('#codeEditor').inputValue()+'\n「未保存」と言う。';await fork.page.locator('#codeEditor').fill(source);await fork.page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await fork.page.waitForTimeout(300);
     const before=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});assert.equal(before.dirty,true);
     const serialized=await fork.page.evaluate(()=>({file:Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),hash:Akari.extensions.requirements().required[0].contentHash}));const malformed=path.join(directory,'unavailable-extension.akari.md');fs.writeFileSync(malformed,serialized.file.replace(serialized.hash,'0'.repeat(64)));await fork.page.locator('#fileInput').setInputFiles(malformed);await productQuestionAnswered(fork.page);await fork.page.waitForTimeout(300);const after=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});return{source:before.source===after.source,history:before.history===after.history,dirty:before.dirty===after.dirty};
   });
@@ -259,7 +263,7 @@ await withOrdinaryFileBrowser(async browser=>{
   });
   await check('EXTENSION-EVENT-LANGUAGE',async()=>{
     await standard.page.evaluate(()=>{let rejected=false;try{Akari.parseExpression('拡張「できごとの値」',Akari.buildSymbols(Akari.makeEmptyProject()));}catch(_){rejected=true;}if(!rejected)throw Error('Standard editor accepted extension-only event sensor');});
-    assert.ok(fork);return fork.page.evaluate(async()=>{
+    assert.ok(fork);const observed=await fork.page.evaluate(async()=>{
       const A=Akari,canonical='拡張「できごとの値」',bare='拡張の値を言う。';
       function variableRead(ast){const value=ast?.body[0]?.value;if(value?.kind!=='VariableRead'||value.name!=='拡張')throw Error('Existing variable read was shadowed by extension sensor');}
       for(const owner of ['project','component']){
@@ -276,6 +280,7 @@ await withOrdinaryFileBrowser(async browser=>{
       const sensor=A.parseExpression(canonical,symbols),formatted=A.formatExpression(sensor);if(sensor.kind!=='SensorRead'||sensor.sensor!=='拡張の値'||formatted!==canonical||!A.astEquivalent(sensor,A.parseExpression(formatted,symbols)))throw Error('Canonical event sensor did not roundtrip');
       const p=A.makeEmptyProject();p.scripts=[{id:'event-source',targetId:'sprite-1',event:'start',source:'拡張「demo.offline」「remember」（9）。'},{id:'event-target',targetId:'sprite-1',event:'message',filter:{message:'拡張:demo.offline/changed'},source:canonical+'を言う。'}];const compiled=A.compileProject(p);if(compiled.errors.length)throw Error(JSON.stringify(compiled.errors));const file=A.serializeProject(p,A.makeDefaultAssetStore()),loaded=await A.parseProjectFile(file),logs=[],scheduler=new A.EventScheduler(loaded.project,A.compileProject(loaded.project),new A.RuntimeModel(loaded.project,{}),{say:(_,v)=>logs.push(v),runtimeError:(_,e)=>{throw e;}});scheduler.start();await new Promise(r=>setTimeout(r,80));scheduler.stop();return{value:logs[0],compiled:true,saved:file.includes(canonical),restored:loaded.project.scripts[1].filter.message==='拡張:demo.offline/changed'};
     });
+    return{...observed,eventLifetime:(await runtimeContracts()).eventLifetime};
   });
   await check('EXTENSION-OFFLINE-STANDALONE',async()=>{
     assert.ok(fork);const generated=await fork.page.evaluate(()=>{const p=Akari.makeEmptyProject();p.name='Independent extension player';p.scripts=[{id:'player-extension',targetId:'stage',event:'start',source:'拡張計算「demo.offline」「double」（7）を言う。'}];return Akari.generateStandaloneHtml(p,Akari.makeDefaultAssetStore());});player=path.join(directory,'player.html');fs.writeFileSync(player,generated);
@@ -324,7 +329,7 @@ await withOrdinaryFileBrowser(async browser=>{
   for(const active of [standard,fork].filter(Boolean)){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}
 }).catch(error=>{pageErrors.push(error.message);console.error(error.stack);});
 for(const id of extensionFoundationIds)if(!results.has(id))results.set(id,{id,status:'FAIL',error:'Required check not executed'});
-const artifactNames=['candidate.html','derived.html','player.html','peer.html','external-derived.html','external-player.html','meijin-derived.html'].filter(name=>fs.existsSync(path.join(directory,name)));
+const artifactNames=['candidate.html','derived.html','player.html','peer.html','external-derived.html','external-player.html','meijin-derived.html','context-derived.html','context-async-player.html'].filter(name=>fs.existsSync(path.join(directory,name)));
 const report={schema:'akari-extension-foundation-v1',status:[...results.values()].every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:inputs,
   provenance:{run:process.env.GITHUB_RUN_ID||'local',attempt:process.env.GITHUB_RUN_ATTEMPT||'1'},
   environment:{platform:process.platform,browser:browserEnvironment.version,playwright:require('playwright/package.json').version},

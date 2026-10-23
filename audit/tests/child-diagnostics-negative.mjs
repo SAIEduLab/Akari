@@ -26,7 +26,11 @@ for(const [id,mutate]of [
   ['unknown-case',r=>r.results[0].id='syntax/unknown'],
   ['output-wheel-proof-missing',r=>delete r.results.find(x=>x.id==='file/digest-refusal').observed.outputReachability],
   ['output-still-clipped',r=>r.results.find(x=>x.id==='save/orphan-fault').observed.outputReachability[0].after.hit=false],
+  ['quoted-name-misrouted',r=>r.results.find(x=>x.id==='semantic/function-effects').observed.quotedNames[0].primary='入れて使う 数や 文字に、同じ 名前が あります'],
+  ['quoted-source-misrouted',r=>r.results.find(x=>x.id==='semantic/function-effects').observed.quotedSources[0].primary='「 」などの とじる しるしを 足します'],
+  ['scalar-list-offered',r=>r.results.find(x=>x.id==='semantic/scalar-guidance').observed.listPrimary='【買うもの】を言う'],
+  ['touch-actor-lost',r=>r.results.find(x=>x.id==='semantic/touch-heading').observed.contexts[2].copied.items[0].targetId='stage'],
 ]){const altered=structuredClone(positive);mutate(altered);assert.throws(()=>verifyChildDiagnosticsReport(altered,inputs),id);results.push({id,status:'PASS',result:'REJECTED'});}
 fs.mkdirSync(path.dirname(output),{recursive:true});
-fs.writeFileSync(output,JSON.stringify({schema:'akari-child-diagnostics-validator-negative-v1',status:'PASS',snapshot:inputs,required:19,results},null,2)+'\n');
-console.log('Child diagnostics validator negative: 19 refused PASS');
+fs.writeFileSync(output,JSON.stringify({schema:'akari-child-diagnostics-validator-negative-v1',status:'PASS',snapshot:inputs,required:23,results},null,2)+'\n');
+console.log('Child diagnostics validator negative: 23 refused PASS');

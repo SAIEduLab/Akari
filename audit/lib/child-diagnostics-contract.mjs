@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {browserEnvironment} from './browser-environment.mjs';
+const meaning = text => text.replace(/\s+/gu, '');
 
 // Fixed independently of the browser runner's list and observed result status.
 const syntaxExpectations=[
@@ -19,7 +20,7 @@ const syntaxExpectations=[
   ['argument-bundle','P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、','（ ）で ひとまとめに します'],
 ];
 export const childDiagnosticIds=Object.freeze([...syntaxExpectations.map(x=>'syntax/'+x[0]),
-  'semantic/function-effects','runtime/list-reference','file/digest-refusal',
+  'semantic/function-effects','semantic/scalar-guidance','semantic/touch-heading','runtime/list-reference','file/digest-refusal',
   'save/digest-fault','save/length-fault','save/orphan-fault','import/current-and-incoming',
   'reach/keyboard-390','reach/touch-390']);
 
@@ -37,24 +38,31 @@ export function verifyChildDiagnosticsReport(report,inputs) {
   const rows=new Map(report.results.map(x=>[x.id,x.observed]));
   for(const row of report.results){assert.equal(row.status,'PASS',row.id);assert.ok(row.observed,row.id);assert.ok(!row.error,row.id);}
   for(const [name,code,message,help]of syntaxExpectations){
-    const d=rows.get('syntax/'+name);assert.equal(d.parser.negative[0].code,code);assert.equal(d.parser.negative[0].message,message);
+    const d=rows.get('syntax/'+name);assert.equal(d.parser.negative[0].code,code);assert.equal(meaning(d.parser.negative[0].message),meaning(message));
     assert.deepEqual(d.parser.positive,[]);assert.equal(d.parser.accepted,true);
-    assert.ok(d.primary.includes(help));assert.ok(!d.primary.includes(code));
-    assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(message));
+    assert.ok(meaning(d.primary).includes(meaning(help)));assert.ok(!d.primary.includes(code));
+    assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(d.parser.negative[0].message));
     assert.deepEqual(d.after,d.before);assert.ok(d.source.length>0);assert.match(d.entry,/native Enter disclosure/);
   }
   const effects=rows.get('semantic/function-effects');
-  assert.ok(effects.errors.some(d=>d.code==='S305'&&d.message==='「答えを もとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません'));
+  const scalar=rows.get('semantic/scalar-guidance');assert.doesNotMatch(scalar.listPrimary,/【買うもの】を言う/);assert.equal(scalar.suggestion,'「犬\\\\」の自分の点数を言う');assert.ok(scalar.localPrimary.includes(scalar.suggestion));assert.deepEqual(scalar.copied,{errors:[],runtimeErrors:[],said:['3']});assert.deepEqual(scalar.after,scalar.before);assert.deepEqual(scalar.localAfter,scalar.localBefore);
+  const heading=rows.get('semantic/touch-heading');assert.deepEqual(heading.contexts.map(c=>c.owner),['sprite-1','stage','meijin']);assert.equal(heading.callableNotes,0);
+  for(const c of heading.contexts){assert.ok(c.primary.includes(c.example));assert.deepEqual(c.copied,{errors:[],items:[{targetId:'sprite-1',event:'touchStart',filter:{target:'星'}}]});assert.deepEqual(c.after,c.before);if(c.owner!=='sprite-1')assert.ok(c.example.startsWith('ねこが'));}
+  assert.ok(effects.errors.some(d=>d.code==='S305'&&meaning(d.message)===meaning('「答えを もとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません')));
   assert.match(effects.primary,/音を 出す・待つ/);assert.match(effects.primary,/「てじゅん」へ 入れます/);assert.match(effects.primary,/足す/);
-  assert.doesNotMatch(effects.primary,/function:diagnostic-function/);assert.match(effects.detail,/S305/);assert.match(effects.detail,/やることは 使えません/);
+  assert.doesNotMatch(effects.primary,/function:diagnostic-function/);assert.match(effects.detail,/S305/);assert.ok(meaning(effects.detail).includes('やることは使えません'));
   assert.deepEqual(effects.after,effects.before);
+  assert.deepEqual(effects.quotedNames.map(r=>r.name),['を2回書いています','とじるしるしを書いてください','入れるものの名前をたしかめてください']);
+  for(const row of effects.quotedNames){assert.ok(row.primary.includes(row.name));assert.doesNotMatch(row.primary,/入れて使う 数や 文字|とじる しるしを 足します/);assert.match(row.detail,/S301/);assert.equal(row.preserved,true);}
+  assert.deepEqual(effects.quotedSources.map(r=>r.source),['「x」とじるしるしを書いてください。','「x」を2回書いています。','「x」」とじるしるしを書いてください。']);
+  for(const row of effects.quotedSources){assert.equal(row.original,'「'+row.source.slice(0,-1)+'」は 読めません。書き方を たしかめて ください。');assert.equal(row.primary,'1行目：'+row.original);assert.equal(row.preserved,true);}
   const runtime=rows.get('runtime/list-reference');assert.match(runtime.primary,/ならんだ ものを おぼえる リスト/);
-  assert.match(runtime.primary,/あかり/);assert.match(runtime.primary,/1行目/);assert.match(runtime.primary,/のこっているよ/);
+  assert.match(runtime.primary,/あかり/);assert.match(runtime.primary,/1行目/);assert.ok(meaning(runtime.primary).includes('のこっているよ'));
   assert.doesNotMatch(runtime.primary,/script:|sprite-1|R411/);assert.match(runtime.detail,/^R411:/);assert.match(runtime.detail,/script:diagnostic-main/);
   assert.match(runtime.detail,/「買うもの」の2番目/);assert.match(runtime.recordChoice,/あかり/);assert.doesNotMatch(runtime.recordChoice,/R411|script:|sprite-1/);
   assert.equal(runtime.after.project,runtime.before.project);assert.equal(runtime.after.source,runtime.before.source);
   const digest=rows.get('file/digest-refusal');assert.match(digest.visible,/作品ファイルを 開けませんでした/);
-  assert.match(digest.visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(digest.visible,/記録と合いません|F508/);
+  assert.ok(meaning(digest.visible).includes('えらんだファイルはかえていません'));assert.doesNotMatch(digest.visible,/記録と合いません|F508/);
   assert.match(digest.detail,/F508.*読みこめませんでした: 絵や音の中身が、記録と合いません/);assert.deepEqual(digest.after,digest.before);
   assert.equal(digest.source,'genuinely malformed serialized asset digest');
   for(const d of [digest,...['digest','length','orphan'].map(name=>rows.get('save/'+name+'-fault'))]){
@@ -71,7 +79,7 @@ export function verifyChildDiagnosticsReport(report,inputs) {
     ['length','F508','絵や音の大きさが、記録と合いません'],['orphan','F503','作品ファイルに、使われていない絵や音か、足りない絵や音があります']]){
     const d=rows.get('save/'+name+'-fault');assert.equal(d.code,code);assert.equal(d.message,message);
     assert.equal(d.source,'explicit synthetic asset lookup failure for UI/atomic-save coverage');
-    assert.match(d.visible,/作品ファイルを ほぞんできませんでした/);assert.match(d.visible,/この画面の作品は のこっています/);
+    assert.ok(meaning(d.visible).includes('作品ファイルをほぞんできませんでした'));assert.ok(meaning(d.visible).includes('この画面の作品はのこっています'));
     assert.doesNotMatch(d.visible,/しるしの絵や音|記録と合いません|足りない絵や音/);assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(message));
     assert.deepEqual(d.downloads,[]);assert.deepEqual(d.after,d.before);
   }

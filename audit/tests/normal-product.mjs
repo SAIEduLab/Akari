@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,8 +24,8 @@ const evidence=await withBrowser(browserPath,async browser=>{
   await (await reveal(p.locator('#eventSelect'))).selectOption('start');
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);
-  await (async()=>{const control=await reveal(p.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();
-  await (async()=>{const control=await reveal(p.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();
+  await chooseView(p,'blocks',{reveal,open:openBodyForTest});
+  await chooseView(p,'code',{reveal,open:openBodyForTest});
   assert.equal(await p.locator('#codeEditor').inputValue(),source);
   const saved=path.join(dir,'normal-product.akari.md');
   let pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();await (await pending).saveAs(saved);
@@ -69,4 +70,4 @@ assert.deepEqual(snapshot(product),before);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:before,...evidence},null,2)+'\n');console.log('Normal GUI save/reload/export/offline/isolation: PASS');
 
 // Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (!await page.locator("#codeEditor").isVisible() && !await page.locator("#blockEditor").isVisible()) await page.locator("#editorModecode").click(); if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
+async function openBodyForTest(page) { if (!await page.locator("#codeEditor").isVisible() && !await page.locator("#blockEditor").isVisible()) await chooseView(page,'code'); if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

@@ -650,6 +650,49 @@ function runSemanticContractTests() {
       }
     });
 
+    test('timer reset is an effect in value-returning definitions', () => {
+      const p=makeDefaultProject();p.functions=[{id:'timer-pure',ownerId:'stage',name:'試す',args:[],source:'タイマーを0にする。\n1を答えとして返す。'}];
+      ok(compileProject(p).errors.some(e=>e.code==='S305'));
+      ok(!hintCandidates(p,'stage',{definitionKind:'function',source:''}).some(h=>h.id==='TimerReset'&&h.enabled));
+      p.functions=[];p.scripts=[{id:'timer-main',targetId:p.components[0].id,event:'start',source:'タイマーを0にする。'}];eq(compileProject(p).errors,[]);
+    });
+    test('touch wait guidance is conditional and excludes unresolved or compound conditions', () => {
+      const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+      p.components=[['ねこ',100],['星',105]].map(([name,x],i)=>({...structuredClone(base),id:'wait-'+i,name,x,y:100,costumes:[{id:'wait-face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:'wait-face-'+i}));
+      p.projectData.variables.push({id:'wait-target',name:'相手',initialValue:'星'});
+      for(const [condition,notice]of [['「星」にふれるまで待つ。',true],['相手にふれるまで待つ。',false],['条件（「星」にふれていない）が成り立つまで待つ。',false],['条件（「星」にふれているまたは1が1と同じ）が成り立つまで待つ。',false],['条件（「星」にふれているかつ1が1と同じ）が成り立つまで待つ。',false]]){
+        p.scripts=[{id:'wait-main',targetId:'wait-0',event:'start',source:condition+'\nいまのばしょから、右へ10歩動く。'}];
+        const c=compileProject(p);eq(c.errors,[]);const notes=c.notes.filter(n=>n.code==='I134');eq(notes.length,notice?1:0);
+        if(notice){ok(notes[0].message.includes('まだ ふれて いない ときは'));ok(!notes[0].message.includes('待ちつづけます'));}
+      }
+    });
+    test('scoped scalar expressions and quoted list names execute',()=>{
+      const p=actorUnitFixture();p.projectData.variables=[];for(const c of p.components)c.localData={variables:[],lists:[]};
+      p.projectData.lists=[{id:'advice-list',name:'買うもの',initialValue:['りんご']}];
+      p.scripts[0].source='【買うもの】を言う。';const d=compileProject(p).errors.find(x=>x.code==='S304');ok(d?.message.includes('【買うもの】の1番目を言う'));
+      p.scripts[0].source='【買うもの】の1番目を言う。';eq(actorUnitRun(p).speech.map(x=>x[1]),['りんご']);
+      for(const name of ['いぬ','犬\\','犬\\内'])for(const prefix of ['', 'この中だけで使うリスト点数を空で作る。\n','［10］の各要素を点数として、次のことをくり返す。\n  ']){
+        p.components[1].name=name;p.components[1].localData.variables=[{id:'advice-scalar',name:'点数',initialValue:3}];
+        const value=formatExpression({kind:'ActorQualifiedRead',actorRef:{kind:'named',name},value:{kind:'VariableRead',name:'点数',qualifier:'self'}});
+        p.actions=[{id:'advice-action',ownerId:'stage',name:'試す',args:[],source:prefix+value+'を言う。'}];p.scripts[0].source='【試す】という手順を行う。';
+        for(const packed of [false,true])eq(actorUnitRun(p,packed).speech.map(x=>x[1]),['3']);
+      }
+    });
+    test('connected rotations preserve sequence and genuine repeat choices',()=>{
+      for(const n of [2,3,20]){const r=parseSyntax('前へ1歩進んで、右に1度回ってから、'.repeat(n)+'何もしない。');ok(r.ast,JSON.stringify(r.syntaxDiagnostics));eq(r.ast.body.length,n*2+1);for(let i=0;i<n;i++){eq(r.ast.body[i*2].op,'MOVE');eq(r.ast.body[i*2+1].op,'TURN_RIGHT');}}
+      for(const count of ['2','【回数】']){const d=parseSyntax(count+'回前へ1歩進んで、何もしない。').syntaxDiagnostics[0];ok(d.message.includes('どこまでを'));eq(d.proposals.length,2);for(const p of d.proposals)ok(parseSyntax(p.source).ast);}
+    });
+    test('touch event advice preserves explicit toucher identity',()=>{
+      for(const meijin of [false,true]){
+        const p=actorUnitFixture('いぬが「星」にふれるまで待つ。\nいぬは、いまのばしょから、右へ10歩動く。');
+        p.components.push({...structuredClone(p.components[0]),id:'advice-star',name:'星',x:300,w:10,h:10,costumes:[{id:'advice-star-face',name:'丸',kind:'text',value:'●'}],costumeId:'advice-star-face',localData:{variables:[],lists:[]}});
+        if(meijin)Object.assign(p.scripts[0],{targetId:'meijin',mode:'meijin'});
+        const c=compileProject(p);eq(c.errors,[]);const note=c.notes.find(n=>n.code==='I134');ok(note.message.includes('いぬが「星」にふれたとき、'));
+        p.scripts[0].source='いぬが「星」にふれたとき、\n  いぬは「接触」と言う。';const compiled=compileProject(p);eq(compiled.errors,[]);eq([compiled.items[0].targetId,compiled.items[0].event,compiled.items[0].filter],['dog','touchStart',{target:'星'}]);
+        const said=[],r=new RuntimeModel(p),q=new EventScheduler(p,compiled,r,{say:(id,text)=>said.push([id,text])});let clock=0;r.now=()=>clock;q.schedule=()=>{};
+        try{q.start();q.pollWatches();r.actor('cat').x=300;clock+=17;q.pollWatches();while(q.ready.length)q.runTurn();eq(said,[]);r.actor('dog').x=300;clock+=17;q.pollWatches();while(q.ready.length)q.runTurn();eq(said,[['dog','接触']]);}finally{q.stop();}
+      }
+    });
     return {
       total: results.length,
       passed: results.filter((x) => x.pass).length,

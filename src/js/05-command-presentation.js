@@ -353,7 +353,7 @@
               }),
               ...(kind === 'IfStatement'
                 ? [
-                    field('elseComment', 'そうでなければのメモ', 'annotation', '', {
+                    field('elseComment', '「そうでなければ」の メモ', 'annotation', '', {
                       when: 'hasElse',
                     }),
                   ]
@@ -543,7 +543,7 @@
       'ForEach',
       'statement',
       '中身を 一つずつ 見る',
-      [name('binder', '今見ているものの名前', 'これ')],
+      [name('binder', '今 見て いる ものの 名前', 'これ')],
       [input('list', 'リスト', 'expression', { initial: [] })],
       [body('body', 'くり返すこと')],
     );
@@ -732,9 +732,9 @@
     for (const [value, label] of [
       ['INPUT_VALUE', '入力らんの中身'],
       ['DISTANCE_TO', 'だれかまでの きょり'],
-      ['KEY_DOWN', 'キーが おされている'],
-      ['TOUCHING_COLOR', '色に ふれている'],
-      ['TOUCHING', 'だれかに ふれている'],
+      ['KEY_DOWN', 'キーが おされて いる'],
+      ['TOUCHING_COLOR', '色に ふれて いる'],
+      ['TOUCHING', 'だれかに ふれて いる'],
     ])
       add(
         'SensorRead',
@@ -788,11 +788,11 @@
   // Checks that only fail on broken saved data: the child is told what to do; the reason and where it is go to the
   // details (F-07).
   function blockDataError(message, path = '') {
-    throw new AkariError('P210', '作品の ファイルが こわれているかもしれないよ。先生に 見てもらってね。', 0, 0, message + (path ? '（' + path + '）' : ''));
+    throw new AkariError('P210', '作品の ファイルが こわれて いるかも しれないよ。先生に 見て もらってね。', 0, 0, message + (path ? '（' + path + '）' : ''));
   }
   function syntaxSchema(node, expected) {
     if (!node || typeof node !== 'object' || Array.isArray(node))
-      blockDataError('ブロックがありません');
+      blockDataError('ブロックが ありません');
     const kind = expected === 'target' && node.kind !== 'Hole' ? 'TargetReference' : node.kind;
     const discriminator =
       kind === 'Hole'
@@ -821,14 +821,14 @@
     const schema = BLOCK_SCHEMA_BY_ID.get(
       kind + (discriminator ? ':' + node[discriminator] : ''),
     );
-    if (!schema) blockDataError('あかりにないブロックです');
+    if (!schema) blockDataError('あかりに ない ブロックです');
     if (expected && schema.category !== expected)
-      blockStructureError('このブロックは ここには入りません。形の合う ばしょに 入れてください');
+      blockStructureError('この ブロックは ここには 入りません。形の 合う ばしょに 入れて ください');
     return schema;
   }
   function blockRecord(record, allowed, path) {
     if (!record || typeof record !== 'object' || Array.isArray(record))
-      blockDataError('ブロックの中身がありません', path);
+      blockDataError('ブロックの 中身が ありません', path);
     for (const key of Object.keys(record))
       if (!allowed.includes(key)) blockDataError('このブロックにはない項目があります', path + (path ? ' / ' : '') + key);
   }
@@ -838,9 +838,9 @@
     if (type === 'actor-ref') {
       blockRecord(value, ['kind', 'name', 'particle'], path);
       // みんな (the whole flow) is a subject only a wait takes.
-      if (!['self', 'named', ...(field.everyone ? ['all'] : [])].includes(value.kind)) blockDataError('だれが動くかの書き方が正しくありません', path);
+      if (!['self', 'named', ...(field.everyone ? ['all'] : [])].includes(value.kind)) blockDataError('だれが 動くかの 書き方が 正しく ありません', path);
       if (value.kind === 'self' || value.kind === 'all') {
-        if (Object.hasOwn(value, 'name')) blockDataError('「自分」にはほかの名前を付けられません', path);
+        if (Object.hasOwn(value, 'name')) blockDataError('「自分」には ほかの 名前を 付けられません', path);
         if (Object.hasOwn(value, 'particle')) blockDataError('主語の「が」は 名前で えらんだ ときに 使います', path);
         return { kind: value.kind };
       }
@@ -851,12 +851,12 @@
     }
     if (type === 'argument-names') {
       if (!Array.isArray(value) || value.length > LIMITS.sourceEach)
-        blockDataError('入れるものの名前がありません', path);
+        blockDataError('入れる ものの 名前が ありません', path);
       return value.map((name, index) => blockFieldValue({ type: 'name' }, name, path + '[' + index + ']'));
     }
     if (type === 'heading') {
       blockRecord(value, ['event', 'actorRef', 'filter'], path);
-      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockDataError('きっかけの種類が正しくありません', path);
+      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockDataError('きっかけの 種類が 正しく ありません', path);
       const heading = { event: value.event, actorRef: blockFieldValue({ type: 'actor-ref' }, value.actorRef, path + '.actorRef') };
       if (Object.hasOwn(value, 'filter')) {
         if (value.filter === null) heading.filter = null;
@@ -865,7 +865,7 @@
           blockRecord(value.filter, ['key', 'message', 'target'], path + '.filter');
           const keys = Object.keys(value.filter);
           if (keys.length !== 1 || !['key', 'message', 'target'].includes(keys[0]))
-            blockDataError('キーか合図を1つ選んでください', path);
+            blockDataError('キーか 合図を 1つ 選んで ください', path);
           const key = keys[0];
           if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message') ||
             (key === 'target' && value.event !== 'touchStart') || (value.event === 'touchStart' && key !== 'target'))
@@ -879,32 +879,32 @@
       const values = type === 'unit' ? ['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz']
         : ['right', 'left', 'up', 'down', 'forward', 'backward'];
       if (!values.includes(value) || (field.choices && !field.choices.includes(value)))
-        blockStructureError(type === 'unit' ? 'たんいを えらんでください' : '進む 向きを えらんでください', path);
+        blockStructureError(type === 'unit' ? 'たんいを えらんで ください' : '進む 向きを えらんで ください', path);
       return value;
     }
     if (type === 'reference' && (typeof value !== 'string' || !value.length))
-      blockStructureError('待つ合図が空いています。何か書いてください', path);
+      blockStructureError('待つ 合図が 空いて います。何か 書いて ください', path);
     if (type === 'number') {
       if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || Object.is(value, -0))
-        blockDataError('数は0以上の数にしてください', path);
+        blockDataError('数は 0以上の 数に して ください', path);
     } else if (type === 'boolean') {
-      if (typeof value !== 'boolean') blockDataError('「あてはまる」か「あてはまらない」を入れてください', path);
+      if (typeof value !== 'boolean') blockDataError('「あてはまる」か「あてはまらない」を入れて ください', path);
     } else if (type === 'qualifier') {
       if (![null, 'exact', 'self', 'project'].includes(value))
-        blockStructureError('使う ばしょが 正しくありません', path);
+        blockStructureError('使う ばしょが 正しく ありません', path);
     } else {
-      if (typeof value !== 'string') blockDataError('文字を入れてください', path);
+      if (typeof value !== 'string') blockDataError('文字を 入れて ください', path);
       if (type === 'name')
         try {
           validateName(value, { callable: field.callable === true });
         } catch (error) {
           blockStructureError(error.message, path);
         }
-      if (!field.multiline && /[\r\n]/.test(value)) blockDataError('1行で書いてください', path);
+      if (!field.multiline && /[\r\n]/.test(value)) blockDataError('1行で 書いて ください', path);
       if (type === 'string' && cpLen(value) > LIMITS.stringChars)
-        blockStructureError('文字が 長すぎます。短く してください', path);
+        blockStructureError('文字が 長すぎます。短く して ください', path);
       if (type === 'annotation' && value && value[0] !== '※')
-        blockStructureError('メモは「※」から書きはじめます。れい：※ ここで回る', path);
+        blockStructureError('メモは「※」から 書きはじめます。れい：※ ここで回る', path);
     }
     return value;
   }
@@ -914,14 +914,14 @@
     const visit = (node, type, path, blockDepth, expressionDepth) => {
       const schema = syntaxSchema(node, type);
       if(node.units&&(type!=='script'||path!=='root'))
-        blockDataError('きっかけの 本文は、いちばん 外に 置いてください',path);
-      if (schema.draftOnly && !allowHoles) blockStructureError('空いているところが あります。うめてから動かしてください', path);
-      if (active.has(node)) blockDataError('ブロックが自分の中に入っています', path);
+        blockDataError('きっかけの 本文は、いちばん 外に 置いて ください',path);
+      if (schema.draftOnly && !allowHoles) blockStructureError('空いて いる ところが あります。うめてから 動かして ください', path);
+      if (active.has(node)) blockDataError('ブロックが 自分の 中に 入って います', path);
       active.add(node);
       if (++count > LIMITS.sourceEach)
-        blockStructureError('ブロックが 多すぎて、使える 数を こえています。ブロックを へらしてください', path);
+        blockStructureError('ブロックが 多すぎて、使える 数を こえて います。ブロックを へらして ください', path);
       if (blockDepth > LIMITS.blockDepth || expressionDepth > LIMITS.expressionDepth)
-        blockStructureError('ブロックの 中に ブロックを 重ねすぎています。重ねる 数を へらしてください', path);
+        blockStructureError('ブロックの 中に ブロックを 重ねすぎて います。重ねる 数を へらして ください', path);
       const allowed = [
         ...(type === 'target' && schema.kind !== 'Hole' ? [] : ['kind']),
         ...schema.fields.map((x) => x.key),
@@ -938,14 +938,14 @@
       for (const field of schema.fields) {
         if (!Object.hasOwn(node, field.key)) {
           if (field.required === false) continue;
-          blockDataError('「' + (field.label || field.key) + '」がありません', path);
+          blockDataError('「' + (field.label || field.key) + '」が ありません', path);
         }
         blockFieldValue(field, node[field.key], path + '.' + field.key);
       }
       for (const annotation of schema.annotations) {
         if (!Object.hasOwn(node, annotation.key)) {
           if (annotation.required === false) continue;
-          blockDataError('「' + (annotation.label || annotation.key) + '」がありません', path);
+          blockDataError('「' + (annotation.label || annotation.key) + '」が ありません', path);
         }
         blockFieldValue(annotation, node[annotation.key], path + '.' + annotation.key);
       }
@@ -954,15 +954,15 @@
         node.qualifier === null &&
         !bareName(node.name)
       )
-        blockStructureError('名前を【 】でかこむか、使う ばしょを えらんでください', path);
+        blockStructureError('名前を【 】でかこむか、使う ばしょを えらんで ください', path);
       if (Object.hasOwn(node, 'argumentNames') && node.argumentNames !== undefined && (!Array.isArray(node.args) || node.argumentNames.length !== node.args.length))
-        blockStructureError('入れるものと 名前の 数が 合いません。同じ 数に してください', path + '.argumentNames');
+        blockStructureError('入れる ものと 名前の 数が 合いません。同じ 数に して ください', path + '.argumentNames');
       for (const slot of schema.inputs) {
         if (!Object.hasOwn(node, slot.key) && slot.required === false) continue;
         const value = node[slot.key];
         if (slot.multiple) {
           if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
-            blockDataError('入れるものの数が合いません', path + '.' + slot.key);
+            blockDataError('入れる ものの 数が 合いません', path + '.' + slot.key);
           for (let i = 0; i < value.length; i++)
             visit(
               value[i],
@@ -984,15 +984,15 @@
         const children = node[slot.key],
           enabled = !slot.when || node[slot.when];
         if (!Array.isArray(children))
-          blockDataError('中のブロックがありません', path + '.' + slot.key);
+          blockDataError('中の ブロックが ありません', path + '.' + slot.key);
         if (!enabled && children.length)
-          blockDataError('使えないところにブロックがあります', path + '.' + slot.key);
+          blockDataError('使えない ところに ブロックが あります', path + '.' + slot.key);
         if (
           enabled &&
           slot.requiredExecutable &&
           !children.some((n) => n && n.kind !== 'CommentLine')
         )
-          blockStructureError('中にブロックを1つ入れてください。メモだけでは動きません', path + '.' + slot.key);
+          blockStructureError('中に ブロックを 1つ 入れて ください。メモだけでは 動きません', path + '.' + slot.key);
         for (let i = 0; i < children.length; i++)
           visit(
             children[i],
@@ -1004,11 +1004,11 @@
       }
       // いまのばしょから動く has one or two legs; with none it would be written いまのばしょから、動く, which does not read.
       if (schema.kind === 'MotionCommand' && node.op === 'MOVE_BY' && !Object.hasOwn(node, 'x') && !Object.hasOwn(node, 'y'))
-        blockStructureError('よこか たての どちらかの 歩数を 入れてください', path);
+        blockStructureError('よこか たての どちらかの 歩数を 入れて ください', path);
       if (schema.kind === 'IfStatement' && !node.hasElse && node.elseComment)
         blockDataError('「そうでなければ」がないのに、そこにメモがあります', path);
       if (schema.kind === 'CommentLine' && node.inlineComment)
-        blockDataError('1行のメモは本文の中に置いてください', path);
+        blockDataError('1行の メモは 本文の 中に 置いて ください', path);
       active.delete(node);
       return node;
     };
@@ -1160,20 +1160,20 @@
     let count = 0;
     const decode = (block, type, path, blockDepth, expressionDepth) => {
       blockRecord(block, ['id', 'schemaId', 'fields', 'inputs', 'bodies', 'annotations'], path);
-      if (seen.has(block)) blockDataError('同じブロックが2か所につながっています', path);
+      if (seen.has(block)) blockDataError('同じ ブロックが 2か所に つながって います', path);
       seen.add(block);
       if (typeof block.id !== 'string' || !block.id || ids.has(block.id))
         blockDataError('ブロックの番号がないか、同じ番号があります', path);
       ids.add(block.id);
       const schema = BLOCK_SCHEMA_BY_ID.get(block.schemaId);
       if (!schema || (type && schema.category !== type))
-        blockDataError('ブロックの しゅるいか、つなぐ 先が 正しくありません', path);
+        blockDataError('ブロックの しゅるいか、つなぐ 先が 正しく ありません', path);
       if (
         ++count > LIMITS.sourceEach ||
         blockDepth > LIMITS.blockDepth ||
         expressionDepth > LIMITS.expressionDepth
       )
-        blockStructureError('ブロックが 多すぎるか、中に 重ねすぎています。ブロックを へらしてください', path);
+        blockStructureError('ブロックが 多すぎるか、中に 重ねすぎて います。ブロックを へらして ください', path);
       blockRecord(
         block.fields,
         schema.fields.map((x) => x.key),
@@ -1196,7 +1196,7 @@
       for (const field of schema.fields) {
         if (!Object.hasOwn(block.fields, field.key)) {
           if (field.required === false) continue;
-          blockDataError('「' + (field.label || field.key) + '」がありません', path);
+          blockDataError('「' + (field.label || field.key) + '」が ありません', path);
         }
         node[field.key] = blockFieldValue(
           field,
@@ -1209,7 +1209,7 @@
         const value = block.inputs[slot.key];
         if (slot.multiple) {
           if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
-            blockDataError('入れるものの数が合いません', path + '.inputs.' + slot.key);
+            blockDataError('入れる ものの 数が 合いません', path + '.inputs.' + slot.key);
           node[slot.key] = value.map((child, i) =>
             decode(
               child,
@@ -1231,7 +1231,7 @@
       for (const slot of schema.bodies) {
         const children = block.bodies[slot.key];
         if (!Array.isArray(children))
-          blockDataError('中のブロックがありません', path + '.bodies.' + slot.key);
+          blockDataError('中の ブロックが ありません', path + '.bodies.' + slot.key);
         node[slot.key] = children.map((child, i) =>
           decode(
             child,
@@ -1245,7 +1245,7 @@
       for (const key of annotationKeys) {
         if (!Object.hasOwn(block.annotations, key)) {
           if (schema.annotations.find(annotation => annotation.key === key)?.required === false) continue;
-          blockDataError('メモを書くところがありません', path + (path ? ' / ' : '') + key);
+          blockDataError('メモを 書く ところが ありません', path + (path ? ' / ' : '') + key);
         }
         node[key] = block.annotations[key];
       }
@@ -1260,7 +1260,7 @@
   }
   function createBlock(schemaId, context = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
-    if (!schema) blockDataError('あかりにないブロックです');
+    if (!schema) blockDataError('あかりに ない ブロックです');
     return blockEncode(schema.create(context), { ...context, expected: schema.category }).tree;
   }
 

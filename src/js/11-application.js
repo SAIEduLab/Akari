@@ -222,7 +222,7 @@
       if (busy || gesture) return;
       const out = cropped();
       if (!out) return;
-      busy = true; refresh(); status.textContent = '絵を おいています…';
+      busy = true; refresh(); status.textContent = '絵を おいて います…';
       try {
         await onCommit(out);
         close();
@@ -237,7 +237,7 @@
         cx.clearRect(0, 0, size, size);
         history = [pixels()]; historyIndex = 0; tool = 'pen';
         color.value = '#111111'; width.value = '4'; shape.value = 'outline';
-        status.textContent = 'ます目は、色が ついていない とうめいな ところの しるしです。絵としては ほぞんされません。';
+        status.textContent = 'ます目は、色が ついて いない とうめいな ところの しるしです。絵としては ほぞんされません。';
         modal.classList.add('show'); app.inert = true;
         refresh(); modal.querySelector('[data-paint-tool="pen"]').focus();
       },
@@ -386,13 +386,13 @@
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and the place of ⏸ いったん止める／▶ つづける
+      // はじめて has no bar under the body: もとに もどす・やり直す go to the toolbar, and the place of ⏸ いったん止める／▶ つづける
       // (final call 21; the two take turns in it) under the stage, as on a video.
       for(const node of [$('#undoBtn'),$('#redoBtn'),$('#runPauseSlot')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry&&node.id==='runPauseSlot'){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
         else if(entry){
-          // Keep もとにもどす before やり直す whichever control was moved last.
+          // Keep もとに もどす before やり直す whichever control was moved last.
           const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
           if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
         }
@@ -403,7 +403,7 @@
       else if(entryLayoutPlaced&&document.body.dataset.editorMode==='blocks'){side.prepend(designer);side.insertBefore(objects,$('.properties-window'));}
       entryLayoutPlaced=entry;
       // The click button names what is chosen: 「たくどん」が おされたとき, 画面が おされたとき.
-      const clickLabel=(selectedId==='stage'?'画面':'「'+(targetById(selectedId)?.name||'')+'」')+'が おされたとき';
+      const clickLabel=(selectedId==='stage'?'画面':'「'+(targetById(selectedId)?.name||'')+'」')+'が おされた とき';
       if($('#entryClickEvent').textContent!==clickLabel)$('#entryClickEvent').textContent=clickLabel;
       for(const [id,event] of [['entryStartEvent','start'],['entryClickEvent','click']]) {
         $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
@@ -568,7 +568,7 @@
         holeOnly=!!place&&(()=>{const items=buildBlockIndex(mainEditor.session.blockView).get(place.parentId)?.node.bodies?.[place.body];return items?.length===1&&items[0].schemaId==='Hole:statement';})();
       if(step?.block)$('#tutorialText').textContent=tutorialInsertionReady(step)
         ?'左の 青い わくの「'+TUTORIAL_BLOCKS[step.block].label+'」を えらぼう。'
-        :holeOnly?'青い わくの「することを えらぶ」を おしてみよう。':'青い わくの「＋ ここに入れる」を おしてみよう。';
+        :holeOnly?'青い わくの「することを えらぶ」を おして みよう。':'青い わくの「＋ ここに入れる」を おして みよう。';
         $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
         for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
           const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
@@ -597,10 +597,10 @@
         $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
         renderTutorialChoices(step);
         if(tutorialNotice&&tutorialNotice.step!==step.id)tutorialNotice=null;
-        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「■ 止める」で もどって、もう一度 やってみよう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの 遊びを 組み合わせたね！ ほぞんして、自分で 遊んでみよう。':tutorialNotice?.text||step.message;
+        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「■ 止める」で もどって、もう一度 やって みよう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの 遊びを 組み合わせたね！ ほぞんして、自分で 遊んでみよう。':tutorialNotice?.text||step.message;
         refreshTutorialPresentation();
         if(changed)focusTutorialTarget();
-      } catch(error) { finishTutorial(false);log('あんないを つづけられませんでした: '+error.message,'error');setStatus('あんないを つづけられなかったよ。作品は のこっているよ'); }
+      } catch(error) { finishTutorial(false);log('あんないを つづけられませんでした: '+error.message,'error');setStatus('あんないを つづけられなかったよ。作品は のこって いるよ'); }
     }
     async function beginTutorial() {
       const blocked=()=>tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]');
@@ -870,11 +870,11 @@
     }
     function sourceCandidate(binding, ownerKey, source) {
       if (cpLen(source) > LIMITS.sourceEach)
-        throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
+        throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらして ください');
       const parsed = parseSyntax(source, { ...bindingContext(binding), key: ownerKey,
         symbols: buildSymbols(project) });
       if (!parsed.ast) {
-        const first = parsed.syntaxDiagnostics[0] || { code: 'P201', message: '文を さいごまで 書いてください' };
+        const first = parsed.syntaxDiagnostics[0] || { code: 'P201', message: '文を さいごまで 書いて ください' };
         const error = new AkariError(first.code, first.message, first.line, first.column);
         error.diagnostics = parsed.syntaxDiagnostics;
         error.proposals = first.proposals || first.choices || [];
@@ -893,7 +893,7 @@
           (x) => x.id !== callableDraftCore.editId,
         );
         if (other.reduce((n, x) => n + cpLen(x.source), 0) + cpLen(source) > LIMITS.sourceTotal)
-          throw new AkariError('F504', '作品全体の 本文の 文字が 多すぎます。文を へらしてください');
+          throw new AkariError('F504', '作品全体の 本文の 文字が 多すぎます。文を へらして ください');
         validateCallableDraft({ ...callableDraftCore, source });
         return null;
       }
@@ -978,7 +978,7 @@
     function diagnosticLocation(diagnostic, { blocks = shownEditorMode() === 'blocks' } = {}) {
       const { key, item, script, definition } = diagnosticOwner(diagnostic);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
-        : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
+        : script || item ? (meijinTextLabel(script) || targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
       if (!diagnostic?.line) return owner;
       if (!blocks) return owner + ' / ' + diagnostic.line + '行目';
@@ -1049,7 +1049,7 @@
         const choices = document.createElement('span');
         choices.className = 'intent-choices';
         choices.setAttribute('role', 'group');
-        choices.setAttribute('aria-label', 'どの動きにしますか');
+        choices.setAttribute('aria-label', 'どの 動きに しますか');
         // A mouse press keeps the focus in the code, so the note is not drawn again (taking its button away) before the click.
         choices.addEventListener('mousedown', (event) => event.preventDefault());
         for (const proposal of proposals) {
@@ -1174,7 +1174,7 @@
     function sourceImportChoice() {
       if ($('#sourceImport').hidden) return '';
       const take = ['#sourceImportConfirm', '#sourceImportSeparate', '#sourceImportEditCurrent'].map((id) => $(id)).find((b) => b && !b.disabled);
-      return take ? `「${take.textContent}」か「取りこみを やめる」を おしてね` : '「取りこみを やめる」を おしてね';
+      return '本文を 入れる ところを たしかめてね。' + (take ? `「${take.textContent}」か「取りこみを やめる」を おしてね` : '「取りこみを やめる」を おしてね');
     }
     function confirmSourceImport(binding, source, separate = false, editCurrent = false) {
       if (modelLocked() || composingEditors.has(binding.textarea) || binding.textarea.value !== source) return false;
@@ -1202,7 +1202,7 @@
         destination ||= old;
         validateDesignProject(next);
         if (plan.projectFingerprint !== currentFingerprint() || plan.ownerKey !== bindingOwner(binding))
-          throw new AkariError('F503', '取りこむ ところが かわりました。もう一度 中身を たしかめてください');
+          throw new AkariError('F503', '取りこむ ところが かわりました。もう一度 中身を たしかめて ください');
         clearTimeout(historyTimer);
         binding.session.pendingEdit = null; binding.textarea.value = readSource(binding);
         hideSourceImport(); pushHistoryNow();
@@ -1234,7 +1234,7 @@
       }
       if (!plan.safe) {
         const notice = document.createElement('p'); notice.textContent = !plan.canSplit
-          ? '本文を べつべつに 分けられないよ。前の「始めると、」などを 使う 文が あるよ。書きかけの 文章は のこっているよ。「取りこみを やめる」で いまの 本文に もどれるよ。'
+          ? '本文を べつべつに 分けられないよ。前の「始めると、」などを 使う 文が あるよ。書きかけの 文章は のこって いるよ。「取りこみを やめる」で いまの 本文に もどれるよ。'
           : '同じ きっかけの 本文が いまの 本文と ちがうか、2つ いじょう あるよ。入れても いまの 本文は のこるよ。くらべてから ボタンを えらんでね。'; root.append(notice);
       }
       const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
@@ -1256,7 +1256,7 @@
       if (modelLocked() || binding.session?.mode === 'blocks') return true;
       const t = binding.textarea;
       if (composingEditors.has(t))
-        return showEditorFailure(binding, '日本語の 入力を Enterキーで 決めてから つづけてください');
+        return showEditorFailure(binding, '日本語の 入力を Enterキーで 決めてから つづけて ください');
       const source = t.value.replace(/\r\n?/g, '\n');
       // A textarea normalizes CRLF on display; that alone is not an edit of source.
       if (source === readSource(binding).replace(/\r\n?/g, '\n')) {
@@ -1271,13 +1271,13 @@
             plan = sourceImportPlan(binding, source);
           if (plan || (fromInput && parsed.ast?.heading && !bindingContext(binding).meijin)) {
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
-              value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
+              value: source, reason: plan ? '取りこむ ところを たしかめて 決めて ください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
             // The text reads now: a mistake shown for an earlier keystroke goes away above the code. With the review, the
             // status line says what waits instead; a body with its own heading keeps the line until its check is done
             // (refreshEditor says 「✓ 書き方を 直せたよ」 or points to the new mistake, E2E-R2-11).
             clearEditorFailure(binding);
-            if (plan) { editorFailureStatus = null; setStatus('本文を 入れる ところを たしかめてね。' + sourceImportChoice()); }
+            if (plan) { editorFailureStatus = null; setStatus(sourceImportChoice()); }
             scheduleAutosave(); updateDirty(); return false;
           }
         }
@@ -1306,7 +1306,7 @@
         if (!result?.ok)
           return preserveView ? false : showEditorFailure(
             binding,
-            result?.reason || '入力を 決めるか、やめてください',
+            result?.reason || '入力を 決めるか、やめて ください',
             { preservePending: true },
           );
         if (binding.session?.blockDraft){
@@ -1319,13 +1319,13 @@
           // named in 「 」, a hole a value fills names that value (I5V-14).
           if(hole)binding.view.focus({id:hole.node.id});
           const branch=parent?.schemaId==='IfStatement'?{thenBody:'もし',elseBody:'そうでなければ'}[hole.body]:null;
-          return showEditorFailure(binding, branch?`「${branch}」の ところが あいているよ。することを 入れてね`:`あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
+          return showEditorFailure(binding, branch?`「${branch}」の ところが あいて いるよ。することを 入れてね`:`あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
         }
         return true;
       }
       if (binding.session?.blockDraft) {
         if (composingEditors.has(binding.textarea))
-          return showEditorFailure(binding, '日本語の 入力を Enterキーで きめてから つづけてください');
+          return showEditorFailure(binding, '日本語の 入力を Enterキーで きめてから つづけて ください');
         const source = binding.textarea.value.replace(/\r\n?/g, '\n');
         try {
           const parsed = parseSyntax(source, bindingContext(binding));
@@ -1379,7 +1379,7 @@
             composingEditors.has($('#callableName')) ||
             (composingEditors.has($('#callableArgs')) || composingEditors.has($('#callablePhrase'))))
         )
-          throw new Error('自分で作ったブロックの 名前と 入れるものの 入力を、決めるか やめてください');
+          throw new Error('自分で作ったブロックの 名前と 入れるものの 入力を、決めるか やめて ください');
         const session = getEditorSession(binding),
           ownerKey = bindingOwner(binding),
           context = bindingContext(binding);
@@ -1431,7 +1431,7 @@
           editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
           binding.textarea.value = candidate.draftSource;
           const pending = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
-          pending.textContent = 'あいている ところに ブロックや 数・文字を 入れてください';
+          pending.textContent = 'あいている ところに ブロックや 数・文字を 入れて ください';
           // In blocks the floating controls say this by the block (E-12); the code view shows it here.
           pending.dataset.notice = 'block-draft';
           pending.hidden = false;
@@ -1519,7 +1519,7 @@
       if (draft) {
         const line = $('#callableIssue'), first = !blocks && $('#callablePending').hidden ? session.notices[0] : null;
         line.hidden = !first;
-        line.textContent = first ? 'ⓘ ' + (first.line || 1) + '行目：' + first.message + (session.notices.length > 1 ? `（ほかに ${session.notices.length - 1}つ あります）` : '') : '';
+        line.textContent = first ? 'ⓘ ' + (first.line || 1) + '行目：' + sentence(first.message) + (session.notices.length > 1 ? `ほかにも 知らせが ${session.notices.length - 1}つ あります。` : '') : '';
       }
     }
     function rememberEditorMode(kind, mode) {
@@ -1670,7 +1670,7 @@
       const session = getEditorSession(binding);
       let focusLine = null;
       if (mode === 'blocks' && !session.syntaxAst)
-        return showEditorFailure(binding, '書き方の まちがいを コードで 直してください');
+        return showEditorFailure(binding, '書き方の まちがいを コードで 直して ください');
       if (mode === 'blocks' && session.mode === 'code') {
         let offset = session.codeSelection?.start || 0;
         if (/\r/.test(session.sourceText)) {
@@ -1901,7 +1901,7 @@
         )
           draftEditor.textarea.value = d.source;
         $('#callableHeader').textContent =
-          `${d.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${d.name || '名前'}」／入れるもの（${d.argsText}）／本文${hasCallableDraft() ? ' （まだ ほぞんしていない）' : ''}`;
+          `${d.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${d.name || '名前'}」／入れるもの（${d.argsText}）／本文${hasCallableDraft() ? ' （まだ ほぞんして いない）' : ''}`;
         $('#callableDelete').disabled = modelLocked() || !d.editId;
       } finally {
         syncingDraft = false;
@@ -1915,7 +1915,7 @@
         )
       ) {
         headerPending = { ownerKey: draftOwner(), composing: true };
-        return showEditorFailure(draftEditor, '日本語の 入力を Enterキーで きめてから つづけてください');
+        return showEditorFailure(draftEditor, '日本語の 入力を Enterキーで きめてから つづけて ください');
       }
       const next = {
         ...callableDraftCore,
@@ -1942,7 +1942,7 @@
             $(id).value = callableDraftCore[key] || '';
           return showEditorFailure(
             draftEditor,
-            ready.reason || '本文の 入力を 決めるか、やめてください',
+            ready.reason || '本文の 入力を 決めるか、やめて ください',
           );
         }
         next.source = callableDraftCore.source;
@@ -1983,7 +1983,7 @@
       toolbar.insertBefore(modes, $('#projectName'));
       for (const [id, path, title] of [
         ['redoBtn', 'M15 4l5 5-5 5M20 9H10a6 6 0 0 0 0 12h2', 'やり直す'],
-        ['undoBtn', 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-2', 'もとにもどす'],
+        ['undoBtn', 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-2', 'もとに もどす'],
       ]) {
         const b = $('#' + id);
         b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>';
@@ -1995,8 +1995,8 @@
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));
-      // In the block view すべての本文・画面の本文・いつ動く？ and もとにもどす・やり直す (くわしく: and はじめに もどす) share one
-      // row. When the two groups do not fit side by side, もとにもどす… take the row under it (data-source-row-wrap), so
+      // In the block view すべての本文・画面の本文・いつ動く？ and もとに もどす・やり直す (くわしく: and はじめに もどす) share one
+      // row. When the two groups do not fit side by side, もとに もどす… take the row under it (data-source-row-wrap), so
       // no button lies under another and every label keeps one line (はばが 足りないときは 折り返します).
       const sourceNav = code.querySelector(':scope > .source-nav'), debugbar = code.querySelector(':scope > .debugbar');
       const groupWidth = (box) => {
@@ -2282,7 +2282,20 @@
     const stageStyle = document.createElement('style');
     stageStyle.textContent = AKARI_STAGE_CSS;
     document.head.appendChild(stageStyle);
-    let stageZoom = null, visibleStageScale = 1;
+    let stageZoom = null, visibleStageScale = 1, runStageMinimum = null;
+    // The edit screen supplies the minimum once per run. Include the scrollbar gutter: a minimum on the scaled child
+    // alone would spill out of the designer and be clipped. Overflow belongs to the finite workspace, not the page.
+    function fitRunStageMinimum() {
+      if (!runStageMinimum || document.body.classList.contains('stage-enlarged')) return;
+      const designer = $('#designerWindow'), wrap = $('.designer-wrap'), style = getComputedStyle(wrap),
+        width = Math.ceil(designer.offsetWidth - wrap.clientWidth + runStageMinimum.width +
+          parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 1),
+        height = Math.ceil(designer.offsetHeight - wrap.clientHeight + runStageMinimum.height +
+          parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 1);
+      for (const [name, value] of [['--run-stage-min-width', width], ['--run-stage-min-height', height]])
+        if (designer.style.getPropertyValue(name) !== value + 'px') designer.style.setProperty(name, value + 'px');
+      stageView.fitStage();
+    }
     const stageView = createAkariStageView(AKARI_RUNTIME, {
       form: el.form,
       canvas: el.canvas,
@@ -2292,8 +2305,15 @@
       imageUrl: designImageUrl,
       getImage: (id) => runtimeCache?.getImage(id),
       selectedId: () => selectedId,
-      getScale: ({ width, height, availableWidth, availableHeight }) => stageZoom ??
-        Math.max(0.01, Math.min(1, (availableWidth - 1) / width, (availableHeight - 1) / height)),
+      getScale: ({ width, height, availableWidth, availableHeight }) => {
+        if (stageZoom !== null) return stageZoom;
+        if (runStageMinimum && !document.body.classList.contains('stage-enlarged')) {
+          const main = $('.main');
+          availableWidth = Math.min(availableWidth, Math.max(runStageMinimum.width + 1, main.clientWidth - 1));
+          availableHeight = Math.min(availableHeight, Math.max(runStageMinimum.height + 1, main.clientHeight - 1));
+        }
+        return Math.max(0.01, Math.min(1, (availableWidth - 1) / width, (availableHeight - 1) / height));
+      },
       onFit: (scale) => {
         visibleStageScale = scale;
         $('.designer-wrap').style.setProperty('--stage-scale', scale);
@@ -2336,6 +2356,15 @@
         }
       },
       onValueDetails: (value, speaker) => showFullValue(`${speaker}の 言うこと（${typeof value === 'string' ? '全部' : 'もとの 数'}）`, value),
+    });
+    window.addEventListener('resize', fitRunStageMinimum);
+    new ResizeObserver(fitRunStageMinimum).observe($('#designerWindow > .win-title'));
+    new ResizeObserver(fitRunStageMinimum).observe($('#runStrip'));
+    // A deliberately focused scroll region owns its navigation keys; keys on the stage still belong to the work.
+    $('.main').addEventListener('keydown', event => {
+      if (runStageMinimum && event.target === event.currentTarget &&
+          ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key))
+        event.stopPropagation();
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
@@ -2395,8 +2424,8 @@
     $('#stageZoomFit').onclick = () => setStageZoom(null);
     function childErrorLogText(message) {
       const m = String(message), plain = m.replace(/^\s*[A-Z]\d{3}(?::|\s)\s*/, '');
-      if (/保存失敗|ほぞんできませんでした/.test(plain)) return '作品ファイルを ほぞんできませんでした。この画面の作品は のこっています。画面を とじずに、もう一度「保存」を おしてください。';
-      if (/読み込み失敗|読みこめませんでした/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえていません。あかりで ほぞんした ファイル（名前が「.akari.md」で おわる ファイル）を えらんでください。';
+      if (/保存失敗|ほぞん\s*できませんでした/.test(plain)) return '作品ファイルを ほぞん できませんでした。この画面の作品は のこって います。画面を とじずに、もう一度「保存」を おして ください。';
+      if (/読み込み失敗|読みこめませんでした/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえて いません。あかりで ほぞんした ファイル（名前が「.akari.md」で おわる ファイル）を えらんで ください。';
       return childDiagnosticText({message:plain});
     }
     const log = (m, type = '') => {
@@ -2612,7 +2641,7 @@
         const n = $('#' + id);
         if (n) n.disabled = locked;
       }
-      // The other toolbar controls cannot be pressed while the work runs either (保存, いっしょに作る, はじめて's もとにもどす・
+      // The other toolbar controls cannot be pressed while the work runs either (保存, いっしょに作る, はじめて's もとに もどす・
       // やり直す, and the ヒント and 作品 menus): the run screen shows none of the locked toolbar controls, but keeps their
       // room (final call 21), so ■ 止める stays where ▶ 動かす was.
       $('#saveBtn').disabled = locked;
@@ -2646,7 +2675,23 @@
       $$('.hint-button').forEach((b) => (b.disabled = locked || b.dataset.unavailable === 'true'));
       // The run screen: from ▶ 動かす (getting ready) until ■ 止める, also paused, stopped by an error and finished. The edit
       // screen (DESIGN, IMPORTING) shows ▶ 動かす only, the run screen ■ 止める only, in the same place.
-      document.body.classList.toggle('runtime', ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState));
+      const wasRuntime = document.body.classList.contains('runtime'), main = $('.main');
+      if (runScreen && !wasRuntime) {
+        const r = $('#formFrame').getBoundingClientRect();
+        runStageMinimum = { width: r.width, height: r.height, left: main.scrollLeft, top: main.scrollTop };
+        main.tabIndex = 0; main.setAttribute('aria-label', '画面と 本文を スクロールする');
+        document.body.dataset.runStageMinimum = '';
+      }
+      document.body.classList.toggle('runtime', runScreen);
+      if (runScreen && !wasRuntime) fitRunStageMinimum();
+      else if (!runScreen && wasRuntime) {
+        const previous = runStageMinimum; runStageMinimum = null;
+        delete document.body.dataset.runStageMinimum;
+        main.removeAttribute('tabindex'); main.removeAttribute('aria-label');
+        $('#designerWindow').style.removeProperty('--run-stage-min-width');
+        $('#designerWindow').style.removeProperty('--run-stage-min-height');
+        main.scrollLeft = previous?.left || 0; main.scrollTop = previous?.top || 0;
+      }
       document.body.classList.toggle('run-finished', runFinished);
       syncWideInert();
       // はじめて's run screen shows the blocks to read only: they are not Tab stops between the stage and ■ 止める (AX-11).
@@ -2725,10 +2770,10 @@
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
       const draft = hasCallableDraft() || hasPendingEditor();
-      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんしていないよ' : draft ? '書きかけが あるよ' : 'かえた ところは ないよ';
+      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんして いないよ' : draft ? '書きかけが あるよ' : 'かえた ところは ないよ';
       el.dirty.className = dirty || draft ? 'dirty-state dirty' : 'dirty-state';
       // The saving state reads as one sentence: what this computer keeps, then the file (このパソコンに のこしたよ。ファイルに
-      // まだ ほぞんしていないよ). With nothing changed only かえた ところは ないよ is said.
+      // まだ ほぞんして いないよ). With nothing changed only かえた ところは ないよ is said.
       el.autosave.classList.toggle('save-quiet', !dirty && !draft);
       const locked = modelLocked();
       $('#undoBtn').disabled =
@@ -2826,7 +2871,7 @@
       }
     }
     function validateSavedEditorFingerprint(value) {
-      const fail = () => { throw new AkariError('F503', 'このパソコンに のこした 作品の 書きかけの ようすが 正しくありません'); };
+      const fail = () => { throw new AkariError('F503', 'このパソコンに のこした 作品の 書きかけの ようすが 正しく ありません'); };
       if (typeof value !== 'string' || value.length > LIMITS.fileBytes) return fail();
       let saved;
       try { saved = JSON.parse(value); } catch (_) { return fail(); }
@@ -2900,7 +2945,7 @@
       if (!observed.unsaved) return Promise.resolve(true);
       if (loseConfirm) return Promise.resolve(false);
       const origin = document.activeElement;
-      $('#loseConfirmMessage').textContent = `「${project.name}」には まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。`;
+      $('#loseConfirmMessage').textContent = `「${project.name}」には まだ ほぞんして いない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。`;
       $('#loseConfirmModal').classList.add('show');
       $('#loseConfirmCancel').focus({preventScroll:true});
       return new Promise((resolve) => {
@@ -2976,12 +3021,11 @@
           const option = document.createElement('option');
           option.value = index === 0 ? ev : scriptSourceKey(row);
           // A key is named as on the keyboard (「スペース」), as the heading writes it.
-          const filter = row?.filter, value = ev === 'touchStart' ? '' : (filter?.key ? keySurface(filter.key) : '') || filter?.message || (typeof filter === 'string' ? filter : '');
+          const filter = row?.filter;
           // A touch body is named with what it touches (「星」に ふれたとき); bodies with the same partner are numbered among
           // themselves. A part with no touch body has the one entry ふれたとき.
           const same = ev === 'touchStart' ? rows.filter(x => x.filter?.target === filter?.target) : rows;
-          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : eventText(ev, filter) + (same.length > 1 ? ` ／ 本文${same.indexOf(row) + 1}` : '') +
-            (value ? ` 「${value}」` : '');
+          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : eventText(ev, filter) + (same.length > 1 ? ` ／ 本文${same.indexOf(row) + 1}` : '');
           if (row) option.dataset.scriptKey = scriptSourceKey(row);
           el.event.appendChild(option);
         });
@@ -3096,7 +3140,7 @@
               onOperation: () => ({ ok: false, reason: '「この 本文を なおす」を えらんでね' }),
             }));
           } else {
-            if (!session.syntaxAst) body.append(make('p', '書き方を たしかめてください。入力した 本文を 見せています。', 'source-error'));
+            if (!session.syntaxAst) body.append(make('p', '書き方を たしかめて ください。入力した 本文を 見せて います。', 'source-error'));
             body.append(make('pre', record.source));
           }
         };
@@ -3123,7 +3167,7 @@
         const card = make('section', null, 'source-card source-draft');
         card.dataset.ownerId = callableDraftCore.ownerId;
         card.dataset.sourceKey = draftOwner();
-        card.append(make('h3', `なおしている ${callableDraftCore.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${callableDraftCore.name || '名前を入力'}」`),
+        card.append(make('h3', `なおして いる ${callableDraftCore.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${callableDraftCore.name || '名前を入力'}」`),
           make('pre', callableDraftCore.source || '本文は からっぽだよ。'),
           button('つづきを なおす', () => { $('#procModal').classList.add('show'); renderEditorBinding(draftEditor); }));
         root.append(card);
@@ -3171,7 +3215,7 @@
       el.title.textContent = project.name;
     }
     // 「たて・よこを そろえる」 (E-22) keeps a part's shape while a corner handle is moved, as Shift does with a mouse; it is
-    // shown over the stage on a touch screen while a part with a box is selected.
+    // shown in the stage heading on a touch screen while a part with a box is selected.
     let designRatioLocked = false;
     $('#designRatioLock').onclick = () => {
       designRatioLocked = !designRatioLocked;
@@ -3188,7 +3232,7 @@
     }
     // How the handles are shown is decided when they are first shown for a part at its size and screen scale, and a
     // drag keeps it from the press through the release (A-R2-05, A-08): the handle stays under the pointer after a drag
-    // that made a small part larger than 64 px. A change made another way (せってい, keys, もとにもどす, the screen's
+    // that made a small part larger than 64 px. A change made another way (せってい, keys, もとに もどす, the screen's
     // zoom) or another part decides it again.
     const designHandleKey = (c) => [c.id, c.w, c.h, c.scalePercent, Math.round(el.form.getBoundingClientRect().width * 100)].join(' ');
     function designHandlesSmallShown(c) {
@@ -3220,8 +3264,8 @@
           // only the corners and move them just outside the part.
           const small = designHandlesSmallShown(c),
             rad = ((c.direction % 360) * Math.PI) / 180,
-            px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
-            py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
+            px = small ? hx * 12 / stageScale : designResizeSmall !== null ? 0 : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
+            py = small ? hy * 12 / stageScale : designResizeSmall !== null ? 0 : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
           handle.hidden = small && (hx === 0 || hy === 0);
           // The offset is along the part's screen axes, which are turned by −向き on the screen.
           handle.style.left = p.x + px * Math.cos(rad) + py * Math.sin(rad) + 'px';
@@ -3388,7 +3432,7 @@
           renderComponents();
           focusResizeHandle(c.id, direction);
           // The size is said as the pointer path says it (「はば 120　高さ 80」, or 「星1: 110%」), and read out (#statusLive).
-          setStatus(changed ? (mode === 'scale' ? `${c.name}: ${c.scalePercent}%` : `はば ${c.w}　高さ ${c.h}`) : '大きさは かわっていないよ');
+          setStatus(changed ? (mode === 'scale' ? `${c.name}の 大きさ ${c.scalePercent}％` : `はば ${c.w}　高さ ${c.h}`) : '大きさは かわって いないよ');
         });
         el.form.append(handle);
       }
@@ -3428,6 +3472,7 @@
           } else if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             selectObject(id);
+            el.tree.querySelector('[tabindex="0"]')?.focus({ preventScroll: true });
           }
         };
         el.tree.appendChild(d);
@@ -3455,12 +3500,12 @@
     // A rename that the work refuses (prepareResourceRename), said in the status line's voice.
     const PROPERTY_REFUSALS = Object.freeze({
       '同じ 名前が あります': 'ほかの キャラクターや 部品と ちがう 名前に してね',
-      '同じ ところに 同じ 名前が あります。ちがう 名前に してください': 'ほかの キャラクターや 部品や 画面と ちがう 名前に してね',
-      '書きかけを 先に 決めてから、名前を かえてください': '書きかけを 先に 決めてから、名前を かえてね',
-      '名前を 使っているか しらべられない 本文が あります。先に 本文を 書きおえてから、名前を かえてください':
-        '名前を 使っているか しらべられない 本文が あるよ。先に 本文を 書きおえてから、名前を かえてね',
-      '同じ 名前が、いくつかの ものを さしています。どれの ことか、はっきり 書いてから 名前を かえてください':
-        '同じ 名前が、いくつかの ものを さしているよ。どれの ことか、はっきり 書いてから 名前を かえてね',
+      '同じ ところに 同じ 名前が あります。ちがう 名前に して ください': 'ほかの キャラクターや 部品や 画面と ちがう 名前に してね',
+      '書きかけを 先に 決めてから、名前を かえて ください': '書きかけを 先に 決めてから、名前を かえてね',
+      '名前を 使って いるか しらべられない 本文が あります。先に 本文を 書きおえてから、名前を かえて ください':
+        '名前を 使って いるか しらべられない 本文が あるよ。先に 本文を 書きおえてから、名前を かえてね',
+      '同じ 名前が、いくつかの ものを さして います。どれの ことか、はっきり 書いてから 名前を かえて ください':
+        '同じ 名前が、いくつかの ものを さして いるよ。どれの ことか、はっきり 書いてから 名前を かえてね',
     });
     function propRow(name, value, onchange, type = 'text', options = {}) {
       const r = document.createElement('div');
@@ -3491,7 +3536,7 @@
           refreshEditor();
           options.after?.();
         } catch (err) {
-          log(`${err.code || ''} ${err.message}`, 'error');
+          log((err.code ? err.code + ' ' : '') + sentence(err.code ? err.message : err.message.replace(/てね$/, 'て ください')), 'error');
           rollbackDesign(before);
           // The field goes back to what it was; the status line says why and what to write, in its own voice (F-11: no
           // silent no-op; F-18). Another check of the work (with a code) is said in the teacher log only.
@@ -3551,10 +3596,10 @@
     function noteOutsideParts() {
       const outside = project.components.filter((c) => {
         const b = designBox(c);
-        return b.right < 0 || b.left > project.stage.width || b.top < 0 || b.bottom > project.stage.height;
+        return b.right <= 0 || b.left >= project.stage.width || b.top <= 0 || b.bottom >= project.stage.height;
       });
       if (outside.length)
-        setStatus(`${outside.map((c) => `「${c.name}」`).join('と ')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+        setStatus(`${outside.map((c) => `「${c.name}」`).join('と ')}は 画面の 外に あるよ。「せってい」の「よこのばしょ」・「たてのばしょ」で もどせるよ`);
       else setStatus(`画面の はば ${project.stage.width}　高さ ${project.stage.height}`);
     }
     // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
@@ -3594,7 +3639,7 @@
               project.stage.width,
               (v) => {
                 const n = Number(v);
-                if (!finite(n) || n < 200 || n > 1200) throw new Error('画面の はばは 200から1200までの 数に してね');
+                if (!Number.isInteger(n) || n < 200 || n > 1200) throw new Error('画面の はばは 200から1200までの、小数の ない 数に してね');
                 project.stage.width = n;
               },
               'number',
@@ -3605,8 +3650,8 @@
               project.stage.height,
               (v) => {
                 const n = Number(v);
-                if (!finite(n) || n < 150 || n > 800)
-                  throw new Error('画面の 高さは 150から800までの 数に してね');
+                if (!Number.isInteger(n) || n < 150 || n > 800)
+                  throw new Error('画面の 高さは 150から800までの、小数の ない 数に してね');
                 project.stage.height = n;
               },
               'number',
@@ -3822,7 +3867,7 @@
       const next = value === null && field === 'bg' ? null : pickerHex(value);
       if (next === null && !(field === 'bg' && value === null))
         throw new Error(
-          '色は、# と 6けたの 0〜9・A〜F で 入れてください（れい: #147efb）',
+          '色は、# と 6けたの 0〜9・A〜F で 入れて ください（れい: #147efb）',
         );
       if (c[field] === next) return false;
       const candidate = cloneDesignProject(project);
@@ -4239,7 +4284,7 @@
       // handles just outside it) as the handles were shown at the press.
       const pressSmall = designResizeSmall = designHandlesSmallShown(c);
       const sizeText = (at) =>
-        designResizeMode(c) === 'scale' ? `${c.name}: ${at.scalePercent}%` : `はば ${at.w}　高さ ${at.h}`;
+        designResizeMode(c) === 'scale' ? `${c.name}の 大きさ ${at.scalePercent}％` : `はば ${at.w}　高さ ${at.h}`;
       const move = (e) => {
         if (e.pointerId !== pointerId) return;
         if (modelLocked() || componentById(id) !== c) {
@@ -4293,7 +4338,7 @@
           setStatus(
             '大きさを かえるのを やめたよ',
           );
-        else setStatus(changed ? sizeText(c) : '大きさは かわっていないよ');
+        else setStatus(changed ? sizeText(c) : '大きさは かわって いないよ');
       };
       const up = (e) => {
           if (e.pointerId === pointerId) finish(e);
@@ -4326,7 +4371,7 @@
       if (!source) return;
       try {
         if (project.components.length >= LIMITS.components)
-          throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けしてください');
+          throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けして ください');
         const next = cloneDesignProject(project), copy = cloneDesignProject(source), ids = allIds(),
           names = new Set(project.components.map(c => c.name));
         let n = 2;
@@ -4557,7 +4602,7 @@
       pushHistoryNow();
       if (modelLocked() || !['label', 'button', 'input', 'box', 'sprite'].includes(type)) return;
       if (project.components.length >= LIMITS.components) {
-        log('部品が いっぱいで、もう ふやせません。いらない部品を けしてください', 'error');
+        log('部品が いっぱいで、もう ふやせません。いらない部品を けして ください', 'error');
         setStatus('キャラクターや 部品が いっぱいで、もう ふやせないよ。いらない ものを けしてね');
         return;
       }
@@ -4650,7 +4695,10 @@
       project.components.push(base);
       markDirty();
       selectObject(id);
-      if (auto) setStatus(`「${name}」を おいたよ。いま 動かすものは「${name}」だよ`);
+      const placed = designBox(base);
+      if (placed.right <= 0 || placed.left >= project.stage.width || placed.top <= 0 || placed.bottom >= project.stage.height)
+        setStatus(`「${name}」は 画面の 外に あるよ。「せってい」の「よこのばしょ」・「たてのばしょ」で もどせるよ`);
+      else if (auto) setStatus(`「${name}」を おいたよ。いま 動かすものは「${name}」だよ`);
     }
 
     let activeFailureId = null,
@@ -4701,7 +4749,7 @@
       v.page = clamp(v.page, 0, pages - 1);
       $('#valueTitle').textContent = v.label;
       const rounded = item !== undefined && displayValue(item).rounded;
-      $('#valueNotice').textContent = rounded ? 'ふだんは 数を 短くして 見せているよ。下は もとの 数だよ。えらんで、ほかの ところに はりつけられるよ。' : '下は 中身の 全部だよ。えらんで、ほかの ところに はりつけられるよ。';
+      $('#valueNotice').textContent = rounded ? 'ふだんは 数を 短くして 見せて いるよ。下は もとの 数だよ。えらんで、ほかの ところに はりつけられるよ。' : '下は 中身の 全部だよ。えらんで、ほかの ところに はりつけられるよ。';
       $('#valueListControls').hidden = !list;
       $('#valueItem').value = String(v.index + 1);
       $('#valueItem').max = String(Math.max(1, v.value.length || 1));
@@ -4751,13 +4799,13 @@
       const lead = document.createElement('p'), reason = document.createElement('div'), place = document.createElement('div'),
         why = document.createElement('div'), next = document.createElement('p');
       lead.textContent = entry ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。'
-        : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。';
+        : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかった ときの きろくは のこって いるよ。';
       reason.className = 'failure-reason'; place.className = 'failure-place'; why.className = 'failure-why';
       place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r, diagnosticSource(r), project);
       reason.append(place, why);
       const latest = r.id === scheduler.errorRecords.at(-1)?.id, sentence = diagnosticSentence(r),
         framed = latest && !!document.querySelector('#blockEditor .blockui-current');
-      next.textContent = !entry ? '「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられるよ。書きなおすときは「■ 止める」を おしてから なおしてね。'
+      next.textContent = !entry ? '「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられるよ。書きなおす ときは「■ 止める」を おしてから なおしてね。'
         : framed ? '「とじる」を おしてから「■ 止める」を おして、オレンジの わくの ところを なおしてね。'
         : '「とじる」を おしてから「■ 止める」を おして、' + (sentence ? '「' + sentence + '」の ブロックを なおしてね。' : 'この ブロックを なおしてね。');
       help.append(lead, reason, next);
@@ -4776,7 +4824,7 @@
       }
       const failedId = r.actor?.baseId || r.targetId, failedTarget = targetById(failedId),
         failedKind = !failedTarget || failedId === 'stage' ? '画面' : failedTarget.type === 'sprite' ? 'キャラクター' : '部品';
-      renderMonitorSection(root, 'うまく いかなかったときの ようす', [
+      renderMonitorSection(root, 'うまく いかなかった ときの ようす', [
         [`動いていた ${failedKind}`, failedTarget?.name || '画面'],
         ['きっかけ', runtimeEventText(r.eventType, r.key)],
         ['動かしていた本文', r.source],
@@ -4798,12 +4846,12 @@
         );
       if (r.binders.length)
         renderMonitorSection(root, 'くり返しで今見ているもの', r.binders);
-      renderMonitorSection(root, 'うまく いかなかったときの 作品の へんすう・リスト', [
+      renderMonitorSection(root, 'うまく いかなかった ときの 作品の へんすう・リスト', [
         ...r.projectVariables,
         ...r.projectLists,
       ]);
       if (r.actor)
-        renderMonitorSection(root, `うまく いかなかったときの この ${failedKind}の ようす`, [
+        renderMonitorSection(root, `うまく いかなかった ときの この ${failedKind}の ようす`, [
           ['よこのばしょ', r.actor.x],
           ['たてのばしょ', r.actor.y],
           ['向き', r.actor.direction],
@@ -4867,12 +4915,12 @@
       apply.id = 'listRepairApply'; apply.textContent = 'ここだけ 入れかえる'; apply.disabled = true;
       cancel.id = 'listRepairCancel'; cancel.textContent = 'やめる'; cancel.onclick = () => panel.remove();
       notice.id = 'listRepairNotice'; notice.setAttribute('role', 'status');
-      if (!candidates.length) notice.textContent = 'ここで 使える リストは ありません。へんすう・リストの ボタンで 作ってから、もう一度 動かしてください。';
+      if (!candidates.length) notice.textContent = 'ここで 使える リストは ありません。へんすう・リストの ボタンで 作ってから、もう一度 動かして ください。';
       select.disabled = !candidates.length;
       const sourceIsCurrent = () => !modelLocked() && generationToken === token &&
         bindingOwner(mainEditor) === ownerKey && readSource(mainEditor) === record.source &&
         el.editor.value === record.source.replace(/\r\n?/g, '\n') && !hasPendingEditor();
-      const stale = () => { notice.textContent = 'うまく いかなかった あとに、本文や 動きが かわりました。いまの 本文を たしかめて、もう一度 動かしてから えらびなおしてください。'; apply.disabled = true; };
+      const stale = () => { notice.textContent = 'うまく いかなかった あとに、本文や 動きが かわりました。いまの 本文を たしかめて、もう一度 動かしてから えらびなおして ください。'; apply.disabled = true; };
       select.onchange = () => {
         if (!sourceIsCurrent()) { stale(); return; }
         const candidate = candidates[Number(select.value)]; apply.disabled = select.value === '';
@@ -4882,7 +4930,7 @@
         if (!sourceIsCurrent()) { stale(); return; }
         const candidate = select.value === '' ? null : candidates[Number(select.value)],
           current = candidate && quotedListCandidates(record).find(c => c.id === candidate.id && c.source === candidate.source && c.owner === candidate.owner);
-        if (!current) { notice.textContent = 'えらんだ リストが かわりました。もう一度 動かしてから、えらびなおしてください。'; apply.disabled = true; return; }
+        if (!current) { notice.textContent = 'えらんだ リストが かわりました。もう一度 動かしてから、えらびなおして ください。'; apply.disabled = true; return; }
         try {
           const source = record.source.slice(0, range.start) + current.source + record.source.slice(range.end);
           if (!commitSource(mainEditor, source, {atomic:true})) return;
@@ -4935,7 +4983,7 @@
           const left = Math.max(0, Math.ceil((reason.deadline - runtime.now()) / 100) / 10);
           return `${left}秒 待っているよ`;
         }
-        return { condition: 'そうなるまで 待っているよ', question: '答えを 待っているよ', waitGroup: 'ほかの 動きが おわるのを 待っているよ',
+        return { condition: 'そう なるまで 待って いるよ', question: '答えを 待っているよ', waitGroup: 'ほかの 動きが おわるのを 待っているよ',
           glide: '時間を かけて 動いているよ', moveUntil: '動いているよ' }[reason.kind] || '待っているよ';
       }
       return { PAUSED: 'いったん 止めたよ', DONE: 'おわったよ', ERROR: '直す ところが あるよ', CANCELLED: '止めたよ' }[task.state] || '動いているよ';
@@ -4945,7 +4993,7 @@
       if (!runtime) {
         const d = document.createElement('div');
         d.className = 'monitor-empty';
-        d.textContent = '止まっているよ';
+        d.textContent = '止まって いるよ';
         el.monitor.appendChild(d);
         renderKeptExtensionData();
         return;
@@ -4960,7 +5008,7 @@
         button.onclick = () => showFailureDetails();
         el.monitor.appendChild(button);
         // 動きのようす speaks in Akari's voice (F-18): the reason, in the language's polite words, is in the record.
-        section('さいごに うまく いかなかったとき', [
+        section('さいごに うまく いかなかった とき', [
           ['直す手がかり', 'わけは「動きが 止まった きろくを 見る」で 見られるよ'],
           ['ばしょ', diagnosticLocation(last)],
           ['うまく いかなかった やること', last.statement],
@@ -4991,7 +5039,7 @@
       ]);
       if (document.body.dataset.uiLevel === 'advanced')
         section('動きの かず', [
-          ['じゅんばんを 待っている', tasks.filter((t) => t.state === 'READY').length],
+          ['じゅんばんを 待って いる', tasks.filter((t) => t.state === 'READY').length],
           ['何かを 待っている', tasks.filter((t) => t.state === 'BLOCKED').length],
         ]);
       if (selectedId !== 'stage') {
@@ -5239,7 +5287,7 @@
       activeLoc = null;
       stageView.keepBubbles();
       paintRunStrip();
-      setStatus(stoppedAll ? '作品が 止まったよ。作る 画面に もどるときは「■ 止める」を おしてね'
+      setStatus(stoppedAll ? '作品が 止まったよ。作る 画面に もどる ときは「■ 止める」を おしてね'
         : 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね');
       updateRunState();
     }
@@ -5332,20 +5380,28 @@
       return cachedNotices().filter(d => d.owner === session.ownerKey && noticeSources.get(d.owner) === session.sourceText)
         .sort((a, b) => (a.line || 0) - (b.line || 0) || (a.column || 0) - (b.column || 0));
     }
-    // ■ 止める points to the notices of the run once: the same notices after the next run say only 止まっているよ. A
+    // ■ 止める points to the notices of the run once: the same notices after the next run say only 止まって いるよ. A
     // notice in a body that is not shown names that body.
     function stopStatusWithNotices() {
+      if (keptFail?.error) {
+        const key = compiled?.items?.find(item => item.key === keptFail.key)?.documentKey || keptFail.key,
+          shown = !sourceOverviewOpen && key === bindingOwner(mainEditor),
+          place = shown && shownEditorMode() === 'code' && keptFail.line ? `コードの ${keptFail.line}行目`
+            : shown && document.querySelector('#blockEditor .blockui-current') ? 'オレンジの わくの ところ'
+            : diagnosticLocation({...keptFail, where: keptFail.key});
+        return `止まって いるよ。${place}を なおしてね。`;
+      }
       const notes = compiled?.notes || [], key = notes.map(d => d.where + '|' + d.line + '|' + d.code).join(',');
       const before = pointedNotices;
       pointedNotices = key;
-      if (!notes.length || key === before) return '止まっているよ';
+      if (!notes.length || key === before) return '止まって いるよ';
       const owner = d => compiled.items?.find(item => item.key === d.where)?.documentKey || d.where;
       const shown = d => sourceOverviewOpen ? scriptBySourceKey(project, owner(d))?.targetId === selectedId : owner(d) === bindingOwner(mainEditor);
-      if (notes.some(shown)) return '止まっているよ。ⓘ が ついた ところに 知らせが あるよ';
+      if (notes.some(shown)) return '止まって いるよ。ⓘ が ついた ところに 知らせが あるよ';
       const { key: where, script, definition } = diagnosticOwner({ where: owner(notes[0]) });
       const place = definition ? (where.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
         : meijinTextLabel(script) || `「${targetById(script?.targetId)?.name || project.stage.name}」の ${eventText(script?.event, script?.filter)}の 本文`;
-      return `止まっているよ。${place}に ⓘ の 知らせが あるよ`;
+      return `止まって いるよ。${place}に ⓘ の 知らせが あるよ`;
     }
     // What the code view says about a body (FM2-04, FM2-10, FCM-19, FCM-25): a reading error that a 名人 text would read
     // says S317, as 作品チェック and ▶ do, and a body with its own heading that the code view holds until ▶ (or the block
@@ -5411,7 +5467,7 @@
       // The visible pending source can differ from the valid project baseline.
       // Never show a baseline success message over a rejected code edit.
       if (composingEditors.has(el.editor)) {
-        errs = []; notice = '日本語を 入れている とちゅうです。文字を 決めてから、書き方を たしかめます';
+        errs = []; notice = '日本語を 入れて いる とちゅうです。文字を 決めてから、書き方を たしかめます';
       } else if (['code','heading-source','source-import'].includes(pending?.kind) && !session.blockDraft) {
         const parsed = parseSyntax(pending.value, { ...bindingContext(mainEditor),
           key: session.ownerKey, symbols: buildSymbols(project) });
@@ -5423,16 +5479,16 @@
         // A body with its own heading is checked for its names and meanings too before the line says it is fine.
         const checked = pending.kind === 'source-import' ? errs
           : checkedEditorErrors(mainEditor, pending.value, errs, pending.kind === 'heading-source' && !errs.length ? parsed.ast : null);
-        if (checked === null) notice = '書き方を たしかめています';
+        if (checked === null) notice = '書き方を たしかめて います';
         else {
           errs = checked;
-          if (!errs.length) notice = pending.reason || '入力を 決めてください';
+          if (!errs.length) notice = pending.reason || '入力を 決めて ください';
         }
       } else if (session.blockDraft) {
-        errs = []; notice = pending?.reason || 'あいている ところに ブロックや 数・文字を 入れてください';
+        errs = []; notice = pending?.reason || 'あいている ところに ブロックや 数・文字を 入れて ください';
       } else if (pending) {
         errs = pending.diagnostics?.length ? pending.diagnostics : [];
-        if (!errs.length) notice = pending.reason || '入力を 決めてください';
+        if (!errs.length) notice = pending.reason || '入力を 決めて ください';
       }
       const notices = !errs.length && !notice && !pending ? bodyNotices(session) : [];
       session.notices = notices;
@@ -5442,7 +5498,7 @@
       } else if (notices.length) {
         // The first notice from the top, with how many more there are; one that names its fix offers it (I120).
         const first = notices[0];
-        el.issue.textContent = 'ⓘ ' + (first.line || 1) + '行目：' + first.message + (notices.length > 1 ? `（ほかに ${notices.length - 1}つ あります）` : '');
+        el.issue.textContent = 'ⓘ ' + (first.line || 1) + '行目：' + sentence(first.message) + (notices.length > 1 ? `ほかにも 知らせが ${notices.length - 1}つ あります。` : '');
         for (const proposal of first.proposals || []) {
           if (typeof proposal.source !== 'string') continue;
           const fix = document.createElement('button');
@@ -5502,6 +5558,16 @@
         filtered = searchHintCandidates(candidates, query, project),
         page = Math.min(offset, Math.max(0, Math.ceil(filtered.length / 24) - 1)),
         begin = page * 24;
+      if (root===el.hints && /ふれ(?:た|る)とき|さわ(?:った|る)とき|あた(?:った|る)とき|ぶつか(?:った|る)とき/.test(normalizeSearchText(query))) {
+        const owner=project.components.find(c=>c.id===selectedId),toucher=owner||project.components.find(c=>c.type==='sprite'),
+          part=project.components.find(c=>c.id!==toucher?.id),example=toucher?sentenceHeadingSource({event:'touchStart',actorRef:currentIsMeijin()||!owner?{kind:'named',name:toucher.name}:{kind:'self'},filter:{target:part?.name||'端'}}):null;
+        if(example){
+        const note = document.createElement('p');
+        note.className = 'hint-heading-note';
+        note.textContent = 'ふれた ときに 動かすには、本文の はじめに「' + example + '」を 書いてね';
+        root.appendChild(note);
+        }
+      }
       for (const h of filtered.slice(begin, begin + 24)) {
         const b = document.createElement('button');
         b.className = 'hint-button';
@@ -5621,10 +5687,10 @@
     }
     function formatCurrent() {
       if (modelLocked() || !flushEditor(mainEditor)) return;
-      if (currentIsMeijin()) { setStatus('名人の本文は、書いたとおりに のこすよ'); return; }
+      if (currentIsMeijin()) { setStatus('名人の本文は、書いた とおりに のこすよ'); return; }
       try {
         const s = getEditorSession(mainEditor);
-        if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えてください');
+        if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えて ください');
         const source = formatScript(s.syntaxAst);
         commitSource(mainEditor, source, { atomic: true });
         el.editor.value = source;
@@ -5715,11 +5781,11 @@
           statements:[],speech:[],observations:[],clicks:0,busy:false,sawTask:false,complete:false,failed:false};
       }
       refreshEditor();
-      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから 動かしてください','error');refuse('書きかけの ところを 直してから「▶ 動かす」を おしてね。');return;}
+      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから 動かして ください','error');refuse('書きかけの ところを 直してから「▶ 動かす」を おしてね。');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
-        log('自分で作ったブロックを なおしている とちゅうです。ほぞんしてから 動かしてください', 'error');
+        log('自分で作ったブロックを なおして いる とちゅうです。ほぞんしてから 動かして ください', 'error');
         refuse('自分で作ったブロックの 画面を とじてから「▶ 動かす」を おしてね。');
         return;
       }
@@ -5730,7 +5796,7 @@
       compiled = compileProject(project);
       if (compiled.errors.length) {
         showDiagnosis();
-        log('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直してください', 'error');
+        log('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直して ください', 'error');
         refuse('作品に 直す ところが あるよ。' + fixPointer(compiled.errors[0]));
         return;
       }
@@ -5775,8 +5841,9 @@
         runFailed = false;
         runHint = '';
         keptFail = null;
-        setStatus('絵や音を じゅんびしているよ');
+        setStatus('絵や音を じゅんびして いるよ');
         updateRunState();
+        stageView.fitStage();
         // The run screen starts now; the focus goes to the stage, not to the page (▶ 動かす is not shown there).
         el.form.focus({ preventScroll: true });
         (async () => {
@@ -5808,7 +5875,7 @@
             renderAll();
             loadEditor();
             log(`${err.code || ''} 動かす じゅんびが できませんでした: ${err.message}`, 'error');
-            setStatus('動かす じゅんびが できなかったよ。作品は のこっているよ。「▶ 動かす」で もう一度 ためしてね');
+            setStatus('動かす じゅんびが できなかったよ。作品は のこって いるよ。「▶ 動かす」で もう一度 ためしてね');
           }
         })();
       } catch (err) {
@@ -5816,7 +5883,7 @@
         appState = 'DESIGN';
         updateRunState();
         log(`${err.code || ''} 動かす じゅんびが できませんでした: ${err.message}`, 'error');
-        setStatus('動かす じゅんびが できなかったよ。作品は のこっているよ。「▶ 動かす」で もう一度 ためしてね');
+        setStatus('動かす じゅんびが できなかったよ。作品は のこって いるよ。「▶ 動かす」で もう一度 ためしてね');
       }
     }
     function stopRun() {
@@ -5852,14 +5919,14 @@
       else el.editor.focus({ preventScroll: true });
     }
     // The words of the run: the same in the status line and on the right (動いているよ, いったん 止めたよ, おわったよ,
-    // 止まっているよ), and in 動きのようす. A run stopped at a mistake cannot go on: it says とちゅうで 止まったよ on the right
+    // 止まって いるよ), and in 動きのようす. A run stopped at a mistake cannot go on: it says とちゅうで 止まったよ on the right
     // as the status line does (「動きが とちゅうで 止まったよ」), not いったん 止めたよ.
     function runStateText() {
-      if (appState === 'PREPARING') return 'じゅんびしているよ';
-      if (appState === 'IMPORTING') return '読みこんでいるよ';
+      if (appState === 'PREPARING') return 'じゅんびして いるよ';
+      if (appState === 'IMPORTING') return '読みこんで いるよ';
       if (runFinished) return 'おわったよ';
       if (scheduler?.running) return runFailed ? 'とちゅうで 止まったよ' : scheduler.paused ? 'いったん 止めたよ' : '動いているよ';
-      return '止まっているよ';
+      return '止まって いるよ';
     }
     // A pause and the continue after it change the status line too, when it only said that the work runs (an error or a
     // hint said with the pause stays).
@@ -6038,6 +6105,10 @@
         commitSource(mainEditor, source, { atomic: true });
         renderEditorBinding(mainEditor); refreshEditor();
         $('#diagnosisModal').classList.remove('show');
+        if (shownEditorMode() === 'code') {
+          el.editor.focus({ preventScroll: true });
+          el.editor.setSelectionRange(proposal.start, proposal.start + proposal.source.length);
+        } else mainEditor.view?.focus({ line: note.line });
         setStatus('直したよ');
       } catch (error) { showEditorFailure(mainEditor, error); }
     }
@@ -6085,7 +6156,16 @@
       }
       $('#diagnosisModal').classList.add('show');
     }
-    let exportBusy = false;
+    let exportBusy = false, exportGeneration = 0;
+    function cancelPlayerExport() {
+      // Invalidate both deferred starts before a later chooser can begin another export.
+      exportGeneration++;
+      exportBusy = false;
+      $('#exportChoiceModal').classList.remove('show');
+      $('#exportControls').disabled = $('#exportArtwork').disabled = false;
+      $('#exportBtn').disabled = modelLocked();
+      setStatus('うごく作品を ファイルに するのを やめたよ');
+    }
     function exportProject() {
       if(tutorial)return;
       if (!flushActiveEditor()) {
@@ -6099,7 +6179,7 @@
       if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
-        log('自分で作ったブロックを なおしている とちゅうだよ。ほぞんしてから、うごく作品を ファイルにしてね', 'error');
+        log('自分で作ったブロックを なおして いる とちゅうだよ。ほぞんしてから、うごく作品を ファイルにしてね', 'error');
         return;
       }
       const errors = compileProject(project).errors;
@@ -6117,6 +6197,7 @@
         $('#exportChoiceModal').classList.remove('show'); return;
       }
       exportBusy = true;
+      const generation = ++exportGeneration;
       const button = $('#exportBtn');
       button.disabled = true;
       $('#exportControls').disabled = $('#exportArtwork').disabled = true;
@@ -6124,7 +6205,12 @@
       // The file is made after the next paint, so that sentence shows while it is made: a work with many pictures takes
       // seconds, and the page cannot paint meanwhile. A timer stands in where no frame comes (a hidden page).
       let started = false;
-      const make = () => { if (!started) { started = true; writePlayerFile(presentation, button); } };
+      const make = () => {
+        if (!started && generation === exportGeneration && $('#exportChoiceModal').classList.contains('show')) {
+          started = true;
+          writePlayerFile(presentation, button);
+        }
+      };
       requestAnimationFrame(() => setTimeout(make, 0));
       setTimeout(make, 200);
     }
@@ -6245,11 +6331,11 @@
         clearTimeout(autosaveTimer);
         writeAutosave();
         log(`${a.download} を ダウンロードしはじめました。このパソコンに のこした 作品も そのままです`, 'ok');
-        setStatus(unfinished?'書きかけの ある 作品を ファイルに ほぞんしたよ。動かす 前に、まだ できていない ところを たしかめてね':`「${project.name}」を ファイルに ほぞんしたよ`);
+        setStatus(unfinished?'書きかけの ある 作品を ファイルに ほぞんしたよ。動かす 前に、まだ できて いない ところを たしかめてね':`「${project.name}」を ファイルに ほぞんしたよ`);
         return true;
       } catch (err) {
-        log(`${err.code || ''} ほぞんできませんでした: ${err.message}`, 'error');
-        setStatus('ファイルに ほぞんできなかったよ。作品は この 画面に のこっているよ。もう一度「保存」を おしてね');
+        log(`${err.code || ''} ほぞん できませんでした: ${err.message}`, 'error');
+        setStatus('ファイルに ほぞん できなかったよ。作品は この 画面に のこって いるよ。もう一度「保存」を おしてね');
         return false;
       }
     }
@@ -6267,7 +6353,7 @@
       updateRunState();
       try {
         if (file.size > LIMITS.fileBytes)
-          throw new AkariError('F504', 'ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `開ける作品ファイルは${LIMITS.fileBytes / 1048576}MiBまで`);
+          throw new AkariError('F504', 'ファイルが 大きすぎて 使えません。もっと 小さい ファイルに して ください', 0, 0, `開ける作品ファイルは${LIMITS.fileBytes / 1048576}MiBまで`);
         const text = await file.text();
         let loaded;
         try { loaded = await parseProjectFile(text); }
@@ -6275,7 +6361,7 @@
           // A newer release of the same extension may open the work; the person decides.
           const upgrades = error?.extensionUpgrades;
           if (!upgrades) throw error;
-          if (!confirm('この 作品は、次の かくちょうの 前の バージョンで 作られているよ。\n' +
+          if (!confirm('この 作品は、次の かくちょうの 前の バージョンで 作られて いるよ。\n' +
             upgrades.map(item => '・' + item.name + '　' + item.from + ' → ' + item.to).join('\n') +
             '\nいまの バージョンで 開く？　ほぞんすると、いまの バージョンで のこるよ。')) throw Object.assign(error, { declined: true });
           loaded = await parseProjectFile(text, { upgradeExtensions: true });
@@ -6367,7 +6453,7 @@
           () =>
             fail(
               new Error(
-                '\u81ea\u52d5\u4fdd\u5b58DB\u306e\u5fdc\u7b54\u304c\u3042\u308a\u307e\u305b\u3093',
+                'このパソコンの きろくから 返事が ありません',
               ),
             ),
           4000,
@@ -6518,7 +6604,7 @@
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
       if(!modelLocked())updateDirty();
-      el.autosave.textContent = 'このパソコンには まだ のこしていないよ';
+      el.autosave.textContent = 'このパソコンには まだ のこして いないよ';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
     async function readAutosave() {
@@ -6591,7 +6677,7 @@
           }
           if (epoch === recoveryEpoch)
             el.autosave.textContent = ok
-              ? 'このパソコンには まだ のこしていないよ'
+              ? 'このパソコンには まだ のこして いないよ'
               : 'このパソコンに のこした 作品を けせたか、たしかめられなかったよ';
           return ok;
         }));
@@ -6612,14 +6698,14 @@
         if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint','lastSavedEditorFingerprint'])||
           rec.id!=='latest'||rec.version!==2||!Number.isFinite(rec.updatedAt)||
           !Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')
-          throw new AkariError('F503','このパソコンに のこした 作品の 形が 正しくありません');
+          throw new AkariError('F503','このパソコンに のこした 作品の 形が 正しく ありません');
         validateSavedEditorFingerprint(rec.lastSavedEditorFingerprint);
         const restored=await decodeWorkspaceHistory(rec.workspace);
         if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
         recoveryData={...rec,restored};
         // The work is named (F-02), and the autosave is called このパソコンに のこす (F-23).
         const keptName=restored.frames?.[restored.cursor]?.project?.name;
-        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()}に、${keptName?'「'+keptName+'」を ':''}とちゅうまで このパソコンに のこしてあるよ。つづきから 作る？ けすと、もう もどせないよ。`;
+        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()}に、${keptName?'「'+keptName+'」を ':''}とちゅうまで このパソコンに のこして あるよ。つづきから 作る？ けすと、もう もどせないよ。`;
         // The safe choice comes first and has the focus: つづきから 作る keeps the work, のこした 作品を けす cannot be undone.
         setStatus('このパソコンに のこした 作品が あるよ');
         $('#recoveryModal').classList.add('show');
@@ -6635,7 +6721,7 @@
           el.autosave.textContent =
             'このパソコンに のこした 作品を もどせるか、たしかめられなかったよ（のこした 作品は そのままだよ）';
           log(
-            `このパソコンに のこした 作品を たしかめられませんでした。のこした 作品は けしていません。 ${err.code || ''} ${err.message}`,
+            `このパソコンに のこした 作品を たしかめられませんでした。のこした 作品は けして いません。 ${err.code || ''} ${err.message}`,
             'error',
           );
         }
@@ -6644,7 +6730,7 @@
     function renderDataModal() {
       // The choice names what is chosen, as the part tools do (F-23): えらんだ キャラクター, えらんだ 部品.
       const chosen = componentById(selectedId);
-      $('#dataScope option[value="self"]').textContent = 'えらんだ ' + (chosen && chosen.type !== 'sprite' ? '部品' : 'キャラクター');
+      $('#dataScope option[value="self"]').textContent = chosen ? 'えらんだ ' + (chosen.type !== 'sprite' ? '部品' : 'キャラクター') : 'えらんだ キャラクターや 部品';
       updateDataForm();
       const body = $('#dataBody');
       body.textContent = '';
@@ -6657,7 +6743,7 @@
       } else {
         const c = componentById(selectedId);
         if (!c) {
-          body.textContent = 'へんすう・リストを かえる キャラクターや 部品を 先に えらんでください。';
+          body.textContent = 'へんすう・リストを かえる キャラクターや 部品を 先に えらんで ください。';
           return;
         }
         vars = c.localData.variables;
@@ -6680,7 +6766,7 @@
           const b = document.createElement('b');
           b.textContent = `${kind} ${d.name}`;
           const sm = document.createElement('small');
-          sm.textContent = `はじめの 中身: ${monitorValue(d.initialValue)}${d.expectedUnit ? ` ／使う たんい: ${d.expectedUnit}` : ''}`;
+          sm.textContent = `はじめの 中身：${monitorValue(d.initialValue)}${d.expectedUnit ? ` ／使う たんい：${d.expectedUnit}` : ''}`;
           const usage = document.createElement('code');
           usage.textContent = nameSource(d.name, scope === 'project' ? 'project' : 'self');
           info.append(b, sm, usage);
@@ -6748,9 +6834,9 @@
         validateName(name);
         const target =
           scope === 'project' ? before.projectData : before.components.find(c=>c.id===selectedId)?.localData;
-        if (!target) throw new Error('部品ごとの へんすう・リストを 作る 部品を えらんでください');
+        if (!target) throw new Error('部品ごとの へんすう・リストを 作る 部品を えらんで ください');
         if ([...target.variables, ...target.lists].some((x) => x.name === name))
-          throw new Error('同じ 名前の へんすう・リストが あります。ちがう 名前に してください');
+          throw new Error('同じ 名前の へんすう・リストが あります。ちがう 名前に して ください');
         field=kind==='list'&&$('#dataListMode').value==='lines'?$('#dataItems'):$('#dataInitial');
         const initial = parseDataFormInitial(field.value, kind,{mode:$('#dataListMode').value,expectedUnit:kind==='variable'?$('#dataUnit').value||null:null}),
           arr = kind === 'variable' ? target.variables : target.lists;
@@ -6923,7 +7009,7 @@
       const seen = new Set();
       for (const a of args) {
         validateName(a);
-        if (seen.has(a)) throw new AkariError('F503', '入れるものに 同じ 名前が 2つ いじょう あります。ちがう 名前に してください');
+        if (seen.has(a)) throw new AkariError('F503', '入れるものに 同じ 名前が 2つ いじょう あります。ちがう 名前に して ください');
         seen.add(a);
       }
       return { ownerId: d.ownerId, type: d.type, name, args, source: d.source, editId: d.editId,
@@ -6947,7 +7033,7 @@
       if (modelLocked() || !flushActiveEditor()) return;
       try {
         const s = getEditorSession(draftEditor);
-        if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えてください');
+        if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えて ください');
         const source = formatScript(s.syntaxAst);
         commitSource(draftEditor, source, { atomic: true });
         draftEditor.textarea.value = source;
@@ -6965,7 +7051,7 @@
         const previous=[...next.actions,...next.functions].find(x=>x.id===d.editId);
         if(previous&&previous.name!==d.name){
           const kind=next.actions.includes(previous)?'action':'function';
-          if(kind!==d.type)throw new AkariError('F503','名前と しゅるいは べつべつに かえてください。使っている ところを たしかめてください');
+          if(kind!==d.type)throw new AkariError('F503','名前と しゅるいは べつべつに かえて ください。使っている ところを たしかめて ください');
           previous.source=d.source;previous.args=d.args;
           if(d.callPhrase)previous.callPhrase=d.callPhrase;else delete previous.callPhrase;
           next=prepareResourceRename(next,kind+':'+previous.id,d.name,{drafts:resourceDraftRecords().filter(r=>r.key!=='draft-reference:callable')});
@@ -6974,7 +7060,7 @@
         if (
           [...next.actions, ...next.functions].some((x) => x.id !== d.editId && x.name === d.name)
         )
-          throw new AkariError('F503', '自分で作ったブロックに 同じ名前が あります。ちがう名前に してください');
+          throw new AkariError('F503', '自分で作ったブロックに 同じ名前が あります。ちがう名前に して ください');
         next.actions = next.actions.filter((x) => x.id !== d.editId);
         next.functions = next.functions.filter((x) => x.id !== d.editId);
         const id = d.editId || ensureUniqueId(d.type);
@@ -7026,12 +7112,12 @@
         const session = binding.session;
         if (!session?.pendingEdit && !session?.blockDraft) continue;
         drafts.push({ key: 'draft-reference:' + binding.kind, ownerId: bindingContext(binding).targetId,
-          kind: binding.kind === 'script' ? 'script' : 'draft', title: 'なおしている 本文',
+          kind: binding.kind === 'script' ? 'script' : 'draft', title: 'なおして いる 本文',
           incomplete: true, source: session.blockDraft?.source || binding.textarea.value,
           context: bindingContext(binding) });
       }
       if (hasCallableDraft() && !drafts.some(d => d.key === 'draft-reference:draft'))
-        drafts.push({ key: 'draft-reference:callable', ownerId: 'stage', kind: 'draft', title: 'なおしている 自分で作ったブロック',
+        drafts.push({ key: 'draft-reference:callable', ownerId: 'stage', kind: 'draft', title: 'なおして いる 自分で作ったブロック',
           source: callableDraftCore.source, context: bindingContext(draftEditor) });
       return drafts;
     }
@@ -7039,7 +7125,7 @@
       root.querySelector('.reference-issue')?.remove();
       const box = document.createElement('div'), title = document.createElement('p'), list = document.createElement('ul');
       box.className = 'reference-issue'; box.setAttribute('role', 'alert'); box.tabIndex = -1;
-      title.textContent = `「${impact.resource.name}」は ${action} ことが できません。この名前を 使っている 本文を たしかめてください。`;
+      title.textContent = `「${impact.resource.name}」は ${action} ことが できません。この名前を 使っている 本文を たしかめて ください。`;
       for (const row of [...impact.references, ...impact.uncertain]) {
         const item = document.createElement('li');
         item.textContent = `${row.title} ${row.line}行目：${row.reason || 'この名前を使っています'}`;
@@ -7081,7 +7167,7 @@
           try {
             validateResourceName(v, label + 'の名前');
             if (arr.some((x) => x !== obj && x.name === v))
-              throw new AkariError('F503', `同じ ${label}の 名前が あります。ちがう 名前に してください`);
+              throw new AkariError('F503', `同じ ${label}の 名前が あります。ちがう 名前に して ください`);
             const options = { drafts: resourceDraftRecords() }, impact = resourceChangeImpact(project, `${kind}:${obj.id}`, options);
             if (impact.uncertain.length) { showResourceImpact(impact, body, '名前を かえる'); return; }
             const next = prepareResourceRename(project, `${kind}:${obj.id}`, v, options);
@@ -7310,13 +7396,13 @@
       const before = cloneDesignProject(project);
       try {
         if (project.stage.backdrops.length >= LIMITS.backdrops)
-          throw new AkariError('F504', 'はいけいが いっぱいで、もう ふやせません。いらない はいけいを けしてください');
+          throw new AkariError('F504', 'はいけいが いっぱいで、もう ふやせません。いらない はいけいを けして ください');
         const name = $('#backdropName').value.trim(),
           val = $('#backdropColor').value.trim();
         validateResourceName(name, 'はいけいの名前');
         if (project.stage.backdrops.some((b) => b.name === name))
-          throw new AkariError('F503', '同じ はいけいの 名前が あります。ちがう 名前に してください');
-        if (!validateColorHex(val)) throw new AkariError('F507', 'はいけいの 色は、# と 6けたの 0〜9・A〜F で 書いてください。れい：#ffffff');
+          throw new AkariError('F503', '同じ はいけいの 名前が あります。ちがう 名前に して ください');
+        if (!validateColorHex(val)) throw new AkariError('F507', 'はいけいの 色は、# と 6けたの 0〜9・A〜F で 書いて ください。れい：#ffffff');
         project.stage.backdrops.push({
           id: ensureUniqueId('backdrop'),
           name,
@@ -7338,14 +7424,14 @@
       const before = cloneDesignProject(project);
       try {
         const c = componentById(selectedId);
-        if (c?.type !== 'sprite') throw new Error('文字の すがたを 入れる キャラクターを えらんでください');
+        if (c?.type !== 'sprite') throw new Error('文字の すがたを 入れる キャラクターを えらんで ください');
         if (c.costumes.length >= LIMITS.costumesPerSprite)
-          throw new AkariError('F504', 'すがたが いっぱいで、もう ふやせません。いらない すがたを けしてください');
+          throw new AkariError('F504', 'すがたが いっぱいで、もう ふやせません。いらない すがたを けして ください');
         const name = $('#costumeName').value.trim(),
           val = $('#costumeText').value;
         validateResourceName(name, 'すがたの名前');
         if (c.costumes.some((x) => x.name === name))
-          throw new AkariError('F503', '同じ すがたの 名前が あります。ちがう 名前に してください');
+          throw new AkariError('F503', '同じ すがたの 名前が あります。ちがう 名前に して ください');
         c.costumes.push({ id: ensureUniqueId('costume'), name, kind: 'text', value: val });
         c.costumeId = c.costumes[c.costumes.length - 1].id;
         validateDesignProject(project);
@@ -7437,7 +7523,7 @@
       pushHistoryNow();
       recoveryEpoch++;
       appState = 'IMPORTING';
-      setAssetProgress(`${label}を たしかめています…`);
+      setAssetProgress(`${label}を たしかめて います…`);
       updateRunState();
       renderAppearance();
       try {
@@ -7461,9 +7547,9 @@
       if (!file) return;
       return runAssetImport('絵', async () => {
         if (project.components.length >= LIMITS.components)
-          throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けしてください');
+          throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けして ください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに して ください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
@@ -7532,14 +7618,14 @@
       if (!file) return;
       return runAssetImport('はいけいの 絵', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに して ください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.stage.backdrops.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
           name = prompt('はいけいの名前', candidate);
         if (name === null) return;
         validateResourceName(name, 'はいけいの名前');
-        if (names.has(name)) throw new AkariError('F503', '同じ はいけいの名前が あります。ちがう名前に してください');
+        if (names.has(name)) throw new AkariError('F503', '同じ はいけいの名前が あります。ちがう名前に して ください');
         const next = cloneDesignProject(project),
           store = new AssetStore(assetStore.snapshotRefs()),
           digest = await sha256(canonical.bytes);
@@ -7569,16 +7655,16 @@
       return runAssetImport('すがたの 絵', async () => {
         const cur = project.components.find((c) => c.id === spriteId);
         if (cur?.type !== 'sprite')
-          throw new AkariError('F503', 'すがたの 絵を 入れる キャラクターを えらんでください');
+          throw new AkariError('F503', 'すがたの 絵を 入れる キャラクターを えらんで ください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに して ください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(cur.costumes.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
           name = prompt('すがたの名前', candidate);
         if (name === null) return;
         validateResourceName(name, 'すがたの名前');
-        if (names.has(name)) throw new AkariError('F503', '同じ すがたの名前が あります。ちがう名前に してください');
+        if (names.has(name)) throw new AkariError('F503', '同じ すがたの名前が あります。ちがう名前に して ください');
         const next = cloneDesignProject(project),
           target = next.components.find((c) => c.id === spriteId),
           store = new AssetStore(assetStore.snapshotRefs()),
@@ -7600,14 +7686,14 @@
       if (!file) return;
       return runAssetImport('音', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに して ください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeAudio(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.sounds.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
           name = prompt('音の名前', candidate);
         if (name === null) return;
         validateResourceName(name, '音の名前');
-        if (names.has(name)) throw new AkariError('F503', '同じ 音の名前が あります。ちがう名前に してください');
+        if (names.has(name)) throw new AkariError('F503', '同じ 音の名前が あります。ちがう名前に して ください');
         const next = cloneDesignProject(project),
           store = new AssetStore(assetStore.snapshotRefs()),
           digest = await sha256(canonical.bytes);
@@ -7750,7 +7836,7 @@
     $('#scriptAdd').onclick = () => {
       if (modelLocked() || !flushActiveEditor()) return;
       try {
-        if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文が いっぱいで、もう ふやせません。いらない 本文を けしてください');
+        if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文が いっぱいで、もう ふやせません。いらない 本文を けして ください');
         const next = cloneDesignProject(project), id = ensureUniqueId('script');
         next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '', ...newBodyFilter(currentEvent) });
         validateDesignProject(next);
@@ -7819,7 +7905,7 @@
     // ■ 止める takes ▶ 動かす's place: a press within 0.5 s of ▶ is the second press of a double press and does nothing
     // (a click, a tap, a pen press or a key alike).
     $('#stopBtn').addEventListener('click', (event) => {
-      if (event.timeStamp - runPressedAt < 500) return;
+      if (event.timeStamp - runPressedAt < 500) { el.form.focus({ preventScroll: true }); return; }
       stopRun();
     });
     // ⏸ いったん止める and ▶ つづける share one place: a press within 0.5 s of the last one there is the second press of a
@@ -7827,7 +7913,13 @@
     // place; after ▶ つづける to the stage, as after ▶ 動かす, so keys reach the work (いっしょに作る keeps its own place).
     let pauseSlotPressedAt = -Infinity;
     const pauseSlotPress = (event) => {
-      if (event.timeStamp - pauseSlotPressedAt < 500) return false;
+      if (event.timeStamp - pauseSlotPressedAt < 500) {
+        if (scheduler?.paused) $('#continueBtn').focus({ preventScroll: true });
+        else if (tutorial) focusTutorialTarget();
+        else if (event.currentTarget.closest('#runtimeInspector')) $('#pauseBtn').focus({ preventScroll: true });
+        else el.form.focus({ preventScroll: true });
+        return false;
+      }
       pauseSlotPressedAt = event.timeStamp;
       return true;
     };
@@ -7939,7 +8031,7 @@
         if (!sample) throw new AkariError('F512','お手本が 見つかりません');
         const nextProject = makeSampleProject(id), nextAssets = makeSampleAssetStore(id);
         openRequest=null; $('#samplePicker').close();
-        replaceCurrentProject(nextProject,nextAssets,sample.targetId,sample.event,`「${sample.title}」を 開いたよ。動かしてみよう！`);
+        replaceCurrentProject(nextProject,nextAssets,sample.targetId,sample.event,`「${sample.title}」を 開いたよ。動かして みよう！`);
       } catch(error) { log('お手本を 開けませんでした: '+error.message,'error'); setStatus('お手本を 開けなかったよ'); }
     }
     $('#sampleBtn').onclick=requestSampleProject;
@@ -7967,7 +8059,7 @@
     $('#entryStartEvent').onclick=()=>selectEntryEvent('start');
     $('#entryClickEvent').onclick=()=>selectEntryEvent('click');
     $('#tutorialStart').onclick=beginTutorial;
-    $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('とちゅうの 作品は のこっているよ。じゆうに つづけられるよ。');};
+    $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('とちゅうの 作品は のこって いるよ。じゆうに つづけられるよ。');};
     $('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(tutorial,'verify-save')){$('#tutorialSavedFile').value='';$('#tutorialSavedFile').click();}};
     $('#tutorialSavedFile').onchange=event=>{const file=event.target.files?.[0];event.target.value='';verifyTutorialSave(file);};
     $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial){tutorialNotice={step:tutorialStep(tutorial)?.id,text:'ファイルを えらぶのを やめたよ。もう一度 えらぶか、「いっしょに 作るのを やめる」を おしてね。'};tutorialRefresh();}});
@@ -7975,7 +8067,7 @@
     $('#exportBtn').onclick = exportProject;
     $('#exportControls').onclick = () => downloadProject('controls');
     $('#exportArtwork').onclick = () => downloadProject('artwork');
-    $('#exportChoiceCancel').onclick = () => $('#exportChoiceModal').classList.remove('show');
+    $('#exportChoiceCancel').onclick = cancelPlayerExport;
     $('#openBtn').onclick = requestOpenProject;
     $('#openRefusalClose').onclick = closeOpenRefusal;
     $('#loseConfirmProceed').onclick = () => loseConfirm?.(true);
@@ -7991,8 +8083,16 @@
       try { if (file) await openProject(file, approval); }
       finally { finishOpenSelection(); }
     });
-    $('#undoBtn').onclick = undo;
-    $('#redoBtn').onclick = redoDo;
+    const historyPress = (action, other) => (event) => {
+      action();
+      if (event.currentTarget.disabled) {
+        if (!other.disabled) other.focus({ preventScroll: true });
+        else if (shownEditorMode() === 'code') el.editor.focus({ preventScroll: true });
+        else mainEditor.view?.focus({ id: mainEditor.session?.blockSelection });
+      }
+    };
+    $('#undoBtn').onclick = historyPress(undo, $('#redoBtn'));
+    $('#redoBtn').onclick = historyPress(redoDo, $('#undoBtn'));
     $('#resetBtn').onclick = () => {
       if (modelLocked()) return;
       if (!flushActiveEditor()) return;
@@ -8209,14 +8309,14 @@
         history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
         initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
         $('#recoveryModal').classList.remove('show');recoveryData=null;
-        log('このパソコンに のこした 作品と、もとにもどせる きろくを もどしました','ok');
+        log('このパソコンに のこした 作品と、もとに もどせる きろくを もどしました','ok');
         setStatus(`「${project.name}」の つづきから 作れるよ`);
         // After the dialog has let go of the page (the modal manager clears #app.inert on its own turn).
         setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
         // What was restored is what this computer keeps: the state says so at once (restoreSnap marked it as not kept).
-        el.autosave.textContent = 'このパソコンに のこしてあるよ';
+        el.autosave.textContent = 'このパソコンに のこして あるよ';
       } catch (err) {
-        log('このパソコンに のこした 作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんでください。', 'error');
+        log('このパソコンに のこした 作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんで ください。', 'error');
         setStatus('このパソコンに のこした 作品を もどせなかったよ。ほぞんした ファイルが あれば「開く」で えらんでね');
       }
     };
@@ -8231,7 +8331,7 @@
 
     // Delete removes the selected part only while the child works with the parts: the focus is on the stage, the part
     // list or the tools that add parts, or it is on the page and the last press was there (a part list row takes no
-    // focus). After a press in the body window (a block's 「けす」, もとにもどす, the 本文 heading) or the toolbar, Delete
+    // focus). After a press in the body window (a block's 「けす」, もとに もどす, the 本文 heading) or the toolbar, Delete
     // never removes a part.
     const PART_PLACES = '#designerWindow, .side, .toolbox';
     let partPressed = false;
@@ -8288,7 +8388,7 @@
               }
             : null,
         root: $(draft ? '#callableBlocks' : '#blockEditor'),
-        // The free middle of the row above the workspace, between すべての本文… and もとにもどす…: the floating
+        // The free middle of the row above the workspace, between すべての本文… and もとに もどす…: the floating
         // The cancel control (「入れるのを やめる」) goes there while a place is chosen, so it covers no block (E-12).
         controlsSpace: draft ? null : () => {
           const nav = $('.codewin > .source-nav'), bar = $('.codewin > .debugbar');

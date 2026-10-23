@@ -61,7 +61,7 @@ export const extensionExpectedObservations = Object.freeze({
     roomyRuntimeComponents: 600, standardComponents: 500, sameAsScript: true, alteredDetected: true },
   'EXTENSION-REGISTRATION-COLLISION-TYPES': { duplicateRejected: true, invalidNumberRejected: true, promiseCalculationRejected: true, olderStandardRejected: 'E701', currentStandardAccepted: true },
   'EXTENSION-INDEPENDENT-CALCULATIONS': { doubled: 14, shouted: 'HELLO!', independent: true },
-  'EXTENSION-COMMAND-EVENT-STATE': { remembered: 9, value: 9, event: 9, restored: 9 },
+  'EXTENSION-COMMAND-EVENT-STATE': { remembered: 9, value: 9, event: 9, restored: 9, handlerContext: { commandsAndCalculations: true, contextKeys: ['runtime','runtimeId','sessionId','signal'], contextFrozen: true, runtimeFrozen: true, viewKeys: ['baseId','direction','isClone','runtimeId','x','y'], freshFrozenView: true, original: [320,200,30], later: [330,200,300], snapshotUnchanged: true, writeRejected: true, writeHasNoEffect: true, cloneOwnView: true, stageNull: true, unknownNull: true, signalsInitiallyActive: true, stopAbortsSessionSignal: true, stopAbortsActiveCallSignal: true, asyncSurfaces: { editor: true, player: true, before: [320,200,30], after: [330,200,300], snapshotUnchanged: true, frozenReadOnly: true, stageNull: true, unknownNull: true } } },
   'EXTENSION-SESSION-CANCELLATION': { staleRejected: true, signalAborted: true, ended: true },
   'EXTENSION-STANDARD-NO-NETWORK': { httpRequests: 0, socketRequests: 0, errors: 0, unblocked: true },
   'EXTENSION-DERIVED-NO-NETWORK': { httpRequests: 0, socketRequests: 0, errors: 0, unblocked: true },
@@ -77,7 +77,7 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-PROFILE-IMPORT-FILE-RUNTIME': { sourceChars: 100001, parsed: true, runtimeList: 100001, listRejected: true, capacityRejected: true },
   'EXTENSION-FAILED-IMPORT-PRESERVES-EDITOR': { source: true, history: true, dirty: true },
   'EXTENSION-RPC-NEGATIVE-LIFECYCLE': { malformed: true, unknown: true, duplicate: true, cancel: true, timeout: true, error: true, impostor: true, oldSession: true, reconnect: true },
-  'EXTENSION-EVENT-LANGUAGE': { value: '9', compiled: true, saved: true, restored: true },
+  'EXTENSION-EVENT-LANGUAGE': { value: '9', compiled: true, saved: true, restored: true, eventLifetime: { registeredKeepsRunning: true, registeredValues: [['sprite-1',17],['stage',19]], eventContextsFrozen: true, sameSession: true, stageFirstStatus: true, noBodyFinishes: true, unknownEventFinishes: true, unknownExtensionFinishes: true, unknownCommandRejected: true, unknownCalculationRejected: true, unregisteredEventValueRejected: true, unknownEmissionRejected: true } },
 });
 export function verifyExtensionFoundation(report, inputs, evidenceDirectory) {
   assert.equal(report.schema, 'akari-extension-foundation-v1');

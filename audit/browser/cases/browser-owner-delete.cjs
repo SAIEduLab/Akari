@@ -42,11 +42,13 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
   });
   await run('confirmed-owner-delete-common-history','1を言う。\n2を言う。',async(p,dialogs)=>{
    await chooseView(p,'code',{reveal:reveal,open:openBodyForTest});const route=await outsideButton(p),before=await read(p);
+   await p.keyboard.press('Delete');const outside=await read(p);assert.deepEqual(outside,before,'Delete outside the parts controls keeps the selected part and the complete editor state');assert.deepEqual(dialogs,[],'toolbar Delete never asks to remove the part');
+   await p.locator('#formSurface').focus();assert.equal(await p.evaluate(()=>document.activeElement.id),'formSurface');
    await p.keyboard.press('Delete');const deleted=await read(p);
    assert.equal(JSON.parse(deleted.project).components.some(c=>c.id==='sprite-1'),false);assert.equal(dialogs.length,1);
    await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await read(p)).project,before.project);
    await (await reveal(p.locator('#redoBtn'))).click();assert.equal((await read(p)).project,deleted.project);
-   return{route,before,deleted,confirmationCount:dialogs.length,undoRedoExact:true};
+   return{route,before,outside,stageFocus:true,deleted,confirmationCount:dialogs.length,undoRedoExact:true};
   });
   await run('expression-move-destination-not-obscured','1を言う。\n2を言う。',async p=>{
    const root=p.locator('#blockEditor'),before=await read(p);

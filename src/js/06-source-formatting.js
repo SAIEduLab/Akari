@@ -11,10 +11,10 @@
   }
   function formatHoleSource(n) {
     if (!expressionDraftFormatDepth)
-      throw new AkariError('P210', 'あいている ところが あります。中身や することを えらんでください');
+      throw new AkariError('P210', 'あいて いる ところが あります。中身や する ことを えらんで ください');
     let label = typeof n.label === 'string' ? n.label.trim() : '';
-    if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいている ところの 名前に 〔 〕や 行がえは 使えません');
-    if (!label) label = ({expression:'中身を入れる',statement:'することをえらぶ',target:'かえるものをえらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
+    if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいて いる ところの 名前に 〔 〕や 行がえは 使えません');
+    if (!label) label = ({expression:'中身を入れる',statement:'する ことを えらぶ',target:'かえる ものを えらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
     else if (!/(?:選ぶ|えらぶ|入れる|指定する|書く)$/.test(label)) label += label === 'きまり' ? 'をえらぶ' : 'を入れる';
     return `〔${label}〕`;
   }
@@ -108,7 +108,7 @@
         // 「たくどん」のよこのばしょ: a part's state word or data name follows without brackets, as other commands name the part in 「」.
         const state = n.value.kind === 'SensorRead' && n.value.arg === undefined;
         const plain = n.actorRef.kind === 'self' ? state : state || n.value.kind === 'VariableRead';
-        const owner = n.actorRef.kind === 'self' ? '自分' : '「' + n.actorRef.name + '」';
+        const owner = n.actorRef.kind === 'self' ? '自分' : formatExpressionCore(exprNode('StringLiteral',{value:n.actorRef.name}));
         s = plain ? `${owner}の${formatExpressionCore(n.value)}` : `${owner}の（${formatExpressionCore(n.value)}）`; p=PREC.POST; break;
       }
       case 'ListLiteral':
@@ -248,7 +248,7 @@
     emit(ast.body,ast.heading?1:0,options.inheritedActor);
     for(const rule of ast.rules||[])line(ast.heading?1:0,rule.kind==='Hole'?formatHoleSource(rule):sentenceFormFor(rule).render(rule),rule.inlineComment||'');
     for(const unit of ast.units||[])out.push(formatScript(unit,options));
-    const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','この 動きの まとまりが 長すぎます。ブロックや 文字を へらしてください',1,1);return source;
+    const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','この 動きの まとまりが 長すぎます。ブロックや 文字を へらして ください',1,1);return source;
     });
   }
   function formatTarget(t) {

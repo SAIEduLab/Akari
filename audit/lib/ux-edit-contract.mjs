@@ -47,6 +47,10 @@ export function verifyUxBrowser(report){
  }
  const selected=get('UX13/selected-body-conflict-preserved');for(const key of ['noSilentReplace','cancelAtomic','existingBodiesUnchanged','undoRedo','existingDocumentEdit'])assert.equal(selected[key],true);assert.equal(selected.clickBodies,2);assert.deepEqual(selected.actual,[{actor:'dango',text:'だんごの既存'},{actor:'dango',text:'なあに？'}]);
  const b23=get('UX13/B23-fixed-initial-state');assert.equal(b23.original,originals.find(c=>c.id==='B23').source);assert.equal(b23.existingStartUnchanged,true);assert.equal(b23.noDuplicateStart,true);for(const key of ['draftContextUnchanged','explicitImport','sourceOwnershipMatches','undoRedo','autosaveRestored'])assert.equal(b23[key],true);assert.deepEqual(b23.actual,[{actor:'sprite-1',text:'おはよう'},{actor:'dango',text:'なあに？'}]);const cancel=get('UX13/B23-import-cancel');for(const key of ['cancelAtomic','contextPreserved','historyPreserved'])assert.equal(cancel[key],true);const conflict=get('UX13/B23-conflict-explicit-separate');for(const key of ['noSilentReplace','differenceShown','cancel','explicitSeparate','existingStartUnchanged'])assert.equal(conflict[key],true);const duplicate=get('UX13/intentional-duplicate-bodies-run');assert.equal(duplicate.scriptCount,2);assert.equal(duplicate.bothExecuted,true);const dependent=get('UX13/dependent-import-refuses-split');for(const key of ['unsafeSplitRefused','noSourceRewrite','cancelAtomic'])assert.equal(dependent[key],true);
+ const refusal=b23.refusal,guidance='本文を 入れる ところを たしかめてね。「書いた 文を 本文に 入れる」か「取りこみを やめる」を おしてね';
+ assert.equal(refusal.original,originals.find(c=>c.id==='B23').source);assert.deepEqual(refusal.context,['sprite-1','start']);
+ for(const key of ['typedByKey','projectPreserved','exportAfterConfirmation'])assert.equal(refusal[key],true);
+ assert.equal(refusal.pending,guidance);assert.equal(refusal.exported,'まだ ファイルに できないよ。'+guidance+'。');assert.equal(refusal.run,'まだ 動かせないよ。'+guidance+'。');assert.equal(refusal.confirmed,'書いた 文を 本文に 入れたよ');assert.match(refusal.error,/1行目/);assert.doesNotMatch(refusal.error,/本文を 入れる ところ/);
  return count;
 }
 export function verifyUxBubbles(report){

@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -153,7 +154,7 @@ async function reveal(locator){
 async function editSource(p,sourceText){
   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
-  await (await reveal(p.locator('#editorModecode'))).click();await (await reveal(p.locator('#codeEditor'))).fill(sourceText);
+  await chooseView(p,'code',{reveal});await (await reveal(p.locator('#codeEditor'))).fill(sourceText);
   await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s&&Akari.app.editorState.dirty===true&&
     Akari.app.project.scripts.some(row=>row.targetId==='stage'&&row.event==='start'&&row.source===s),sourceText);
 }

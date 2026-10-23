@@ -65,6 +65,7 @@ export function checkResult(api, c) {
   const problems = [];
   if ((errors.length > 0) !== e.stops) problems.push('stops: expected ' + e.stops + ', got ' + JSON.stringify(errors.slice(0, 2).map(x => x.code + '@' + x.line + ' ' + x.message)));
   if (e.stops && e.line !== undefined && errors[0] && errors[0].line !== e.line) problems.push('line: expected ' + e.line + ', got ' + errors[0].line);
+  if (e.errorCode !== undefined && errors[0]?.code !== e.errorCode) problems.push('errorCode: expected ' + e.errorCode + ', got ' + errors[0]?.code);
   // A word may be given with its spellings (['順', 'じゅん']); spaces between words (分かち書き) are not compared.
   const bare = text => String(text).replace(/\s+/g, ''), guidance = bare(errors.map(x => x.message).join(''));
   const has = (text, word) => [].concat(word).some(w => bare(text).includes(bare(w))), words = word => [].concat(word).join('/');

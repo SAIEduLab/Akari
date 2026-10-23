@@ -65,5 +65,11 @@ export function verifyDesignerZoom(report, inputs) {
     assert.equal(r.pass, true, r.id); assert.equal(r.detail, 'PASS');
     if (r.status !== undefined) assert.equal(r.status, 'PASS');
   }
+  const touch = report.results.find(r => r.id === 'DESIGN-ZOOM-NARROW-TOUCH').evidence.touchEditing;
+  const runMinimum=report.results.find(r=>r.id==='DESIGN-ZOOM-RUNTIME').evidence.runMinimum;
+  assert.deepEqual(runMinimum.map(r=>[...r.viewport,...r.stage]),[[740,360,640,400],[740,360,1200,200],[740,360,200,800],[844,390,640,400],[844,390,1200,200],[844,390,200,800],[1366,650,640,400],[650,700,640,400],[651,700,640,400]]);
+  for(const r of runMinimum){for(const key of ['stageMinimum','parentContains','wholeStageReachable','rootFits','stopFixed','wheel','touch','keyboard','gameKeysPreserved','controlsReachable','pauseStable','designPreserved'])assert.equal(r[key],true);assert.ok(r.run[0]>=r.edit[0]-.1&&r.run[1]>=r.edit[1]-.1);}
+  assert.deepEqual(touch.map(r => r.width),[1366,1024,760]);
+  for (const r of touch) { assert.equal(r.centerHit,true);assert.equal(r.covered,false);assert.equal(r.wobblePreserved,true);assert.equal(r.dragged,true);assert.equal(r.ratioPreserved,true);assert.ok(r.panPixels>50);assert.equal(r.urlPreserved,true); }
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.networkRequests, []);
 }

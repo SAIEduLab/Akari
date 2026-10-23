@@ -57,7 +57,10 @@ async function hiddenObservationControls(p) {
 const cases = {
   async 'UI-BUTTON-SOURCE-NAV'(p) {
     for(const m of ['code','blocks']) {
-      await mode(p,m); await select(p,'stage'); const before=await fingerprint(p);
+      await mode(p,m); await select(p,'stage');
+      const row=p.locator('#projectTree [tabindex="0"]');await row.focus();await p.keyboard.press('Enter');
+      assert.equal(await p.evaluate(()=>document.activeElement?.closest('#projectTree')!==null),true,'part selection keeps keyboard focus in the part list');
+      const before=await fingerprint(p);
       await visible(p,'#sourceOverviewBtn'); assert.equal(await p.locator('#sourceOverviewBtn').innerText(),'すべての本文');
       await visible(p,'#sourceEditBtn',false); await visible(p,'#sourceStageBtn',false);
       await click(p,'#sourceOverviewBtn'); await visible(p,'#sourceOverview'); await visible(p,'#sourceOverviewBtn',false); await visible(p,'#sourceEditBtn');
@@ -77,6 +80,9 @@ const cases = {
     await mode(p,'blocks'); const before=await fingerprint(p); await number(p).fill('2'); await number(p).press('Enter');
     assert.equal((await fingerprint(p)).source,'2を言う。'); assert.equal((await fingerprint(p)).history,before.history+1);
     await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,'1を言う。'); await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'2を言う。');
+    // Enter on the last redo disables it; the keys still belong to an enabled control or the body.
+    await click(p,'#undoBtn');await p.locator('#redoBtn').focus();await p.keyboard.press('Enter');
+    assert.equal((await fingerprint(p)).source,'2を言う。');assert.equal(await p.evaluate(()=>document.activeElement===document.body),false);
     return {basic:true,codeUndoRedo:true,blockUndoRedo:true,atomicBlockHistory:true};
   },
   async 'UI-BUTTON-SIDE-ACTIONS'(p) {
@@ -90,7 +96,10 @@ const cases = {
     const before=await p.evaluate(()=>Akari.app.project.components.length); await click(p,'#componentActions .prop-duplicate'); assert.equal(await p.evaluate(()=>Akari.app.project.components.length),before+1);
     await click(p,'#componentActions .prop-delete'); assert.equal(await p.evaluate(()=>Akari.app.project.components.length),before);
     await select(p,'stage'); await visible(p,'#componentActions .prop-duplicate',false); await visible(p,'#componentActions .prop-delete',false);
-    return {plainCodeLabels:true,blockFolding:true,actionsOutsideFold:true,duplicateDelete:true};
+    await mode(p,'code');const projectBefore=(await fingerprint(p)).project;
+    for(const label of ['はば','高さ']){const field=p.locator('#properties input[aria-label="'+label+'"]');await field.fill(label==='はば'?'300.5':'200.5');await field.press('Tab');assert.ok((await p.locator('#statusText').innerText()).includes('小数の ない 数'));}
+    assert.equal((await fingerprint(p)).project,projectBefore);const refusalLog=await p.locator('#console').textContent();assert.match(refusalLog,/して ください/);assert.doesNotMatch(refusalLog,/してください|❌  /);
+    return {plainCodeLabels:true,blockFolding:true,actionsOutsideFold:true,duplicateDelete:true,fractionRefusedWithFormalSpacedLog:true};
   },
   async 'UI-BUTTON-LEVELS'(p) {
     // The levels offered follow the view; a level that cannot be chosen is not in the list (not a disabled option).
@@ -119,6 +128,16 @@ const cases = {
   },
   async 'UI-BUTTON-BLOCK-DESTINATION'(p) {
     await fill(p,'1を言う。'); await mode(p,'blocks');
+    await p.locator('#blockEditor .blockui-extra > summary').first().click();
+    const pageErrors=[],rememberError=e=>pageErrors.push(e.message);p.on('pageerror',rememberError);
+    const room=await p.locator('#blockEditor .blockui-workspace').boundingBox();
+    await p.mouse.move(room.x+room.width-20,room.y+room.height/2);await p.mouse.wheel(0,80);
+    await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    p.off('pageerror',rememberError);assert.deepEqual(pageErrors,[],'scrolling an open extra panel never calls the actions-panel placer');
+    const place=p.locator('#blockEditor [data-blockui-action="body-insert"]').first();
+    assert.notEqual(await place.evaluate(e=>getComputedStyle(e).pointerEvents),'none','an open panel does not disable uncovered insertion places');
+    await place.click();assert.ok(await p.locator('#blockEditor .blockui-chosen-destination').count());await p.keyboard.press('Escape');
+    assert.equal(await p.locator('#blockEditor .blockui-extra[open]').count(),0);
     for(const root of ['#blockEditor','#callableBlocks']) {
       if(root==='#callableBlocks') { await callable(p); await chooseView(p,'blocks',{prefix:'callable',reveal}); }
       const before=await fingerprint(p);
@@ -191,7 +210,25 @@ const cases = {
       assert.equal(await palette.isVisible(),true); assert.equal((await fingerprint(p)).source,'「まだ変換中」と2秒話す。');
       paletteRecovery.push({width,oneClickRecovery:true,committedStatePreserved:true,pendingTextCommittedOnce:true,syntheticCompositionPreserved:true});
     }
-    return {viewports:evidence,ordinaryScrolling:true,navigationUndoRedoCommandsAndFold:true,paletteRecovery};
+    await p.setViewportSize({width:390,height:844});await p.locator('#uiLevel').selectOption('basic');await fill(p,'右に15度回る。\n1秒待つ。\n前へ10歩進む。');await mode(p,'blocks');
+    for(let i=0;i<3;i++)await p.locator('#blockEditor [data-blockui-action="zoom-in"]').click();
+    await p.locator('#blockEditor .blockui-extra > summary').first().click();await p.waitForTimeout(100);
+    const panel=p.locator('#blockEditor .blockui-extra[open] > .blockui-extra-controls'),contained=()=>panel.evaluate(e=>{const r=e.getBoundingClientRect(),w=e.closest('.blockui-workspace').getBoundingClientRect();return r.left>=w.left&&r.right<=w.right&&r.top>=w.top&&r.bottom<=w.bottom;});assert.equal(await contained(),true,'a panel at 200% fits the narrow workspace');
+    for(const field of await panel.locator('button,input,select').all()){await field.scrollIntoViewIfNeeded();await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.equal(await field.evaluate(e=>{const r=e.getBoundingClientRect(),w=e.closest('.blockui-workspace').getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.left>=w.left&&r.right<=w.right&&r.top>=w.top&&r.bottom<=w.bottom&&(e===hit||e.contains(hit));}),true,'each zoomed panel control fits and can be pressed');}
+    await p.keyboard.press('Escape');
+    await p.setViewportSize({width:1366,height:768});
+    await select(p,'sprite-1');
+    await fill(p,'画面の左下のはしから、右へ320歩のばしょへ行く。');await mode(p,'blocks');
+    const notice=p.locator('#blockEditor [data-blockui-action="notices"]').first();
+    await notice.focus();await p.keyboard.press('Enter');
+    const corrections=p.locator('#blockEditor .blockui-node-notices.blockui-open button');assert.equal(await corrections.count(),2);
+    const reached=[];for(let i=0;i<16&&reached.length<2;i++){
+      await p.keyboard.press('Tab');
+      for(let j=0;j<2;j++)if(!reached.includes(j)&&await corrections.nth(j).evaluate(e=>e===document.activeElement))reached.push(j);
+    }
+    assert.deepEqual(reached,[0,1],'native Tab reaches both notice corrections');
+    await p.keyboard.press('Enter');await p.waitForFunction(()=>Akari.app.editorState.main.sourceText.includes('上へ0歩'));
+    return {viewports:evidence,ordinaryScrolling:true,navigationUndoRedoCommandsAndFold:true,paletteRecovery,zoomedPopoverContained:true};
   },
 };
 assert.deepEqual(Object.keys(cases),uiButtonIds);

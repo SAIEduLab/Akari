@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -7,12 +8,13 @@ import {pathToFileURL} from 'node:url';
 import {snapshot,withBrowser,sha} from '../lib/product-test-host.mjs';
 import {meijinExampleErrors} from '../lib/meijin-example-world.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {manualPages,manualWidths,decodeManualText,manualExampleSymbols,verifyManualDocs,checkManualDocsNegatives} from '../lib/manual-docs-contract.mjs';
 
 // Additional documentation checks; does not replace any product acceptance test.
 const [browserPath,output]=process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output),'new documentation evidence directory required');
 fs.mkdirSync(output,{recursive:true});
-const pages=['index.html','MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html','Manual/meijin-mode.html'];
+const pages=manualPages;
 // The 名人 manual's examples are 名人 text: each is checked as a whole 名人 script in a work with the parts and data it
 // names (no errors), and each written-as-wrong example (code class="ng") must be stopped by the check.
 const meijinPage='Manual/meijin-mode.html';
@@ -21,8 +23,8 @@ const html=fs.readFileSync(currentProductFile(),'utf8');
 const context=vm.createContext({console,TextEncoder,TextDecoder,Blob,URL,structuredClone,setTimeout,clearTimeout});
 vm.runInContext(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')),context,{timeout:30000});
 const api=vm.runInContext('Akari',context);
-const meijinWork=source=>meijinExampleErrors(api,source);
-const decode=s=>s.replace(/&#(x[0-9a-f]+|\d+);/gi,(_,n)=>String.fromCodePoint(n[0].toLowerCase()==='x'?parseInt(n.slice(1),16):Number(n))).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&');
+const meijinWork=source=>meijinExampleErrors(api,source,{lists:['えらんだ部品']});
+const decode=decodeManualText;
 const sources=Object.fromEntries(pages.map(p=>[p,fs.readFileSync(p,'utf8')]));
 const snippets=[];const links=[];
 for(const [file,source] of Object.entries(sources)){
@@ -37,7 +39,7 @@ for(const [file,source] of Object.entries(sources)){
       assert.deepEqual(errors,[],file+': 名人 example '+(index+1));
       snippets.push({file,index:index+1,sha256:sha(code),status:'MEIJIN_CHECK_PASS'});continue;
     }
-    const parsed=api.parseSyntax(code);
+    const parsed=api.parseSyntax(code,{symbols:manualExampleSymbols(api,file)});
     assert.ok(parsed.ast,file+': example '+(index+1)+' '+JSON.stringify(parsed.syntaxDiagnostics));
     snippets.push({file,index:index+1,sha256:sha(code),status:'SYNTAX_PASS'});
   }
@@ -53,13 +55,14 @@ for(const [file,source] of Object.entries(sources)){
 // Include the inline alternate command examples as well as complete preformatted examples.
 for(const file of pages){
   for(const m of sources[file].matchAll(/<code\b([^>]*)>([^<]+)<\/code>/g)){
-    const code=decode(m[2]);if(!code.endsWith('。'))continue;
+    const code=decode(m[2]);if(!code.endsWith('。')&&!(file===meijinPage&&code.endsWith('、')))continue;
     if(file===meijinPage){
-      const stopped=meijinWork(code).length>0;
+      const heading=code.endsWith('、'),stopped=meijinWork(heading?code+'\n  何もしない。':code).length>0;
       assert.equal(stopped,/class="ng"/.test(m[1]),file+': inline 名人 '+(stopped?'stopped':'read')+' '+code);
-      snippets.push({file,inline:code,status:stopped?'MEIJIN_STOPPED_AS_WRITTEN':'MEIJIN_CHECK_PASS'});continue;
+      snippets.push({file,inline:code,sha256:sha(code),status:stopped?'MEIJIN_STOPPED_AS_WRITTEN':heading?'MEIJIN_HEADING_PASS':'MEIJIN_CHECK_PASS'});continue;
     }
-    assert.ok(api.parseSyntax(code).ast,file+': inline command '+code);
+    assert.ok(api.parseSyntax(code,{symbols:manualExampleSymbols(api,file)}).ast,file+': inline command '+code);
+    snippets.push({file,inline:code,sha256:sha(code),status:'SYNTAX_PASS'});
   }
 }
 for(const m of fs.readFileSync('README.md','utf8').matchAll(/\]\((\.\/[^)]+)\)/g)){
@@ -74,7 +77,7 @@ if(browserPath!=='--static'){
     await ctx.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});
     const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
-      for(const width of [1366,768,390])for(const file of pages){
+      for(const width of manualWidths)for(const file of pages){
         await page.setViewportSize({width,height:900});
         await page.goto(pathToFileURL(path.resolve(file)).href);
         await page.emulateMedia({reducedMotion:'reduce'});
@@ -82,15 +85,16 @@ if(browserPath!=='--static'){
         assert.ok(metrics.scroll<=metrics.width+1,file+': page overflow '+JSON.stringify(metrics));
         await page.keyboard.press('Tab');assert.equal(await page.locator('.skip-link').evaluate(e=>e===document.activeElement),true);
         await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>location.hash),'#main-content');
+        const details=[];
         for(const detail of await page.locator('details').all()){
           const summary=detail.locator('summary');await summary.focus();const was=await detail.evaluate(e=>e.open);
-          await page.keyboard.press('Enter');assert.equal(await detail.evaluate(e=>e.open),!was);
+          await page.keyboard.press('Enter');const after=await detail.evaluate(e=>e.open);assert.equal(after,!was);details.push({before:was,after});
           await detail.evaluate(e=>{e.open=true;});
         }
         await page.evaluate(()=>window.scrollTo(0,0));
         const name=file.replaceAll('/','-').replace('.html','')+'-'+width;
         await page.screenshot({path:path.join(output,name+'.png'),fullPage:true});
-        report.views.push({file,width,...metrics,screenshot:name+'.png'});
+        report.views.push({file,width,...metrics,skipLink:true,details,screenshot:name+'.png',screenshotSha256:sha(fs.readFileSync(path.join(output,name+'.png')))});
       }
       await page.setViewportSize({width:1366,height:900});
       await page.goto(pathToFileURL(path.resolve('MANUAL.html')).href);
@@ -115,7 +119,7 @@ if(browserPath!=='--static'){
       await (await reveal(page.locator('#eventSelect'))).selectOption('click');
       // The v2 starter opens in blocks mode. Switch through the visible mode control
       // before entering the manual's executable example in the source editor.
-      await (await reveal(page.locator('#editorModecode'))).click();
+      await chooseView(page,'code',{reveal});
       await page.locator('#codeEditor').waitFor({state:'visible'});
       const executableFirst=first.replace(/^ねこ(?=は)/,targetName);
       await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(executableFirst);})();
@@ -126,14 +130,17 @@ if(browserPath!=='--static'){
       await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
       await node.click();
       await page.waitForFunction(({target,start})=>Math.abs(parseFloat(document.querySelector('.component[data-id="'+target+'"]').style.left)-start-10)<0.1,{target,start});
+      const end=await node.evaluate(e=>parseFloat(e.style.left));
       await pressStop(await reveal(page.locator('#stopBtn')));
       assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors),[]);
       await page.screenshot({path:path.join(output,'first-work-editor.png'),fullPage:true});
-      report.firstWork={status:'PASS',target,targetName,source:executableFirst,expectedMovement:10,editorMode:'code selected through UI'};
+      report.firstWork={status:'PASS',target,targetName,source:executableFirst,expectedMovement:10,start,end,compileErrors:await page.evaluate(()=>Akari.app.compile().errors),editorMode:'code selected through UI',screenshot:'first-work-editor.png',screenshotSha256:sha(fs.readFileSync(path.join(output,'first-work-editor.png')))};
     }finally{await ctx.close();}
-    assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
+    assert.deepEqual(errors,[]);assert.deepEqual(network,[]);report.pageErrors=errors;report.networkRequests=network;
   });
   report.status='PASS';
+  verifyManualDocs(report,before,output);
+  report.validatorNegatives=checkManualDocsNegatives(report,before,output);
 }
 assert.deepEqual(snapshot(currentProductFile()),before);
 fs.writeFileSync(path.join(output,'manual-docs.json'),JSON.stringify(report,null,2)+'\n');

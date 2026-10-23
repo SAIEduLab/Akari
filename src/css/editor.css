@@ -5994,8 +5994,8 @@ body.runtime .status { flex-wrap: nowrap; align-items: center; }
 body.runtime .status > #statusText { flex: 1 1 0; min-width: 0; display: flex; align-items: center; }
 body.runtime .status > .runstate { flex: none; }
 body.runtime #execSentence[hidden] { display: block !important; visibility: hidden !important; }
-@media (max-width: 700px) { body.runtime .status > #statusText { min-height: 2lh; } }
-@media (max-width: 430px) { body[data-ui-level="entry"].runtime .status > #statusText { min-height: 3lh; } }
+@media (max-width: 760px) { body.runtime .status > #statusText { min-height: 2lh; } }
+@media (max-width: 460px) { body[data-ui-level="entry"].runtime .status > #statusText { min-height: 3lh; } }
 body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
 /* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */
@@ -6112,6 +6112,21 @@ body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #desi
 body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > .designer-wrap { grid-row: 2; min-height: 0; }
 body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > .run-strip { grid-row: 3; grid-column: 1; }
 body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #designerWindow > #entryRunControls { grid-row: 3; grid-column: 2; align-items: center; padding: 2px 10px 2px 0; }
+/* Overflow stays in the finite workspace. The readable body row remains above the part list on short windows. */
+body.runtime[data-editor-mode][data-run-stage-minimum] .main { overflow: auto; overscroll-behavior: contain; }
+/* The scene's explicit minimum must size its grid row, leaving the debugger in the next row. */
+body.runtime[data-editor-mode][data-run-stage-minimum]:not([data-ui-level="entry"]):not(.stage-enlarged) .main { grid-template-rows: minmax(auto, 1fr) auto; }
+@media (max-width: 650px) {
+  body.runtime[data-editor-mode][data-run-stage-minimum]:not([data-ui-level="entry"]):not(.stage-enlarged) .main { grid-template-rows: minmax(auto, 1fr) 160px auto; }
+}
+@media (max-width: 360px) {
+  body.runtime[data-editor-mode][data-run-stage-minimum]:not([data-ui-level="entry"]):not(.stage-enlarged) .main { grid-template-rows: minmax(auto, 1fr) 110px auto; }
+}
+body.runtime[data-editor-mode][data-run-stage-minimum]:not(.stage-enlarged) #designerWindow {
+  min-width: var(--run-stage-min-width, 0px); min-height: var(--run-stage-min-height, 0px);
+}
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-rows: minmax(200px, 1fr) 170px; }
+body.runtime .main:focus-visible { outline: 2px solid #2f6fd6; outline-offset: -2px; }
 /* On a narrow screen there is no room for a second column: はじめて's run screen is one column, the stage (with the
    strip that shows the running sentence) and then the part list, as at かんたん; the blocks come back after ■ 止める.
    The body window stays for いっしょに作る's guide. */
@@ -6202,15 +6217,16 @@ body[data-ui-level="entry"].runtime[data-editor-mode]:not(.stage-enlarged) #desi
 /* 「…」 opens its panel over the workspace, right under the block's face and as wide as it (where it would be in the
    flow), as ほかのそうさ opens its list (E-12): the blocks below keep their places. While it is open, its block lies
    above the others and the places between blocks do not take presses. */
-.blockui-world .blockui-node-main:has(> .blockui-extra[open]) { position: relative; }
+.blockui-world .blockui-node-main:has(> .blockui-extra[open]) { position: relative; z-index: 121; }
 .blockui-world .blockui-extra[open] { flex-basis: auto; }
 .blockui-world .blockui-extra[open] > .blockui-extra-controls {
   position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); box-sizing: border-box; min-width: min(220px, 100%);
   padding: 8px 10px; background: #fff; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
 }
+.blockui-world .blockui-extra-controls :is(.blockui-field, .blockui-value-row, button, input, select) { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .blockui-world .blockui-body:has(.blockui-extra[open]) { z-index: 2; }
 .blockui-world .blockui-node:has(.blockui-extra[open]) { z-index: 110; }
-.blockui-world .blockui-body:has(.blockui-extra[open]) > .blockui-insertion { pointer-events: none; }
+
 .blockui-world .blockui-subject-text { font-weight: 700; }
 .blockui-world .blockui-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
 .blockui-world .blockui-value-row > .blockui-slot-label { min-width: 4em; font-size: 12px; font-weight: 500; }
@@ -6443,19 +6459,37 @@ body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp {
 }
 body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] { visibility: hidden; }
 
-/* たて・よこを そろえる over the stage (E-22): shown on a touch screen while a part with a box is selected. */
+/* The touch resize control belongs to the heading, clear of every part. Keep its room when no box is selected. */
 #designerWindow { position: relative; }
 #designRatioLock {
-  position: absolute; z-index: 3200; left: 10px; top: 44px; min-height: 32px; padding: 3px 10px; border: 1px solid #6c8ca5; border-radius: 16px;
-  background: #ffffffee; font-size: 13px; box-shadow: 0 2px 6px #12324d26;
+  position: static; flex: 0 0 84px; align-self: center; box-sizing: border-box; margin: 0; min-height: 32px; padding: 3px; border: 1px solid #6c8ca5; border-radius: 16px;
+  background: #ffffffee; font-size: 13px; line-height: 1.2; white-space: normal; box-shadow: 0 2px 6px #12324d26;
 }
 #designRatioLock[aria-pressed="true"] { background: #dcebf7; border-color: #1f56b4; font-weight: 700; }
-#designRatioLock[hidden], body.runtime #designRatioLock { display: none; }
+#designRatioLock[hidden] { display: block; visibility: hidden; pointer-events: none; }
+body.runtime #designRatioLock { display: none; }
 @media not (pointer: coarse) { #designRatioLock { display: none; } }
 @media (pointer: coarse) {
   #stageEnlarge, #designRatioLock, #stageThumbnail { min-height: 40px; }
-  #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; }
+  #designerWindow > .win-title { height: auto; min-height: 44px; flex-basis: auto; flex-wrap: wrap; gap: 1px; }
+  #stageEnlarge { padding-inline: 2px; margin-left: 0; }
+  .stage-zoom-controls { gap: 0; }
+  #stageZoomReset { min-width: 40px; width: 40px; padding-inline: 0; }
 }
+
+/* A short touch screen uses the existing stacked editor layout, with room for the heading and artwork. */
+@media (pointer: coarse) and (max-height: 500px) {
+  body[data-ui-level="entry"]:not(.runtime) { height: auto; overflow: auto; }
+  body[data-ui-level="entry"]:not(.runtime) #app { height: auto; min-height: 100dvh; }
+  body[data-ui-level="entry"]:not(.runtime) .main { display: flex; flex-direction: column; overflow: visible; }
+  body[data-ui-level="entry"]:not(.runtime) .codewin { min-height: 550px; }
+  body[data-ui-level="entry"]:not(.runtime) .designer { height: 300px; flex: none; }
+  body[data-ui-level="entry"]:not(.runtime) .side { height: 170px; flex: none; }
+  body[data-ui-level="entry"]:not(.runtime) .blockui-layout { min-height: 340px; }
+}
+
+html { overscroll-behavior-x: none; }
+body:not(.runtime) #formSurface .component.ak-input { touch-action: none; }
 
 /* The place いっしょに作る points at keeps the size of 「＋ ここに入れる」, so the child can press it (E-07). */
 body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target:not(.blockui-insertion-end) {
@@ -6523,7 +6557,8 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-notice) { flex-directio
 #callableIssue[hidden] { display: none; }
 .blockui-node-notices { grid-column: 1 / -1; display: none; margin: 5px 0; padding: 7px 10px 7px 25px; background: #eef5fc; color: #1f4f7a; font-size: 12px; overflow-wrap: anywhere; }
 .blockui-node-notices.blockui-open { display: block; }
-.blockui-world .blockui-node-notices { position: relative; z-index: 2; max-width: 660px; white-space: normal; }
+.blockui-world .blockui-node-notices { position: absolute; z-index: 121; box-sizing: border-box; margin: 0; max-width: 660px; white-space: normal; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26; }
+.blockui-world .blockui-node:has(> .blockui-node-notices.blockui-open) { z-index: 111; }
 .blockui-node-head > [data-blockui-action="notices"] { min-height: 26px; padding: 1px 5px; border: 0; background: transparent; box-shadow: none; color: var(--notice-ink); font-size: 12px; }
 .blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 2px dashed var(--notice-edge); outline-offset: 0; border-radius: 6px; }
 /* The notice marks are edit-screen controls: the run screen shows neither 「ⓘ 知らせ」, its list, the outline nor a
@@ -6534,4 +6569,7 @@ body.runtime :is(#editorPending, #callablePending) .intent-choices { display: no
 body.runtime .blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 0; }
 /* A subject carried over from another part's sentence (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is shown on the
    block as a pale chip in （ ）: it is not written in the code (lead decision 30). */
-.blockui-world .blockui-subject-carried { display: inline-flex; align-items: center; padding: 0 6px; border: 1px dashed #8a9bb0; border-radius: 999px; background: #ffffff99; color: #5b6b80; font-weight: 400; }
+.blockui-world .blockui-subject-carried { display: inline-flex; align-items: center; padding: 0 6px; border: 1px dashed #8a9bb0; border-radius: 999px; background: #ffffff99; color: #4b5b70; font-weight: 400; }
+
+/* A sideways swipe at the edge of the editor keeps the child in the work. */
+html { overscroll-behavior-x: none; }

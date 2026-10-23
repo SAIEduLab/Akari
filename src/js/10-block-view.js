@@ -8,62 +8,85 @@
     const at = lines.slice(0, diagnostic.line - 1).reduce((n, l) => n + l.length + 1, 0) + text.match(/^[ \u3000\t]*/)[0].length;
     try { return insertionContext(source, at, at).depth > 0; } catch (_) { return null; }
   }
-  // The names an example may use (FM2-12): the work's first variable or list and its first sound, never one the work
-  // does not have. Without the work, the example leaves them out.
+  // A scalar example must name an existing variable with its scope, independent of the current body's locals.
+  // Lists are not scalars. Without a variable the optional scalar example is left out.
   function diagnosticExampleNames(work) {
-    const data = [...(work?.projectData?.variables || []), ...(work?.components || []).flatMap(c => c?.localData?.variables || []),
-      ...(work?.projectData?.lists || [])].find(x => typeof x?.name === 'string' && x.name);
-    return { value: data ? nameSource(data.name) : null, sound: work?.sounds?.find(x => typeof x?.name === 'string' && x.name)?.name || null };
+    const named=x=>typeof x?.name==='string'&&x.name, data=work?.projectData?.variables?.find(named);
+    let value=data?nameSource(data.name,'project'):null;
+    if(!value){
+      const owner=work?.components?.find(c=>c.localData?.variables?.some(named)),local=owner?.localData.variables.find(named);
+      if(local){
+        value=formatExpression(exprNode('ActorQualifiedRead',{actorRef:{kind:'named',name:owner.name},value:exprNode('VariableRead',{name:local.name,qualifier:'self'})}));
+      }
+    }
+    // The optional numeric comparison also needs an unqualified numeric premise; text, booleans and units differ.
+    const numeric=x=>named(x)&&typeof x.initialValue==='number'&&Number.isFinite(x.initialValue)&&!x.expectedUnit,
+      number=work?.projectData?.variables?.find(numeric),owner=number?null:work?.components?.find(c=>c.localData?.variables?.some(numeric)),local=owner?.localData.variables.find(numeric),
+      comparisonValue=number?'作品の'+nameSource(number.name,'exact'):local?formatExpression(exprNode('StringLiteral',{value:owner.name}))+'の自分の'+nameSource(local.name,'exact'):null;
+    return { value,comparisonValue,sound:work?.sounds?.find(named)?.name||null };
   }
   // Presentation only: parser/runtime diagnostics and their original messages stay unchanged. With the body's source,
   // an indentation message names もし／くり返す only for a line inside one (F-24); the parser's Tab message is shown as it is.
   // With the work, the examples name its own data and sounds.
   function childDiagnosticText(diagnostic, source = null, work = null) {
-    const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください'), names = diagnosticExampleNames(work);
+    const message = String(diagnostic?.message || diagnostic || '書き方を たしかめて ください'), names = diagnosticExampleNames(work);
+    // Phrase spacing changes presentation, not which diagnostic guidance applies.
+    // Quoted user names are data, not diagnostic-family selectors. Keep the original message for display/details.
+    // These families quote arbitrary source/data; its text must never select a different explanation.
+    if (diagnostic?.code === 'S301' || /^「[\s\S]*」は 読めません。書き方を たしかめて ?ください。$/.test(message) || /^「[\s\S]*」という 文は あかりに ありません。/.test(message)) return message;
+    let routingMessage = '', quoteDepth = 0;
+    for (let i = 0; i < message.length; i++) {
+      const char = message[i];
+      if (char === '\\' && quoteDepth && i + 1 < message.length) { i++; continue; }
+      if (char === '「') { if (!quoteDepth) routingMessage += '「」'; quoteDepth++; }
+      else if (char === '」' && quoteDepth) quoteDepth--;
+      else if (!quoteDepth) routingMessage += char;
+    }
+    const matches = (pattern, text = routingMessage) => new RegExp(pattern.source.replace(/\s+/gu, ''), pattern.flags).test(text.replace(/\s+/gu, ''));
     if (diagnostic?.code === 'R403')
-      return '計算の 答えが 大きすぎるなどの 理由で、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめてください。';
-    if (/「ではない」が 2つ つづいています/.test(message))
-      return '「ではない」を 2つ つづけるときは、「条件（…）が成り立たない」で 書きます。れい：条件（1が2と同じではない）が成り立たない';
-    if (/を 2回 書いています|入れるものに 同じ 名前が/.test(message))
-      return '入れて使う 数や 文字に、同じ 名前が 2つ いじょう あります。「入れるもの」の 名前は ちがう 名前に してください。れい：点数を10として、';
-    if (/入れるものの 名前を たしかめてください/.test(message))
+      return '計算の 答えが 大きすぎるなどの 理由で、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめて ください。';
+    if (matches(/「」が 2つ つづいています/))
+      return '「ではない」を 2つ つづける ときは、「条件（…）が成り立たない」で 書きます。れい：条件（1が2と同じではない）が成り立たない';
+    if (matches(/を 2回 書いています|入れるものに 同じ 名前が/))
+      return '入れて使う 数や 文字に、同じ 名前が 2つ いじょう あります。「入れるもの」の 名前は ちがう 名前に して ください。れい：点数を10として、';
+    if (matches(/入れるものの 名前を たしかめてください/))
       return '入れて使う 数や 文字の 名前を 1つ 書きます。てじゅんや「答えを もとめる」の「入れるもの」と 同じ 名前に します。れい：点数を10として、';
-    if (/名前と 入れるものを「を」で つないで 書きます/.test(message))
+    if (matches(/名前と 入れるものを「」で つないで 書きます/))
       return '名前と 入れるものを「を」で つなぎます。れい：点数を10として、';
-    if (/入れるものを（ ）で かこんでください/.test(message))
+    if (matches(/入れるものを（ ）で かこんでください/))
       return '入れて使う 数や 文字を（ ）で ひとまとめに します。れい：（10、「あかり」）';
-    if (/開く しるしと とじる しるしが 合っているか/.test(message))
+    if (matches(/開く しるしと とじる しるしが 合っているか/))
       return '（ ）・［ ］・【 】の 開く しるしと とじる しるしを そろえます。れい：［1、2］';
-    if (/とじる しるしを 書いてください/.test(message))
+    if (matches(/とじる しるしを 書いてください/))
       return '「 」・【 】・（ ）などの とじる しるしを 足します。れい：「こんにちは」';
-    if (/で つなぐ きまりを、1つずつ（ ）で かこんで|きまりを 1つずつ（ ）で かこんで 分けて/.test(message))
+    if (matches(/で つなぐ きまりを、1つずつ（ ）で かこんで|きまりを 1つずつ（ ）で かこんで 分けて/))
       return '「で、」「か、」で つなぐ 文の 中に「かつ」「または」は 書けません。ぜんぶを「条件（…）が成り立つ」で ひとまとめに します。れい：もし条件（1が1と同じかつ2が2と同じかつ3が3と同じ）が成り立つなら、';
-    if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message)) {
+    if (matches(/くらべる 2つの ものを（ ）か【 】で かこんで/)) {
       // The name is the one the child wrote before が (もし点数が…), else the work's own data.
       const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
         own = /^[ 　\t]*(?:もし)?([^\s　、。「」（）【】]+?)が/.exec(line)?.[1];
-      const name = own || names.value?.replace(/^【|】$/g, '');
-      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。' + (name ? 'れい：【' + name + '】が10より大きい' : '');
+      const value = own ? nameSource(own,'exact') : names.comparisonValue;
+      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。' + (value ? 'れい：' + value + 'が10より大きい' : '');
     }
-    if (/言う ことは「「文字」と言う」/.test(message))
+    if (matches(/言う ことは/))
       return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。' + (names.value ? 'へんすうの 中身を 話すときは「' + names.value + 'を言う」のように 書きます。' : '');
-    if (/そのまま 言う 文字か、入れた 音か/.test(message))
+    if (matches(/そのまま 言う 文字か、入れた 音か/))
       return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：' + ['「おはよう」と言う', names.sound && '「' + names.sound + '」を鳴らす', names.value && names.value + 'を言う'].filter(Boolean).join('／') + '。';
-    if (/重ねるときは、次の 行に 書いて/.test(message))
+    if (matches(/重ねるときは、次の 行に 書いて/))
       return '「もし」「くり返す」の 中の 文は、次の 行に 書いて 行の はじめを 右へ ずらします。\nれい：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
-    if (/いちばん 外の 文は、行の はじめを 右へ ずらさずに/.test(message))
-      return 'いちばん 外の 文は 行の 左から 書きます。行の はじめの 空白を けしてください。';
-    if (/などの 次の 行は、行の はじめを 右へ ずらして/.test(message))
+    if (matches(/いちばん 外の 文は、行の はじめを 右へ ずらさずに/))
+      return 'いちばん 外の 文は 行の 左から 書きます。行の はじめの 空白を けして ください。';
+    if (matches(/などの 次の 行は、行の はじめを 右へ ずらして/))
       return '「作品を動かしたとき、」などの 次の 行は、はじめを 右へ ずらします。\nれい：作品を動かしたとき、\n  「おはよう」と言う。';
-    if (/同じ まとまりの 文は、行の はじめの 空白の 数を/.test(message))
+    if (matches(/同じ まとまりの 文は、行の はじめの 空白の 数を/))
       return diagnosticLineEnclosed(diagnostic, source) === false
-        ? '前の 行と 同じ だけ 右へ ずらします。この 行の はじめの 空白を へらしてください。'
+        ? '前の 行と 同じ だけ 右へ ずらします。この 行の はじめの 空白を へらして ください。'
         : '同じ「もし」や「くり返す」の 中の 行は、はじめの 空白の 数を そろえます。れい：どちらも 空白を 2つ。';
-    if (/同じ 行と 次の 行の 両方に 書かないで/.test(message))
-      return '中の 文を 同じ 行と 次の 行の 両方に 書いています。次の 行に まとめ、行の はじめを 右へ ずらしてください。\nれい：2回くり返す。\n  「おはよう」と言う。';
-    if (/「ここまで」は 書きません/.test(message))
+    if (matches(/同じ 行と 次の 行の 両方に 書かないで/))
+      return '中の 文を 同じ 行と 次の 行の 両方に 書いて います。次の 行に まとめ、行の はじめを 右へ ずらして ください。\nれい：2回くり返す。\n  「おはよう」と言う。';
+    if (matches(/^「」は 書きません/))
       return '「ここまで」を けして、次の 文の はじめを 左へ もどします。\nれい：2回くり返す。\n  「中」と言う。\n「外」と言う。';
-    if (/と 組になる「もし」が ありません/.test(message)) {
+    if (matches(/と 組になる「」が ありません/)) {
       // Only a line that starts with そうでなければ／でなければ is about its もし (F-24). Another line that comes out of the
       // body (one not moved to the right) is told to move to the right, with the body's own heading (FM2-01).
       const lines = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/) : null,
@@ -72,24 +95,25 @@
         const heading = lines[0] && /、$/.test(lines[0].trim()) && !/^[ 　\t]/.test(lines[0]) ? lines[0].trim() : '作品を動かしたとき、';
         return '「' + heading + '」の 中の 文は、上の 文と 同じ だけ 右へ ずらして 書きます。\nれい：' + heading + '\n  ' + splitComment(text).code.trim();
       }
-      return '「そうでなければ、」は、組に なる「もし」と 行の はじめを そろえます。上に「もし」が あるか たしかめてください。';
+      return '「そうでなければ、」は、組に なる「もし」と 行の はじめを そろえます。上に「もし」が あるか たしかめて ください。';
     }
-    if (/の 中では、動く・音を 出す・待つ|の 中では、この ブロックは 使えません/.test(message))
+    if (matches(/の 中では、動く・音を 出す・待つ|の 中では、この ブロックは 使えません/))
       return '「答えを もとめる」では、部品を 動かす・音を 出す・待つ などの やることは 使えません。これらは「てじゅん」へ 入れます。れい：1＋2を答えとして返す。';
-    if (/の 中からは、作品や 部品の へんすう・リストを かえられません/.test(message))
+    if (matches(/の 中からは、作品や 部品の へんすう・リストを かえられません/))
       return '「答えを もとめる」では、作品や 部品の へんすう・リストの 中身を かえられません。かえる やることは「てじゅん」へ 入れます。';
-    if (/「待つ」と「動く」の 2つの 文に 分けます/.test(message))
+    if (matches(/「」と「」の 2つの 文に 分けます/))
       return '待ってから 動くときは、2つの 文に 分けます。\nれい：1秒待つ。\n前へ10歩進む。';
-    if (/「N番目」はリスト/.test(message)) {
+    if (matches(/「」はリスト/)) {
       // The name the child wrote before 〜番目, when the line is known; no list of another work is named.
       const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
         name = /([^\s（）「」【】、。]+?)の(?:[0-9０-９]+|（[^）]*）)番目/.exec(line)?.[1];
       return (name ? '「' + name + '」は リストでは ないので、何番目かを えらべません。' : '') + '何番目かを えらべるのは、ならんだ ものを おぼえる リストです。';
     }
-    if (/使われていない絵や音か、足りない絵や音/.test(message))
-      return '作品で使う絵や音と、ほぞんする絵や音の組み合わせが合っていません。理由は 下の くわしい せつめいに のこしています。「絵や音」の画面で、使う絵や音を たしかめてください。';
-    if (/絵や音の中身を表す文字|同じしるし|絵や音の番号|使うはずの絵や音|同じ中身の絵や音|ではないものを使っています|絵や音「[^」]*」がありません|の種類が、正しくありません|記録と合いません|記録とちがいます|絵や音の記録の形|使える大きさの外|あかりで使えない(?:形|種類)の|中身をたしかめるしるし|同じ絵や音が2つ以上|おまけの情報|ほぞんした音|ほぞんしたときと合いません/.test(message))
-      return '絵や音の 中身を たしかめられませんでした。理由は 下の くわしい せつめいに のこしています。「絵や音」の 画面で、使う 絵や音を たしかめてください。';
+    const assetMessage = routingMessage;
+    if (matches(/使われていない絵や音か、足りない絵や音/, assetMessage))
+      return '作品で 使う 絵や音と、ほぞんする 絵や音の 組み合わせが 合って いません。理由は 下の くわしい せつめいに のこして います。「絵や音」の 画面で、使う 絵や音を たしかめて ください。';
+    if (matches(/絵や音の中身を表す文字|同じしるし|絵や音の番号|使うはずの絵や音|同じ中身の絵や音|ではないものを使っています|絵や音「[^」]*」がありません|の種類が、正しく ありません|記録と合いません|記録とちがいます|絵や音の記録の形|使える大きさの外|あかりで使えない(?:形|種類)の|中身をたしかめるしるし|同じ絵や音が2つ以上|おまけの情報|ほぞんした音|ほぞんしたときと合いません/, assetMessage))
+      return '絵や音の 中身を たしかめられませんでした。理由は 下の くわしい せつめいに のこして います。「絵や音」の 画面で、使う 絵や音を たしかめて ください。';
     return message;
   }
   function diagnosticDetailText(diagnostic, original = null) {
@@ -258,7 +282,7 @@
       return { ...context(), targetId };
     };
     const getTree = (s) => s?.blockView?.tree || s?.blockView || null;
-    const errorText = (e) => e?.message || e?.reason || String(e || 'うまく できなかったよ。もう一度 やってみてね');
+    const errorText = (e) => e?.message || e?.reason || String(e || 'うまく できなかったよ。もう一度 やって みてね');
     const copy = (v) =>
       typeof structuredClone === 'function' ? structuredClone(v) : JSON.parse(JSON.stringify(v));
     const announce = (message, error = false) => {
@@ -286,7 +310,7 @@
           : replacement
             ? { ownerKey: session()?.ownerKey, reason: 'もとの ばしょに 入れる ブロックを えらんでね' }
             : drag?.started
-              ? { ownerKey: session()?.ownerKey, reason: 'ブロックを 運んでいる とちゅうだよ' }
+              ? { ownerKey: session()?.ownerKey, reason: 'ブロックを 運んで いる とちゅうだよ' }
               : null,
       );
     const localIndex = (rootNode) => {
@@ -467,17 +491,17 @@
     // ＾ is a くわしく block (F-21): its help shows there only (renderPalette).
     const powerHelp=E('p','','「同じ数を くり返し かける」（＾）は、同じ 数を 何回も かける 計算だよ。2＾3 は 2×2×2 で 8 に なるよ。');
     const help=E('details','blockui-local-help');help.append(E('summary','','いまの作り方のヒント'),
-      E('p','','「＋ ここに入れる」で ブロックを 入れるよ。あいている ところには 文字・数・へんすう・リストを えらぶよ。「たずねる」で 待った 返事は「答え」で 使えるよ。とちゅうでも ほぞんできるよ。'),
+      E('p','','「＋ ここに入れる」で ブロックを 入れるよ。あいている ところには 文字・数・へんすう・リストを えらぶよ。「たずねる」で 待った 返事は「答え」で 使えるよ。とちゅうでも ほぞん できるよ。'),
       E('p','','あいている ところに 入れる 中身には、文字「おはよう」、数の 10、「あてはまる・あてはまらない」などが あるよ。'),
       E('p','','つなぐブロックは、「話す」「待つ」など、してほしい ことだよ。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところだよ。'),
-      E('p','','ブロックは なかまごとに 分かれているよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。'),
-      E('p','','とちゅうに 入れる：本、ぼうしの 間に かさを 入れると、本、かさ、ぼうしに なるよ。入れかえる：かさを ぼうしに かえるように、えらんだ 中身を かえるよ。'),
-      E('p','','リストには、中身が 1つずつ ならんでいるよ。「中身を 一つずつ 見る」ブロックでは、前から じゅんに 同じ 動きを するよ。'),
+      E('p','','ブロックは なかまごとに 分かれて いるよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。'),
+      E('p','','とちゅうに 入れる：本、ぼうしの 間に かさを 入れると、本、かさ、ぼうしに なるよ。入れかえる：かさを ぼうしに かえる ように、えらんだ 中身を かえるよ。'),
+      E('p','','リストには、中身が 1つずつ ならんで いるよ。「中身を 一つずつ 見る」ブロックでは、前から じゅんに 同じ 動きを するよ。'),
       E('p','','計算や くらべ方の しるしだけを かえても、左右の 中身は のこるよ。'),
       powerHelp,
       E('p','','メモは、あとで 思い出せるように 書く ひとことだよ。動きは かわらないよ。'),
       E('p','','「見た目のコピー」は、見た目と せっていが 同じ 部品を もう1つ 作るよ。本文は もたないよ。「自分のコピーを作る」の コピーは、動いている あいだだけの 部品で、もとの 部品の 本文で 動くよ。'),
-      E('p','','「入力を やめる」「入れるのを やめる」「もっていくのを やめる」は、いま している ことを やめるよ。「もとにもどす」は、もう 決めた ことを 1つ もどすよ。'));
+      E('p','','「入力を やめる」「入れるのを やめる」「もって いくのを やめる」は、いま している ことを やめるよ。「もとに もどす」は、もう 決めた ことを 1つ もどすよ。'));
     paletteControls.append(help);
     paletteControls.id = viewId + '-palette-tools';
     paletteControls.hidden = true;
@@ -518,10 +542,11 @@
         toolsFrame = null;
         const box = workspace.querySelector('.blockui-node.blockui-selected')?.getBoundingClientRect(), room = workspace.getBoundingClientRect();
         if (box && box.bottom > room.top && box.top < room.bottom) placeNodeTools();
+        placeBlockPopovers();
       });
     }
     listen(doc.defaultView, 'resize', () => {
-      for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
+      for (const menu of workspace.querySelectorAll('.blockui-actions[open],.blockui-extra[open]')) menu.open = false;
       placeControls();
     });
     // The controls are fixed to the window, so they follow the page and the editor when either scrolls.
@@ -573,7 +598,7 @@
       renderPalette();
     });
     function normalizedResult(result) {
-      if (result === false) return { ok: false, error: 'うまく できなかったよ。もう一度 やってみてね' };
+      if (result === false) return { ok: false, error: 'うまく できなかったよ。もう一度 やって みてね' };
       return result && typeof result === 'object'
         ? result
         : { ok: true, changed: result !== false };
@@ -606,16 +631,16 @@
       if (session()?.ownerKey !== owner) {
         const transition=result.ownerTransition;
         if(transition?.from!==owner||transition.to!==session()?.ownerKey){
-          announce('なおしていた ところが かわったよ。もう一度 やってね', true);
-          return { ok: false, reason: 'なおしていた ところが かわったよ。もう一度 やってね' };
+          announce('なおして いた ところが かわったよ。もう一度 やってね', true);
+          return { ok: false, reason: 'なおして いた ところが かわったよ。もう一度 やってね' };
         }
         // Persisting a new event gives the same document its permanent key.
         if(displaySession?.ownerKey===owner)displaySession={...displaySession,ownerKey:transition.to};
       }
-      announce(result.changed === false ? '中身は かわっていないよ'
+      announce(result.changed === false ? '中身は かわって いないよ'
         : ['insert', 'wrap', 'expression', 'variadic-insert'].includes(op.type) ? 'ブロックを 入れたよ'
         : ['remove', 'variadic-remove'].includes(op.type) ? 'ブロックを けしたよ'
-        : ['move', 'move-run'].includes(op.type) ? 'ブロックを もっていったよ' : op.type === 'duplicate' ? 'ブロックを もう1つ 作ったよ' : 'ブロックを かえたよ');
+        : ['move', 'move-run'].includes(op.type) ? 'ブロックを もって いったよ' : op.type === 'duplicate' ? 'ブロックを もう1つ 作ったよ' : 'ブロックを かえたよ');
       if (!fromPending) render({ force: true });
       return result;
     }
@@ -773,7 +798,7 @@
           pending: true,
           reason: replacement
             ? 'もとの ばしょに 入れる ブロックを えらぶか、「' + cancelLabel() + '」を おしてね'
-            : 'ブロックを おく ところで はなしてね。やめるときは Esc キーを おしてね',
+            : 'ブロックを おく ところで はなしてね。やめる ときは Esc キーを おしてね',
         };
       if (!pending) return { ok: true };
       const p = pending;
@@ -794,7 +819,7 @@
       if (p.composing || p.input.dataset.composing === 'true')
         return refused('日本語の へんかんを おわらせてから、もう一度 やってね');
       if (session()?.ownerKey !== p.ownerKey)
-        return refused('入れている とちゅうで、なおしていた ところが かわったよ。「決める」を おすか、「' + cancelLabel() + '」を おしてね');
+        return refused('入れて いる とちゅうで、なおして いた ところが かわったよ。「決める」を おすか、「' + cancelLabel() + '」を おしてね');
       if (
         session()?.sourceRevision !== p.sourceRevision ||
         session()?.contextRevision !== p.contextRevision
@@ -872,13 +897,13 @@
     }
     function cancelField() {
       dropPending();
-      announce('入れるのを やめたよ。組み立てていた ブロックは のこっているよ');
+      announce('入れるのを やめたよ。組み立てていた ブロックは のこって いるよ');
       return { ok: true };
     }
     // One やめる per state, named by what it stops (F-23): a block put in that still has holes, the input being typed, a
     // block being moved, or the place chosen for the next block.
     function cancelLabel() {
-      return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もっていくのを やめる' : '入れるのを やめる';
+      return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もって いくのを やめる' : '入れるのを やめる';
     }
     function cancel() {
       const stopped = cancelLabel().replace(/やめる$/, 'やめたよ'), hadKeys = root.contains(doc.activeElement);
@@ -917,7 +942,7 @@
       const parent = index.get(destination?.parentId)?.node, schema = schemaOf(parent);
       if (destination?.input) {
         const input = schema?.inputs.find(s => s.key === destination.input);
-        return (input?.label || 'あいている ところ') + 'に 入れる ブロックを えらんでいるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね';
+        return (input?.label || 'あいている ところ') + 'に 入れる ブロックを えらんで いるよ。つなぐブロックを ふやす ときは「＋ ここに入れる」を おしてね';
       }
       if (destination?.body) {
         const body = schema?.bodies.find(s => s.key === destination.body);
@@ -961,7 +986,7 @@
         : moving
           ? moving.type === 'run'
             ? 'この ブロックから 下の ' + runIds(moving.id).length + 'この ブロックを もっていく ところを えらんでね'
-            : 'どこへ もっていくか えらんでね'
+            : 'どこへ もって いくか えらんでね'
           : destination?.input
             ? destinationDescription()
             : destination?.body
@@ -1071,8 +1096,8 @@
       showImpliedDestination();
       placeNodeTools();
       if (!id) for (const n of workspace.querySelectorAll('.blockui-focused')) n.classList.remove('blockui-focused');
-      for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
-        if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
+      for (const menu of workspace.querySelectorAll('.blockui-actions[open],.blockui-extra[open]'))
+        if (menu.closest('.blockui-node')?.dataset.blockId !== id) { menu.open = false; openEditors.delete(menu.dataset.blockuiDisclosure); }
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
       // A number that is its own field in the sentence (1 秒, E-02) has its tools on its own place: the field being
       // edited keeps them while its sentence is the selected block.
@@ -1363,7 +1388,7 @@
       if (schema.category !== (location.body ? 'statement' : 'expression'))
         return {
           enabled: false,
-          reason: location.body ? '本文には つなぐブロックを 入れるよ。はめるブロックは あいている ところを えらんで 入れてね' : 'いまは はめるブロックを えらんでいるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね',
+          reason: location.body ? '本文には つなぐブロックを 入れるよ。はめるブロックは あいている ところを えらんで 入れてね' : 'いまは はめるブロックを えらんで いるよ。つなぐブロックを ふやす ときは「＋ ここに入れる」を おしてね',
         };
       const key = schemaId + '|' + JSON.stringify(location) + '|' + (candidateNode ? JSON.stringify(candidateNode) : '');
       if (availabilityCache.has(key)) return availabilityCache.get(key);
@@ -1562,6 +1587,17 @@
     }
     function shownPhrase(schema, node) {
       const parts = phrase(schema);
+      // Named inputs keep their names and 「として」 on the face, as written in this call's code.
+      if (['UserActionCall', 'UserFunctionCall'].includes(schema.kind) && node?.fields.argumentNames?.length === node?.inputs.args?.length && node.inputs.args.length) {
+        const slot = schema.inputs.find(s => s.key === 'args'), field = schema.fields.find(f => f.key === 'name'), named = [];
+        if (schema.kind === 'UserFunctionCall') named.push('（');
+        node.fields.argumentNames.forEach((name, i) => {
+          if (i) named.push('、');
+          named.push(nameSource(name) + 'を ', { token: '', slot, index: i });
+        });
+        named.push(' として、【', { token: '', field }, schema.kind === 'UserActionCall' ? '】というてじゅんを行う' : '】で求めた答え）');
+        return named;
+      }
       // The character's colour reads 色を〔赤〕にする, as block-to-code writes it, unless the work has data named 色 (F-25).
       if (parts && schema.id === 'LooksCommand:SET_COLOR') {
         if (!project() || workSymbols()?.allDataNames?.has?.('色')) return parts;
@@ -1744,7 +1780,10 @@
     // One call for each てじゅん and 答えを もとめる of the work, written as 書ける ことば writes it (ジャンプ with 高さを1として、).
     function definitionCalls(work) {
       if (!work) return [];
-      const handed = d => (d.args || []).length ? d.args.map(arg => nameSource(arg) + 'を1').join('、') + 'として、' : '', out = [];
+      const handed = d => {
+        const values = definitionHintArguments(d, work);
+        return (d.args || []).length ? d.args.map((arg, i) => nameSource(arg) + 'を' + values[i]).join('、') + 'として、' : '';
+      }, out = [];
       for (const [kind, list] of [['UserActionCall', work.actions], ['UserFunctionCall', work.functions]])
         for (const d of list || []) {
           const action = kind === 'UserActionCall', text = action ? `${handed(d)}【${d.name}】というてじゅんを行う` : `（${handed(d)}【${d.name}】で求めた答え）`;
@@ -1755,7 +1794,7 @@
         }
       return out;
     }
-    // A block of the list or a なかま that has the keys keeps them when the list is made again (Escape, もとにもどす): the
+    // A block of the list or a なかま that has the keys keeps them when the list is made again (Escape, もとに もどす): the
     // same one, else the first block or the search field, never the page (Y2-06).
     const PALETTE_KEYS = '[data-blockui-action="palette-add"],[data-blockui-action="palette-category"]',
       paletteKey = n => ['data-blockui-action', 'data-blockui-category', 'data-blockui-schema', 'data-search-binding'].map(a => n.getAttribute(a)).join('|');
@@ -1804,7 +1843,7 @@
       }
       categorySelect.scrollTop = categoryScroll;
       // A search looks through every category, whichever is chosen (E-13); the results keep their category colours.
-      searchScope.textContent=query?'すべての なかまから さがしているよ':'すべての なかまから さがせるよ';
+      searchScope.textContent=query?'すべての なかまから さがして いるよ':'すべての なかまから さがせるよ';
       restoreSearch.hidden = !previousSearch || !!query;
       restoreSearch.textContent = `前の「${previousSearch}」を もう一度 さがす`;
       const location = destination || defaultDestination(),
@@ -1816,7 +1855,7 @@
         // is a block of 答えを もとめる only (F2-06).
         .filter(s => !(['UserActionCall', 'UserFunctionCall'].includes(s.kind) && !s.candidateNode)
           && (s.kind !== 'ReturnStatement' || context().definitionKind === 'function'));
-      if (!query) {
+      if (!query && !entry) {
         const calls = definitionCalls(projectState), at = searched.findIndex(s => blockPaletteGroup(s) === 'action');
         searched.splice(at < 0 ? searched.length : at, 0, ...calls);
       }
@@ -1865,7 +1904,7 @@
       if (hiddenAtEntry)
         paletteList.append(E('p', 'blockui-empty blockui-entry-hidden', context().targetId === 'stage'
           ? '画面では、動きと すがたの ブロックは 使えないよ。キャラクターを えらぶと 使えるよ'
-          : 'ここで 使えない ブロックは かくしているよ'));
+          : 'ここで 使えない ブロックは かくして いるよ'));
       for (const schema of candidates) {
         const a = paletteAvailability(schema, location),
           item = E('div', 'blockui-palette-item', null, {
@@ -1927,12 +1966,12 @@
             'p',
             'blockui-empty',
             // A search already looks through every なかま: it asks for other words.
-            query ? '「' + searchText.trim() + '」に 合う ブロックが ないよ。ほかの ことばで さがしてみてね。れい：うごく・まつ・いう'
+            query ? '「' + searchText.trim() + '」に 合う ブロックが ないよ。ほかの ことばで さがして みてね。れい：うごく・まつ・いう'
             // The work has no てじゅん or 答えを もとめる yet: the toolbar's 自分で作ったブロック makes one (F2-06).
             : category === 'action' && !(projectState?.actions?.length || projectState?.functions?.length)
-              ? '自分で作ったブロックは まだ ないよ。上の「自分で作ったブロック」で 作れるよ'
+              ? (document.body.dataset.uiLevel === 'basic' ? '自分で作ったブロックは まだ ないよ。「くわしく」に すると 作れるよ' : '自分で作ったブロックは まだ ないよ。「キャラクター・部品」の 下の「自分で作ったブロック」で 作れるよ')
             : location?.input
-              ? 'ここに 入れられる ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね'
+              ? 'ここに 入れられる ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。つなぐブロックを ふやす ときは「＋ ここに入れる」を おしてね'
               : 'この ばしょで 使える ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。',
           ),
         );
@@ -2004,9 +2043,9 @@
       if (!owner && value?.kind === 'named' && !schemaOf(node)?.bodies?.length && !subjectWritten(node, value.name) &&
           value.name !== project()?.components.find(c => c.id === context().targetId)?.name) {
         const why = '前の 文の「' + value.name + (value.particle || 'は') + '」を ひきついで、' + value.name + 'が します',
-          carried = E('span', 'blockui-subject-chip blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id, 'data-carried-subject': value.name, title: why, role: 'note', 'aria-label': why });
+          carried = E('span', 'blockui-subject-chip blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id, 'data-carried-subject': value.name, role: 'note', 'aria-label': why });
         Object.assign(carried.style, { display: 'inline-flex', alignItems: 'center', alignSelf: 'center', padding: '0 7px', minHeight: '20px',
-          border: '1px dashed currentColor', borderRadius: '10px', opacity: '0.6', marginRight: '4px', fontSize: '0.92em', whiteSpace: 'nowrap' });
+          border: '1px dashed currentColor', borderRadius: '10px', opacity: '1', marginRight: '4px', fontSize: '0.92em', whiteSpace: 'nowrap' });
         return carried;
       }
       if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
@@ -2332,7 +2371,7 @@
       destination = null;
       announce(type === 'copy' ? 'もう1つ 作る ところを えらんでね'
         : type === 'run' ? 'この ブロックから 下の ' + runIds(node.id).length + 'この ブロックを もっていく ところを えらぶか、そのまま 運んでね'
-          : 'どこへ もっていくか えらんでね');
+          : 'どこへ もって いくか えらんでね');
       updateControls();
       showImpliedDestination();
 
@@ -2348,7 +2387,7 @@
       }
       const kind = schemaOf(info.node).category;
       if ((kind === 'statement') !== !!location.body) {
-        announce('つなぐブロックは 本文へ、はめるブロックは あいている ところへ もっていってね', true);
+        announce('つなぐブロックは 本文へ、はめるブロックは あいている ところへ もって いってね', true);
         return;
       }
       const parent = index.get(location.parentId), carried = source.type === 'run' ? runIds(source.id) : [source.id];
@@ -2356,7 +2395,7 @@
         source.type !== 'copy' &&
         carried.some(id => location.parentId === id || parent?.ancestors.includes(id))
       ) {
-        announce('自分の 中には もっていけないよ', true);
+        announce('自分の 中には もって いけないよ', true);
         return;
       }
       if (kind === 'statement') {
@@ -2439,7 +2478,7 @@
         note,
         select,
         accept,
-        button('もっていくのを やめる', 'cancel-expression-move', () => cancel()),
+        button('もって いくのを やめる', 'cancel-expression-move', () => cancel()),
       );
       select.focus();
     }
@@ -2484,8 +2523,8 @@
       dragHandle.disabled = isLocked();
       tools.append(dragHandle);
       const menu = E('details', 'blockui-actions'),
-        summary = E('summary', 'blockui-selection-actions', 'ほかのそうさ', {
-          'aria-label': schema.label + 'のほかのそうさ',
+        summary = E('summary', 'blockui-selection-actions', 'ほかの そうさ', {
+          'aria-label': schema.label + 'のほかの そうさ',
           'data-blockui-action': 'more',
         }),
         commands = E('div', 'blockui-action-items');
@@ -2711,7 +2750,7 @@
             last = Math.floor((begin - 1) / BODY_PAGE);
           gap.append(
             button('つづきのブロックを見せる', 'body-gap-next', () => showPage(first)),
-            E('span', '', `${end + 1}〜${begin}番目の ブロックは かくれているよ`),
+            E('span', '', `${end + 1}〜${begin}番目の ブロックは かくれて いるよ`),
           );
           if (last !== first)
             gap.append(button('すぐ前のブロックを見せる', 'body-gap-previous', () => showPage(last)));
@@ -2930,7 +2969,7 @@
           if (value) focus({ id:value.id });
         }
       });
-      const b = button('計算を入れる', 'slot-select', () => chooseDestination(location), {
+      const b = button('計算を入れる', 'slot-select', () => { category = 'operator'; categoryExplicit = true; searchText = ''; search.value = ''; chooseDestination(location); }, {
         'aria-label': label + 'に計算を入れる',
       });
       b.disabled = isLocked();
@@ -3191,7 +3230,7 @@
           ul.append(item);
         }
         box.append(ul);
-        const mark = button('ⓘ 知らせ', 'notices', () => { selection(node.id); mark.setAttribute('aria-expanded', String(ul.classList.toggle('blockui-open'))); },
+        const mark = button('ⓘ 知らせ', 'notices', () => { selection(node.id); mark.setAttribute('aria-expanded', String(ul.classList.toggle('blockui-open'))); scheduleGeometry(); },
           { 'aria-label': notices.length + 'この 知らせを 見せる', 'aria-expanded': 'false', title: notices.map(d => d.message).join(' ／ ') });
         head.prepend(mark);
       }
@@ -3229,7 +3268,7 @@
         const field = key => fieldControl(node, schema.fields.find(f => f.key === key));
         const slot = key => renderInput(node, schema.inputs.find(s => s.key === key));
         if(['BinaryExpression','CompareExpression','LogicalExpression'].includes(schema.kind)){
-          const operator=E('select','blockui-operator',null,{'aria-label':'計算や くらべ方のしるしだけを かえる'});
+          const operator=E('select','blockui-operator',null,{'aria-label':'計算や くらべ方の しるしだけを かえる'});
           // ＾ is offered at くわしく only (F-21), unless the block already uses it.
           for(const candidate of BLOCK_SCHEMAS.filter(s=>s.kind===schema.kind&&(s.id===schema.id||document.body.dataset.uiLevel==='advanced'||!ADVANCED_ONLY_SCHEMA_IDS.has(s.id))))operator.append(E('option','',candidate.label,{value:candidate.id}));
           operator.value=schema.id;operator.disabled=isLocked()||options.readOnly;
@@ -3340,7 +3379,7 @@
           else if (schema.category === 'target' && info?.input) {
             main.append(holeLabel());
             const picker = E('select', '', null, { 'aria-label': label + 'を えらぶ', 'data-blockui-hole-target': node.id });
-            picker.append(E('option', '', 'かえるものを えらぶ', { value: '' }));
+            picker.append(E('option', '', 'かえる ものを えらぶ', { value: '' }));
             for (const name of namesFor(node, { type: 'name' })) picker.append(E('option', '', name, { value: name }));
             picker.disabled = isLocked();
             listen(picker, 'change', () => {
@@ -3378,7 +3417,7 @@
           main.dataset.blockuiDrag = 'node';
           main.dataset.blockId = node.id;
         }
-        if(schema.kind==='IfStatement'&&!node.fields.hasElse&&!options.readOnly)main.append(button('＋ そうでなければを入れる','else-add',()=>{
+        if(schema.kind==='IfStatement'&&!node.fields.hasElse&&!options.readOnly)main.append(button('＋「そうでなければ」を 入れる','else-add',()=>{
           const result=operate({type:'else',id:node.id,enabled:true});
           if(result.ok){const parent=index.get(node.id)?.node,hole=parent?.bodies.elseBody.find(n=>n.schemaId==='Hole:statement');if(hole)focus({id:hole.id});}
         }));
@@ -3439,7 +3478,7 @@
       listen(details, 'toggle', () => {
         if (details.isConnected) diagnosticsOpen = details.open;
       });
-      details.append(E('summary', '', diagnostics.length + 'か所を たしかめます（書いた中身は のこっています）'));
+      details.append(E('summary', '', diagnostics.length + 'か所を たしかめます（書いた中身は のこって います）'));
       const pages = Math.ceil(diagnostics.length / 20);
       diagnosticPage = Math.min(diagnosticPage, pages - 1);
       const ul = E('ul');
@@ -3563,13 +3602,13 @@
         notifyPending();
       }
       if (nextSignature !== signature) moving = null;
-      // The selected block's 「ほかのそうさ」 stays open when the view is drawn again for the same text: the work check's
+      // The selected block's 「ほかの そうさ」 stays open when the view is drawn again for the same text: the work check's
       // notices arrive a moment after a change (P11 (d)), and a drawing put off while a field had the keys comes when the
-      // press on 「ほかのそうさ」 takes them; neither may close it under the child's press. Its own たたむ and メモ close it.
+      // press on 「ほかの そうさ」 takes them; neither may close it under the child's press. Its own たたむ and メモ close it.
       const nextTextKey = [s?.ownerKey, s?.sourceRevision, s?.contextRevision].join('|'),
         keptMenu = textKey === nextTextKey
           ? workspace.querySelector('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions[open]')?.closest('.blockui-node')?.dataset.blockId : null,
-        // The control of that menu that has the keys (「ほかのそうさ」 itself or one of its items) gets them back.
+        // The control of that menu that has the keys (「ほかの そうさ」 itself or one of its items) gets them back.
         menuKey = keptMenu && doc.activeElement?.closest?.('.blockui-actions[open]') ? doc.activeElement.dataset?.blockuiAction : null;
       textKey = nextTextKey;
       const ownerChanged = s?.ownerKey !== displaySession?.ownerKey,
@@ -3666,7 +3705,7 @@
           E(
             'p',
             'blockui-empty',
-            'この 本文の 書き方を たしかめてください。コードは そのまま のこっています。',
+            'この 本文の 書き方を たしかめて ください。コードは そのまま のこって います。',
           ),
         );
       } else {
@@ -3712,7 +3751,7 @@
         n?.focus({ preventScroll: true });
       }
       if (keptOpen && menuKey) keptOpen.querySelector('[data-blockui-action="' + menuKey + '"]')?.focus({ preventScroll: true });
-      // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
+      // A control not drawn again (its block made anew by もとに もどす) leaves the keys in the block view (Y2-06).
       if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
     function resolveLocation(value) {
@@ -3804,6 +3843,7 @@
           : null,
       );
       revealNode(id);
+      if (index.get(id)?.node.schemaId.startsWith('Hole:')) chooseDestination(listLocation(index.get(id)));
       if(index.get(id)?.node.schemaId.startsWith('Hole:')&&zoom<0.75)setZoom(1);
       const n = locationElement({ ...point, id });
       n?.focus({ preventScroll: true });
@@ -3817,10 +3857,16 @@
       if (key === highlightedId) return;
       revealNode(point.id);
       applyHighlight();
-      if (root.getClientRects().length)
-        workspace
-          .querySelector('.blockui-current')
-          ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      if (root.getClientRects().length) {
+        const n = workspace.querySelector('.blockui-current');
+        if (n) {
+          const r = n.getBoundingClientRect(), room = workspace.getBoundingClientRect();
+          if (r.top < room.top) workspace.scrollTop += r.top - room.top;
+          else if (r.bottom > room.bottom) workspace.scrollTop += r.bottom - room.bottom;
+          if (r.left < room.left) workspace.scrollLeft += r.left - room.left;
+          else if (r.right > room.right) workspace.scrollLeft += r.right - room.right;
+        }
+      }
     }
     function attachShape(box, kind) {
       box.dataset.shapeKind = kind;
@@ -3958,6 +4004,42 @@
       minus.disabled = zoom <= 0.5;
       plus.disabled = zoom >= 2;
       placeNodeTools();
+      placeBlockPopovers();
+    }
+    function closeBlockPopovers(target, focusTraversal = false) {
+      for (const menu of workspace.querySelectorAll('.blockui-extra[open]')) {
+        if (menu.contains(target)) continue;
+        menu.open = false;
+        openEditors.delete(menu.dataset.blockuiDisclosure);
+      }
+      for (const panel of workspace.querySelectorAll('.blockui-node-notices.blockui-open')) {
+        const trigger = panel.closest('.blockui-node')?.querySelector(':scope > .blockui-node-head [data-blockui-action="notices"]');
+        // Tab passes the other tools in this block's head before reaching its correction buttons.
+        if (panel.contains(target) || trigger?.contains(target) || (focusTraversal && panel.closest('.blockui-node')?.contains(target))) continue;
+        panel.classList.remove('blockui-open');
+        panel.closest('.blockui-node')?.querySelector('[data-blockui-action="notices"]')?.setAttribute('aria-expanded', 'false');
+      }
+    }
+    // Panels stay within the workspace and float over it, so opening one moves no block.
+    function placeBlockPopovers() {
+      const room = workspace.getBoundingClientRect();
+      for (const panel of workspace.querySelectorAll('.blockui-extra[open] > .blockui-extra-controls,.blockui-node-notices.blockui-open')) {
+        const box = panel.closest('.blockui-node'), parent = panel.offsetParent,
+          anchor = box?.querySelector(':scope > .blockui-node-content > .blockui-node-main') || box;
+        if (!parent || !anchor) continue;
+        panel.style.minWidth = '0';
+        panel.style.width = Math.max(1, Math.min(380, room.width - 16)) / zoom + 'px';
+        panel.style.maxWidth = Math.max(1, room.width - 16) / zoom + 'px';
+        panel.style.maxHeight = Math.max(1, room.height - 16) / zoom + 'px';
+        panel.style.overflowY = 'auto';
+        const r = panel.getBoundingClientRect(), a = anchor.getBoundingClientRect(), origin = parent.getBoundingClientRect(),
+          left = Math.max(room.left + 8, Math.min(a.left, room.right - 8 - r.width)),
+          below = a.bottom + 2, above = a.top - r.height - 2,
+          top = below + r.height <= room.bottom - 8 ? below : above >= room.top + 8 ? above : Math.max(room.top + 8, room.bottom - r.height - 8);
+        panel.style.left = (left - origin.left) / zoom + 'px';
+        panel.style.right = 'auto';
+        panel.style.top = (top - origin.top) / zoom + 'px';
+      }
     }
     function scheduleGeometry() {
       if (destroyed || geometryFrame !== null) return;
@@ -4414,7 +4496,7 @@
           reason = errorText(e);
         }
 
-      if (valid) reason = !location.body ? 'ここの 中身を 入れかえる' : wraps ? '下の ' + wraps + 'この ブロックを 中に 入れる' : 'ここにつなぐ';
+      if (valid) reason = !location.body ? 'ここの 中身を 入れかえる' : wraps ? '下の ' + wraps + 'この ブロックを 中に 入れる' : 'ここに つなぐ';
       drag.location = location;
       drag.target = element;
       drag.valid = valid;
@@ -4526,6 +4608,7 @@
     // being typed in keeps the press for its caret and its selection.
     let controlPress = null;
     listen(root, 'pointerdown', (event) => {
+      closeBlockPopovers(event.target);
       pointerFocusTarget = event.target;
       pointerFocusPrevious = doc.activeElement;
       lastPointerType = event.pointerType || 'mouse';
@@ -4675,7 +4758,7 @@
         const ids = carriedIds(state);
         const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
           : removeBlock(index.get(state.id)?.node || { id: state.id });
-        if (result.ok) { keepKeys(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
+        if (result.ok) { keepKeys(); showDropNote('けしたよ。「もとに もどす」で もどせるよ', event.clientX, event.clientY); }
         return;
       }
       if (!state.valid || !state.location) {
@@ -4754,6 +4837,7 @@
       if(slot)doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));
     }
     listen(root, 'focusin', (event) => {
+      closeBlockPopovers(event.target, true);
       if (pointerFocusTarget && event.target.contains(pointerFocusTarget)) return;
       focusBlockField(event.target);
     });
@@ -4800,9 +4884,17 @@
       if (event.key === 'Escape') {
         event.preventDefault();
         event.stopPropagation();
-        const menu = event.target.closest('.blockui-extra[open],.blockui-who[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-local-help[open],.blockui-actions[open],.blockui-who[open]');
+        const notice = workspace.querySelector('.blockui-node-notices.blockui-open');
+        if (notice) {
+          notice.classList.remove('blockui-open');
+          const mark = notice.closest('.blockui-node')?.querySelector('[data-blockui-action="notices"]');
+          mark?.setAttribute('aria-expanded', 'false'); mark?.focus({ preventScroll: true });
+          return;
+        }
+        const menu = event.target.closest('.blockui-extra[open],.blockui-who[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-extra[open],.blockui-local-help[open],.blockui-actions[open],.blockui-who[open]');
         if (menu) {
           menu.open = false;
+          openEditors.delete(menu.dataset.blockuiDisclosure);
           menu.querySelector('summary')?.focus();
           return;
         }
@@ -4814,7 +4906,7 @@
           notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
           for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
           for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
-          announce('えらぶのを やめたよ。' + (session()?.blockDraft ? '入れかけの ブロックは「入れるのを やめる」で やめられるよ。' : '') + '決めた ことは「もとにもどす」で もどせるよ');
+          announce('えらぶのを やめたよ。' + (session()?.blockDraft ? '入れかけの ブロックは「入れるのを やめる」で やめられるよ。' : '') + '決めた ことは「もとに もどす」で もどせるよ');
         }
         return;
       }

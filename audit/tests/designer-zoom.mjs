@@ -10,6 +10,7 @@ import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {designerZoomIds, verifyDesignerZoom} from '../lib/feature-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
 import {chooseView} from '../browser/cases/view-toggle.cjs';
+import {observeRunStageMinimum} from '../lib/run-stage-minimum-observations.cjs';
 
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh designer evidence required');
@@ -18,6 +19,62 @@ fs.mkdirSync(artifacts, {recursive: true});
 const inputs = snapshot(currentProductFile()), results = [];
 const settle = p => p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 const near = (a, b, label) => assert.ok(Math.abs(a - b) < 0.001, `${label}: ${a} vs ${b}`);
+async function touchEditing(browser) {
+  const rows = [];
+  for (const width of [1366, 1024, 760]) {
+    const context = await browser.newContext({viewport:{width,height:768},hasTouch:true});
+    const p = await context.newPage(), errors = [], requests = [];
+    p.on('pageerror', e => errors.push(String(e)));
+    p.on('request', r => { if (/^https?:/.test(r.url())) requests.push(r.url()); });
+    try {
+      await p.goto(pathToFileURL(path.resolve(currentProductFile())).href);
+      await p.waitForFunction(() => !!window.Akari?.app);
+      await p.locator('#uiLevel').selectOption('advanced'); await chooseView(p,'code');
+      await p.locator('.tool[data-type="input"]').click(); await chooseView(p,'blocks');
+      await p.locator('.component.ak-input').scrollIntoViewIfNeeded();
+      const cdp = await context.newCDPSession(p);
+      const read = () => p.evaluate(() => {
+        const c = Akari.app.project.components.find(c => c.type === 'input'), f = document.querySelector('#formSurface').getBoundingClientRect(),
+          scale = f.width / Akari.app.project.stage.width, x = f.left + c.x * scale, y = f.bottom - c.y * scale,
+          lock = document.querySelector('#designRatioLock'), r = lock.getBoundingClientRect();
+        return {x:c.x,y:c.y,w:c.w,h:c.h,history:Akari.app.editorState.history,px:x,py:y,
+          centerHit:document.elementFromPoint(x,y)?.dataset.runtimeId === c.id,
+          covered:x >= r.left && x <= r.right && y >= r.top && y <= r.bottom,ratio:lock.getAttribute('aria-pressed')};
+      });
+      const drag = async (from, dx, dy) => {
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:from.px,y:from.py}]});
+        await p.waitForTimeout(40);
+        for(let n=1;n<=12;n++) {
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:from.px+dx*n/12,y:from.py+dy*n/12}]});
+          await p.waitForTimeout(20);
+        }
+        await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]}); await settle(p);
+      };
+      const before = await read(); assert.equal(before.covered,false); assert.equal(before.centerHit,true);
+      await drag(before,0,7); const wobbled = await read();
+      assert.deepEqual([wobbled.x,wobbled.y,wobbled.w,wobbled.h,wobbled.history],[before.x,before.y,before.w,before.h,before.history],'a sub-slop finger wobble changes neither the part nor history');
+      await drag(wobbled,0,40); const moved = await read();
+      assert.ok(moved.y < before.y - 10,'a vertical finger drag moves the input part');assert.equal(moved.ratio,before.ratio);assert.equal(moved.history,before.history+1);
+      await size(p,1200,400);
+      await p.locator('#stageZoomReset').scrollIntoViewIfNeeded();await p.locator('#stageZoomReset').click();
+      await p.locator('.designer-wrap').scrollIntoViewIfNeeded();
+      const pan = await p.evaluate(() => {
+        const n=document.querySelector('.designer-wrap'); n.scrollLeft=0; n.scrollTop=0;
+        const r=n.getBoundingClientRect(), f=document.querySelector('#formSurface').getBoundingClientRect();
+        const x=Math.max(r.left,f.left)+50,y=Math.max(r.top,f.top)+40;
+        document.addEventListener('touchstart',e=>{window.__panTarget=e.target.id;},{capture:true,once:true});
+        return {left:n.scrollLeft,x,y,overflow:n.scrollWidth-n.clientWidth,url:location.href};
+      });
+      assert.ok(pan.overflow>100,'100% has a horizontal overflow to reach');
+      await drag({px:pan.x,py:pan.y},-130,0);await p.waitForTimeout(250);
+      const after = await p.evaluate(() => ({left:document.querySelector('.designer-wrap').scrollLeft,url:location.href,target:window.__panTarget}));
+      assert.equal(after.target,'formSurface','the finger starts on the background, clear of touch-adjusted input targets');
+      assert.ok(after.left>pan.left+50,'a finger on the background reaches the horizontal overflow');assert.equal(after.url,pan.url);
+      assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);rows.push({width,centerHit:before.centerHit,covered:before.covered,wobblePreserved:true,dragged:true,ratioPreserved:moved.ratio===before.ratio,panPixels:after.left-pan.left,urlPreserved:true});
+    } finally { await context.close(); }
+  }
+  return rows;
+}
 async function reveal(locator) {
   if (!await locator.isVisible()) for (const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())
     await panel.locator('.blockui-side-toggle').click();
@@ -197,6 +254,7 @@ const cases = {
       assert.deepEqual(await state(p), before, 'zoom during run/pause preserves design');
       await pressStop(p.locator('#stopBtn')); await assertFit(p);
     }
+    return {runMinimum: await observeRunStageMinimum(p.context().browser(), currentProductFile())};
   },
   async 'DESIGN-ZOOM-SAVE-EXPORT'(p) {
     await size(p); await (async()=>{const control=p.locator('#codeEditor'); await openBodyForTest(control.page()); return control.fill('「ズーム確認」と言う。');})();
@@ -249,6 +307,7 @@ const cases = {
       await stable(p); await p.locator('#designerWindow').screenshot({path: path.join(artifacts, m + '-narrow.png')});
     }
     await cdp.detach();
+    return {touchEditing:await touchEditing(p.context().browser())};
   },
   // LANGUAGE.md 画面デザイナ: with a handle chosen, an arrow key moves it 1 step that way (10 with Shift), ↑ upward; the
   // centre stays, so the size changes by twice the move, and the keys never move the part. A character whose look is

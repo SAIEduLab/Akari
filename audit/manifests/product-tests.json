@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "8dfb6c74d93efdb743801fc7175dd77cf79083c0b0c73468e0fe362ecbeb841f",
+  "fixedIdSha256": "cb3b92d32db01ec815ebb2ce9f7274bf254f14ad06893b70df63870b4e3ab0fe",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -176,7 +176,12 @@
         "TEST-CONTRACT self analysis uses event or action entry target through every control",
         "TEST-CONTRACT function self stays at call entry through every control and nested call",
         "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
-        "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available"
+        "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+        "TEST-CONTRACT timer reset is an effect in value-returning definitions",
+        "TEST-CONTRACT touch wait guidance is conditional and excludes unresolved or compound conditions",
+        "TEST-CONTRACT scoped scalar expressions and quoted list names execute",
+        "TEST-CONTRACT connected rotations preserve sequence and genuine repeat choices",
+        "TEST-CONTRACT touch event advice preserves explicit toucher identity"
       ],
       "environments": [
         "chromium"
@@ -726,7 +731,26 @@
         "CORE meijin exported work opens: touch body without a subject",
         "CORE meijin exported work opens: after a group subject",
         "CORE exported work opens a body with two headings and no document record",
-        "CORE exported work keeps a subject written with が"
+        "CORE exported work keeps a subject written with が",
+        "CORE intent corrections keep nested chains and inline if bodies in their block",
+        "CORE intent corrections keep an unrelated second error fixable",
+        "CORE intent corrections preserve all three waits on the logical clock",
+        "CORE slow near forms keep their time across all connective spellings",
+        "CORE movement guidance examples read and preserve the written direction",
+        "CORE chain axis notices retain both readable choices",
+        "CORE quiz spelling guidance does not redirect text answers into part values",
+        "CORE ambiguous bare compound answers are not silently quoted as one word",
+        "CORE touch choices keep the following else associated with its if",
+        "CORE touch partner diagnostics preserve mutable values and never suggest making data",
+        "CORE flow notices account for procedure effects and possible branch shows",
+        "CORE notice and refusal guidance names the actual context",
+        "CORE function statement hints compile without changing project data or untyped arguments",
+        "CORE procedure examples use explicit string comparisons while unknown arguments keep the numeric default",
+        "CORE body identity includes its key and signal on every runtime label",
+        "CORE turned opaque picture cells do not fall between sample points",
+        "CORE packed asset validation cannot be certified by caller supplied fields",
+        "CORE positive opaque overlap has no fixed spatial dead band",
+        "CORE screen touch guidance preserves a component named screen"
       ],
       "environments": [
         "chromium"

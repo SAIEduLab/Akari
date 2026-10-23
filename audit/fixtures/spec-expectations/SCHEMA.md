@@ -96,7 +96,7 @@ format の事例は `world` を書けます。書かないときは、次の作�
 
 ```json
 { "kind": "check", "world": { }, "expect": {
-  "stops": true, "line": 2,
+  "stops": true, "line": 2, "errorCode": "S317",
   "guidanceContains": ["…"], "guidanceAbsent": ["…"], "fixContains": ["…"],
   "notices": [{ "line": 3, "contains": "…" }], "noNotices": false } }
 ```
@@ -105,6 +105,7 @@ format の事例は `world` を書けます。書かないときは、次の作�
 
 - `stops`：実行を止める誤りがあるか。作品が本文として受け取らない文（例：画面の本文に書いた「「星」にふれたとき、」。作る画面では、本文欄の下に理由が出ます）も、その本文の1行目の、止める誤りとして数えます。
 - `line`：誤りが最初に出る行（1から数える）。省略可。
+- `errorCode`：最初に出る止める誤りの番号。LANGUAGE.md が番号を定めるときだけ書きます。省略可。
 - `guidanceContains`、`guidanceAbsent`：誤りの案内の文に含まれる語、含まれない語。仕様に案内の文が書いてあるときだけ書く。語は、表記の違いを並べた配列でも書けます（`["順", "じゅん"]` はどちらかがあればよい）。案内の文は子ども向けに、かなで書いたり、ことばの間に空白を入れたり（分かち書き）するので、空白は比べません。知らせの `contains` も同じです。
 - `fixContains`：直し方（押すと子どもの文を書きかえる文。LANGUAGE.md では「直し方を出します」「書きかえる文をえらべます」と書く）に含まれる語。誤りと知らせの直し方のどれか一つに含まれればよい。仕様に直し方の文が書いてあるときだけ書く。語の書き方と空白の扱いは `guidanceContains` と同じです。案内の文に出る語は `guidanceContains`、直し方の文に出る語は `fixContains` に分けて書きます。
 - `notices`：止めない知らせ。`contains` は知らせの文に含まれる語。

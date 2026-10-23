@@ -21,8 +21,8 @@ await check('N07/data-and-literal',()=>{const a=run('点数の値を言う。'),
 await check('N08/unit-refusal',()=>['1歩＋1秒を言う。','点数を1秒増やす。'].map(s=>rejected(s,/単位|歩|秒|点/)));
 await check('N09/repeat-scope-required',()=>rejected('3回進んで、回る。',/どこまで.*くり返す/));
 await check('N10/duplicate-rate',()=>rejected('右へ1秒に30歩、2秒に50歩の速さで動く。',/速さ|秒|移動|式/));
-// LANGUAGE.md 読めない文の案内: 「「〔書いた文〕」は 読めません。書き方を たしかめてください。」; 「計算」 is said only inside （ ） or a number place.
-await check('N11/duplicate-direction',()=>{const r=rejected('いまのばしょから、右へ左へ20歩動く。',/「いまのばしょから、右へ左へ20歩動く」は 読めません。書き方を たしかめてください。/);assert.ok(r.diagnostics.every(d=>!/計算/.test(d.message)),'no 計算 in a sentence message');return r;});
+// LANGUAGE.md 読めない文の案内: 「「〔書いた文〕」は 読めません。書き方を たしかめて ください。」; 「計算」 is said only inside （ ） or a number place.
+await check('N11/duplicate-direction',()=>{const r=rejected('いまのばしょから、右へ左へ20歩動く。',/「いまのばしょから、右へ左へ20歩動く」は 読めません。書き方を たしかめて ください。/);assert.ok(r.diagnostics.every(d=>!/計算/.test(d.message)),'no 計算 in a sentence message');return r;});
 await check('N12/missing-rate',()=>rejected('「a」キーを押しているあいだ、あかりは20歩動く。',/速さ|秒|継続/));
 await check('N13/no-foreign-data-fallback',()=>{const p=project('自分の星だけの値を言う。'),b=structuredClone(p.components[0]);Object.assign(b,{id:'pair-star',name:'星',localData:{variables:[{id:'foreign',name:'星だけ',initialValue:99}],lists:[]},costumes:[{id:'star-costume',name:'星',kind:'text',value:'*'}],costumeId:'star-costume'});p.components.push(b);const before=JSON.stringify(p),c=A.compileProject(p);assert.ok(c.errors.length);assert.match(c.errors.map(e=>e.message).join('\n'),/星だけ/);assert.equal(JSON.stringify(p),before);return{diagnostics:plain(c.errors),foreignValue:99};});
 await check('N14/else-and-event-boundary',()=>{const orphan=rejected('そうでなければ、\n  何もしない。',/もし/),p=project('作品を動かしたとき、あかりは、\n  「開始」と言う。\nあかりがクリックされたとき、\n  「クリック」と言う。'),c=A.compileProject(p);assert.deepEqual(plain(c.errors),[]);assert.equal(c.items.length,2);return{orphan,events:c.items.map(x=>x.event)};});

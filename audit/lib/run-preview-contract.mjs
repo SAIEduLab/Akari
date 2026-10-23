@@ -6,9 +6,9 @@ const inside=(r,v)=>assert.ok(r.width>0&&r.height>0&&r.left>=-1&&r.top>=-1&&r.ri
 export async function observeRunPreview(page){
   return page.evaluate(()=>{
     const rect=selector=>{const n=document.querySelector(selector);if(!n)return{x:0,y:0,width:0,height:0,top:0,left:0,right:0,bottom:0,visible:false};const r=n.getBoundingClientRect(),style=getComputedStyle(n);return{...r.toJSON(),visible:!!n.getClientRects().length&&style.visibility!=='hidden'&&style.display!=='none'};};
-    const control=id=>{const n=document.getElementById(id),r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{id,rect:rect('#'+id),enabled:!n.disabled,hit:hit===n||n.contains(hit)};};
+    const control=id=>{const observedId=id==='stopBtn'&&document.querySelector('#runtimeInspector').open?'runtimeInspectorStop':id,n=document.getElementById(observedId),r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{id,observedId,rect:rect('#'+observedId),enabled:!n.disabled,hit:hit===n||n.contains(hit)};};
     const shownButton=id=>{const n=document.getElementById(id);return !!n&&!!n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden';};
-    return{mode:document.body.dataset.editorMode,level:document.body.dataset.uiLevel,chosen:document.querySelector('#uiLevel').value,state:Akari.app.editorState.state,runShown:shownButton('runBtn'),
+    return{inspectorOpen:document.querySelector('#runtimeInspector').open,mode:document.body.dataset.editorMode,level:document.body.dataset.uiLevel,chosen:document.querySelector('#uiLevel').value,state:Akari.app.editorState.state,runShown:shownButton('runBtn'),
       switchShown:shownButton('editorModecode')||shownButton('editorModeblocks'),inspectShown:shownButton('runtimeInspectBtn'),palette:rect('#blockEditor .blockui-palette'),workspace:rect('#blockEditor .blockui-workspace'),runtime:document.body.classList.contains('runtime'),viewport:{width:innerWidth,height:innerHeight},scene:rect('#designerWindow'),editorVisible:rect('#codeEditor').visible||rect('#blockEditor').visible,controls:['stopBtn','pauseBtn','continueBtn','stepBtn'].map(control),source:JSON.stringify(Akari.app.project.scripts),focusInScene:document.activeElement===document.querySelector('#formSurface')};
   });
 }
@@ -18,8 +18,7 @@ export function verifyRunPreview(o,mode,level){
   inside(o.scene,o.viewport);assert.ok(o.scene.width>=o.viewport.width*0.6,'playback uses the main width');
   assert.ok(o.scene.height>=Math.min(380,o.viewport.height*0.45),'playback uses the main height');
   assert.equal(o.focusInScene,true);assert.deepEqual(o.controls.map(c=>c.id),['stopBtn','pauseBtn','continueBtn','stepBtn']);assert.equal(o.runShown,false,'the run screen shows no ▶ 動かす');
-  for(const c of o.controls){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true,'actual hit target '+c.id);}
-  assert.deepEqual(o.controls.map(c=>c.enabled),[true,true,false,true]);
+  verifyRunningControls(o,true);verifyPauseCycle(o,true);
   assert.equal(o.paused,'PAUSED');assert.equal(o.afterStep,'PAUSED');assert.equal(o.resumed,'RUNNING');assert.equal(o.stopped.state,'DESIGN');assert.equal(o.stopped.runtime,false);assert.equal(o.stopped.editorVisible,true);
   assert.equal(o.stopped.source,o.source,'stop restores the unchanged authored project');
   const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.visibleMode,mode);assert.equal(v.alternateMode,mode==='code'?'blocks':'code');assert.equal(v.restoredMode,mode);assert.equal(v.sourcePreserved,true);assert.equal(v.executionLocationVisible,true);assert.equal(v.closed,true);assert.equal(v.modeControlsReturned,true);assert.equal(v.modeControlsShownWhileRunning,false);
@@ -28,12 +27,45 @@ export function verifyRunPreview(o,mode,level){
 // too; 1つずつ 動かす and 本文を見て たしかめる are not at はじめて (final call 21; LANGUAGE.md 作る画面と動かす画面). A 名人
 // work has the くわしく screen with those controls. The run screen shows no view toggle; 「本文と動きのようす」 has it, and in a
 // 名人 work a press keeps the code and says why under it, 「名人は、コードモードで だけ 使えるよ」 (final calls 22, 23).
-// At はじめて the run screen shows ■, ⏸ and ▶ つづける; 1つずつ 動かす is not there.
-function verifyEntryRunControls(o){
-  const [,pause,resume,step]=o.controls;
-  for(const c of [pause,resume]){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true,c.id+' is on the はじめて run screen');assert.equal(c.hit,true,'actual hit target '+c.id);}
-  assert.deepEqual([pause.enabled,resume.enabled],[true,false],'running: ⏸ can be pressed, ▶ つづける cannot');
-  assert.equal(step.rect.visible,false,'1つずつ 動かす is not on the はじめて run screen');
+// At はじめて the run screen shows ■ and alternates ⏸ / ▶ つづける; 1つずつ 動かす is not there.
+function verifyRunningControls(o,stepping){
+  const [stop,pause,resume,step]=o.controls;
+  assert.deepEqual(o.controls.map(c=>c.observedId),[o.inspectorOpen?'runtimeInspectorStop':'stopBtn','pauseBtn','continueBtn','stepBtn'],'the logical controls identify their actual observed DOM elements');
+  for(const c of [stop,pause,...(stepping?[step]:[])]){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true,'actual hit target '+c.id);assert.equal(c.enabled,true);}
+  assert.equal(resume.rect.visible,false,'only pause is shown while running');assert.equal(resume.hit,false);assert.equal(resume.enabled,false);
+  samePlace(pause.rect,resume.rect);
+  if(!stepping)assert.equal(step.rect.visible,false,'1つずつ 動かす is not on the はじめて run screen');
+}
+function samePlace(a,b){for(const key of ['left','top','width','height'])assert.ok(Math.abs(a[key]-b[key])<=1,'pause and continue keep the same '+key);}
+function verifyEntryRunControls(o){verifyRunningControls(o,false);}
+function verifyPauseCycle(o,stepping){
+  const p=o.pauseObservation,r=o.resumeObservation;
+  for(const phase of [o.pauseCycleBefore,p,r]){assert.equal(phase.source,o.source,'pause, step and continue preserve authored source');assert.equal(phase.inspectorOpen,o.pauseCycleBefore.inspectorOpen,'the pause cycle stays in its initial toolbar or inspector context');}
+  assert.equal(p.state,'PAUSED');assert.equal(p.focusContinue,true,'pause places focus on continue');
+  assert.equal(p.controls[1].rect.visible,false);assert.equal(p.controls[1].hit,false);assert.equal(p.controls[1].enabled,false);
+  assert.deepEqual(p.controls.map(c=>c.observedId),[p.inspectorOpen?'runtimeInspectorStop':'stopBtn','pauseBtn','continueBtn','stepBtn']);
+  for(const active of [p.controls[0],...(stepping?[p.controls[3]]:[])]){inside(active.rect,p.viewport);assert.equal(active.rect.visible,true);assert.equal(active.hit,true);assert.equal(active.enabled,true);}
+  const c=p.controls[2];inside(c.rect,p.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true);assert.equal(c.enabled,true);
+  samePlace(o.pauseCycleBefore.controls[1].rect,c.rect);
+  assert.ok(o.guardAttemptMs>=0&&o.guardAttemptMs<500,'the negative press is inside the 0.5 second guard');assert.equal(o.guardState,'PAUSED','a second press within 0.5 seconds does nothing');
+  assert.equal(r.state,'RUNNING');
+  if(r.inspectorOpen)assert.equal(r.focusPause,true,'continue keeps focus on pause in the inspector');
+  else assert.equal(r.focusInScene,true,'continue places focus on the stage');
+  verifyRunningControls(r,stepping);
+}
+// Observe both states and a real second press inside the guard, before waiting for the allowed press.
+export async function observePauseCycle(page,o,{stepping=true}={}){
+  await page.evaluate(()=>{globalThis.__auditPausePresses=[];globalThis.__auditPauseListener=e=>{if(e.target.closest('#pauseBtn,#continueBtn'))__auditPausePresses.push({id:e.target.closest('#pauseBtn,#continueBtn').id,at:e.timeStamp});};document.addEventListener('click',__auditPauseListener,true);});
+  await page.waitForTimeout(510);o.pauseCycleBefore=await observeRunPreview(page);await page.locator('#pauseBtn').click();
+  o.paused=await page.evaluate(()=>Akari.app.editorState.state);o.pauseObservation=await observeRunPreview(page);
+  o.pauseObservation.focusContinue=await page.evaluate(()=>document.activeElement===document.querySelector('#continueBtn'));
+  await page.locator('#continueBtn').click();o.guardState=await page.evaluate(()=>Akari.app.editorState.state);
+  const presses=await page.evaluate(()=>__auditPausePresses.slice(0,2));assert.deepEqual(presses.map(x=>x.id),['pauseBtn','continueBtn']);o.guardAttemptMs=presses[1].at-presses[0].at;
+  await page.waitForTimeout(510);
+  if(stepping){await page.locator('#stepBtn').click();o.afterStep=await page.evaluate(()=>Akari.app.editorState.state);}
+  await page.locator('#continueBtn').click();o.resumed=await page.evaluate(()=>Akari.app.editorState.state);o.resumeObservation=await observeRunPreview(page);
+  Object.assign(o.resumeObservation,await page.evaluate(()=>({inspectorOpen:document.querySelector('#runtimeInspector').open,focusPause:document.activeElement===document.querySelector('#pauseBtn')})));
+  await page.evaluate(()=>{document.removeEventListener('click',__auditPauseListener,true);delete globalThis.__auditPauseListener;delete globalThis.__auditPausePresses;});
 }
 export function verifyRunScreen(o,mode,level){
   const shown=level==='meijin'?'advanced':level;
@@ -47,11 +79,10 @@ export function verifyRunScreen(o,mode,level){
   assert.equal(o.runShown,false,'the run screen shows no ▶ 動かす');assert.equal(o.switchShown,false,'the run screen shows no コード／ブロック switch');
   const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.rect.visible,true);assert.equal(stop.hit,true,'actual hit target stopBtn');assert.equal(stop.enabled,true);
   if(level==='entry'){
-    verifyEntryRunControls(o);
+    verifyEntryRunControls(o);verifyPauseCycle(o,false);
     assert.equal(o.inspectShown,false,'本文を見て たしかめる is not on the はじめて run screen');assert.equal(o.inspector,null);
   } else {
-    for(const c of o.controls){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true,'actual hit target '+c.id);}
-    assert.deepEqual(o.controls.map(c=>c.enabled),[true,true,false,true]);assert.equal(o.inspectShown,true);
+    verifyRunningControls(o,true);verifyPauseCycle(o,true);assert.equal(o.inspectShown,true);
     assert.equal(o.paused,'PAUSED');assert.equal(o.afterStep,'PAUSED');assert.equal(o.resumed,'RUNNING');
     const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.executionLocationVisible,true);
     assert.equal(v.codeVisible,true);assert.equal(v.blocksVisible,false);

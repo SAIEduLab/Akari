@@ -58,18 +58,27 @@ check('REJECT-BANNED-CHILD-WORD',()=>{
 });
 // F-19 (lead decision 32): no unspaced child text beyond the allowlist, and no allowlist entry that is gone.
 const spacing=JSON.parse(read('audit/fixtures/child-spacing-allowlist.json')),spacingInputs=[productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))];
-const allowed=Object.values(spacing.texts).flat();
-check('CHILD-SPACING-RUNS',()=>{assert.equal(spacing.schema,'akari-child-spacing-allowlist-v1');assert.equal(spacing.run,CHILD_SPACING_RUN);assert.deepEqual(childSpacingIssues(spacingInputs,allowed),[]);});
+const allowed=spacing;
+check('CHILD-SPACING-RUNS',()=>{assert.equal(spacing.schema,'akari-child-spacing-allowlist-v2');assert.equal(spacing.run,CHILD_SPACING_RUN);assert.deepEqual(childSpacingIssues(spacingInputs,allowed),[]);});
 // The lint finds an unspaced string, template and markup text, leaves spaced text, quoted parts and allowlisted texts
 // alone, and lists an allowlist entry that no text has any more.
 check('REJECT-UNSPACED-CHILD-TEXT',()=>{
-  const texts=(files,list=[])=>childSpacingIssues(files,list).map(i=>i.text).sort();
-  assert.deepEqual(texts([{file:'a.js',kind:'script',text:"// ここをおしてはじめる\nconst a='ここをおしてはじめる', b=`うごかしてみよう`, c='ここを おして はじめる', d='「いまのばしょから」と書く', e='いまのばしょから';"}],['いまのばしょから','もうないもじれつ']),['ここをおしてはじめる','うごかしてみよう'].sort());
-  assert.deepEqual(childSpacingIssues([{file:'a.js',kind:'script',text:"const e='いまのばしょから';"}],['いまのばしょから','もうないもじれつ'],{stale:true}),['もうないもじれつ']);
-  assert.deepEqual(texts([{file:'b.html',kind:'html',text:'<!-- ここをおしてはじめる --><p>ここをおしてはじめる</p><p>ここを おして はじめる</p><code>いまのばしょから</code><ruby>以上<rt>いじょう</rt></ruby>'}]),['ここをおしてはじめる']);
+  const rules={runs:[{text:'もどせません',reason:'動詞もどすの可能形・丁寧否定の一文節'}],codeLiterals:[{text:'いまのばしょから',reason:'共通の移動文のコードだけのリテラル'}]};
+  const issues=text=>childSpacingIssues([{file:'a.js',kind:'script',text}],rules);
+  assert.deepEqual(issues("const a='ここを おして はじめる',b='もどせません',c='「ここをおしてはじめる」と 書きます',d='いまのばしょから';"),[]);
+  assert.equal(issues("const a='前に ここをおしてはじめる';")[0].run,'ここをおしてはじめる','a space elsewhere never hides a bad run');
+  assert.equal(issues("const a='もどせません。ここをおしてはじめる';")[0].run,'ここをおしてはじめる','a permitted run never exempts the rest of a message');
+  assert.equal(issues("const a='説明は いまのばしょからです';")[0].run,'いまのばしょからです','a code literal never exempts mixed prose');
+  assert.equal(issues("const a=`ここをおしてはじめる`; ")[0].run,'ここをおしてはじめる','JS delimiters are not quoted child content');
+  for(const field of ['source','sample'])assert.equal(issues(`const help={${field}:'説明は ここをおしてはじめる'};`)[0].run,'ここをおしてはじめる','property names never exempt presentation prose');
+  for(const attr of ['aria-label','title','placeholder','alt'])assert.equal(childSpacingIssues([{file:'a.html',kind:'html',text:`<input ${attr}="前に ここをおしてはじめる">`}],rules)[0].run,'ここをおしてはじめる','child-facing HTML attributes are checked');
+  assert.equal(issues("const a='（ここをおしてはじめる）';")[0].run,'ここをおしてはじめる','parentheses do not quote code');
+  assert.equal(issues("const a='「例：ここをおしてはじめる';")[0].run,'ここをおしてはじめる','an unmatched quote cannot hide remaining prose');
+  assert.deepEqual(issues('const a=`「名前：${name}『本文』」を おしてね`;'),[],'balanced nested quotes survive template interpolation');
   const label="'じゅんび できたよ'";assert.ok(productText.includes(label));
-  assert.deepEqual(childSpacingIssues([productInput(productText.replace(label,"'じゅんびできたよ'"))],spacing.texts[currentProductFile()]).map(i=>i.text),['じゅんびできたよ']);
+  assert.ok(childSpacingIssues([productInput(productText.replace(label,"'先に じゅんびできたよ'"))],spacing).some(i=>i.run==='じゅんびできたよ'));
 });
+
 const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results};
 assert.deepEqual(results.map(r=>r.id),productSourceIds);
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');

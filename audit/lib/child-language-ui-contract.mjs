@@ -10,7 +10,7 @@ export const childLanguageUiIds = Object.freeze([
 // The block view's 「いまの作り方のヒント」 speaks in the plain register, one register per surface (LANGUAGE.md 1042, F-18; FCB-18).
 export const childInsertionConceptHints=Object.freeze({
   "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしい ことだよ。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところだよ。",
-  "palette": "ブロックは なかまごとに 分かれているよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。"
+  "palette": "ブロックは なかまごとに 分かれて いるよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。"
 });
 
 function readable(rows,min=1) {
@@ -55,7 +55,7 @@ function panelReach(observation,method,basic=false) {
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
     // The last two explanations of the guide (1.5.0 adds 画面・部品・作業台の 大きさ after 見た目のコピー).
-    assert.ok(text.includes('作業台の 大きさ')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'),'the last explanations are reached: '+text.slice(0,80));
+    assert.ok(text.includes('作業台の 大きさ')&&text.includes('決めた ことを 1つ もとに もどす')&&text.includes('入力を やめる'),'the last explanations are reached: '+text.slice(0,80));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);

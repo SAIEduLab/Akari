@@ -60,7 +60,7 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     await chooseView(page,'blocks');await page.locator('#blockEditor').waitFor({state:'visible'});await chooseView(page,'code');
     assert.deepEqual(await state(page),before,'mode roundtrip must keep project and history');
     await page.locator('#runBtn').click();
-    await page.waitForFunction(()=>document.querySelector('#console').textContent.includes('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直してください'));
+    await page.waitForFunction(()=>document.querySelector('#console').textContent.includes('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直して ください'));
     assert.ok((await page.locator('#statusText').textContent()).startsWith('まだ 動かせないよ。'),'a refused run tells the child why nothing moved');
     const after=await state(page),observed=await page.evaluate(()=>__unitsObserved),position=await page.evaluate(()=>({x:Akari.app.project.components[0].x,y:Akari.app.project.components[0].y}));
     assert.deepEqual(after,before,'compile rejection preserves valid design history and state');

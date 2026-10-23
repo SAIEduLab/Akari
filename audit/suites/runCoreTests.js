@@ -853,6 +853,187 @@ function runCoreTests() {
       const restored = AKARI_RUNTIME.restoreExecutable(JSON.parse(JSON.stringify(packExecutable(p))));
       ok(restored.compiled.items.length > 0, 'restored');
     });
+    // Intent corrections preserve scope, offer usable choices and never silently choose another meaning.
+    const intentWork = (source, meijin = false) => {
+      const p = makeDefaultProject(), base = p.components.find(c => c.type === 'sprite');
+      p.components = ['ねこ', '星', 'ロケット', 'はし'].map((name, i) => ({ ...structuredClone(base), id: 'intent-part-' + i, name,
+        costumes: [{ id: 'intent-face-' + i, name: '顔', kind: 'text', value: '●' }], costumeId: 'intent-face-' + i,
+        localData: { variables: [], lists: [] } }));
+      p.projectData = { variables: [{ id: 'intent-score', name: '点数', initialValue: 0 }, { id: 'intent-name', name: '名前', initialValue: '' }, { id: 'intent-target', name: '相手', initialValue: 0 }], lists: [{ id: 'intent-list', name: '持ち物', initialValue: ['本'] }] };
+      p.scripts = [{ id: 'intent-body', targetId: meijin ? 'meijin' : p.components[0].id, ...(meijin ? { mode: 'meijin' } : {}), event: 'start', source }];
+      p.actions = []; p.functions = []; p.sounds = [];
+      return p;
+    };
+    const intentCheck = (source, meijin = false, edit = () => {}) => { const p = intentWork(source, meijin); edit(p); return { p, compiled: compileProject(p) }; };
+    const applyIntentFix = (source, proposal) => source.slice(0, proposal.start) + proposal.source + source.slice(proposal.end);
+    test('intent corrections keep nested chains and inline if bodies in their block', () => {
+      for (const source of [
+        '3回くり返す\n  右に90ど回って、1秒待つ。',
+        '作品を動かしたとき、\n  ずっとくり返す\n    みぎに90度回って、1秒待つ。',
+        '作品を動かしたとき、\n  もし「星」にふれていれば「いたい」と言う。',
+        '3回くり返す\n  もし点数が10をこえたら、「あ」と言う。',
+      ]) {
+        const first = intentCheck(source).compiled.errors[0]; ok(first?.proposals?.length, source);
+        for (const proposal of first.proposals) { const fixed = applyIntentFix(source, proposal); eq(intentCheck(fixed).compiled.errors, []); ok(!/\n1秒待つ/.test(fixed), fixed); }
+      }
+    });
+    test('intent corrections keep an unrelated second error fixable', () => {
+      const source = '右に90ど回る。\n左に90ど回る。', first = intentCheck(source).compiled.errors[0];
+      ok(first.proposals?.length); const next = intentCheck(applyIntentFix(source, first.proposals[0])).compiled.errors[0];
+      eq(next.line, 2); ok(next.proposals?.length);
+    });
+    test('intent corrections preserve all three waits on the logical clock', () => {
+      const source = '3回くり返す\n  右に90ど回って、1秒待つ。\n「おわり」と言う。', first = intentCheck(source).compiled.errors[0], fixed = applyIntentFix(source, first.proposals[0]), { p, compiled } = intentCheck(fixed), r = new RuntimeModel(p), speech = [];
+      let now = 0; r.now = () => now;
+      const q = new EventScheduler(p, compiled, r, { say: (id, text) => speech.push([now, text]) }); q.schedule = () => {};
+      try { q.start(); for (now = 0; now <= 3100; now++) { q.recheckBlocked(); for (let n = 0; n < 500 && q.ready.length; n++) q.runTurn(); q.recheckBlocked(); } eq(speech.map(x => x[1]), ['おわり']); ok(Math.abs(speech[0][0] - 3000) <= 20); } finally { q.stop(); }
+    });
+    test('slow near forms keep their time across all connective spellings', () => {
+      for (const [source, meijin] of [
+        ['ゆっくり右に90度回り、1秒待つ。', false], ['ゆっくり右に90度回って1秒待つ。', false],
+        ['もし点数が1なら、ゆっくり右に90度回って、1秒待つ。', false],
+        ['ねこは、ゆっくり右に90度回り、1秒待つ。', true], ['右に90度、1秒かけて回り、1秒待つ。', false],
+      ]) { const first = intentCheck(source, meijin).compiled.errors[0]; ok(first.proposals?.length, source); const fixed = applyIntentFix(source, first.proposals[0]); ok(fixed.includes('1秒かけて、'), fixed); eq(intentCheck(fixed, meijin).compiled.errors, []); }
+    });
+    test('movement guidance examples read and preserve the written direction', () => {
+      for (const source of ['よこのばしょを、200にする。', 'よこのばしょを、10増やす。']) {
+        const message = intentCheck(source).compiled.errors[0].message, example = /「(画面の左下[^」]+|いまのばしょから[^」]+)」/.exec(message)?.[1];
+        ok(example, message); eq(intentCheck(example + '。').compiled.errors, []);
+      }
+      for (const source of ['いまのばしょから、右へゆっくり10歩動く。', 'みぎに90度回る。', 'ねこは、ひだりに90度回る。', '右へ10歩ずつ動く。', '左に（点数）ど回る。', '「ロケット」まで1秒かけて行く。', 'はしまで行く。', 'みぎへ10歩動く。', '「星」のところまで2秒で行く。']) {
+        const first = intentCheck(source).compiled.errors[0]; ok(first.proposals?.length, source); for (const proposal of first.proposals) eq(intentCheck(applyIntentFix(source, proposal)).compiled.errors, []);
+      }
+      ok(intentCheck('右へ10歩、右へ5歩、上へ3歩動く。').compiled.errors[0].message.includes('1つずつ'));
+    });
+    test('chain axis notices retain both readable choices', () => {
+      const source = '画面の左下のはしから、右へ320歩のばしょへ1秒かけて行って、1秒待つ。', result = intentCheck(source).compiled;
+      eq(result.errors, []); const notice = result.notes.find(n => n.code === 'I120'); eq(notice.proposals.length, 2);
+      for (const proposal of notice.proposals) eq(intentCheck(applyIntentFix(source, proposal)).compiled.errors, []);
+    });
+    test('quiz spelling guidance does not redirect text answers into part values', () => {
+      for (const word of ['星', 'はい', 'はなこ', 'にんじん', 'とまと']) {
+        const source = 'もし答えが' + word + 'なら、\n  「あ」と言う。', first = intentCheck(source).compiled.errors[0];
+        eq(first.code, 'P205'); ok(first.proposals?.length, word); ok(first.proposals[0].source.includes('「' + word + '」'));
+      }
+      ok(intentCheck('もしりんごが答えなら、\n  「あ」と言う。').compiled.errors[0].proposals?.length);
+      const meijin = intentCheck('ねこは「なに？」とたずねて、答えを待つ。\nもし答えが星なら、\n  ねこは「あ」と言う。', true).compiled;
+      eq(meijin.errors, []); ok(meijin.notes.some(n => n.code === 'I123'));
+    });
+    test('ambiguous bare compound answers are not silently quoted as one word', () => {
+      const result = intentCheck('もし答えがりんごかみかんなら、\n  「あ」と言う。').compiled;
+      ok(result.errors.length); ok(!result.errors[0].proposals?.some(p => p.source.includes('「りんごかみかん」')));
+      for (const head of ['もし答えが「りんごかみかん」なら、', 'もし答えが「りんご」と同じか、答えが「みかん」と同じなら、']) eq(intentCheck(head + '\n  「あ」と言う。').compiled.errors, []);
+    });
+    test('touch choices keep the following else associated with its if', () => {
+      const source = 'もし「星」にふれたら、\n  「あ」と言う。\nそうでなければ、\n  「い」と言う。', first = intentCheck(source).compiled.errors[0];
+      ok(first.proposals?.length); for (const p of first.proposals) { ok(p.source.startsWith('もし')); eq(intentCheck(applyIntentFix(source, p)).compiled.errors, []); }
+    });
+    test('touch partner diagnostics preserve mutable values and never suggest making data', () => {
+      eq(intentCheck('相手を「星」にする。\nもし相手にふれていれば、\n  「あ」と言う。').compiled.errors, []);
+      for (const partner of ['画面', '画面のまん中', '見つからない相手']) { const c = intentCheck('もし' + partner + 'にふれていれば、\n  「あ」と言う。').compiled; ok(c.errors.length); ok(!c.errors.some(e => /へんすうか リストを 作/.test(e.message))); }
+      ok(intentCheck('もし画面のまん中にふれていれば、\n  「あ」と言う。').compiled.errors[0].message.includes('ばしょ'));
+    });
+    test('flow notices account for procedure effects and possible branch shows', () => {
+      const shown = intentCheck('すがたをかくす。\n【見せる】というてじゅんを行う。\n「やあ」と言う。', false, p => p.actions = [{ id: 'intent-show', ownerId: 'stage', name: '見せる', args: [], source: 'すがたを見せる。' }]).compiled;
+      eq(shown.errors, []); ok(!shown.notes.some(n => n.code === 'I133'));
+      const moving = intentCheck('「星」にふれるまで待つ。\n前へ10歩進む。', false, p => { p.actions = [{ id: 'intent-move', ownerId: 'stage', name: '動く', args: [], source: '前へ10歩進む。' }]; p.scripts.push({ id: 'intent-key', targetId: p.components[0].id, event: 'keyDown', filter: { key: '空白' }, source: '【動く】というてじゅんを行う。' }); }).compiled;
+      eq(moving.errors, []); ok(!moving.notes.some(n => n.code === 'I134'));
+      ok(!intentCheck('すがたをかくす。\nもし点数が1なら、\n  すがたを見せる。\n「やあ」と言う。').compiled.notes.some(n => n.code === 'I133'));
+    });
+    test('notice and refusal guidance names the actual context', () => {
+      const timer = intentCheck('ずっとくり返す\n  もしタイマーが5なら、\n    「あ」と言う。').compiled.notes.find(n => n.code === 'I124'); ok(timer.message.includes('くり返しの 前'));
+      const first = intentCheck('もし「スペース」キーがおされてれば、\n  「あ」と言う。').compiled.errors[0]; ok(first.proposals?.length); eq(intentCheck(applyIntentFix('もし「スペース」キーがおされてれば、\n  「あ」と言う。', first.proposals[0])).compiled.errors, []);
+      const heading = intentCheck('作品を動かしたとき、前へ10歩進む。\n1秒待つ。').compiled.errors[0].message; ok(heading.includes('「作品を動かしたとき、」')); ok(!heading.includes('「作品を動かしたとき、前へ'));
+      const otherwise = intentCheck('作品を動かしたとき、\n  「あ」と言う。\n    そうでなければ、\n      「い」と言う。').compiled.errors[0].message; ok(otherwise.includes('ありません'));
+      ok(intentCheck('10こ作る。').compiled.errors[0].message.includes('「10こ作る」'));
+      ok(!intentCheck('音を鳴らす。').compiled.errors[0].message.includes('ニャー'));
+      ok(intentCheck('点数のところへ行く。').compiled.errors[0].message.includes('「星」'));
+      const source = 'もし点数が10をこえたら、「あ」と言う。', d = intentCheck(source).compiled.errors[0]; ok(d.message.includes(d.proposals[0].source.split('\n')[0]));
+      eq(intentCheck('1秒ごとに、点数を1ふやす。').compiled.errors[0].code, 'S317');
+      ok(intentCheck('このキャラクターがおされたとき、\n  「あ」と言う。').compiled.errors[0].proposals?.length);
+      ok(intentCheck('「持ち物は」と持ち物をつなげて言う。').compiled.errors.some(e => e.code === 'S304'));
+    });
+    test('function statement hints compile without changing project data or untyped arguments', () => {
+      const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile'];
+      for (const args of [[], ['あいさつ']]) { const p = intentWork(''), hints = hintCandidates(p, 'stage', { definitionKind: 'function', args, source: '' }).filter(h => h.enabled && h.mode === 'statement');
+        for (const h of hints) { p.functions = [{ id: 'intent-function', ownerId: 'stage', name: '試す', args, source: h.text + (/を答えとして返す/.test(h.text) ? '' : '\n0を答えとして返す。') }]; eq(compileProject(p).errors, []); ok(!/あいさつが10|点数を1ふやす|点数を10にする/.test(h.text)); }
+      }
+      for (const [source, args, values, kept] of [
+        ['', [], [], null], ['', ['あいさつ'], ['こんにちは'], 'あいさつ'], ['', ['あいさつ'], [['本']], 'あいさつ'],
+        ['', ['数えた回数'], ['こんにちは'], '数えた回数'],
+        ['この中だけで使う変数あいさつを作り、最初は「こんにちは」にする。\n', [], [], 'あいさつ'],
+        ['この中だけで使う変数数えた回数を作り、最初は「こんにちは」にする。\n', [], [], '数えた回数'],
+        ['この中だけで使うリスト数えた回数を空で作る。\n', [], [], '数えた回数'],
+      ]) {
+        const p = intentWork(''), hints = hintCandidates(p, 'stage', { definitionKind: 'function', args, source }).filter(h => controls.includes(h.id));
+        eq(hints.length, 3); ok(hints.every(h => h.enabled));
+        for (const h of hints) {
+          const declaration = /^この中だけで使う変数(.+?)を作り、最初は(\d+)にする。\n/.exec(h.text); ok(declaration, h.text);
+          const counter = declaration[1]; ok(!args.includes(counter)); ok(!source.includes('変数' + counter + 'を')); ok(!source.includes('リスト' + counter + 'を'));
+          eq(Number(declaration[2]), h.id === 'IfStatement' ? 11 : 0);
+          const run = returned => { p.functions = [{ id: 'intent-function', ownerId: 'stage', name: '試す', args, source: source + h.text + '\n' + returned + 'を答えとして返す。' }]; const compiled = compileProject(p); eq(compiled.errors, []); return runUserFunction('試す', values, { runtime: new RuntimeModel(p), runtimeId: p.components[0].id, compiled }); };
+          eq(run(counter), h.id === 'RepeatCount' ? 3 : 10);
+          if (kept) eq(run(kept), args.includes(kept) ? values[args.indexOf(kept)] : source.includes('リスト' + kept) ? [] : 'こんにちは');
+          eq(p.projectData.variables.find(v => v.name === '点数').initialValue, 0);
+        }
+      }
+      for (const source of [
+        '何もしない。\n', 'もし1が1なら、\n  ',
+        'この中だけで使う変数あいさつを作り、最初は「こんにちは」にする。\n何もしない。\n',
+        'この中だけで使う変数回数を作り、最初は0にする。\n回数を1にする。\n',
+      ]) {
+        const hints = hintCandidates(intentWork(''), 'stage', { definitionKind: 'function', args: ['あいさつ'], source }).filter(h => controls.includes(h.id));
+        eq(hints.length, 3); ok(hints.every(h => !h.enabled && h.reason.includes('はじめ')));
+      }
+      for (const source of ['\nこの中だけで使う変数数えた回数を作り、最初は「こんにちは」にする。\n数えた回数を答えとして返す。', '\nこの中だけで使うリスト数えた回数を空で作る。\n数えた回数を答えとして返す。']) {
+        const hints = hintCandidates(intentWork(''), 'stage', { definitionKind: 'function', args: [], source, start: 0, end: 0 }).filter(h => controls.includes(h.id));
+        eq(hints.length, 3); ok(hints.every(h => !h.enabled && h.reason.includes('行の あと')));
+      }
+    });
+    test('procedure examples use explicit string comparisons while unknown arguments keep the numeric default', () => {
+      const p = intentWork(''), definition = { id: 'intent-direction', ownerId: 'stage', name: '進む', args: ['進む方向', '歩数'], source: 'もし進む方向が「右」なら、\n  前へ10歩進む。' }; p.actions = [definition];
+      ok(hintCandidates(p, p.components[0].id).some(h => h.binding?.id === definition.id && h.text.includes('進む方向を「右」') && h.text.includes('歩数を1')));
+    });
+    test('body identity includes its key and signal on every runtime label', () => {
+      const p = intentWork('何もしない。');
+      for (const [event, filter, expected] of [['keyDown', { key: '空白' }, '「スペース」キーを おした とき'], ['message', { message: '出発' }, '「出発」という 合図を 受けた とき'], ['touchStart', { target: '星' }, '「星」に ふれた とき']]) {
+        Object.assign(p.scripts[0], { event, filter }); const compiled = compileProject(p); eq(compiled.errors, []);
+        const scheduler = new EventScheduler(p, compiled, new RuntimeModel(p)); eq(scheduler.flowName({ scriptId: p.scripts[0].id, eventType: event, targetId: p.components[0].id }), 'ねこ / ' + expected);
+      }
+      for (const [event, filter] of [['keyDown', 'スペース'], ['message', '出発']]) { Object.assign(p.scripts[0], { event, filter }); let rejected = false; try { validateDesignProject(p); } catch (e) { rejected = e.code === 'F503'; } ok(rejected, 'String filters are rejected by the existing project format'); ok(compileProject(p).errors.some(e => e.code === 'F503')); }
+    });
+    test('turned opaque picture cells do not fall between sample points', () => {
+      const p = intentWork(''), r = new RuntimeModel(p), a = r.actor(p.components[0].id), b = r.actor(p.components[1].id), cells = new Uint8Array(4096), counts = new Uint32Array(4225); cells[31 * 64 + 31] = 1;
+      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) counts[(y + 1) * 65 + x + 1] = cells[y * 64 + x] + counts[y * 65 + x + 1] + counts[(y + 1) * 65 + x] - counts[y * 65 + x];
+      r.pictureMask = () => ({ w: 64, h: 64, cells, counts, seen: { left: 31, right: 32, top: 31, bottom: 32 } });
+      Object.assign(a, { x: 200, y: 200, w: 640, h: 640, direction: 30, scalePercent: 100 }); Object.assign(b, { x: 180, y: 205, w: 640, h: 640, direction: 150, scalePercent: 100 });
+      // The two opaque 10×10 cells overlap at a turned corner; the independently derived polygon fixture is positive.
+      eq(r.partsTouch(a, b), true);
+      Object.assign(a, { direction: 0 }); Object.assign(b, { x: 210, y: 200, direction: 0 }); r.touchCache.clear(); eq(r.partsTouch(a, b), false);
+      b.x = 211; r.touchCache.clear(); eq(r.partsTouch(a, b), false);
+      r.mouseX = 195; r.mouseY = 205; r.mouseAt.entered = false; eq(r.touching(a.runtimeId, 'マウス'), false); r.mouseAt.entered = true; eq(r.touching(a.runtimeId, 'マウス'), true); r.mouseX = 205; eq(r.touching(a.runtimeId, 'マウス'), false);
+    });
+    test('positive opaque overlap has no fixed spatial dead band', () => {
+      const p=intentWork(''),r=new RuntimeModel(p),a=r.actor(p.components[0].id),b=r.actor(p.components[1].id);
+      r.pictureMask=()=>({w:1,h:1,cells:new Uint8Array([1]),counts:new Uint32Array([0,0,0,1]),seen:{left:0,right:1,top:0,bottom:1}});
+      Object.assign(a,{x:100,y:100,w:10,h:10,direction:0,scalePercent:100});
+      Object.assign(b,{y:100,w:10,h:10,direction:0,scalePercent:100});
+      for(const overlap of [1e-6,1e-7,1e-10,0,-1e-7]){b.x=110-overlap;r.touchCache.clear();eq(r.partsTouch(a,b),overlap>0);}
+    });
+    test('screen touch guidance preserves a component named screen', () => {
+      const p=intentWork('');p.components[1].name='画面';
+      for(const source of ['もし画面にふれていれば、\n  何もしない。','画面にふれるまで待つ。']){
+        p.scripts[0].source=source;eq(compileProject(p).errors,[]);
+      }
+      p.components[1].name='星';p.scripts[0].source='もし画面にふれていれば、\n  何もしない。';ok(compileProject(p).errors.some(e=>e.code==='P205'));
+    });
+    test('packed asset validation cannot be certified by caller supplied fields', () => {
+      const p = makeDefaultProject(), store = makeDefaultAssetStore(), data = packExecutable(p, store), asset = data.assets[0], record = store.get(asset.id);
+      ok(AKARI_RUNTIME.restoreExecutable(data, { packed: new Map([[asset.id, { text: asset.dataBase64, record }]]) }));
+      for (const [field, value] of [['dataBase64', 'not-valid-base64'], ['sha256', '0'.repeat(64)], ['byteLength', asset.byteLength + 1]]) { const bad = structuredClone(data); bad.assets[0][field] = value;
+        let error; try { AKARI_RUNTIME.restoreExecutable(bad, { packed: new Map([[asset.id, { text: bad.assets[0].dataBase64, record: { ...record, sha256: bad.assets[0].sha256, byteLength: bad.assets[0].byteLength } }]]) }); } catch (caught) { error = caught; } eq(error?.code, 'X602');
+      }
+    });
     return {
       passed: results.filter((x) => x.pass).length,
       failed: results.filter((x) => !x.pass).length,

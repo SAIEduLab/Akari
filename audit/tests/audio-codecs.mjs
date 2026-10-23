@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -81,7 +82,7 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   const marker='音声検証完了-'+name,source='「検証音」を鳴らす。\n「'+marker+'」と言う。';
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);
-  await click(p,'#editorModeblocks');await click(p,'#editorModecode');
+  await chooseView(p,'blocks',{reveal});await chooseView(p,'code',{reveal});
   assert.equal(await p.evaluate(()=>Akari.compileProject(Akari.app.project).errors.length),0);
   await click(p,'#runBtn');await p.waitForFunction(marker=>document.querySelector('#console').textContent.includes(marker),marker);
   await pressStop(await reveal(p.locator('#stopBtn')));
@@ -173,7 +174,7 @@ cases['audio-runtime-mime-rejection']=async(p,browser)=>{
   await (await reveal(p.locator('#eventSelect'))).selectOption('start');
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「検証音」を鳴らし始める。');})();
   await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「検証音」を鳴らし始める。');
-  await click(p,'#editorModeblocks');await click(p,'#editorModecode');
+  await chooseView(p,'blocks',{reveal});await chooseView(p,'code',{reveal});
   const html=await p.evaluate(()=>Akari.generateStandaloneHtml(Akari.app.project,Akari.app.assetStore));
   assert.equal(html.split('"mime":"audio/mp4"').length,2);
   const file=path.join(dir,'invalid-mime-player.html');fs.writeFileSync(file,html.replace('"mime":"audio/mp4"','"mime":"audio/unknown"'));
@@ -201,5 +202,5 @@ console.log(("Audio "+currentProductVersion()+": all ")+results.length+' cases P
 async function openBodyForTest(page) {
   await (await reveal(page.locator('#uiLevel'))).selectOption('advanced');
   if (await page.locator('#sourceOverview').isVisible()) await click(page,'#sourceEditBtn');
-  await click(page,'#editorModecode');
+  await chooseView(page,'code',{reveal});
 }

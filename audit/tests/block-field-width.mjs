@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import {makeRegressionProject,installRegressionProject,showAdvancedCode,showView} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -69,7 +70,7 @@ const browserVersion = await withBrowser(browserPath,async browser => {
           const long='長い文字列'.repeat(80);await literal.fill(long);await literal.press('Tab');await settle(p);assert.equal(await literal.inputValue(),long);assert.equal(await literal.getAttribute('title'),long);
           assert.ok(parseFloat(await literal.evaluate(i=>getComputedStyle(i).width))<1000);await literal.fill('表示更新');await literal.press('Tab');await settle(p);
         } else if(id==='FIELD-CALLABLE') {
-          await p.locator('#sourceOverviewBtn').click();await p.locator('[data-source-edit="action:field-action"]').click();await p.locator('#callableModeblocks').click();await settle(p);
+          await p.locator('#sourceOverviewBtn').click();await p.locator('[data-source-edit="action:field-action"]').click();await chooseView(p,'blocks',{prefix:'callable'});await settle(p);
           const callable=p.locator('#callableBlocks .blockui-field input:visible');await callable.first().waitFor();await checkFields(callable);await p.locator('#procClose').click();
         } else {
           if(await p.locator('#sourceEditBtn').isVisible())await p.locator('#sourceEditBtn').click();await showView(p,'blocks');await settle(p);

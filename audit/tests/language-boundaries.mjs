@@ -6,26 +6,8 @@ import assert from 'node:assert/strict';
 import {performance} from 'node:perf_hooks';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
+import {boundarySource as make,boundaryCases,boundaryTimeoutMs,verifyLanguageBoundaries,checkLanguageBoundaryNegatives} from '../lib/language-boundaries-contract.mjs';
 
-const make=(name,n)=>({
-  'unclosed-string':'「'+'をにから秒'.repeat(n)+'という',
-  'unclosed-name':'【'+'をにから秒'.repeat(n)+'に加える',
-  'unclosed-parens':'（'.repeat(n)+'1を点数に足す',
-  'duplicate-particles':'1を'+'点数に'.repeat(n)+'足す',
-  'duplicate-time':'1秒で'.repeat(n)+'横1、縦2の位置へ滑る',
-  'duplicate-coordinates':'横1、縦2、'.repeat(n)+'の位置へ行く',
-  'missing-slide-destination':'1秒で'.repeat(n)+'滑る',
-  'missing-slide-duration':'横1、縦2の位置へ'.repeat(n)+'すべる',
-  'comparison-late-failure':'aが'.repeat(n)+'1と同じと言う',
-  'comparison-missing-marker':'1より'.repeat(n)+'大きいという',
-  'missing-tone-frequency':'1秒、'.repeat(n)+'鳴らす',
-  'duplicate-input-value':'1を'.repeat(n)+'「値」に入れる',
-  'long-valid':Array(n).fill('何もしない').join('\n'),
-  // The 1.5.0 move sentences (LANGUAGE.md 動きの文); the 1.4.0 forms above stay as inputs that must be refused quickly.
-  'duplicate-steps':'右へ1歩、'.repeat(n)+'動く',
-  'duplicate-move-time':'1秒かけて、'.repeat(n)+'画面の左下のはしから、右へ1歩、上へ2歩のばしょへ行く',
-  'missing-move-destination':'1秒かけて、'.repeat(n)+'行く',
-})[name];
 if(process.argv[2]==='--worker') {
   const [name,count]=process.argv.slice(3), source=make(name,Number(count));
   const html=fs.readFileSync(currentProductFile(),'utf8');
@@ -39,20 +21,17 @@ if(process.argv[2]==='--worker') {
   if(fs.existsSync(output))throw Error('Evidence already exists');
   const before=snapshot(currentProductFile()),results=[];
   const measure=(name,n)=>{
-    const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n)],{encoding:'utf8',timeout:5000,maxBuffer:1e6});
+    const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n)],{encoding:'utf8',timeout:boundaryTimeoutMs,maxBuffer:1e6});
     assert.equal(r.status,0,`${name}/${n}: ${r.error||r.stderr}`);
     return JSON.parse(r.stdout);
   };
-  for(const name of ['unclosed-string','unclosed-name','unclosed-parens','duplicate-particles','duplicate-time','duplicate-coordinates','long-valid',
-    'missing-slide-destination','missing-slide-duration','comparison-late-failure','comparison-missing-marker','missing-tone-frequency','duplicate-input-value',
-    'duplicate-steps','duplicate-move-time','missing-move-destination'])
-    for(const n of [1000,4000,12000]) {
-      const row=measure(name,n);assert.equal(row.accepted,name==='long-valid');results.push(row);
-    }
-  // Exercise malformed late failures just below the product limit as well.
-  for(const [name,n] of Object.entries({'missing-slide-destination':32000,'missing-slide-duration':10000,
-    'comparison-late-failure':45000,'comparison-missing-marker':32000,'missing-tone-frequency':32000,'duplicate-input-value':45000})) {
-    const row=measure(name,n);assert.equal(row.accepted,false);assert.ok(row.chars<=100000);results.push(row);
+  for(const {name,count,accepted} of boundaryCases){
+    const row=measure(name,count);assert.equal(row.accepted,accepted,name+'/'+count);
+    // Preserve every input exactly. HEAD already includes missing-slide-duration/12000 (108003 chars)
+    // as an over-limit refusal; only the separate near-limit inputs required <=100000.
+    assert.equal(row.chars,[...make(name,count)].length);
+    if(row.chars>100000){assert.equal(name,'missing-slide-duration');assert.equal(count,12000);assert.equal(row.chars,108003);assert.equal(row.accepted,false);}
+    results.push(row);
   }
   const api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
   assert.ok(api.parseSyntax('※'+'a'.repeat(api.LIMITS.sourceEach-1)).ast);
@@ -64,6 +43,8 @@ if(process.argv[2]==='--worker') {
   assert.deepEqual([...api.BLOCK_SCHEMAS.map(s=>s.id)],frozen.schemaIds);
   assert.deepEqual(snapshot(currentProductFile()),before);
   fs.mkdirSync(path.dirname(output),{recursive:true});
-  fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:before,timeoutMs:5000,results,featureContract:'audit/manifests/features.json'},null,2)+'\n');
+  const report={status:'PASS',snapshot:before,timeoutMs:boundaryTimeoutMs,results,featureContract:'audit/manifests/features.json'};
+  verifyLanguageBoundaries(report,before);report.validatorNegatives=checkLanguageBoundaryNegatives(report,before);
+  fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({status:'PASS',measurements:results.length,maxMs:Math.max(...results.map(r=>r.ms))}));
 }

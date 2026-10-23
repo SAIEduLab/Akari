@@ -6,6 +6,7 @@ const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const {currentProductFile}=require('../lib/product-path.cjs');
 const {verifyExportOpen,checkEvidenceNegatives}=require('../lib/export-open-contract.cjs');
+const {observeArtworkTouch}=require('../lib/artwork-touch-observations.cjs');
 const product=path.resolve(currentProductFile()),out=path.resolve(process.argv[3]);
 assert.ok(!fs.existsSync(out),'fresh output');fs.mkdirSync(out,{recursive:true});
 const api=loadApi(fs.readFileSync(product,'utf8'));
@@ -38,7 +39,7 @@ async function withPage(b,fn,file=product,width=1180){const p=await page(b,file,
 // The product asks about unsaved work in its own dialog. Answer it by pressing the visible
 // 「やめる」 button and report the question that was shown.
 // It names the work it is about (I5a).
-const loseQuestion='「検証用の作品」には まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。';
+const loseQuestion='「検証用の作品」には まだ ほぞんして いない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。';
 async function askedAndCancelled(p,trigger){await trigger();await p.locator('#loseConfirmModal.show').waitFor();const asked=[await p.locator('#loseConfirmMessage').innerText()];assert.equal(await p.locator('#loseConfirmCancel').innerText(),'やめる');assert.equal(await p.locator('#loseConfirmProceed').innerText(),'すてて つづける');await p.locator('#loseConfirmCancel').click();await p.locator('#loseConfirmModal').waitFor({state:'hidden'});return asked;}
 async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const AC=window.AudioContext;window.AudioContext=class extends AC{createOscillator(){const o=super.createOscillator(),start=o.start;o.start=(...a)=>{__tones.push({at:performance.now(),frequency:o.frequency.value});return start.apply(o,a);};return o;}};});}
 (async()=>{
@@ -46,7 +47,36 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
  const browserPath=process.argv[2];assert.ok(browserPath&&fs.existsSync(browserPath),'browser required');
  const b=await chromium.launch({executablePath:browserPath,headless:true,args:['--allow-file-access-from-files','--disable-background-networking','--autoplay-policy=no-user-gesture-required']});report.browser=b.version();
  try{
-  await run('EXPORT-CHOICE-CANCEL-FOCUS',()=>withPage(b,async p=>{await p.waitForFunction(()=>!!Akari.app);let count=0;p.on('download',()=>count++);await p.locator('#exportBtn').click();await p.locator('#exportChoiceModal.show').waitFor();assert.equal(await p.locator('#exportControls').evaluate(n=>document.activeElement===n),true);await p.screenshot({path:path.join(out,'export-choice.png')});await p.keyboard.press('Shift+Tab');assert.equal(await p.locator('#exportChoiceCancel').evaluate(n=>document.activeElement===n),true);await p.keyboard.press('Escape');await p.locator('#exportChoiceModal').waitFor({state:'hidden'});assert.equal(await p.locator('#exportBtn').evaluate(n=>document.activeElement===n),true);assert.equal(count,0);return{downloads:count,staticExamples:await p.locator('.export-example button').count()};}));
+  await run('EXPORT-CHOICE-CANCEL-FOCUS',()=>withPage(b,async p=>{
+    await p.waitForFunction(()=>!!Akari.app);let count=0;p.on('download',()=>count++);
+    await p.locator('#exportBtn').click();await p.locator('#exportChoiceModal.show').waitFor();
+    assert.equal(await p.locator('#exportControls').evaluate(n=>document.activeElement===n),true);
+    await p.screenshot({path:path.join(out,'export-choice.png')});await p.keyboard.press('Shift+Tab');
+    assert.equal(await p.locator('#exportChoiceCancel').evaluate(n=>document.activeElement===n),true);
+    await p.keyboard.press('Escape');await p.locator('#exportChoiceModal').waitFor({state:'hidden'});
+    assert.equal(await p.locator('#exportBtn').evaluate(n=>document.activeElement===n),true);
+    for(const cancel of ['button','Escape']){
+      await p.locator('#exportBtn').click();
+      // One event-loop turn makes the vulnerable interval deterministic: both the next paint and hidden-page timer
+      // are still pending. These are the real chooser/cancel handlers; no export or timer function is replaced.
+      const pending=await p.evaluate(cancel=>{
+        document.querySelector('#exportArtwork').click();
+        const busy=document.querySelector('#exportControls').disabled;
+        if(cancel==='button')document.querySelector('#exportChoiceCancel').click();
+        else document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+        return{busy,closed:!document.querySelector('#exportChoiceModal.show'),ready:!document.querySelector('#exportBtn').disabled};
+      },cancel);
+      assert.deepEqual(pending,{busy:true,closed:true,ready:true});await p.waitForTimeout(300);assert.equal(count,0);
+    }
+    // A new chooser cannot revive a canceled job's stale frame/timer; the next export still creates exactly one file.
+    await p.locator('#exportBtn').click();const pending=p.waitForEvent('download');
+    await p.evaluate(()=>{
+      document.querySelector('#exportArtwork').click();document.querySelector('#exportChoiceCancel').click();
+      document.querySelector('#exportBtn').click();document.querySelector('#exportControls').click();
+    });
+    await (await pending).saveAs(path.join(out,'after-cancel.html'));await p.waitForTimeout(250);assert.equal(count,1);
+    return{downloads:count,staticExamples:await p.locator('.export-example button').count(),canceledPending:3,reopenedOnce:true};
+  }));
   await run('EXPORT-CHOICE-NARROW-ONE-DOWNLOAD',()=>withPage(b,async p=>{await p.waitForFunction(()=>!!Akari.app);await p.locator('#exportBtn').click();await p.screenshot({path:path.join(out,'export-choice-narrow.png')});await p.locator('#exportArtwork').scrollIntoViewIfNeeded();const box=await p.locator('#exportArtwork').boundingBox();assert.ok(box.width<=320&&box.x>=0);let count=0;p.on('download',()=>count++);const wait=p.waitForEvent('download');await p.locator('#exportArtwork').dblclick();const d=await wait;await d.saveAs(path.join(out,'native-artwork.html'));await p.waitForTimeout(200);assert.equal(count,1);return{count,box};},product,320));
   // The player follows the editor: stopped, ▶ 動かす only; running, ■ 止める in ▶'s place and ⏸ いったん止める; paused, ■ and
   // ▶ つづける. A double press of ▶ does not stop at once (its second press lands on ■), and neither does a single press of ■
@@ -56,6 +86,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     const startBox=await p.locator('#playerStart').boundingBox(),pressedAt=Date.now();await p.locator('#playerStart').click();
     await p.locator('#playerStop').waitFor({state:'visible'});await p.locator('#playerStop').click();const singleAfterMs=Date.now()-pressedAt;await p.waitForTimeout(150);
     assert.ok(singleAfterMs<DOUBLE_PRESS_MS,'the single press of ■ came '+singleAfterMs+' ms after ▶, too late to show the 0.5 s rule');const afterSingle=await p.locator('#playerRoot').getAttribute('data-state');assert.equal(afterSingle,'RUNNING','a single press of ■ within 0.5 s of ▶ does nothing');
+    assert.equal(await p.evaluate(()=>document.activeElement?.id),'formSurface');await p.waitForTimeout(DOUBLE_PRESS_MS);await p.keyboard.press('Space');assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'RUNNING');
     await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));
     assert.equal(await shown(),'playerStop:■ 止める playerPause:⏸ いったん止める');assert.equal(Math.round((await p.locator('#playerStop').boundingBox()).x),Math.round(startBox.x),'■ takes the place of ▶');
     // ⏸ いったん止める; a second press of that place within 0.5 s does nothing, and the focus is on the place, now ▶ つづける.
@@ -68,7 +99,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     assert.equal(await p.evaluate(()=>document.activeElement?.id),'formSurface','after ▶ つづける the keys reach the work');
     await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'STOPPED');assert.equal(await shown(),'playerStart:▶ 動かす');
     await p.locator('#playerStart').dblclick();await p.waitForTimeout(300);const afterDouble=await p.locator('#playerRoot').getAttribute('data-state');assert.notEqual(afterDouble,'STOPPED','a double press of ▶ does not stop at once');
-    await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));return{title:await p.locator('#playerTitle').innerText(),restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:afterDouble!=='STOPPED',singlePressWithinHalfSecondRuns:afterSingle==='RUNNING',pauseSlotGuard:true};},generate('controls',marker,{},'default')));
+    await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));return{title:await p.locator('#playerTitle').innerText(),restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:afterDouble!=='STOPPED',singlePressWithinHalfSecondRuns:afterSingle==='RUNNING',pauseSlotGuard:true,ignoredStopKeepsStageFocus:true};},generate('controls',marker,{},'default')));
   // The controls player when the work ends: every body has ended, or 作品を全部止める ran. It shows ■ 止める only, and ■
   // goes back to ▶ 動かす (LANGUAGE.md 書き出した作品のはじめ方).
   await run('EXPORT-CONTROLS-FINISHED',async()=>{const ended=async file=>withPage(b,async p=>{const shown=()=>p.evaluate(shownControls);
@@ -76,7 +107,8 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='FINISHED');await p.waitForTimeout(300);const finished={state:await p.locator('#playerRoot').getAttribute('data-state'),shown:await shown(),afterStopAllSaid:(await p.locator('#formSurface').textContent()).includes('とどかない')};
     await pressStop(p.locator('#playerStop'));return{...finished,afterStop:await shown()};},file);
    const bodies=await ended(generate('controls-ended','「おわり」と言う。',{},'default')),stopAll=await ended(generate('controls-stop-all','「とまる」と言う。\n作品を全部止める。\n「とどかない」と言う。',{},'default'));
-   return{bodiesEnded:bodies.shown,bodiesState:bodies.state,stopAll:stopAll.shown,stopAllState:stopAll.state,sentenceAfterStopAllSaid:stopAll.afterStopAllSaid,afterStop:[bodies.afterStop,stopAll.afterStop]};});
+   const failedReasonVisible=await withPage(b,async p=>{await p.setViewportSize({width:1366,height:650});await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');await p.locator('#playerStart').click();await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='FAILED');const rect=await p.evaluate(()=>{const r=document.querySelector('#playerOutput').getBoundingClientRect(),s=document.querySelector('#playerStop').getBoundingClientRect();return{top:r.top,bottom:r.bottom,stopTop:s.top,stopBottom:s.bottom,height:innerHeight,text:document.querySelector('#playerOutput').innerText};});assert.ok(rect.top>=0&&rect.bottom<=rect.height&&rect.stopTop>=0&&rect.stopBottom<=rect.height);assert.ok(rect.text.includes('0では'));return true;},generate('controls-failed-visible','点数を（1÷0）にする。',{stage:{...make('').stage,width:1000,height:700}},'default'));
+   return{failedReasonVisible,bodiesEnded:bodies.shown,bodiesState:bodies.state,stopAll:stopAll.shown,stopAllState:stopAll.state,sentenceAfterStopAllSaid:stopAll.afterStopAllSaid,afterStop:[bodies.afterStop,stopAll.afterStop]};});
   await run('EXPORT-CONTROLS-SCALE',async()=>{const sized=(name,width,height)=>{const p=make(marker);p.stage.width=width;p.stage.height=height;const file=path.join(out,name+'.html');fs.writeFileSync(file,api.generateStandaloneHtml(p,api.makeDefaultAssetStore()));return file;};
    const shown=async(file,window,running=false)=>{const c=await b.newContext({offline:true,viewport:window});await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});try{const p=await c.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(file).href);
      await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');const measure=()=>p.evaluate(()=>{const r=document.querySelector('#formSurface').getBoundingClientRect(),stop=document.querySelector('#playerStop').getBoundingClientRect();
@@ -109,7 +141,8 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
    const variants={text:d=>{const t=d.assets[i].dataBase64;d.assets[i].dataBase64=t.slice(0,40)+(t[40]==='A'?'B':'A')+t.slice(41);},sha256:d=>{d.assets[i].sha256='0'.repeat(64);},
      byteLength:d=>{d.assets[i].byteLength+=1;},program:d=>{d.program[0].ownerId='nobody';}};
    const refused=Object.fromEntries(Object.entries(variants).map(([k,m])=>{const d=JSON.parse(JSON.stringify(pk));m(d);return [k,code(()=>api.restoreExecutable(d,{packed:packed()}))];}));
-   return{made,mismatched,restored,refused};});
+   for(const [name,field,value]of [['claimedText','dataBase64','not-valid-base64'],['claimedHash','sha256','0'.repeat(64)],['claimedLength','byteLength',pk.assets[i].byteLength+1]]){const d=JSON.parse(JSON.stringify(pk));d.assets[i][field]=value;const spoof=new Map(d.assets.map(a=>[a.id,{text:a.dataBase64,record:{...good.get(a.id),sha256:a.sha256,byteLength:a.byteLength}}]));refused[name]=code(()=>api.restoreExecutable(d,{packed:spoof}));}
+   const {observeExportRoundtrips,observeEditorExportTrace}=await import('../lib/export-semantics-observations.mjs');const semantics={roundtrips:observeExportRoundtrips(api),trace:observeEditorExportTrace(api)};return{made,mismatched,restored,refused,semantics};});
   // On a touch screen (coarse pointer) every button of the ▶ player and its question window is at least 40 px tall (E-19).
   await run('EXPORT-CONTROLS-TOUCH-SIZE',async()=>{const c=await b.newContext({offline:true,viewport:{width:1024,height:768},hasTouch:true,isMobile:true});await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});
    try{const p=await c.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(generate('controls-touch','「答えは？」とたずねる。\n答えを言う。\n10秒待つ。',{},'default')).href);
@@ -119,8 +152,8 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     sizes.stop=await height('#playerStop');sizes.pause=await height('#playerPause');sizes.questionStop=await height('#questionStop');sizes.questionSubmit=await height('#questionSubmit');
     for(const [k,v] of Object.entries(sizes))assert.ok(v>=40,k+' is '+v+' px tall');
     return{allAtLeast40:true,sizes};}finally{await c.close();}});
-  await run('EXPORT-ARTWORK-SIZE-RELOAD-INPUT',()=>withPage(b,async p=>{await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));const box=await p.locator('#formSurface').boundingBox();assert.deepEqual({x:box.x,y:box.y,width:box.width,height:box.height},{x:0,y:0,width:640,height:400});assert.equal(await p.locator('#playerStart,#playerPause,#playerStop,#playerTitle,#playerStatus').count(),0);await p.locator('.component[data-runtime-id="button-1"]').click();await p.waitForFunction(()=>document.querySelector('#formSurface').textContent.includes('作品のボタン'));await p.locator('#formSurface').focus();await p.keyboard.press('a');await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('作品のキー'));await p.reload();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));assert.doesNotMatch(await p.locator('#playerOutput').innerText(),/作品のキー/);return{box,noControls:true,nativeButtonAndKey:true};},generate('artwork-input',marker,{scripts:[{targetId:'stage',event:'start',source:marker},{targetId:'button-1',event:'click',source:'「作品のボタン」と言う。'},{targetId:'stage',event:'keyDown',source:'「作品のキー」と言う。'}]}),320));
-  await run('EXPORT-ARTWORK-QUESTION-ANSWER-STOP',()=>withPage(b,async p=>{await p.locator('#questionModal.show').waitFor();await p.locator('#questionAnswer').fill('返答');await p.locator('#questionSubmit').click();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('返答'));await p.reload();await p.locator('#questionModal.show').waitFor();await p.locator('#questionStop').click();assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'STOPPED');assert.equal(await p.locator('#formSurface').evaluate(n=>document.activeElement===n),true);return{answer:true,stop:true};},generate('artwork-question','「答えは？」とたずねる。\n答えの値を言う。\n10秒待つ。')));
+  await run('EXPORT-ARTWORK-SIZE-RELOAD-INPUT',()=>withPage(b,async p=>{await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));const box=await p.locator('#formSurface').boundingBox();assert.deepEqual({x:box.x,y:box.y,width:box.width,height:box.height},{x:0,y:0,width:640,height:400});assert.equal(await p.locator('#playerStart,#playerPause,#playerStop,#playerTitle,#playerStatus').count(),0);await p.locator('.component[data-runtime-id="button-1"]').click();await p.waitForFunction(()=>document.querySelector('#formSurface').textContent.includes('作品のボタン'));await p.locator('#formSurface').focus();await p.keyboard.press('a');await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('作品のキー'));await p.reload();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));assert.doesNotMatch(await p.locator('#playerOutput').innerText(),/作品のキー/);return{box,noControls:true,nativeButtonAndKey:true,touch:await observeArtworkTouch(b,api,out,{error:e=>report.pageErrors.push(e),network:u=>report.networkRequests.push(u)})};},generate('artwork-input',marker,{scripts:[{targetId:'stage',event:'start',source:marker},{targetId:'button-1',event:'click',source:'「作品のボタン」と言う。'},{targetId:'stage',event:'keyDown',source:'「作品のキー」と言う。'}]}),320));
+  await run('EXPORT-ARTWORK-QUESTION-ANSWER-STOP',()=>withPage(b,async p=>{await p.setViewportSize({width:1366,height:650});await p.locator('#questionModal.show').waitFor();await p.locator('#questionAnswer').fill('返答');await p.locator('#questionSubmit').click();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('返答'));await p.reload();await p.locator('#questionModal.show').waitFor();await p.locator('#questionStop').click();assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'STOPPED');assert.equal(await p.locator('#formSurface').evaluate(n=>document.activeElement===n),true);const stopMessageVisible=await p.locator('#playerOutput').evaluate(n=>{const r=n.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&n.textContent.includes('止めたよ');});assert.equal(stopMessageVisible,true);return{answer:true,stop:true,stopMessageVisible};},generate('artwork-question','「答えは？」とたずねる。\n答えの値を言う。\n10秒待つ。',{stage:{...make('').stage,width:1000,height:700}})));
   await run('EXPORT-ARTWORK-AUDIO-PERMITTED',async()=>{const c=await b.newContext({offline:true});await audioProbe(c);const p=await c.newPage();try{p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(generate('audio-permitted',tone)).href);await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));assert.equal(await p.locator('#playerActivation').isVisible(),false);assert.equal(await p.evaluate(()=>__tones.length),1);return{starts:await p.evaluate(()=>__tones),automatic:true};}finally{await c.close();}});
 
   await run('EXPORT-ARTWORK-IMAGE-PEN-STOP',()=>withPage(b,async p=>{

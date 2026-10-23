@@ -663,13 +663,22 @@
     if (!c.statementSlot)
       throw new AkariError(
         'P201',
-        'ここには やることを 入れられないよ。あいている 行か、1行 全部を えらんでから 入れてね',
+        'ここには やる ことを 入れられないよ。あいて いる 行か、1行 全部を えらんでから 入れてね',
       );
     const indent = c.indentText,
       body = (c.head ? '' : indent) + text.split('\n').join('\n' + indent),
       suffix = c.after && !c.after.startsWith('\n') ? '\n' : '';
     const pos = c.before.length + body.length;
     return { source: c.before + body + suffix + c.after, start: pos, end: pos };
+  }
+  function definitionHintArguments(definition,project){
+    if(!definition.args.length)return [];
+    const result=definition.args.map(()=> '1'),ast=parseSyntax(definition.source,{symbols:buildSymbols(project),definition:true,definitionKind:project.functions.includes(definition)?'function':'action',args:definition.args}).ast,found=new Set();
+    const visit=node=>{if(!node||typeof node!=='object')return;if(node.kind==='CompareExpression'&&node.op==='EQ'){
+      for(const [name,value]of [[node.left,node.right],[node.right,node.left]])if(name?.kind==='VariableRead'&&value?.kind==='StringLiteral'&&!found.has(name.name)){
+        const i=definition.args.indexOf(name.name);if(i>=0){result[i]=formatExpression(value);found.add(name.name);}
+      }
+    }for(const child of Object.values(node))if(child&&typeof child==='object')visit(child);};visit(ast);return result;
   }
   function hintCandidates(project, targetId, options = {}) {
     const source = options.source ?? '',
@@ -684,6 +693,9 @@
       event = options.event || 'start',
       out = [],
       seen = new Set();
+    // A control example contains executable lines: no existing local declaration may follow it.
+    const followingLocals = pure ? localDeclarationNames(place.after) : null,
+      pureControlSlot = pure && place.declarationSlot && !followingLocals.vars.length && !followingLocals.lists.length;
     const labels = {
       MotionCommand: '\u52d5\u304d',
       LooksCommand: '\u898b\u305f\u76ee',
@@ -830,6 +842,7 @@
         'BroadcastAndWait',
         'WaitTime',
         'WaitUntil',
+        'TimerReset',
         'MotionCommand',
         'LooksCommand',
         'PenCommand',
@@ -842,14 +855,14 @@
       // The examples of もし and くり返す do something that is seen, and a loop on a number ends (F-25): a number of the
       // work counts up, よこのばしょ grows as the part goes right, and the stage waits. Only a calculation (pure) has no
       // action to put inside.
-      const counter = n && !n.readonly ? n.text : null, body = pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '前へ10歩進む。';
+      const counter = pure ? nameSource(initialBlockName('数えた回数', usedNames)) : n && !n.readonly ? n.text : null, body = pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '前へ10歩進む。';
       // In 答えを もとめる (pure) a loop changes its own number, so it ends and means something (F2-07); a loop that
       // never ends there (ずっと, a key that is never pressed in a calculation) is not offered.
-      if (pure && (x.kind === 'Forever' || x.kind === 'RepeatUntil' || (!counter && ['RepeatWhile', 'RepeatCount', 'IfStatement'].includes(x.kind)))) continue;
+      if (pure && (x.kind === 'Forever' || x.kind === 'RepeatUntil')) continue;
       if (x.kind === 'IfStatement')
-        text = pure ? `もし${counter}が10より大きいなら、\n  ${counter}を10にする。` : n ? `もし${v}が10以上なら、\n  「やったね」と言う。`
+        text = pure ? `もし${counter}が10より大きければ、\n  ${counter}を10にする。` : n ? `もし${v}が10以上なら、\n  「やったね」と言う。`
           : type === 'stage' ? 'もしタイマーが10以上なら、\n  「10秒 たったよ」と言う。'
-          : 'もしよこのばしょが300より大きいなら、\n  「右の ほうだよ」と言う。\nそうでなければ、\n  「左の ほうだよ」と言う。';
+          : 'もしよこのばしょが300より大きければ、\n  「右の ほうだよ」と言う。\nそうでなければ、\n  「左の ほうだよ」と言う。';
       if (x.kind === 'RepeatWhile')
         text = counter ? `${counter}が10より小さいあいだ、くり返す。\n  ${counter}を1ふやす。`
           : type === 'stage' ? 'タイマーが3より小さいあいだ、くり返す。\n  1秒待つ。' : 'よこのばしょが300より小さいあいだ、くり返す。\n  前へ10歩進む。';
@@ -857,6 +870,10 @@
         text = `「スペース」キーがおされるまで、くり返す。\n  ${body}`;
       if (x.kind === 'RepeatCount')
         text = `3回くり返す。\n  ${pure ? counter + 'を1ふやす。' : body}`;
+      if (pure && ['IfStatement', 'RepeatWhile', 'RepeatCount'].includes(x.kind)) {
+        text = `この中だけで使う変数${counter}を作り、最初は${x.kind === 'IfStatement' ? 11 : 0}にする。\n` + text;
+        if (!pureControlSlot) reason = 'この 例は、この中だけの へんすうを 作るので、本文の はじめ（へんすう・リストを 作る 行の あと）で えらびます';
+      }
       if (x.kind === 'Forever')
         text = `ずっとくり返す。\n  ${type === 'stage' ? '1秒待つ。' : '右に15度回る。'}`;
       // A character's line is said in its own voice (F-18: no です・ます in what a part says).
@@ -923,7 +940,7 @@
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
-          reason = 'コピーが できたときの 動きで 使います';
+          reason = 'コピーが できた ときの 動きで 使います';
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
@@ -1008,21 +1025,25 @@
       for (const b of bindings)
         add('return:' + b.text, '\u8fd4\u3059', b.text + 'を答えとして返す');
     }
-    for (const d of project.actions)
+    for (const d of project.actions) {
+      const examples=definitionHintArguments(d,project);
       if (!pure)
         add(
           'action:' + d.id,
           'てじゅん',
-          `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】というてじゅんを行う`,
+          `${d.args.length ? d.args.map((arg,i) => `${nameSource(arg)}を${examples[i]}`).join('、') + 'として、' : ''}【${d.name}】というてじゅんを行う`,
           'statement', '', {kind:'action', id:d.id, name:d.name},
         );
-    for (const d of project.functions)
+    }
+    for (const d of project.functions) {
+      const examples=definitionHintArguments(d,project);
       add(
         'function:' + d.id,
         '答えを もとめる',
-        `（${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
+        `（${d.args.length ? d.args.map((arg,i) => `${nameSource(arg)}を${examples[i]}`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
         'expression', '', {kind:'function', id:d.id, name:d.name},
       );
+    }
     const exclusive = {
       '\u62bc\u3055\u308c\u305f\u30ad\u30fc': 'keyDown',
       '\u53d7\u3051\u53d6\u3063\u305f\u77e5\u3089\u305b': 'message',
@@ -1216,7 +1237,7 @@
   });
   // Block names: the written word, with spaces where a child reads them in pieces.
   const SENSOR_LABELS = Object.freeze({
-    'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされている',
+    'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされて いる',
     '以前の背景名': '前の はいけいの名前', '新しい背景名': '新しい はいけいの名前',
   });
   // Builtin calculations whose written word differs from the internal name.
@@ -1240,7 +1261,7 @@
         protectedAt[i] = 1;
         if (['」','』'].includes(quote) && ch === '\\') {
           if (!['\\', quote === '』' ? '『' : '「', quote].includes(text[i + 1]))
-            throw new AkariError('N103', '「」の 中で \\ を 使うときは、\\「、\\」、\\\\ の どれかに します', 0, i + 1);
+            throw new AkariError('N103', '「」の 中で \\ を 使う ときは、\\「、\\」、\\\\ の どれかに します', 0, i + 1);
           protectedAt[++i] = 1;
         } else if (ch === quote) quote = '';
         continue;
@@ -1267,7 +1288,7 @@
     startLine: line.lineNo,
     startColumn: line.startColumn || 1,
     endLine: line.lineNo,
-    endColumn: Math.max(1, cpLen(line.raw) + 1),
+    endColumn: Math.max(1, surfaceLineInfo(line).columns.count + 1),
   });
 
   function splitComment(raw) {
@@ -1336,10 +1357,10 @@
     )
       throw new AkariError(
         'F503',
-        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてください`,
+        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けして ください`,
       );
     if (callable && (BUILTIN_NAMES.has(name) || Object.values(BUILTIN_SURFACES).includes(name)))
-      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に してください`);
+      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に して ください`);
     return name;
   }
 

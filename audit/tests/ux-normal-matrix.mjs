@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -65,12 +66,12 @@ async function perform(p,c,mode){const e=p.locator('#codeEditor');
   if(['B02','B05','B08','B11','B14','B17','B20','B22','B23'].includes(c.id))await putCode(p,c.source);
   if(c.id==='B03'){await e.focus();await e.press('Control+Home');await e.press('Shift+ArrowDown');await e.press('Control+x');await e.press('Control+End');await e.press('Enter');await e.press('Control+v');}
   if(c.id==='B06'){await e.focus();await e.press('Control+End');await e.press('Home');await e.press('Delete');await e.press('Delete');}
-  if(c.id==='B09'){await headingClick(p);await p.locator('#editorModecode').click();}
+  if(c.id==='B09'){await headingClick(p);await chooseView(p,'code');}
   if(c.id==='B12'){await replaceCode(p,'3','1');if(await p.locator('#sourceImportEditCurrent').isVisible())await p.locator('#sourceImportEditCurrent').click();else if(await p.locator('#sourceImportConfirm').isVisible())await p.locator('#sourceImportConfirm').click();}
   if(c.id==='B15'){await e.press('Control+End');await e.pressSequentially('  「ちがうよ」と2秒話す。');}
   if(c.id==='B18')await replaceCode(p,'×','＋');
   if(c.id==='B21'){await replaceCode(p,'『買うもの』','リスト「買うもの」');await replaceCode(p,'1番目','2番目');}
-  if(c.id==='B22'){await speak(p,'こんにちは');await p.locator('#editorModeblocks').click();await p.locator('#editorModecode').click();await replaceCode(p,'こんにちは','おはよう');await p.locator('#editorModeblocks').click();await p.locator('#undoBtn').click();await p.locator('#editorModecode').click();}
+  if(c.id==='B22'){await speak(p,'こんにちは');await chooseView(p,'blocks');await chooseView(p,'code');await replaceCode(p,'こんにちは','おはよう');await chooseView(p,'blocks');await p.locator('#undoBtn').click();await chooseView(p,'code');}
   if(c.id==='B24'){const text=await e.inputValue(),at=text.indexOf('そのあと');await e.focus();await e.evaluate((e,n)=>e.setSelectionRange(n,e.value.length),at);await e.press('Backspace');assert.notEqual(await e.inputValue(),text);await p.locator('#undoBtn').click();assert.equal((await state(p)).source,text);}
   return;
  }
@@ -85,7 +86,7 @@ async function perform(p,c,mode){const e=p.locator('#codeEditor');
  if(c.id==='B14'){await rootBody(p).locator(':scope > .blockui-insertion').last().click();await add(p,'IfStatement','IfStatement');const branch=node(p,'IfStatement'),condition=branch.locator(':scope > .blockui-node-content > .blockui-node-main > [data-blockui-input="condition"]');await chooseExpression(p,condition,'CompareExpression:EQ');const q=node(p,'CompareExpression:EQ');await typeSlot(q.locator(':scope > .blockui-node-content > .blockui-node-main > [data-blockui-input="left"]'),'SensorRead:答え');await typeSlot(q.locator(':scope > .blockui-node-content > .blockui-node-main > [data-blockui-input="right"]'),'StringLiteral','ほし');await addSay(p,'どうぞ',branch.locator('[data-blockui-body-wrapper="thenBody"] [data-blockui-action="hole-select-statement"]'));await branch.locator('[data-blockui-action="else-add"]').click();await addSay(p,'もういちど',branch.locator('[data-blockui-body-wrapper="elseBody"] [data-blockui-action="hole-select-statement"]'));}
  if(c.id==='B15')await addSay(p,'ちがうよ',p.locator('#blockEditor [data-blockui-body-wrapper="elseBody"] [data-blockui-action="hole-select-statement"]'));
  if(c.id==='B17'){const say=await addSay(p,'計算');const slot=say.locator(':scope > .blockui-node-content > .blockui-node-main > [data-blockui-input="value"]');await chooseExpression(p,slot,'BinaryExpression:SUB');const q=node(p,'BinaryExpression:SUB');await typeSlot(q.locator(':scope > .blockui-node-content > .blockui-node-main > [data-blockui-input="left"]'),'NumberLiteral','4');await typeSlot(q.locator(':scope > .blockui-node-content > .blockui-node-main > [data-blockui-input="right"]'),'NumberLiteral','1');}
- if(c.id==='B18')await p.getByLabel('計算や くらべ方のしるしだけを かえる',{exact:true}).selectOption('BinaryExpression:ADD');
+ if(c.id==='B18')await p.getByLabel('計算や くらべ方の しるしだけを かえる',{exact:true}).selectOption('BinaryExpression:ADD');
  if(c.id==='B20'){await add(p,'NumericUpdate:ADD','NumericUpdate:ADD');const update=node(p,'NumericUpdate:ADD');await update.locator('[data-blockui-hole-target]').selectOption('点数');const slot=update.locator('[data-blockui-input="value"]');await chooseExpression(p,slot,'NumberLiteral');await edit(slot.locator('[data-blockui-field="value"]'),'1');await addSay(p,'点数');const picker=p.getByLabel('話す 文字か、へんすうの 中身を えらぶ');await reveal(picker);await picker.selectOption({label:'点数の いまの中身'});}
  if(c.id==='B21'){await p.getByLabel('文字の代わりに使うリストを えらぶ').selectOption({index:1});await edit(node(p,'ListRead').locator('[data-blockui-input="index"] [data-blockui-field="value"]'),'2');}
  if(c.id==='B22'){const say=await addSay(p,'こんにちは'),field=say.locator('[data-schema-id="StringLiteral"] [data-blockui-field="value"]');await speak(p,'こんにちは');await edit(field,'おはよう');await p.locator('#undoBtn').click();assert.equal((await state(p)).ast.body[0].value.value,'こんにちは');}

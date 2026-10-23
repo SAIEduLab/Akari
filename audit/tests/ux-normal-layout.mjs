@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -21,7 +22,7 @@ try{await withBrowser(chrome,async browser=>{
     }catch(e){row.error=e.stack;row.status='FAIL';await p.screenshot({path:path.join(dir,id.replaceAll('/','-')+'-failure.png')});}save();
    }
    report.activeCase.phase='return-to-code';
-   await p.locator('#editorModecode').click();const code=await p.locator('#codeEditor').evaluate(e=>({source:e.value,width:e.clientWidth,scroll:e.scrollWidth,wrap:getComputedStyle(e).whiteSpace}));assert.equal(code.source,before.source);assert.equal(code.wrap,'pre-wrap');assert.ok(code.scroll<=code.width+2);
+   await chooseView(p,'code');const code=await p.locator('#codeEditor').evaluate(e=>({source:e.value,width:e.clientWidth,scroll:e.scrollWidth,wrap:getComputedStyle(e).whiteSpace}));assert.equal(code.source,before.source);assert.equal(code.wrap,'pre-wrap');assert.ok(code.scroll<=code.width+2);
   });delete report.activeCase;console.log('layout '+c.id+' '+viewport.width+'x'+viewport.height+' '+scheme);
  }
 },600000);}catch(e){report.hostFailure=e.stack;}report.status=!report.hostFailure&&report.results.length===100&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';save();if(report.status!=='PASS')process.exitCode=1;

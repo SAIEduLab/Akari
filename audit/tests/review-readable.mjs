@@ -91,7 +91,7 @@ async function stageSpeechReview(browser){
         assert.ok(info.controls.pauseVisible,'advanced mode retains pause/continue controls');
         await page.locator('#pauseBtn').click();
         await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');
-        await page.locator('#continueBtn').click();
+        await page.waitForTimeout(510);await page.locator('#continueBtn').click();
         await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
       }
       await pressStop(page.locator('#stopBtn'));

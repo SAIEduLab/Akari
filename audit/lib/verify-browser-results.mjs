@@ -17,6 +17,7 @@ export function assertSingleBrowserOwner(entries){
   return owner.size;
 }
 export function verifyBrowserReport(report,spec,expectedSnapshot) {
+  assert.ok(!report.error,spec.task+': '+report.error);
   for(const key of ['pageErrors','networkRequests','errors','network'])if(key in report)assert.deepEqual(report[key],[],spec.task+'/'+key);
   for(const key of ['failed'])if(key in report)assert.equal(report[key],0);
   for(const key of ['sourceUnchanged','sourceFileUnchanged','environmentPass','complete'])if(key in report)assert.equal(report[key],true);
@@ -25,7 +26,10 @@ export function verifyBrowserReport(report,spec,expectedSnapshot) {
   if(spec.task!=='schema-shards')assert.ok(typeof report.browser==='string'&&report.browser.length>0,'missing browser '+spec.task);
   if(spec.key==='single'){
     assert.equal(report.pass,true);assert.equal(report.method,spec.keys[0]);assert.equal(report.lines,16666);
-    assert.equal(report.sourceUnchanged,true);assert.equal(report.state.mode,'blocks');assert.equal(report.state.chars,99995);assert.ok(report.state.dom<=5000);
+    assert.equal(report.sourceUnchanged,true);assert.equal(report.state.mode,'blocks');assert.equal(report.state.chars,99995);assert.ok(Number.isInteger(report.state.dom)&&report.state.dom>0&&report.state.dom<=5000);
+    // perf-input's existing deadline covers input and switching together, not each independently.
+    for(const key of ['inputMs','switchMs'])assert.ok(Number.isFinite(report[key])&&report[key]>=0,'missing/invalid '+key);
+    assert.ok(report.inputMs+report.switchMs<=30000,'perf-input exceeded its 30-second deadline');
     return;
   }
   assert.ok(Array.isArray(report.results));

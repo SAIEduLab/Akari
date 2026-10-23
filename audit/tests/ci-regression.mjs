@@ -11,6 +11,8 @@ import {editorAssetIds,audioIds,codecBrowser} from '../lib/feature-contract.mjs'
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 import {caseRecorder,writeCaseReport} from '../lib/gate-case-contract.mjs';
+import {browserContract,verifyBrowserReport} from '../lib/verify-browser-results.mjs';
+import {boundaryCases,boundarySource,boundaryTimeoutMs,verifyLanguageBoundaries,checkLanguageBoundaryNegatives} from '../lib/language-boundaries-contract.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
 const [output]=process.argv.slice(2);assert.ok(output,'usage: ci-regression.mjs <result.json>');
 const {results,pass}=caseRecorder();
@@ -218,4 +220,39 @@ assert.equal(readinessChecks,1,'the readiness predicate was evaluated');
 assert.deepEqual(presses.filter(s=>s.startsWith('#editorMode')),['#editorModecode']);assert.equal(shown,'code');assert.equal(waits.length,3);
 pass('fixture-readiness/unfinished-import-rejected');
 console.log('Fixture readiness: unfinished import/state rejected; initial viewport and offline context preserved PASS');
+const perfSpec=browserContract().entries.find(row=>row.task==='perf-input:keyboard-insert'),perfInputs=snapshot(currentProductFile());
+const perfReport={browser:expected.version,sha256:perfInputs.productSha256,pass:true,method:perfSpec.keys[0],lines:16666,sourceUnchanged:true,state:{mode:'blocks',chars:99995,dom:1000},inputMs:100,switchMs:200};
+verifyBrowserReport(perfReport,perfSpec,perfInputs);pass('perf-report/accepted');
+for(const [name,mutate]of [
+  ['error',r=>r.error='Timeout: timed out after 30 seconds'],['input-missing',r=>delete r.inputMs],['switch-missing',r=>delete r.switchMs],
+  ['nonfinite',r=>r.inputMs=Infinity],['negative',r=>r.switchMs=-1],['total-deadline',r=>{r.inputMs=16000;r.switchMs=16000;}],
+  ['false-pass',r=>r.pass=false],['wrong-source',r=>r.sha256='0'.repeat(64)],['invalid-dom',r=>r.state.dom=-1],
+]){const bad=structuredClone(perfReport);mutate(bad);assert.throws(()=>verifyBrowserReport(bad,perfSpec,perfInputs),name);pass('perf-report/reject-'+name);}
+const boundaryReport={status:'PASS',snapshot:perfInputs,timeoutMs:boundaryTimeoutMs,featureContract:'audit/manifests/features.json',results:boundaryCases.map(c=>({name:c.name,count:c.count,chars:[...boundarySource(c.name,c.count)].length,ms:1,heapDelta:0,accepted:c.accepted,...(c.accepted?{}:{diagnostic:'P205'})}))};
+verifyLanguageBoundaries(boundaryReport,perfInputs);pass('language-boundaries/accepted');
+for(const row of checkLanguageBoundaryNegatives(boundaryReport,perfInputs)){assert.equal(row.rejected,true);pass('language-boundaries/reject-'+row.id);}
+// Expose presentation helpers only inside this isolated VM; the distributed product gains no test hook.
+const guidanceContext={console,TextEncoder,TextDecoder,Blob,URL,structuredClone,setTimeout,clearTimeout};
+const productCode=source.slice(source.indexOf('<script>')+8,source.lastIndexOf('</script>'));
+assert.equal(productCode.split('const Akari = {').length,2);
+vm.runInNewContext(productCode.replace('const Akari = {','const Akari = {diagnosticExampleNames,childDiagnosticText,'),guidanceContext,{timeout:30000});
+const guidanceApi=guidanceContext.Akari,guidanceProject=guidanceApi.makeDefaultProject();guidanceProject.projectData={variables:[],lists:[{id:'guide-list',name:'買うもの',initialValue:['りんご']}]};
+for(const c of guidanceProject.components)c.localData={variables:[],lists:[]};
+assert.equal(guidanceApi.diagnosticExampleNames(guidanceProject).value,null);
+const guidanceOwner=guidanceProject.components[0];guidanceOwner.name='犬\\';guidanceOwner.localData.variables=[{id:'guide-local',name:'点数',initialValue:3}];
+const scalar=guidanceApi.diagnosticExampleNames(guidanceProject);assert.match(scalar.value,/自分の/);
+for(const prefix of ['', 'この中だけで使うリスト点数を空で作る。\n','［10］の各要素を点数として、次のことをくり返す。\n  ']){
+ guidanceProject.actions=[{id:'guide-action',ownerId:'stage',name:'試す',args:[],source:prefix+scalar.value+'を言う。'}];guidanceProject.scripts=[{id:'guide-start',targetId:guidanceOwner.id,event:'start',source:'【試す】という手順を行う。'}];
+ const compiled=guidanceApi.compileProject(guidanceProject);assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors));const said=[],runtime=new guidanceApi.RuntimeModel(guidanceProject),scheduler=new guidanceApi.EventScheduler(guidanceProject,compiled,runtime,{say:(id,text)=>said.push(text)});let clock=0;runtime.now=()=>clock;scheduler.schedule=()=>{};
+ try{scheduler.start();for(let i=0;i<100&&scheduler.tasks.size;i++){if(scheduler.ready.length)scheduler.runTurn();else{clock+=1000;scheduler.recheckBlocked();}}assert.equal(scheduler.errorRecords.length,0);assert.equal(scheduler.tasks.size,0);assert.deepEqual(said,['3']);}finally{scheduler.stop();}
+}
+pass('diagnostic-guidance/list-and-scoped-scalar');
+for(const initialValue of [3,'文字',true,{magnitude:3,unit:'点'}]){
+ guidanceOwner.localData.variables[0].initialValue=initialValue;
+ const names=guidanceApi.diagnosticExampleNames(guidanceProject);assert.equal(!!names.comparisonValue,typeof initialValue==='number');
+ if(names.comparisonValue){guidanceProject.actions=[];guidanceProject.scripts[0].source='もし'+names.comparisonValue+'が10より大きければ、\n  何もしない。';assert.equal(guidanceApi.compileProject(guidanceProject).errors.length,0);}
+}
+guidanceProject.projectData.variables=[{id:'guide-global',name:'点数',initialValue:7}];guidanceOwner.localData.lists=[{id:'guide-shadow',name:'点数',initialValue:[]}];
+const globalExample=guidanceApi.diagnosticExampleNames(guidanceProject);assert.match(globalExample.value,/^作品の/);assert.equal(globalExample.comparisonValue,'作品の【点数】');
+pass('diagnostic-guidance/typed-comparison');
 writeCaseReport(output,'ci-regression',results);

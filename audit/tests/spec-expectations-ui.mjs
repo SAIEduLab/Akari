@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
+import {childSpacingIssues} from '../lib/product-source-contract.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {readExpectationFiles,verifyExpectations,verifyExpectationsUiReport,areas,expectationsRoot} from '../lib/spec-expectations.mjs';
@@ -150,6 +151,48 @@ const place=async(s,c,{x,y,w,h,scale=100,direction=0})=>{await s.select(c.id);aw
 // A point of the work screen (よこ, たて from the bottom-left corner) on the page.
 const screenPoint=(s,x,y)=>s.page.locator('#formSurface').evaluate((el,[x,y])=>{const r=el.getBoundingClientRect(),st=Akari.app.project.stage;return{x:r.left+x*r.width/st.width,y:r.top+(st.height-y)*r.height/st.height};},[x,y]);
 const checks={
+  'CC-398':async s=>{const p=s.page;await s.select('w-neko');
+    p.once('dialog',d=>d.accept('ベル'));await p.locator('#soundInput').setInputFiles({name:'ベル.wav',mimeType:'audio/wav',buffer:fs.readFileSync('audit/fixtures/audio/tone.wav')});await p.waitForFunction(()=>Akari.app.project.sounds.some(x=>x.name==='ベル'));
+    await s.write('「ベル」を鳴らす。');
+    // The case explicitly delays asset preparation. Keep the real preparation after releasing that delay.
+    await p.evaluate(()=>{const prepare=Akari.AssetRuntimeCache.prototype.prepare;globalThis.__preparationOriginal=prepare;Akari.AssetRuntimeCache.prototype.prepare=async function(...args){await new Promise(resolve=>globalThis.__releasePreparation=resolve);return prepare.apply(this,args);};});
+    await p.click('#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='PREPARING'&&typeof __releasePreparation==='function');const bar=await s.toolbar();
+    await p.evaluate(()=>{Akari.AssetRuntimeCache.prototype.prepare=__preparationOriginal;__releasePreparation();delete globalThis.__preparationOriginal;delete globalThis.__releasePreparation;});await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await s.stop();
+    return {expect:{preparingStopOnly:bar.stopBtn.shown&&bar.stopBtn.pressable&&['runBtn','pauseBtn','continueBtn','stepBtn','runtimeInspectBtn'].every(id=>!bar[id].shown)},info:{bar}};},
+  'CC-399':async s=>{const p=s.page;await p.locator('#tutorialStart').click();if(await p.locator('#loseConfirmProceed').isVisible())await p.locator('#loseConfirmProceed').click();
+    const step=async id=>p.waitForFunction(id=>document.body.dataset.tutorialStep===id,id);await step('choose-click');await p.locator('#entryClickEvent').click();
+    const insert=async key=>{await p.locator('#blockEditor [data-blockui-action="body-insert"].tutorial-target,#blockEditor .blockui-hole-target.tutorial-target').first().click();await p.locator('#blockEditor [data-lesson-block="'+key+'"]').click();};
+    await step('add-speech');await insert('speech');await step('speech-text');
+    const id=await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body.find(n=>n.schemaId==='Say').inputs.value.id),field=p.locator('#blockEditor [data-block-id="'+id+'"][data-blockui-field="value"]');await field.fill('つかまった！');await field.press('Enter');
+    await step('add-escape');await insert('escape');await step('run-original');await p.click('#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.waitForTimeout(550);
+    const running=await s.toolbar(),guide=await p.locator('#tutorialExit').evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {inGuide:!!e.closest('#tutorialGuide'),text:e.textContent,shown:!!e.getClientRects().length&&getComputedStyle(e).visibility==='visible',enabled:!e.disabled,hit:hit===e||e.contains(hit)};});
+    await p.click('#pauseBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');await p.waitForTimeout(550);const paused=await s.toolbar();await p.click('#continueBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await s.stop();const state=await p.evaluate(()=>Akari.app.editorState.state);
+    return {expect:{tutorialExit:!running.tutorialStart.shown&&running.tutorialStart.w>0&&guide.inGuide&&guide.text==='いっしょに 作るのを やめる'&&guide.shown&&guide.enabled&&guide.hit,runningControls:running.stopBtn.shown&&running.stopBtn.pressable&&running.pauseBtn.shown&&running.pauseBtn.pressable,resumes:paused.continueBtn.shown&&paused.continueBtn.pressable,back:state==='DESIGN'},info:{running,paused,guide,state}};},
+  'CC-410':async s=>{const p=s.page;await s.select('w-neko');
+    // Delay just the input file's bytes; the importer and canonicalizer run unchanged after release.
+    await p.evaluate(()=>{const read=File.prototype.arrayBuffer;globalThis.__fileArrayBuffer=read;File.prototype.arrayBuffer=async function(){if(this.name==='audit-loading.png')await new Promise(resolve=>globalThis.__releaseImage=resolve);return read.call(this);};});
+    const png=Buffer.from(await p.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');g.fillStyle='#f00';g.fillRect(0,0,1024,1024);return c.toDataURL('image/png').split(',')[1];}),'base64');
+    await p.locator('#imageObjectInput').setInputFiles({name:'audit-loading.png',mimeType:'image/png',buffer:png});await p.waitForFunction(()=>typeof __releaseImage==='function');
+    const before=await readViewToggle(p);await pressViewToggle(p);const during=await readViewToggle(p),note=await viewRefusalNote(p),style=await p.locator('#editorModecode').evaluate(e=>({opacity:getComputedStyle(e).opacity,visibility:getComputedStyle(e).visibility,disabled:e.disabled})),role=await p.locator('#modeBlockedNote').getAttribute('role');
+    await p.evaluate(()=>{File.prototype.arrayBuffer=__fileArrayBuffer;__releaseImage();delete globalThis.__fileArrayBuffer;delete globalThis.__releaseImage;});await p.waitForFunction(()=>Akari.app.project.components.some(c=>c.name==='audit-loading'));await chooseView(p,'code');
+    return {expect:{kept:before.view==='blocks'&&during.view==='blocks'&&during.label===before.label&&style.opacity==='1'&&style.visibility==='visible'&&!style.disabled,note:note==='読みこみが おわるまで、まってね'&&role==='status',switches:await shownView(p)==='code'},info:{before,during,note,style,role}};},
+  'CC-422':async s=>{const p=s.page,{buildDerivedProduct}=await import('../../extensions/build.mjs'),{offline}=require('../../extensions/examples/offline.js'),derived=path.join(directory,'CC-422-derived.html');
+    await buildDerivedProduct({product,output:derived,extensions:[offline]});await p.goto(pathToFileURL(derived).href);await p.waitForFunction(()=>!!globalThis.Akari?.app);await p.setInputFiles('#fileInput',workFiles.parts);await p.waitForFunction(()=>Akari.app.project.components.some(c=>c.id==='w-neko'));await chooseView(p,'code');await s.select('w-neko');
+    await s.write('「はじめ」と言う。');await p.selectOption('#eventSelect','message');await s.write('「拡張:demo.offline/changed」という合図を受けたとき、「とどいた」と1秒言う。');await s.run();await p.waitForTimeout(1000);
+    const r={state:(await p.locator('#runState').innerText()).trim(),line:(await p.locator('#statusText').innerText()).trim()};await s.stop();
+    return {expect:{running:r.state==='動いているよ',line:r.line==='「拡張:demo.offline/changed」の 合図を 受けると 動くよ'},info:r};},
+  'CC-424':async s=>{const p=s.page,allowlist=JSON.parse(fs.readFileSync('audit/fixtures/child-spacing-allowlist.json')),observations=[];await s.select('w-neko');await s.code();await s.write('3秒待つ。');
+    const scan=async()=>{const texts=await p.evaluate(()=>{const names=new Set([Akari.app.project.name,Akari.app.project.stage.name,...Akari.app.project.components.map(c=>c.name)]),texts=[],walk=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+      const excluded=e=>e.closest('script,style,code,pre,kbd,rt,textarea,.component,.sprite-bubble');
+      for(let n; n=walk.nextNode();){const e=n.parentElement,text=n.textContent.trim();if(!text||!e||excluded(e))continue;const r=document.createRange();r.selectNode(n);if(!r.getClientRects().length||getComputedStyle(e).visibility!=='visible'||names.has(text))continue;texts.push(text);}
+      for(const e of document.querySelectorAll('[aria-label],[title],[placeholder],[alt]')){if(excluded(e)||!e.getClientRects().length||getComputedStyle(e).visibility!=='visible')continue;for(const attr of ['aria-label','title','placeholder','alt']){const text=e.getAttribute(attr)?.trim();if(text&&!names.has(text))texts.push(text);}}return texts;});
+      return texts.flatMap((text,index)=>childSpacingIssues([{file:'visible-text-'+index,kind:'html',text:text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}],allowlist));};
+    // Independent observer controls: another space cannot hide a bad run, including in an accessible label.
+    await p.evaluate(()=>{const button=document.createElement('button');button.id='audit-spacing-negative';button.textContent='前に ここをおしてはじめる';button.setAttribute('aria-label','前に あとをおしてはじめる');document.body.append(button);});
+    const negative=await scan();await p.locator('#audit-spacing-negative').evaluate(e=>e.remove());assert.ok(negative.some(x=>x.run==='ここをおしてはじめる'));assert.ok(negative.some(x=>x.run==='あとをおしてはじめる'));
+    for(const [view,level] of [['blocks','entry'],['blocks','basic'],['blocks','advanced'],['code','basic'],['code','advanced']]){if(await p.locator('#uiLevel').inputValue()==='entry')await p.selectOption('#uiLevel','basic');await chooseView(p,view);await p.selectOption('#uiLevel',level);await p.waitForTimeout(150);const edit=await scan();await s.run();const run=await scan();await s.stop();observations.push({view,level,edit,run});}
+    return {expect:{allSurfacesSpaced:observations.every(r=>!r.edit.length&&!r.run.length)},info:{observations,negativeControlRuns:negative.map(x=>x.run)}};},
+
   // ── common ──
   'CC-055':async s=>{await s.select('w-neko');await s.code();await s.write('ねこは「こんにちは」と言う。\nねこは1秒待つ。\nだんごは「やあ」と言う。');
     const r=await s.check();await s.page.click('#exportBtn');await s.page.locator('#exportChoiceModal').waitFor({state:'visible'});
@@ -403,15 +446,16 @@ const checks={
     return {expect:{oneRow:rows.length===24&&rows.every(r=>r.one),narrow:narrow.covered===0&&narrow.outside===0&&narrow.count>0},info:{rows:rows.filter(r=>!r.one),narrow}};},
   // ── The run screen after final calls 21 and 26–28 (lead decision 27: the ⏸／▶ つづける place). ──
   // A mistake stops the run: neither ⏸ nor ▶ つづける, their place kept empty; 本文を見て たしかめる stays, 1つずつ 動かす goes.
-  'CC-393':async s=>{const p=s.page;await s.select('w-neko');await s.write('1秒待つ。\n点数を（5÷点数のあまり）にする。');
+  'CC-393':async s=>{const p=s.page;await s.select('w-neko');await s.write('「あ」と言う。\n「い」と言う。\n1秒待つ。\n点数を（5÷点数のあまり）にする。');
+    assert.ok(await p.evaluate(()=>Akari.compileProject(Akari.app.project).notes.some(n=>n.code==='I130')),'the regression includes an independent non-stopping notice');
     const edit=await s.toolbar();await s.run();await p.waitForTimeout(600);const running=await s.toolbar();
     await p.locator('#failureModal.show').waitFor({timeout:4000});await p.click('#failureClose');await p.waitForTimeout(300);
     const failed=await s.toolbar(),nameIsText=await s.nameIsText(),nameState=await p.evaluate(()=>({state:Akari.app.editorState.state,text:document.querySelector('#projectNameText')?.hidden})),slot=await p.locator('#runPauseSlot').boundingBox(),work=['newBtn','sampleBtn','basicActionGuide','openBtn','saveBtn','exportBtn','uiLevel'];
-    await p.waitForTimeout(300);await p.click('#stopBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');const back=await s.toolbar();
+    await p.waitForTimeout(300);await p.click('#stopBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');const back=await s.toolbar(),stoppedLine=(await p.locator('#statusText').innerText()).trim();
     return {expect:{noPauseOrContinue:!failed.pauseBtn.shown&&!failed.continueBtn.shown&&!!slot&&slot.width>0&&s.samePlace(running.pauseBtn,failed.pauseBtn),
       inspectNotStep:failed.runtimeInspectBtn.shown&&failed.runtimeInspectBtn.pressable&&!failed.stepBtn.shown,
       barStopAndName:failed.stopBtn.shown&&s.samePlace(edit.runBtn,failed.stopBtn)&&work.every(id=>!failed[id].shown)&&nameIsText,
-      back:back.runBtn.shown&&!back.stopBtn.shown},info:{failed,slot,nameState}};},
+      back:back.runBtn.shown&&!back.stopBtn.shown,failureBeforeNotice:stoppedLine==='止まって いるよ。コードの 4行目を なおしてね。'&&!stoppedLine.includes('ⓘ')},info:{failed,slot,nameState,stoppedLine}};},
   // A second press of the place within 0.5 s of ⏸ does nothing; ▶ つづける pressed after that goes on.
   'CC-394':async s=>{const p=s.page;await s.select('w-neko');await s.write('ずっとくり返す。\n  1秒待つ。\n  点数を1ふやす。');
     const score=()=>p.evaluate(()=>[...document.querySelectorAll('#runtimeMonitor .monitor-row')].find(r=>r.querySelector('.monitor-key')?.textContent==='点数')?.querySelector('.monitor-value')?.textContent??null);
@@ -491,7 +535,7 @@ const checks={
   'CC-423':async s=>{const p=s.page;await s.select('w-neko');await s.write('「まけ」と言う。\n作品を全部止める。');await s.run();await p.waitForTimeout(1000);
     const r={bubble:await s.bubble('w-neko'),line:(await p.locator('#statusText').innerText()).trim(),notice:(await p.locator('#codeIssue').innerText().catch(()=>'')).trim()};
     await s.stop();await p.waitForTimeout(300);const after=(await p.locator('#codeIssue').innerText().catch(()=>'')).trim();
-    return {expect:{bubbleKept:r.bubble==='まけ'&&r.line==='作品が 止まったよ。作る 画面に もどるときは「■ 止める」を おしてね',noNotice:!r.notice.includes('ⓘ')&&!after.includes('ⓘ')},info:{...r,after}};},
+    return {expect:{bubbleKept:r.bubble==='まけ'&&r.line==='作品が 止まったよ。作る 画面に もどる ときは「■ 止める」を おしてね',noNotice:!r.notice.includes('ⓘ')&&!after.includes('ⓘ')},info:{...r,after}};},
   // はじめて's run screen keeps only what can be used (lead decision 34): no event, ＋ or block tool buttons, a larger
   // screen with the blocks small beside it; at 650 px or less the screen and the parts list in one column.
   'CC-392':async s=>{const p=s.page;await p.setViewportSize({width:1366,height:900});await s.select('w-neko');
@@ -511,7 +555,7 @@ const checks={
   // A screen height change that leaves a part outside says so and keeps the part where it is (A-07, A-20).
   'CC-403':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);const id=(await s.part('たくどん')).id;await s.select(id);
     await s.prop('たてのばしょ',600);await s.select('stage');await s.prop('高さ',300);const line=(await p.locator('#statusText').innerText()).trim();await s.select(id);const y=await s.propValue('たてのばしょ');
-    return {expect:{note:line==='「たくどん」は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ',kept:y==='600'},info:{line,y}};},
+    return {expect:{note:line==='「たくどん」は 画面の 外に あるよ。「せってい」の「よこのばしょ」・「たてのばしょ」で もどせるよ',kept:y==='600'},info:{line,y}};},
   // The stage dots lie on the backdrop every 10 steps from the bottom-left corner, on the edit screen, the run screen and
   // 大きく見る, also at a height that is not a multiple of 10 (A-16). The dots are found in a screenshot of the screen at
   // 100%: columns from the left edge and rows from the bottom edge, at 0, 10, 20… steps.
@@ -600,8 +644,8 @@ const checks={
     await s.write('「あ」と言う。\n「い」と言う。');const two=await look();await s.write('「あ」と言う。\n「い」と言う。\n画面の左下のはしから、右へ320歩のばしょへ行く。');const three=await look();
     await s.write('画面の左下のはしから、右へ320歩のばしょへ行く。');const one=await look();
     return {expect:{notice:two.notice.includes(1)&&two.issue.startsWith('ⓘ 1行目：時間を 書かない「言う」は、すぐ 次の 文へ 進みます。')&&two.error===0&&two.kind==='issue-notice'&&two.blue,
-      counted:three.issue.startsWith('ⓘ 1行目：')&&three.issue.includes('（ほかに 1つ あります）')&&three.notice.includes(3),
-      fixes:one.issue.startsWith('ⓘ 1行目：たての 歩数を 書いていないので、')&&one.fixes.length===2&&one.fixes.some(t=>t.includes('上へ（たてのばしょ）歩'))&&one.fixes.some(t=>t.includes('上へ0歩'))},info:{two,three,one}};},
+      counted:three.issue.startsWith('ⓘ 1行目：')&&three.issue.includes('ほかにも 知らせが 1つ あります。')&&three.notice.includes(3),
+      fixes:bare(one.issue).startsWith(bare('ⓘ 1行目：たての 歩数を 書いていないので、'))&&one.fixes.length===2&&one.fixes.some(t=>t.includes('上へ（たてのばしょ）歩'))&&one.fixes.some(t=>t.includes('上へ0歩'))},info:{two,three,one}};},
   // A mistake comes first: with one, no notice mark is shown.
   'CC-413':async s=>{const p=s.page;await s.select('w-neko');await s.write('「あ」と言う。\n「い」と言う。\n右へ10歩動く。');
     const r=await p.evaluate(()=>({issue:document.querySelector('#codeIssue').innerText.trim(),kind:document.querySelector('#codeIssue').className,notice:document.querySelectorAll('.gutter-line.notice').length,error:[...document.querySelectorAll('.gutter-line.error')].map(n=>Number(n.textContent))}));
@@ -631,10 +675,14 @@ const checks={
   // code does not write it (lead decision 30).
   'CC-416':async s=>{const p=s.page,source='おばあさんは「こんにちは」と言う。\n「うんとこしょ」と2秒話す。\n「やあ」と言う。';await s.select('w-ojii');await s.write(source);await s.press('コードモード ⇄');
     const chips=await p.evaluate(()=>[...document.querySelectorAll('#blockEditor .blockui-script .blockui-node[data-schema-id^="Say"]')].map(n=>{const c=n.querySelector('.blockui-subject-carried'),seen=c&&c.getClientRects().length>0;
-      return {chip:seen?c.textContent.trim():null,title:c?.title||c?.getAttribute('aria-description')||'',pale:seen?Number(getComputedStyle(c).opacity)<1||/rgb\(1[2-9]\d|rgb\(2\d\d/.test(getComputedStyle(c).color):false,read:n.querySelector(':scope > .blockui-node-content > .blockui-node-main')?.innerText.replace(/\s+/g,'')||''};}));
+      let contrasts=[];
+      if(seen){const rgb=x=>x.match(/[\d.]+/g).map(Number),luma=x=>x.slice(0,3).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0),style=getComputedStyle(c),fg=rgb(style.color),background=rgb(style.backgroundColor),before=n.dataset.paletteTone;
+        for(const tone of ['motion','look','control','event','data','operator','sense','sound','pen','action','clone','comment']){n.dataset.paletteTone=tone;const shape=n.querySelector(':scope > .blockui-shape path'),base=rgb(getComputedStyle(shape).fill),bg=background.slice(0,3).map((v,i)=>v*(background[3]??1)+base[i]*(1-(background[3]??1))),a=luma(fg),b=luma(bg);contrasts.push({tone,ratio:(Math.max(a,b)+.05)/(Math.min(a,b)+.05)});}n.dataset.paletteTone=before;}
+      return {chip:seen?c.textContent.trim():null,title:c?.title||c?.getAttribute('aria-description')||'',name:c?.getAttribute('aria-label')||'',contrasts,pale:seen?getComputedStyle(c).borderStyle==='dashed'&&Number(getComputedStyle(c).opacity)===1&&getComputedStyle(c).backgroundColor==='rgba(255, 255, 255, 0.6)':false,read:n.querySelector(':scope > .blockui-node-content > .blockui-node-main')?.innerText.replace(/\s+/g,'')||''};}));
+    for(const chip of chips)for(const contrast of chip.contrasts)assert.ok(contrast.ratio>=4.5,'carried subject text contrast '+JSON.stringify(contrast));
     await s.press('ブロックモード ⇄');const back=await s.text();
     return {expect:{firstNamed:chips.length===3&&chips[0].chip===null&&chips[0].read.includes('おばあさんは'),carried:chips[1].chip==='（おばあさんは）'&&chips[2].chip==='（おばあさんは）'&&chips[1].pale,
-      explained:chips[1].title==='前の 文の「おばあさんは」を ひきついで、おばあさんが します',notWritten:back===source&&!back.includes('（おばあさんは）')},info:{chips,back}};},
+      explained:chips[1].name==='前の 文の「おばあさんは」を ひきついで、おばあさんが します'&&chips[1].title==='',notWritten:back===source&&!back.includes('（おばあさんは）')},info:{chips,back}};},
   // はじめて's 「回数を決めてくり返す」 comes with 3, and 「前へ進む」 put after it goes inside it.
   'CC-417':async s=>{const p=s.page;await s.newWork();const id=(await s.part('たくどん')).id;await s.select(id);
     const shown=await p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="RepeatCount"]:visible').first().evaluate(e=>[...e.querySelectorAll('input')].map(i=>i.value).join(',')||e.innerText.replace(/\s+/g,''));
@@ -649,7 +697,7 @@ const checks={
     await p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="RepeatCount"]:visible').first().click();await p.waitForTimeout(300);
     await p.click('#runBtn');await p.waitForTimeout(400);const r=await p.evaluate(()=>{const a=document.activeElement;return {state:Akari.app.editorState.state,line:document.querySelector('#statusText').textContent.trim(),
       focus:a?.dataset?.blockuiAction||a?.tagName,hole:/^Hole:/.test(a?.dataset?.schemaId||''),inLoop:!!a?.parentElement?.closest?.('.blockui-node[data-schema-id="RepeatCount"]')};});
-    return {expect:{notRun:r.state==='DESIGN',focusInside:(r.focus==='body-insert'||r.hole)&&r.inLoop,line:r.line==='まだ 動かせないよ。あいている ところが あるよ。くり返すことを 入れてね'},info:r};},
+    return {expect:{notRun:r.state==='DESIGN',focusInside:(r.focus==='body-insert'||r.hole)&&r.inLoop,line:r.line==='まだ 動かせないよ。あいている ところが あるよ。くり返すことを 入れてね。'},info:r};},
   // くわしく's new blocks come with values that run: the first other part, 3, 50％, 1つ, 1段階, and the rule 1秒に200歩.
   'CC-419':async s=>{const p=s.page;await s.select('w-neko');await openPaletteTools(p.locator('#blockEditor'));
     for(const id of ['MotionCommand:POINT_TO','CloneCommand:CREATE_TARGET','PenCommand:SET_SIZE','SoundCommand:SET_VOLUME','LooksCommand:FORWARD_LAYERS','SoundCommand:PITCH_UP']){

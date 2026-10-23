@@ -1,3 +1,4 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import {nameLegacyFixtureActor} from '../lib/gate-ui-fixture.mjs';
@@ -44,13 +45,13 @@ try{
   await page.locator('#fileInput').setInputFiles({name:'composition.akari.md',mimeType:'text/plain',buffer:Buffer.from(payload.text)});
   await page.waitForFunction(name=>Akari.app.project.name===name,payload.name);await page.locator('#uiLevel').selectOption('advanced');
   await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
-  if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModecode').click();
+  if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await chooseView(page,'code');
  };
  for(const d of prose.drafts){
   await run(d.id+'/source-ui','SOURCE_ACCEPTANCE',async(page,capture)=>{
    await install(page,d);const inputHistoryBefore=await page.evaluate(()=>Akari.app.editorState.history);await page.locator('#codeEditor').fill(d.mainFirstDraft);
    if(await page.locator('#sourceImportConfirm').isVisible()){if(await page.locator('#sourceImportConfirm').isDisabled())await page.locator('#sourceImportEditCurrent').click();else await page.locator('#sourceImportConfirm').click();}
-   else if(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit?.kind==='heading-source')){await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();}
+   else if(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit?.kind==='heading-source')){await chooseView(page,'blocks');await chooseView(page,'code');}
    const evidence=await page.evaluate(source=>({enteredSource:document.querySelector('#codeEditor').value,pending:Akari.app.editorState.main.pendingEdit,
     modelSource:Akari.app.editorState.main.sourceText,compileErrors:Akari.app.compile().errors,sourceShaMatches:document.querySelector('#codeEditor').value===source}),d.mainFirstDraft);capture(evidence);
    if(evidence.pending||evidence.modelSource!==d.mainFirstDraft){const error=new Error('Original prose must be accepted, not merely preserved as pending. '+JSON.stringify(evidence.pending));error.code='ACCEPTANCE_REQUIRED';throw error;}
@@ -60,7 +61,7 @@ try{
    await page.waitForFunction(history=>Akari.app.editorState.history===history+1,inputHistoryBefore);
    evidence.inputHistoryBefore=inputHistoryBefore;evidence.inputHistoryAfter=await page.evaluate(()=>Akari.app.editorState.history);
    const before=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,dirty:Akari.app.editorState.dirty}));
-   await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();evidence.codeAfterRoundtrip=await page.locator('#codeEditor').inputValue();
+   await chooseView(page,'blocks');await chooseView(page,'code');evidence.codeAfterRoundtrip=await page.locator('#codeEditor').inputValue();
    assert.equal(evidence.codeAfterRoundtrip,d.mainFirstDraft);assert.deepEqual(await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,dirty:Akari.app.editorState.dirty})),before);
    const download=page.waitForEvent('download');await page.locator('#saveBtn').click();const saved=await download,file=path.join(dir,d.id+'.akari.md');await saved.saveAs(file);const text=fs.readFileSync(file,'utf8');
    const loaded=await page.evaluate(async text=>(await Akari.parseProjectFile(text)).project,text);assert.ok(loaded.scripts.some(s=>s.source===d.mainFirstDraft));
@@ -93,26 +94,26 @@ try{
  });
  await run('EDITOR/idless-heading-selection','EDITOR_IDENTITY',async(page,capture)=>{
   await nameLegacyFixtureActor(page);
-  await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
+  await page.locator('#uiLevel').selectOption('advanced');await chooseView(page,'code');await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
   const input=page.locator('#codeEditor');await input.fill('');
   const source='あかりがクリックされたとき、\n  あかりは、いまのばしょから、右へ30歩動いて、「今日はどこへ行こう」と言う。';
   const baseline=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,event:document.querySelector('#eventSelect').value}));
   await input.fill(source);await page.waitForTimeout(150);
   const staged=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,event:document.querySelector('#eventSelect').value,raw:document.querySelector('#codeEditor').value}));
   assert.equal(staged.project,baseline.project);assert.equal(staged.owner,baseline.owner);assert.equal(staged.event,baseline.event);assert.equal(staged.raw,source);
-  await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();
+  await chooseView(page,'blocks');await chooseView(page,'code');
   const read=()=>page.evaluate(()=>({textarea:document.querySelector('#codeEditor').value,event:document.querySelector('#eventSelect').value,owner:Akari.app.editorState.main.ownerKey,scripts:Akari.app.project.scripts}));
   const first=await read();capture({source,first});assert.equal(first.scripts.length,1,'one input must not duplicate a default body');assert.equal(first.scripts[0].source,source);
   assert.ok(first.scripts[0].id,'an edited body has a stable identity');
   assert.equal(first.scripts[0].event,'click');assert.equal(first.textarea,source,'changed body remains visible');assert.equal(first.event,'click','event selector follows the edited body');
-  await input.fill(source);await page.waitForTimeout(150);await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();const second=await read();assert.equal(second.scripts.length,1,'re-entering the same source cannot create a second body');
+  await input.fill(source);await page.waitForTimeout(150);await chooseView(page,'blocks');await chooseView(page,'code');const second=await read();assert.equal(second.scripts.length,1,'re-entering the same source cannot create a second body');
   assert.equal(second.scripts[0].id,first.scripts[0].id,'re-entry preserves the edited body identity');
   const evidence={source,baseline,staged,inputKeepsContext:true,explicitCommit:true,first,second};capture(evidence);return evidence;
  });
  for(const viewport of [{width:1366,height:768},{width:1024,height:768},{width:390,height:844}])await run('EDITOR/multiline-native-'+viewport.width,'EDITOR_NATIVE_TEXT',async(page,capture)=>{
   await page.setViewportSize(viewport);await install(page,prose.drafts[0]);
   const literal='1行目\n  2行目\n\t「青空」🐈',source=await page.evaluate(value=>Akari.formatExpression({kind:'StringLiteral',value})+'と言う。',literal);
-  await page.locator('#codeEditor').fill(source);await page.locator('#editorModeblocks').click();
+  await page.locator('#codeEditor').fill(source);await chooseView(page,'blocks');
   const root=page.locator('#blockEditor'),field=root.locator('.blockui-node[data-schema-id="StringLiteral"] textarea[data-blockui-field="value"]');
   assert.equal(await field.inputValue(),literal,'native field must retain every LF before editing');
   await field.click();await field.press('Control+End');await field.pressSequentially('!');assert.equal(await field.inputValue(),literal+'!');
@@ -124,8 +125,8 @@ try{
   const dialog=page.locator('.blockui-text-dialog'),full=dialog.locator('textarea');assert.equal(await full.inputValue(),literal+'!');
   await full.fill('取り消す\n  仮の内容');await dialog.locator('[data-blockui-text-action="cancel"]').click();
   assert.equal(await field.inputValue(),literal+'!');
-  await page.locator('#editorModecode').click();const actual=await page.locator('#codeEditor').inputValue(),expected=await page.evaluate(value=>Akari.formatExpression({kind:'StringLiteral',value})+'と言う。',literal+'!');assert.equal(actual,expected);
-  await page.locator('#editorModeblocks').click();assert.equal(await field.inputValue(),literal+'!');
+  await chooseView(page,'code');const actual=await page.locator('#codeEditor').inputValue(),expected=await page.evaluate(value=>Akari.formatExpression({kind:'StringLiteral',value})+'と言う。',literal+'!');assert.equal(actual,expected);
+  await chooseView(page,'blocks');assert.equal(await field.inputValue(),literal+'!');
   const evidence={viewport,literal,afterAppend:literal+'!',afterCancel:await field.inputValue(),codeAfterRoundtrip:actual,expectedCode:expected,nativeControl:'TEXTAREA'};capture(evidence);return evidence;
  });
  const downloadProject=async(page,id,button='#saveBtn')=>{const waiting=page.waitForEvent('download');await page.locator(button).click();const download=await waiting,file=path.join(dir,id+'.akari.md');await download.saveAs(file);return {file,text:fs.readFileSync(file,'utf8')};};
@@ -138,7 +139,7 @@ try{
   return {source,restored:await page.locator('#codeEditor').inputValue(),runBlocked:true,exportBlocked:true};
  });
  await run('SAVE/unfinished-return-hole','DRAFT_PERSISTENCE',async(page)=>{
-  await install(page,prose.drafts[0]);await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('途中の答え');await page.locator('#callableModeblocks').click();
+  await install(page,prose.drafts[0]);await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('途中の答え');await chooseView(page,'blocks',{prefix:'callable'});
   const root=page.locator('#callableBlocks');await openPaletteTools(root);await root.locator('[data-blockui-search]').fill('ReturnStatement');await root.locator('[data-blockui-schema="ReturnStatement"]').click();assert.equal(await root.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1);
   const saved=await downloadProject(page,'unfinished-return','#callableSaveProject');await page.locator('#procClose').click();assert.equal(await page.locator('#procModal').isVisible(),false);
   await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(()=>document.querySelector('#procModal').classList.contains('show')&&!!Akari.app.editorState.draft.blockDraft);
@@ -146,7 +147,7 @@ try{
   return {name:'途中の答え',holeRestored:true,closedWithoutDiscard:true};
  });
  await run('SAVE/unfinished-number','DRAFT_PERSISTENCE',async(page)=>{
-  await install(page,prose.drafts[0]);await page.locator('#codeEditor').fill('前へ10歩進む。');await page.locator('#editorModeblocks').click();
+  await install(page,prose.drafts[0]);await page.locator('#codeEditor').fill('前へ10歩進む。');await chooseView(page,'blocks');
   // The step count sits in the block face of 前へ進む (no inner NumberLiteral node).
   const field=page.locator('#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE"] input[data-blockui-field="value"]');await field.fill('－');
   const saved=await downloadProject(page,'unfinished-number');await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(()=>Akari.app.editorState.main.pendingEdit?.value==='－');assert.equal(await field.inputValue(),'－');

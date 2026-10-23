@@ -206,7 +206,7 @@ const cases = {
     // 見た目のコピー adds a part that holds no body, and is not the 「コピー」 a run makes (F-23, LANGUAGE.md 173).
     assert.match(await p.locator('#basicActionGuide').innerText(),/本文は もちません/);
     assert.match(await p.locator('#basicActionGuide').innerText(),/「コピー」とは べつの もの/);
-    assert.match(await p.locator('#basicActionGuide').innerText(),/決めた ことを 1つ もとにもどす/);
+    assert.match(await p.locator('#basicActionGuide').innerText(),/決めた ことを 1つ もとに もどす/);
     const help=await textFits(p.locator('#basicActionGuide p'));
     const tailReach=await keyboardPanelTail(p,'#basicActionGuide');
     await summary.press('Enter'); assert.equal(await p.locator('#basicActionGuide').getAttribute('open'),null);
@@ -322,7 +322,7 @@ const cases = {
     await source(p,'2 + 3を言う。\n2回くり返す。\n  1を言う。'); await chooseView(p,'blocks',{reveal});
     await openPaletteTools(p.locator('#blockEditor'));
     const before=await state(p), summary=await keyboardDetails(p,'#blockEditor .blockui-local-help');
-    for(const text of ['あいている ところに 入れる 中身','文字「おはよう」','「あてはまる・あてはまらない」','「同じ数を くり返し かける」（＾）','2×2×2 で 8','コピー','もとにもどす'])
+    for(const text of ['あいている ところに 入れる 中身','文字「おはよう」','「あてはまる・あてはまらない」','「同じ数を くり返し かける」（＾）','2×2×2 で 8','コピー','もとに もどす'])
       assert.ok((await p.locator('#blockEditor .blockui-local-help').innerText()).includes(text),text);
     const help=await textFits(p.locator('#blockEditor .blockui-local-help p'));
     const truthExample=help.find(r=>r.text.includes('「あてはまる・あてはまらない」')).text;
@@ -335,7 +335,7 @@ const cases = {
     const oldValues=await arithmetic.locator('[data-blockui-field="value"]').evaluateAll(es=>es.map(e=>e.value));
     assert.deepEqual(oldValues,['2','3']);
     const operator=arithmetic.locator('.blockui-operator');
-    assert.equal(await operator.getAttribute('aria-label'),'計算や くらべ方のしるしだけを かえる');
+    assert.equal(await operator.getAttribute('aria-label'),'計算や くらべ方の しるしだけを かえる');
     await operator.selectOption('BinaryExpression:SUB');
     const arithmeticAfter=p.locator('#blockEditor .blockui-node[data-schema-id="BinaryExpression:SUB"]');
     const newValues=await arithmeticAfter.locator('[data-blockui-field="value"]').evaluateAll(es=>es.map(e=>e.value));

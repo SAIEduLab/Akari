@@ -118,10 +118,11 @@
       form.style.height = p.stage.height + 'px';
       // While a work runs, a finger on the screen is the mouse wherever it starts: it does not scroll the page, and a
       // sideways swipe does not go back to the page before. On the edit screen and in a player before ▶ the page still
-      // scrolls up and down (and zooms) under a finger on the screen, but a sideways swipe does not leave the page.
+      // scrolls in both directions (and zooms) under a finger on the screen; overscroll containment keeps a sideways
+      // swipe from leaving the page.
       // 開いたら すぐに 動かす keeps the work at its own size, so there (runTouch: 'pinch-zoom') two fingers on the
       // running screen zoom and move the page to reach a part the window cuts off; one finger is still the mouse.
-      const touch = r ? options.runTouch || 'none' : 'pan-y pinch-zoom';
+      const touch = r ? options.runTouch || 'none' : 'pan-x pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
         form.style.overscrollBehavior = r ? 'none' : 'none auto';
@@ -448,7 +449,7 @@
         full.hidden = full.dataset.always !== 'true';
         full.type = 'button';
         full.dataset.label = presentation.rounded ? 'もとの 数' : '全部';
-        full.setAttribute('aria-label', presentation.rounded ? '数を 短くして 見せているよ。もとの 数を 見る' : 'ふきだしの 文を ぜんぶ 見る');
+        full.setAttribute('aria-label', presentation.rounded ? '数を 短くして 見せて いるよ。もとの 数を 見る' : 'ふきだしの 文を ぜんぶ 見る');
         full.style.pointerEvents = 'auto';
         full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue, speakerLabel); };
         b.appendChild(full);
@@ -656,7 +657,7 @@
       endFrame = null;
     const designUrls = new Map();
     // A file that cannot start cannot be put right here: whoever made it makes it again.
-    const CANNOT_START = 'この 作品を 動かせなかったよ。作った 人に、もう一度 ファイルに してもらってね。';
+    const CANNOT_START = 'この 作品を 動かせなかったよ。作った 人に、もう一度 ファイルに して もらってね。';
     const message = (text) => {
       output.hidden = false;
       const addition = (output.textContent ? '\n' : '') + String(text);
@@ -711,11 +712,11 @@
           LOADING: '読みこみ中',
           READY: 'じゅんび できたよ',
           PREPARING: 'じゅんび中',
-          RUNNING: '動いているよ',
+          RUNNING: '動いて いるよ',
           PAUSED: 'いったん 止めたよ',
           FINISHED: 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね',
           FAILED: '動きが とちゅうで 止まったよ。「■ 止める」を おすと、はじめに もどるよ',
-          STOPPED: '止まっているよ',
+          STOPPED: '止まって いるよ',
           ERROR: '開けないよ',
         }[phase] || '';
       root.dataset.state = phase;
@@ -756,6 +757,7 @@
       view?.clearInput();
       if (scheduler) phase = 'FAILED';
       explain(error?.code ? error.message : '動きが とちゅうで 止まったよ。', error, 'R411');
+      if(artwork)output.scrollIntoView({block:'nearest'});else view?.fitStage();
       flush();
       state();
     }
@@ -785,7 +787,7 @@
       phase = 'STOPPED';
       flush();
       state();
-      if (artwork) message('止めたよ。もう一度 動かすときは、この ページを 読みこみなおしてね');
+      if (artwork) {message('止めたよ。もう一度 動かすときは、この ページを 読みこみなおしてね');output.scrollIntoView({block:'nearest'});}
       (start || form).focus({ preventScroll: true });
     }
     async function audioActivation(localCache, attempt, gesture) {
@@ -808,7 +810,7 @@
       dispose();
       phase = artwork ? 'ERROR' : 'STOPPED';
       // The same words with ▶ and without: what to do, then the code and the reason in the fold.
-      explain(gesture || error?.code === 'R415' ? '音を 出せなかったよ。この 作品を ちがう 画面で 開いてみてね。' : CANNOT_START,
+      explain(gesture || error?.code === 'R415' ? '音を 出せなかったよ。この 作品を ちがう 画面で 開いて みてね。' : CANNOT_START,
         error, 'R415');
       flush(); state();
     }
@@ -929,7 +931,7 @@
     }
     if (start) start.onclick = (event) => { startPressedAt = event.timeStamp; startRun(); };
     if (stop) stop.onclick = (event) => {
-      if (event.timeStamp - startPressedAt < 500) return;
+      if (event.timeStamp - startPressedAt < 500) return form.focus({ preventScroll: true });
       stopRun();
     };
     if (pause) pause.onclick = (event) => {
@@ -1031,7 +1033,8 @@
             const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage')), header = root.querySelector('header');
             return document.documentElement.clientHeight - parseFloat(page.paddingTop || 0) - parseFloat(page.paddingBottom || 0) -
               (header ? header.offsetHeight + parseFloat(getComputedStyle(header).marginBottom || 0) : 0) -
-              parseFloat(box.borderTopWidth || 0) - parseFloat(box.borderBottomWidth || 0);
+              parseFloat(box.borderTopWidth || 0) - parseFloat(box.borderBottomWidth || 0) -
+              (!output.hidden && ['FAILED','ERROR'].includes(phase) ? output.offsetHeight + parseFloat(getComputedStyle(output).marginTop || 0) : 0);
           },
         }),
         getProject: () => session.project,
@@ -1045,12 +1048,12 @@
           message(text);
           if (details?.rounded) {
             const full = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('span');
-            summary.textContent = '数を 短くして 見せているよ。もとの 数を 見る';
+            summary.textContent = '数を 短くして 見せて いるよ。もとの 数を 見る';
             raw.textContent = details.rawText;
             full.append(summary, raw); output.appendChild(full);
           }
         },
-        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文 ぜんぶ：' : '数を 短くして 見せているよ。もとの 数：') + core.valueText(value)),
+        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文 ぜんぶ：' : '数を 短くして 見せて いるよ。もとの 数：') + core.valueText(value)),
       });
       // When the title or the status line takes another row (a narrow window), the stage fits again below it.
       const header = root.querySelector('header');
@@ -1111,6 +1114,7 @@
     }
     const program = compiled.items.map((item) => ({
       key: item.key, ownerId: item.ownerId, ast: clean(item.ast),
+      ...(item.meijin ? { meijin: true } : {}),
       ...(item.key.startsWith('script:') ? { id: item.id || item.scriptId || item.key.split(':')[1],
         targetId: item.targetId, event: item.event, filter: item.filter || null } : {}),
       // A procedure made in a 名人 script's text carries its name and inputs (it is in no list of procedures).
@@ -1152,7 +1156,7 @@
     );
   }
   function generateStandaloneHtml(project, assetStore = new AssetStore(), { presentation = 'controls' } = {}) {
-    if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
+    if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品の はじめ方が 正しく ありません');
     const artwork = presentation === 'artwork';
     assetStore = withDefaultMascotAsset(project, assetStore || new AssetStore());
     const payload = packExecutable(project, assetStore),
@@ -1182,8 +1186,10 @@
       AKARI_STAGE_CSS +
       '\n' +
       AKARI_PLAYER_CSS +
+      '\nhtml{overscroll-behavior-x:none}' +
       // No dots before the first paint either (renderStage paints the backdrop alone).
       '\n#formSurface{background-image:none}' +
+      (artwork ? '\n#formSurface .component{touch-action:pinch-zoom}' : '') +
       (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
       // On a touch screen the player's buttons are 40 px tall, as the editor's are.
       '\n@media(pointer:coarse){.player-controls button,.question-controls button{min-height:40px}}' +
@@ -1193,14 +1199,14 @@
       '</h1><div class="player-controls"><button id="playerStart" disabled>▶ 動かす</button><button id="playerStop" hidden>■ 止める</button><button id="playerPause" hidden><span class="pl-pause">⏸ いったん止める</span><span class="pl-cont">▶ つづける</span></button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
       '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここを おして はじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
       '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">■ 止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
-      '<noscript>この 作品を 動かすには、JavaScriptを 使えるように してください。</noscript>\n<script>\n' +
+      '<noscript>この 作品を 動かすには、JavaScriptを 使えるように して ください。</noscript>\n<script>\n' +
       script +
       '\n<' +
       '/script>\n</body>\n</html>\n';
     if (new TextEncoder().encode(html).length > LIMITS.executableBytes)
       throw new AkariError(
         'X604',
-        '作品が 大きすぎて、うごく作品の ファイルに できないよ。絵や 音を へらしてみてね',
+        '作品が 大きすぎて、うごく作品の ファイルに できないよ。絵や 音を へらして みてね',
       );
     return html;
   }
