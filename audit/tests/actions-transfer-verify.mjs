@@ -54,13 +54,13 @@ function syntheticComposition(){
  for(const d of prose.drafts){
   const actor={id:'sprite-1',x:100,y:100,direction:0,isClone:false},star={...actor,id:'composition-star',x:200};
   const state=time=>({time,actors:[structuredClone(actor),structuredClone(star)],variables:[['点数',0]],lists:[],speech:[]});
-  const times={I07:[0],I08:[0,1999,2000,3999,4000,5999,6000],I09:[0,999,1000],I10:[0,17],I11:[0,999,1000,1999,2000],I12:[0,999,1000]}[d.id],states=times.map(state);
+  const times={I07:[0],I08:[0,1999,2000,3999,4000,5999,6000],I09:[0,999,1000],I10:[0,17,34],I11:[0,999,1000,1999,2000],I12:[0,999,1000]}[d.id],states=times.map(state);
   const say=(text,time,id='sprite-1')=>({kind:'say',id,text,time});let trace=[];
   if(d.id==='I07'){states[0].variables=[['点数',{magnitude:3,unit:'点'}]];trace=[say('できた！',0),say('3点',0)];}
   if(d.id==='I08'){trace=[say('本',0),say('かさ',2000),say('ぼうし',4000)];for(const s of states)s.lists=[['持ち物',['本','かさ','ぼうし']]];}
   if(d.id==='I09')trace=[{kind:'ask',text:'名前を教えてください',time:0},say('はる「青空」さん、こんにちは',1000)];
   // 右に15度回る lowers the angle to 345; the second turn of the repeat waits for the next こま (17 ms).
-  if(d.id==='I10')trace=[...[[345,0],[0,0],[345,17],[0,17]].map(([direction,time])=>({kind:'motion',after:{direction},time})),say('250',17)];
+  if(d.id==='I10')trace=[...[[345,0],[0,0],[345,17],[0,17]].map(([direction,time])=>({kind:'motion',after:{direction},time})),say('250',34)];
   if(d.id==='I11')trace=[say('準備できた',1000),say('準備できた',2000,'composition-star'),say('全員集合',2000)];
   if(d.id==='I12')for(const s of states)if(s.time<1000)s.actors.push(...[0,1,2].map(i=>({...actor,id:'clone-'+i,x:120,isClone:true})));
   for(const s of states)s.speech=trace.filter(x=>x.kind==='say'&&x.time<=s.time);
@@ -253,7 +253,7 @@ const requiredNegativeIds=[
  'failed-status','missing-case','duplicate-case','skipped-case','pending-as-pass','changed-original','rewritten-ui-source','wrong-product','wrong-browser','missing-extra-definition','wrong-meaning','source-block-mismatch','changed-time','duplicate-body','changed-identity','multiline-lost-lf','multiline-cancel-committed','draft-dropped-source','draft-coerced-number','page-error','network',
  'missing-value','wrong-expected','wrong-observed','missing-route','missing-variant',
  'audio-missing','audio-duplicate','audio-wrong-head','audio-no-output','audio-wrong-frequency','audio-no-volume-change','audio-wait-early','audio-waits-other-sound','audio-restarts-after-stop','audio-short-recording','audio-unstable-periods',
- 'structured-missing','structured-identity-drift','structured-lost-body','structured-wrong-direction','structured-rate-confusion',
+ 'structured-missing','structured-identity-drift','structured-lost-body','structured-empty-work-ran','structured-wrong-direction','structured-rate-confusion',
  ...evidenceControls(['ux-normal-language.json','ux-normal-browser.json','ux-normal-matrix.json','ux-normal-layout.json','ux-normal-speech.json'],['wrong-meaning']),
  ...evidenceControls(['ux-normal-matrix.json'],['B12-wait-three-seconds','B10-serialized','wrong-initial-source','wrong-result-source','B12-other-body-changed','missing-required-rerun','B20-initial-zero-lost','virtual-input-not-final-source']),
  'ux-normal-speech.json/outside-visible-stage','ux-normal-layout.json/left-edge-clipped',

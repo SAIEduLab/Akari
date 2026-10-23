@@ -28,6 +28,7 @@ async function captureBlockDocuments(p,project){
         const title=n.querySelector(':scope > .blockui-node-head > .blockui-node-title'),r=n.getBoundingClientRect(),style=getComputedStyle(n);
         return {schema:n.dataset.schemaId,parent:parent?all.indexOf(parent):null,slot:slot||null,title:title?.textContent||'',rendered:!!r.width&&!!r.height&&style.visibility!=='hidden',
           fields:Object.fromEntries(own('input[data-blockui-field],select[data-blockui-field],input[data-blockui-structured-role],select[data-blockui-structured-role]').map(f=>[f.dataset.blockuiField||f.dataset.blockuiStructuredRole,f.type==='checkbox'?String(f.checked):f.value])),
+          units:own('.blockui-unit-text').map(u=>{const r=u.getBoundingClientRect();return{text:u.textContent.trim(),rendered:!!r.width&&!!r.height&&getComputedStyle(u).visibility!=='hidden'};}),
           operator:own('.blockui-operator')[0]?.value||null};
       });
       return {scriptId,selectedOwner:document.querySelector('#objectSelect').value,selectedEvent:document.querySelector('#eventSelect').value,nodes};

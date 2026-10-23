@@ -67,13 +67,13 @@ export function blockMeaning(views,project,runs,taskId){
     function* statements(p,body,actor){
       for(const n of body){
         if(++turns>10000)throw Error('Block audit operation bound');const who=p.ref(n,actor),one=slot=>{const found=p.children(n,slot);assert.equal(found.length,1);return expression(p,found[0]);};
-        const seconds=()=>{assert.equal(p.field(n,'unit'),'秒');const duration=Number(p.field(n,'value'));assert.ok(Number.isFinite(duration)&&duration>=0);return duration*1000;};
+        const seconds=()=>{assert.deepEqual(n.units,[{text:'秒',rendered:true}],'actual displayed seconds unit');const duration=Number(p.field(n,'value'));assert.ok(Number.isFinite(duration)&&duration>=0);return duration*1000;};
         switch(n.schema){
           case 'Say':yield {kind:'say',actor:who,text:String(one('value')),duration:seconds()};yield {kind:'clear',actor:who};break;
           // The fixed tasks wait with the whole flow (みんな); a part's own wait is not one of their concepts.
           case 'WaitTime':assert.equal(n.fields['actorRef.kind']??'all','all','fixed task waits with the whole flow');yield {kind:'wait',duration:seconds()};break;
           case 'Ask':answer=yield {kind:'ask',text:String(one('question'))};break;
-          case 'RepeatCount':{assert.equal(p.field(n,'unit'),'回');const count=Number(p.field(n,'value'));assert.ok(Number.isInteger(count)&&count>=0&&count<=100);for(let i=0;i<count;i++)yield* statements(p,p.children(n,'body'),who);break;}
+          case 'RepeatCount':{assert.deepEqual(n.units,[{text:'回',rendered:true}],'actual displayed repetition unit');const count=Number(p.field(n,'value'));assert.ok(Number.isInteger(count)&&count>=0&&count<=100);for(let i=0;i<count;i++)yield* statements(p,p.children(n,'body'),who);break;}
           case 'IfStatement':assert.ok(['true','false'].includes(p.field(n,'hasElse')));yield* statements(p,p.children(n,one('condition')?'thenBody':'elseBody'),who);break;
           case 'Assignment':case 'NumericUpdate:ADD':{
             const targets=p.children(n,'target');assert.equal(targets.length,1);assert.equal(targets[0].schema,'TargetReference');const name=lookup(p,targets[0]),value=Number(one('value'));assert.ok(variables.has(name)&&Number.isFinite(value));variables.set(name,n.schema==='Assignment'?value:Number(variables.get(name))+value);break;
