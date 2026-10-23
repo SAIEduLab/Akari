@@ -335,7 +335,9 @@ async function reveal(locator){
 }
 
 async function keyboardActivate(l){const p=l.page();for(let i=0;i<500&&!await l.evaluate(e=>e===document.activeElement);i++){const backwards=await l.evaluate(e=>!!(e.compareDocumentPosition(document.activeElement)&Node.DOCUMENT_POSITION_FOLLOWING));await p.keyboard.press(backwards?'Shift+Tab':'Tab');}assert(await l.evaluate(e=>e===document.activeElement),'exact insertion receives keyboard focus');await l.press('Enter');}
-async function selectSlot(slot){await U.clickNode(slot.locator(':scope > .blockui-node'));await U.openSlot(slot);return keyboardActivate(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'));}
+// Pointer/focus handlers finish their deferred render and slot-head placement on the next frame.
+const visualFrame=page=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+async function selectSlot(slot){await visualFrame(slot.page());await U.clickNode(slot.locator(':scope > .blockui-node'));await visualFrame(slot.page());await U.openSlot(slot);await visualFrame(slot.page());return keyboardActivate(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'));}
 
 
 // Specification-owned role units (LANGUAGE.md 227, 270, 280); never inferred from the observed block.
