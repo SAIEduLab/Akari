@@ -18,9 +18,10 @@ const ARGUMENT_NAMES=['高さ','幅','速さ'];
 (async()=>{const dir=L.path.resolve(process.argv[2]||'audit-evidence/browser/candidate'),output=L.path.resolve(process.argv[4]||dir),manifest=L.verifyManifest(dir),filter=process.argv[3]?.split(','),api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),contract=C.currentInputs(dir);
 C.verifySchemaContract({fixture:contract.fixture,schemaIds:contract.schemaIds,productSchemas:api.BLOCK_SCHEMAS});
 const schemas=contract.fixture.schemas,semanticRows=contract.fixture.semanticRows,results=[],errors=[],network=[],browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
-try{const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});const p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(p);
+let p=null,setupComplete=false,primaryError=null;
+try{const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});p=await context.newPage();p.setDefaultTimeout(8000);p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(p);
 const openPage=async()=>{await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);await (await reveal(p.locator('#assetBtn'))).click();await p.locator('#soundInput').setInputFiles(L.path.join(__dirname,'media','tone.wav'));await p.waitForFunction(()=>Akari.app.project.sounds.length>=1);await (await reveal(p.locator('#assetClose'))).click();await (await reveal(p.locator('.tool[data-type="input"]'))).click();return p.locator('#objectSelect').inputValue();};
-let inputId=await openPage();let draft=false,rootId='#blockEditor';
+let inputId=await openPage();setupComplete=true;let draft=false,rootId='#blockEditor';
 const session=()=>p.evaluate(d=>(d?Akari.app.editorState.draft:Akari.app.editorState.main),draft);
 const projectText=()=>p.evaluate(()=>JSON.stringify(Akari.app.project));
 const mode=async which=>{await chooseView(p,which,{prefix:draft?'callable':'editor'});await p.locator(rootId).waitFor({state:which==='blocks'?'visible':'hidden'});};
@@ -341,7 +342,17 @@ for(const s of schemas){if(filter&&!filter.includes(s.id))continue;const evidenc
  }catch(e){results.push({id:s.id,pass:false,evidence,error:e.message.split('\n').slice(0,9).join('\n')});console.log('FAIL '+s.id+': '+e.stack);L.result(L.path.join(output,'schema-debug.json'),results);await p.screenshot({path:L.path.join(output,'schema-failure-'+results.length+'.png'),fullPage:true}).catch(()=>{});inputId=await openPage();draft=false;rootId='#blockEditor';}
  L.result(L.path.join(output,'schema-case-'+schemas.indexOf(s)+'.json'),results.at(-1));}
 L.result(L.path.join(output,filter?'browser-schemas-selected.json':'browser-schemas.json'),{manifest,browser:browser.version(),expected:filter?filter.length:schemas.length,results,pageErrors:errors,networkRequests:network});
-}finally{await browser.close();}console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length,pageErrors:errors,networkRequests:network}));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;
+}catch(error){
+ primaryError=error;
+ if(!setupComplete){
+  const failure={schema:'akari-schema-setup-failure-v1',error:error.stack,page:null};let timer;
+  if(p)try{failure.page=await Promise.race([p.evaluate(()=>({readyState:document.readyState,appAvailable:!!globalThis.Akari?.app,fontStatus:document.fonts?.status,
+   pendingImages:[...document.images].filter(image=>!image.complete).length,navigation:performance.getEntriesByType('navigation').map(entry=>entry.toJSON())})),
+   new Promise(resolve=>{timer=setTimeout(()=>resolve({unavailable:'failure-state-timeout'}),1000);})]);}catch(captureError){failure.page={unavailable:captureError.message};}finally{clearTimeout(timer);}
+  try{L.result(L.path.join(output,'schema-setup-failure.json'),failure);}catch(captureError){console.error('Setup failure evidence could not be written:',captureError);}
+ }
+ throw error;
+}finally{try{await browser.close();}catch(closeError){if(primaryError)console.error('Browser cleanup also failed:',closeError);else throw closeError;}}console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length,pageErrors:errors,networkRequests:network}));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});
 
 
