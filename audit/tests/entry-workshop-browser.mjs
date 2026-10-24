@@ -123,7 +123,8 @@ async function exitAndResume(p,id){
 }
 async function deny(p,route){
  const ids={new:'newBtn',sample:'sampleBtn',open:'openBtn',export:'exportBtn',redo:'redoBtn',dialog:'loseConfirmProceed'};
- if(route==='sample')await p.locator('#sampleBtn').click({force:true});
+ // Entry has no sample control. Preserve its internal refusal test as explicitly synthetic.
+ if(route==='sample'){const control=p.locator('#sampleBtn');assert.equal(await control.isVisible(),false,'entry keeps the sample control hidden');await control.evaluate(el=>el.click());return{activation:'synthetic-hidden-control',visible:false};}
  else if(route==='mouse-menu')await p.locator('#projectMenu > summary').click({force:true});
  else if(route==='keyboard-enter'||route==='keyboard-space')await p.locator('#newBtn').evaluate((el,route)=>{const event=new KeyboardEvent('keydown',{key:route==='keyboard-enter'?'Enter':' ',bubbles:true,cancelable:true});el.dispatchEvent(event);if(!event.defaultPrevented)throw Error('Forbidden keyboard activation was not canceled');el.click();},route);
  else if(ids[route])await p.locator('#'+ids[route]).evaluate(el=>el.click());
@@ -191,7 +192,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    await p.waitForTimeout(180);const idle=await read(p);assert.equal(idle.step,id,'no operation cannot advance '+id);assert.deepEqual(content(idle),content(before));
    const browserKeys=await p.evaluate(()=>{const keys=[['F5',{}],['r',{ctrlKey:true}],['w',{ctrlKey:true}],['l',{ctrlKey:true}],['f',{ctrlKey:true}],['p',{ctrlKey:true}],['Tab',{ctrlKey:true}],['ArrowLeft',{altKey:true}]];
     return keys.map(([key,options])=>{const event=new KeyboardEvent('keydown',{key,...options,bubbles:true,cancelable:true}),target=document.querySelector('#tutorialExit');target.dispatchEvent(event);target.dispatchEvent(new KeyboardEvent('keyup',{key,...options,bubbles:true,cancelable:true}));return{key,options,prevented:event.defaultPrevented};});});assert.ok(browserKeys.every(k=>!k.prevented),'browser-owned shortcuts remain outside tutorial '+id);
-   for(const route of deniedRoutes){const old=await read(p);await deny(p,route);const after=await read(p);assert.deepEqual(content(after),content(old),id+'/'+route);assert.equal(after.step,id,id+'/'+route+' cannot advance');denials.push({route,unchanged:true,before:content(old),after:content(after)});}
+   for(const route of deniedRoutes){const old=await read(p),activation=await deny(p,route);const after=await read(p);assert.deepEqual(content(after),content(old),id+'/'+route);assert.equal(after.step,id,id+'/'+route+' cannot advance');denials.push({route,unchanged:true,before:content(old),after:content(after),...(activation||{})});}
    if(id==='verify-save'){assert.ok(downloaded);const beforeVerify=await read(p);await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);const after=await read(p);assert.equal(after.project,beforeVerify.project);assert.equal(after.history,beforeVerify.history);}
    else {const file=await positive(p,id);if(file)downloaded=file;if(index+1<tutorialSteps.length)await waitStep(p,tutorialSteps[index+1]);}
    steps.push({id,before,idle,browserKeys,denials,after:await read(p),screenshot:await picture(p,'tutorial-'+id)});

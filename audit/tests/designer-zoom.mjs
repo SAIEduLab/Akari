@@ -250,7 +250,7 @@ const cases = {
       assert.equal(await p.evaluate(() => Akari.app.editorState.state), 'RUNNING');
       await p.locator('#stageZoomFit').click(); await assertFit(p);
       await p.locator('#pauseBtn').click();
-      for (const button of ['#stageZoomIn', '#stageZoomFit']) if(button==='#exportBtn')await projectAction(p,'exportBtn');else await p.locator(button).click();
+      for (const button of ['#stageZoomIn', '#stageZoomFit']) await p.locator(button).click();
       assert.equal(await p.locator('#continueBtn').isEnabled(), true);
       assert.deepEqual(await state(p), before, 'zoom during run/pause preserves design');
       await pressStop(p.locator('#stopBtn')); await assertFit(p);
