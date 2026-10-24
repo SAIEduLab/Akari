@@ -38484,9 +38484,10 @@ function createAkariExtensionHost(options) {
       // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
         if (event.target.closest('.project-actions button')) {
-          const menu=$('#projectMenu');
+          // An action can return focus to an invalid input. Preserve that decision.
+          const menu=$('#projectMenu'),returnToMenu=menu.contains(document.activeElement);
           menu.open=false;
-          if(!document.querySelector('.modal.show,.modal.open,dialog[open]'))menu.querySelector('summary').focus({preventScroll:true});
+          if(returnToMenu&&!document.querySelector('.modal.show,.modal.open,dialog[open]'))menu.querySelector('summary').focus({preventScroll:true});
         }
         if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
@@ -44838,7 +44839,8 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           flushingEditor ||
           event.target.matches('.diagnostic-details > summary') ||
-          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#loseConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          // Menu navigation does not commit input; each chosen action owns its guard.
+          event.target.closest('#projectMenu > summary,#exportBtn,.editor-modes,#sourceImport,#colorModal,#samplePicker,#loseConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;

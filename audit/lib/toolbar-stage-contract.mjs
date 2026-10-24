@@ -7,10 +7,10 @@ export const toolbarViews=Object.freeze([['blocks','entry'],['blocks','basic'],[
 export const toolbarWidths=Object.freeze([1920,1366,1280,1024,768,760,390,320]);
 export const toolbarStageIds=Object.freeze([
  ...toolbarWidths.flatMap(w=>toolbarViews.map(([mode,level])=>`toolbar/${w}/${mode}/${level}`)),
- 'menu-and-history-actions','entry-tutorial',...toolbarViews.map(([mode,level])=>`new-save-open/${mode}/${level}`),'export-and-playback','entry-guidance-transitions',
+ 'menu-and-history-actions','entry-tutorial',...toolbarViews.map(([mode,level])=>`new-save-open/${mode}/${level}`),'export-and-playback','entry-guidance-transitions','pending-menu/code-import','pending-menu/blocks-field',
  ...['blocks','code'].flatMap(mode=>['modal-history/'+mode,...[100,150,200].map(z=>`scroll/${mode}/${z}`),'touch-scroll/'+mode,'run-scroll/'+mode]),
 ]);
-export const toolbarRejectionIds=Object.freeze(['missing-case','duplicate-case','failed-case','stale-snapshot','wrong-order','missing-menu-item','wrong-history-home','changed-saved-project','stopped-horizontal-scroll','untrusted-touch','runtime-input-unlocked','artifact-hash','page-error','visual-order','missing-overflow','hidden-action-guidance','retargeted-touch']);
+export const toolbarRejectionIds=Object.freeze(['missing-case','duplicate-case','failed-case','stale-snapshot','wrong-order','missing-menu-item','wrong-history-home','changed-saved-project','stopped-horizontal-scroll','untrusted-touch','runtime-input-unlocked','artifact-hash','page-error','visual-order','missing-overflow','hidden-action-guidance','retargeted-touch','pending-click-not-delivered','invalid-field-focus-lost']);
 const bounds=(r,v)=>{assert.ok(r&&r.width>0&&r.height>0);assert.ok(r.left>=-1&&r.right<=v.width+1&&r.top>=-1&&r.bottom<=v.height+1,'visible control within viewport');};
 export function verifyToolbarStage(r,inputs,artifactDir){
  assert.equal(r.schema,'akari-gate-cases-v1');assert.equal(r.step,'toolbar-stage');assert.equal(r.status,'PASS');assert.deepEqual(r.snapshot,inputs);
@@ -26,6 +26,8 @@ export function verifyToolbarStage(r,inputs,artifactDir){
  for(const [mode,level]of toolbarViews){const o=row(`new-save-open/${mode}/${level}`);assert.equal(o.roundtrip,true);assert.equal(o.before.name,o.name);assert.deepEqual(o.after,o.before);}
  const guidance=row('entry-guidance-transitions');assert.deepEqual(guidance.seen.map(o=>o.level),['entry','basic','entry']);for(const o of guidance.seen.filter(o=>o.level==='entry')){assert.equal(o.sample,false);assert.ok(!o.status.includes('お手本を開く'));}
  const player=row('export-and-playback');assert.equal(player.before.overscrollX,'auto');assert.deepEqual(player.running,{overscrollX:'none',touchAction:'none'});assert.equal(player.stopped.overscrollX,'auto');
+ const pending=row('pending-menu/code-import');assert.deepEqual(pending.routes.map(x=>x.route),['pointer','keyboard']);for(const o of pending.routes){assert.deepEqual(o.observed.clicks,[true]);assert.match(o.observed.status,/^まだ ファイルに できないよ。本文を 入れる ところを/);assert.equal(o.observed.focusSummary,true);assert.equal(o.observed.menuOpen,false);assert.equal(o.observed.modal,false);assert.equal(o.before.pending.kind,'source-import');assert.deepEqual(o.after,o.before);}
+ const field=row('pending-menu/blocks-field');assert.deepEqual(field.after,field.before);assert.equal(field.before.pending.value,'-');assert.deepEqual(field.observed.clicks,[true]);assert.match(field.observed.status,/^まだ ファイルに できないよ。数だけを/);assert.equal(field.observed.sameFieldFocus,true);assert.equal(field.observed.inputValue,'-');assert.equal(field.observed.menuOpen,false);assert.equal(field.observed.modal,false);
  for(const mode of ['blocks','code']){const modal=row('modal-history/'+mode);assert.equal(modal.open.parent,'win-title');assert.equal(modal.closed.parent,mode==='blocks'?'menutool':'debugbar');for(const state of [modal.open,modal.closed])assert.deepEqual(state.ids,['undoBtn','redoBtn']);assert.equal(modal.exportFocus,true);assert.equal(modal.fileFocus,true);
   for(const zoom of [100,150,200]){const o=row(`scroll/${mode}/${zoom}`);assert.deepEqual(o.inputs.map(x=>x.kind),['horizontal','vertical','shift','bar']);for(const input of o.inputs){assert.equal(input.projectPreserved,true);assert.ok(input.before.scrollWidth>input.before.width+1&&input.before.scrollHeight>input.before.height+1,'both axes must actually overflow');if(input.kind==='vertical')assert.ok(input.after.top>input.before.top);else assert.ok(input.after.left>input.before.left,'horizontal input produces actual movement');}}
   const touch=row('touch-scroll/'+mode);assert.equal(touch.point.hit,'formSurface');assert.equal(touch.ownerBefore,'stage');assert.equal(touch.ownerAfter,'stage');assert.ok(touch.after.left>touch.before.left);const touchStart=touch.events.find(e=>e.type==='touchstart');assert.equal(touchStart?.target,'formSurface');assert.equal(touchStart?.component,null);assert.equal(touch.projectPreserved,true);for(const type of ['touchstart','touchmove','touchend'])assert.ok(touch.events.some(e=>e.type===type&&e.trusted===true));assert.ok(touch.events.every(e=>e.trusted));
@@ -47,6 +49,8 @@ export function rejectToolbarEvidence(r,inputs,artifactDir){
   x=>{const o=x.results.find(o=>o.id==='scroll/blocks/150').inputs[0];o.before.scrollWidth=o.before.width;o.after.left=o.before.left;},
   x=>x.results.find(o=>o.id==='entry-guidance-transitions').seen[0].status='お手本を開く',
   x=>x.results.find(o=>o.id==='touch-scroll/blocks').events.find(e=>e.type==='touchstart').component='title',
+  x=>x.results.find(o=>o.id==='pending-menu/code-import').routes[0].observed.clicks=[],
+  x=>x.results.find(o=>o.id==='pending-menu/blocks-field').observed.sameFieldFocus=false,
  ];assert.equal(changes.length,toolbarRejectionIds.length);
  return changes.map((change,i)=>{const bad=structuredClone(r);change(bad);assert.throws(()=>verifyToolbarStage(bad,inputs,artifactDir),toolbarRejectionIds[i]);return{id:toolbarRejectionIds[i],status:'PASS'};});
 }

@@ -155,7 +155,7 @@ try{await withBrowser(chrome,async browser=>{
    await page.keyboard.press('Escape');assert.equal(await dialog.evaluate(e=>e.open),false);assert.deepEqual(await fingerprint(page),before);assert.equal(await page.locator('#sampleBtn').evaluate(e=>e===document.activeElement),true);
   }
   await picker(page);await page.locator('#samplePicker [data-sample-id="music"]').focus();await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>Akari.app.project.name),metadata('music').title);
-  const ctx=await browser.newContext({offline:true,hasTouch:true,viewport:{width:390,height:844}}),p=await ctx.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));try{await p.goto(pathToFileURL(path.resolve(product)).href);await p.waitForFunction(()=>!!Akari.app);await p.locator('#sampleBtn').tap();await p.locator('#samplePicker [data-sample-id="dance"]').tap();assert.equal(await p.evaluate(()=>Akari.app.project.name),samplesFeature.names[0]);}finally{await ctx.close();}
+  const ctx=await browser.newContext({offline:true,hasTouch:true,viewport:{width:390,height:844}}),p=await ctx.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));try{await p.goto(pathToFileURL(path.resolve(product)).href);await p.waitForFunction(()=>!!Akari.app);await p.locator('#uiLevel').selectOption('basic');await p.locator('#sampleBtn').tap();await p.locator('#samplePicker [data-sample-id="dance"]').tap();assert.equal(await p.evaluate(()=>Akari.app.project.name),samplesFeature.names[0]);}finally{await ctx.close();}
  });
 },420000);}catch(e){report.hostFailure=e.stack;console.error(e.stack);}
 for(const id of sampleTestIds)if(!report.results.some(r=>r.id===id))report.results.push({id,status:'FAIL',error:'Required check did not execute'});
