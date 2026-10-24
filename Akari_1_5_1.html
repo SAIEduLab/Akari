@@ -5776,10 +5776,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 @media(max-width:650px){.export-choices{grid-template-columns:1fr}.project-choice-dialog{padding:16px}.export-choice{padding:12px}}
 
 /* The entry layout keeps the same editor and stage; each area scrolls inside. */
-#entryProjectMenu,#tutorialStart,#entryEvents { display:none; }
+#projectMenu { display:block; }
+#tutorialStart,#entryEvents { display:none; }
 #tutorialGuide[hidden],#tutorialChoices[hidden],#tutorialFinish[hidden],#entryOutside[hidden] { display:none; }
-#entryProjectMenu { position:relative; }
-.entry-project-actions { position:absolute; z-index:30; background:white; border:1px solid #9aaec8; padding:8px; min-width:150px; display:grid; gap:6px; }
+#projectMenu { position:relative; }
+.project-actions { position:absolute; z-index:30; background:white; border:1px solid #9aaec8; padding:8px; min-width:150px; display:grid; gap:6px; }
 body[data-ui-level="entry"] #app { height:100dvh; min-height:0; }
 /* The stage column grows with wide screens so a child can see and tap small characters. */
 body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) clamp(340px,34vw,520px); grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
@@ -5790,11 +5791,11 @@ body[data-ui-level="entry"] .side>section:first-child { flex:1; min-height:0; }
 body[data-ui-level="entry"] #componentControls { display:none; }
 body[data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
 body[data-ui-level="entry"] .menutool :is(#undoBtn,#redoBtn) svg { width:18px; height:18px; flex:none; }
-body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2),#basicActionGuide) { display:none; }
+body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2)) { display:none; }
 /* はじめて chooses the event only with the two buttons above the body (F-05): no いつ動く？ and no rules in the body. */
 body[data-ui-level="entry"] :is(.blockui-heading-editor,.blockui-rules) { display:none; }
 body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
-body[data-ui-level="entry"] :is(#entryProjectMenu,#tutorialStart) { display:block; }
+body[data-ui-level="entry"] :is(#projectMenu,#tutorialStart) { display:block; }
 body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
 body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ '; }
 body[data-ui-level="entry"] .code-head { display:flex; padding:6px 10px; }
@@ -5855,7 +5856,6 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side { display:flex
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>.objects-window { display:flex !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>:not(.objects-window) { display:none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>#designerWindow { grid-column:2; grid-row:1; }
-body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { display:inline-flex; }
 @media(max-width:950px) {
  body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 280px; }
  body[data-ui-level="entry"] .blockui-layout { grid-template-columns:190px minmax(0,1fr); }
@@ -5978,11 +5978,11 @@ body.runtime :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn)[data-ina
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
 /* The run screen's toolbar (final call 21) shows ■ 止める in ▶ 動かす's place and the work's name as plain text. The
-   buttons that cannot be used while the work runs (新しく作る, お手本を開く, ヒント, 開く, 保存, うごく作品を ファイルにする,
+   buttons that cannot be used while the work runs (新しく作る, お手本を開く, 開く, 保存, うごく作品を ファイルにする,
    はじめて's 作品 menu that holds three of them, and はじめて's もとにもどす・やり直す and いっしょに作る), the level and the view
    toggle are not shown, but their room stays, so no toolbar button moves at any width. At every level the run
    screen's toolbar shows ■ 止める and the work's name only (いっしょに作る's guide keeps its own exit). */
-body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, #undoBtn, #redoBtn, #tutorialStart, .ui-level-label, .editor-modes) { visibility: hidden !important; }
+body.runtime .menutool > :is(#newBtn, #sampleBtn, #openBtn, #saveBtn, #exportBtn, #projectMenu, #undoBtn, #redoBtn, #tutorialStart, .ui-level-label, .editor-modes) { visibility: hidden !important; }
 /* The name: the box keeps its room, and the same words stand in it as plain text (not an edit field). */
 body.runtime .menutool > #projectName { visibility: hidden !important; }
 .project-name-text { position: absolute; z-index: 1; box-sizing: border-box; display: flex; align-items: center; margin: 0; padding-right: 4px; overflow: hidden; color: var(--dark, #283e50); white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
@@ -6048,20 +6048,17 @@ html { overflow-x: hidden; overflow-y: auto; scroll-padding-top: var(--toolbar-h
 body { overflow: visible !important; }
 .menutool { position: sticky; top: 0; z-index: 500; }
 
-/* ヒント (right of お手本を開く) and はじめて's 作品 open over the page under the toolbar: the toolbar keeps its height and
-   the other buttons keep their places. A long ヒント scrolls inside. */
+/* The shared 作品 menu opens below the toolbar without moving its buttons. */
 .menutool > details.toolbar-menu { position: relative; flex: 0 0 auto; }
 .menutool > details.toolbar-menu > summary { box-sizing: border-box; min-height: 36px; padding: 5px 12px; border: 1px solid #bda47a66; border-radius: 10px; background: #fffaf0d9; line-height: 24px; cursor: pointer; white-space: nowrap; }
 /* While the work runs a menu stays in its place, pale like the other toolbar buttons, and does not open. */
 .menutool > details.toolbar-menu > summary[aria-disabled="true"] { opacity: 0.5; cursor: default; }
-.menutool > #basicActionGuide > .child-help-panel,
-.menutool > #entryProjectMenu > .entry-project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
-.menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
-.menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
+.menutool > #projectMenu > .project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
+.menutool > #projectMenu > .project-actions { border-radius: 10px; }
 /* はじめて's 作品 opens a menu: it ends with ▾ instead of the ▶ that ▶ 動かす beside it also shows. */
-.menutool > #entryProjectMenu > summary { list-style: none; }
-.menutool > #entryProjectMenu > summary::-webkit-details-marker { display: none; }
-.menutool > #entryProjectMenu > summary::after { content: " ▾" / ""; }
+.menutool > #projectMenu > summary { list-style: none; }
+.menutool > #projectMenu > summary::-webkit-details-marker { display: none; }
+.menutool > #projectMenu > summary::after { content: " ▾" / ""; }
 body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
 
 /* Block view: the heading 本文 sits at the left of the 動かすもの row, and すべての本文・画面の本文・いつ動く？ share one row with
@@ -6462,7 +6459,7 @@ body:not([data-workbench-wide="true"]) #stageThumbnail, body:not([data-editor-mo
   }
 }
 
-/* はじめて has no ヒント: how to change a part's size (and to see the screen at 100%) is written under the screen while a
+/* How to change a part's size (and to see the screen at 100%) is written under the screen while a
    part shows its handles (E-22). Its room is kept when no part is selected, so the screen never moves. */
 #designHelp { display: none; }
 body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp {
@@ -6592,47 +6589,35 @@ html { overscroll-behavior-x: none; }
 .intent-choices [data-intent-input] > strong { flex-basis: 100%; }
 .intent-choices [data-intent-input] label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
 .intent-choices [data-intent-input] input { width: 8em; min-width: 0; max-width: 100%; }
+
+/* Prototype: all levels share 作品; only the specified fourth action is shown. */
+body[data-ui-level="entry"] #sampleBtn,
+body[data-meijin-level="on"] #sampleBtn { display:none !important; }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="titlebar">あかり</div>
   <div class="menutool">
-    <button id="newBtn">新しく作る</button>
-    <button id="sampleBtn">お手本を開く</button>
-    <button id="openBtn">開く</button>
-    <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
-    <button id="exportBtn" aria-label="うごく作品を ファイルにする" aria-describedby="exportActionHelp">うごく作品を ファイルにする</button>
-    <button id="undoBtn">↶ もとに もどす</button>
-    <button id="redoBtn">↷ やり直す</button>
+    <details id="projectMenu" class="toolbar-menu"><summary>作品</summary><div class="project-actions"><button id="newBtn">新しく作る</button><button id="openBtn">開く</button><button id="exportBtn" aria-label="うごく作品を ファイルにする">うごく作品を ファイルにする</button></div></details>
+    <button id="saveBtn" aria-label="保存"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
     <span class="sep"></span>
     <button id="runBtn">▶ 動かす</button>
     <button id="stopBtn">■ 止める</button>
+    <button id="tutorialStart" type="button">いっしょに作る</button>
+    <button id="sampleBtn">お手本を開く</button>
+    <button id="undoBtn">↶ もとに もどす</button>
+    <button id="redoBtn">↷ やり直す</button>
     <button id="resetBtn">はじめに もどす</button>
     <span class="sep"></span>
     <button id="imageObjectAdd" title="絵の ファイルを キャラクターにして 画面に おく">🖼 絵を おく</button>
     <button id="paintAdd" title="絵を かいて キャラクターにして 画面に おく">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="音の ファイルを 入れる">🔊 音を 入れる</button>
-    <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp">絵や音を まとめる</button>
+    <button id="assetBtn" aria-label="絵や音を まとめる">絵や音を まとめる</button>
     <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
-    <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
+    <button id="dataBtn" aria-label="へんすう・リスト"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <details id="entryProjectMenu" class="toolbar-menu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
-    <button id="tutorialStart" type="button">いっしょに作る</button>
     <label class="ui-level-label"><select id="uiLevel" aria-label="レベル"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
-    <details id="basicActionGuide" class="child-help toolbar-menu"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの 中を 指で 上に なぞると 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
-      <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
-      <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
-      <p id="assetActionHelp"><strong>絵や音を まとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたり します。</p>
-      <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
-      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ キャラクターが する ことを ならべた ものです。「きっかけ」で <span class="child-word">えらびます</span>。「いつ動く？」で きっかけを かえます。</p>
-      <p><strong>見た目のコピー</strong>：見た目と せっていが 同じ キャラクターや 部品を もう1つ 作ります。本文は もちません。動かしている ときに 本文で 作る「コピー」とは べつの ものです。</p>
-      <p id="addActionHelp"><strong>絵を おく・お絵かき・音を 入れる</strong>：絵の ファイルや かいた 絵を キャラクターにして 画面に おきます。「音を 入れる」は 音の ファイルを 入れます。</p>
-      <p id="stageSizeHelp"><strong>画面の 大きさ</strong>：画面の 見出しの「41%」のような 数を おすと、100%で 見られます。「全体」で 画面 全体が 入る 大きさに もどります。「大きく見る」は 画面を 100%で 重ねて 見せます。「もどる」か Escキーで もどります。</p>
-      <p id="resizeHelp"><strong>部品の 大きさ</strong>：えらんだ キャラクターや 部品の まわりの 青い 丸を おしたまま ひっぱると、大きさが かわります。Shiftキーを おしながら 角の 丸を ひっぱるか、指で そうさする ときは「たて・よこを そろえる」を おしてから ひっぱると、形を かえずに 大きさだけ かわります。</p>
-      <p id="workspaceSizeHelp"><strong>作業台の 大きさ</strong>：作業台の 下の「100%」のような 数を おすと、100%に <span class="child-word">もどります</span>。「−」「＋」では 50%から 200%まで かわります。2本の 指を 広げたり せばめたり しても かわります。</p>
-      <p><strong>もとに もどす・やり直す</strong>：決めた ことを 1つ もとに もどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけて いる 入力を やめます。</p>
-    </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
     <span id="projectNameText" class="project-name-text" hidden></span>
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
@@ -6871,7 +6856,7 @@ html { overscroll-behavior-x: none; }
       <div class="win-title" id="codeHeading">本文</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>きっかけ <select id="eventSelect" aria-describedby="bodyActionHelp" title="どの きっかけの 本文を なおすかを えらびます"></select></label>
+        <label>きっかけ <select id="eventSelect" title="どの きっかけの 本文を なおすかを えらびます"></select></label>
         <button id="scriptAdd" type="button">同じ きっかけの 本文を ふやす</button>
         <button id="meijinDelete" type="button" hidden>この 名人の本文を けす</button>
       </div>
@@ -7144,7 +7129,7 @@ html { overscroll-behavior-x: none; }
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.5.0';
+  const PRODUCT_RELEASE = '1.5.1';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -28121,7 +28106,7 @@ function createAkariExtensionHost(options) {
       const touch = r ? options.runTouch || 'none' : 'pan-x pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
-        form.style.overscrollBehavior = r ? 'none' : 'none auto';
+        form.style.overscrollBehavior = r ? 'none' : 'auto';
       }
       if (canvas.width !== p.stage.width) canvas.width = p.stage.width;
       if (canvas.height !== p.stage.height) canvas.height = p.stage.height;
@@ -33901,7 +33886,7 @@ function createAkariExtensionHost(options) {
         box.append(more);
       }
       if (!children.length) box.append(E('p', 'blockui-empty', parent.schemaId === 'Script'
-        ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね。動く お手本は「お手本を開く」で 見られるよ。'
+        ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね。' + (doc.body.dataset.uiLevel === 'entry' ? '' : '動く お手本は「お手本を開く」で 見られるよ。')
         : 'ここに ブロックを 入れられるよ'));
       return box;
     }
@@ -36644,16 +36629,11 @@ function createAkariExtensionHost(options) {
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      // はじめて has no bar under the body: もとに もどす・やり直す go to the toolbar, and the place of ⏸ いったん止める／▶ つづける
+      // はじめて puts the place of ⏸ いったん止める／▶ つづける
       // (final call 21; the two take turns in it) under the stage, as on a video.
-      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#runPauseSlot')]){
+      for(const node of [$('#runPauseSlot')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry&&node.id==='runPauseSlot'){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
-        else if(entry){
-          // Keep もとに もどす before やり直す whichever control was moved last.
-          const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
-          if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
-        }
         else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
       }
       const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
@@ -36667,7 +36647,6 @@ function createAkariExtensionHost(options) {
         $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
         $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
       }
-      for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
       // What はじめて keeps but does not show: blocks and rules it has not in this body, and every body of another event
       // (keys, signals, ふれたとき …), which only the two buttons above could open. The holes of a block being put in
       // (〔くり返すことを入れる〕) are not such blocks.
@@ -38294,14 +38273,16 @@ function createAkariExtensionHost(options) {
       // A button shown or put away (a level, the list of all bodies) changes what the groups need, as a new width does.
       const sourceRowObserver = new ResizeObserver(placeSourceRow);
       for (const box of [code, sourceNav, debugbar, ...sourceNav.children, ...debugbar.children]) sourceRowObserver.observe(box);
+      const historyToolbarAnchor=document.createComment('toolbar history');
+      $('#sampleBtn').after(historyToolbarAnchor);
       const historyHomes=[$('#undoBtn'),$('#redoBtn')].map(button=>{const marker=document.createElement('span');button.before(marker);return {button,marker};}),
         callableTitle = $('#procModal > .dialog > .win-title');
       placeHistoryButtons=()=>{
         for(const {button,marker}of historyHomes){
           if($('#procModal').classList.contains('show')){if(button.parentElement!==callableTitle)callableTitle.append(button);}
-          else if(document.body.dataset.uiLevel==='entry'){
-            const anchor=button.id==='undoBtn'&&$('#redoBtn').parentElement===toolbar?$('#redoBtn'):$('#tutorialStart');
-            if(button.parentElement!==toolbar||button.nextElementSibling!==anchor)toolbar.insertBefore(button,anchor);
+          else if(document.body.dataset.editorMode==='blocks'){
+            const anchor=button.id==='undoBtn'&&$('#redoBtn').parentElement===toolbar?$('#redoBtn'):historyToolbarAnchor;
+            if(button.parentElement!==toolbar||button.nextSibling!==anchor)toolbar.insertBefore(button,anchor);
           }else if(marker.nextSibling!==button)marker.after(button);
         }
       };
@@ -38324,22 +38305,10 @@ function createAkariExtensionHost(options) {
       ])
         tools.append($('#' + id));
       // The right end of the toolbar, left to right: コード／ブロック, the level, the work name (the level's choices depend
-      // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
+      // on the view).
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
-      $('#sampleBtn').after($('#basicActionGuide'));
       installToolbarMenus(toolbar);
       toolbox.append(tools);
-      // A control described by a ヒント paragraph gets the paragraph's text as its own description (AX-09): a reference
-      // into the closed ヒント reads as nothing, and a paragraph with ruby would be read with its readings (「保存
-      // ほぞん」). Run once every such control is in the page (the 作品の道具 buttons are moved into the toolbox above).
-      for (const control of $$('[aria-describedby]')) {
-        const help = document.getElementById(control.getAttribute('aria-describedby'));
-        if (!help?.closest('#basicActionGuide')) continue;
-        const copy = help.cloneNode(true);
-        copy.querySelectorAll('rt').forEach((rt) => rt.remove());
-        control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
-        control.removeAttribute('aria-describedby');
-      }
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
         if (event.target.matches('button,select'))
@@ -38472,7 +38441,7 @@ function createAkariExtensionHost(options) {
         true,
       );
     }
-    // The toolbar's menus (ヒント, はじめて's 作品) open over the page: a second press of the summary, a press anywhere
+    // The toolbar's 作品 menu opens over the page: a second press of the summary, a press anywhere
     // else or Escape closes them (Escape gives the focus back to the summary). The toolbar stays at the top of the page
     // when it scrolls; scrolling to a place keeps it clear of the toolbar, whose height can change as it wraps.
     function installToolbarMenus(toolbar) {
@@ -38507,7 +38476,11 @@ function createAkariExtensionHost(options) {
         menu.addEventListener('toggle', () => placeMenu(menu));
       // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
-        if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
+        if (event.target.closest('.project-actions button')) {
+          const menu=$('#projectMenu');
+          menu.open=false;
+          if(!document.querySelector('.modal.show,.modal.open,dialog[open]'))menu.querySelector('summary').focus({preventScroll:true});
+        }
         if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
       const syncHeight = () => {
@@ -38925,11 +38898,11 @@ function createAkariExtensionHost(options) {
         if (n) n.disabled = locked;
       }
       // The other toolbar controls cannot be pressed while the work runs either (保存, いっしょに作る, はじめて's もとに もどす・
-      // やり直す, and the ヒント and 作品 menus): the run screen shows none of the locked toolbar controls, but keeps their
+      // やり直す, and the 作品 menu): the run screen shows none of the locked toolbar controls, but keeps their
       // room (final call 21), so ■ 止める stays where ▶ 動かす was.
       $('#saveBtn').disabled = locked;
       $('#tutorialStart').disabled = locked;
-      for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
+      for (const menu of [$('#projectMenu')]) {
         const summary = menu.querySelector(':scope > summary');
         if (locked) {
           menu.open = false;
@@ -39191,7 +39164,7 @@ function createAkariExtensionHost(options) {
     function finishOpenSelection() {
       openRequest = null;
       el.fileInput.value = '';
-      if (!document.querySelector('.modal.show,.modal.open,dialog[open]')) $('#openBtn').focus({preventScroll:true});
+      if (!document.querySelector('.modal.show,.modal.open,dialog[open]')) openButtonShown()?.focus({preventScroll:true});
     }
     function selectProjectForOpen() {
       if (!openRequest || modelLocked()) return;
@@ -39606,9 +39579,9 @@ function createAkariExtensionHost(options) {
         )
         ?.focus({ preventScroll: true });
     }
-    // はじめて has no ヒント, so what the handles' and the zoom's titles say is written under the screen (E-22): how the
+    // What the handles' and zoom's titles say is written under the screen at はじめて (E-22): how the
     // handles change a part's size while a part shows them, and how to see the screen at 100%. The other levels have it
-    // in ヒント.
+    // beside each relevant control.
     function updateDesignHelp(c = el.form.querySelector('.design-resize-handle') && componentById(selectedId)) {
       const help = $('#designHelp'), mode = c ? designResizeMode(c) : null,
         zoom = $('#stageZoomReset').textContent.trim();
@@ -39972,7 +39945,7 @@ function createAkariExtensionHost(options) {
       del.textContent = `🗑 この ${kind}を けす`;
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
-      // What the copy does is said by its title, its description and the ヒント (見た目のコピー); no line of its own.
+      // What the copy does is said by its title and description; no line of its own.
       duplicate.setAttribute('aria-description', `見た目と せっていが 同じ ${kind}を もう1つ 作ります。本文は もちません。`);
       actions.append(title, duplicate, del);
       (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
@@ -42310,8 +42283,9 @@ function createAkariExtensionHost(options) {
                 : focusable(current)[0] || current
               ).focus();
           } else if (lastTop) {
-            const old = previousFocus.get(lastTop);
-            if (old?.isConnected && !old.closest('.modal:not(.show):not(.open)')) old.focus();
+            const old = previousFocus.get(lastTop), closedMenu=old?.closest('details:not([open])');
+            const target=closedMenu?.querySelector(':scope > summary') || old;
+            if (target?.isConnected && !target.closest('.modal:not(.show):not(.open)')) target.focus();
           }
           lastTop = current;
         }
@@ -42709,9 +42683,9 @@ function createAkariExtensionHost(options) {
     // Every refusal of 開く stays on the screen until とじる; the work, its history and unsaved edits stay as they
     // were. A file of another project format says which あかり opens it; any other refusal asks for an あかり file.
     // The code and the full reason stay in 出力.
-    // At はじめて 開く is inside the 作品 menu; while that menu is closed its summary takes the focus.
+    // 開く is inside the shared 作品 menu; while that menu is closed its summary takes the focus.
     function openButtonShown() {
-      return [$('#openBtn'), $('#entryOpen'), $('#entryProjectMenu > summary')]
+      return [$('#openBtn'), $('#projectMenu > summary')]
         .find((n) => n && (n.checkVisibility ? n.checkVisibility({ visibilityProperty: true }) : n.getClientRects().length > 0)) || null;
     }
     function showOpenRefusal(error) {
@@ -44338,9 +44312,6 @@ function createAkariExtensionHost(options) {
       if(!document.querySelector('.modal.show:not(#procModal),dialog[open]'))$('#sampleBtn').focus({preventScroll:true});
     });
     $('#saveBtn').onclick = saveProject;
-    for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).onclick=()=>{
-      if(tutorial)return;$('#entryProjectMenu').open=false;$('#'+origin).click();
-    };
     $('#entryStartEvent').onclick=()=>selectEntryEvent('start');
     $('#entryClickEvent').onclick=()=>selectEntryEvent('click');
     $('#tutorialStart').onclick=beginTutorial;
@@ -44813,7 +44784,7 @@ function createAkariExtensionHost(options) {
       (event) => {
         const target = event.target.closest('button,.tree-item,.tool');
         // うごく作品を ファイルにする closes the input itself and says why it does not go on (exportProject), as ▶ does.
-        if (target?.matches('#exportBtn,#entryExport')) return;
+        if (target?.matches('#exportBtn')) return;
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           // The note under the code holds the way out of a pending edit (its rewrites and 書いた文のまま考える).
@@ -44931,7 +44902,7 @@ function createAkariExtensionHost(options) {
     setupModalAccessibility();
     checkRecovery();
     // The version is in 出力 (はじまりました); the status line says only what is true now.
-    setStatus(`からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
+    setStatus(document.body.dataset.uiLevel === 'entry' ? 'からっぽの 作品だよ。ブロックを 入れてね。「いっしょに作る」でも はじめられるよ。' : `からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
     app = {
       get editorState() {
         return {

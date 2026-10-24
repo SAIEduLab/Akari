@@ -125,7 +125,7 @@
       const touch = r ? options.runTouch || 'none' : 'pan-x pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
-        form.style.overscrollBehavior = r ? 'none' : 'none auto';
+        form.style.overscrollBehavior = r ? 'none' : 'auto';
       }
       if (canvas.width !== p.stage.width) canvas.width = p.stage.width;
       if (canvas.height !== p.stage.height) canvas.height = p.stage.height;

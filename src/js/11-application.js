@@ -387,16 +387,11 @@
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      // はじめて has no bar under the body: もとに もどす・やり直す go to the toolbar, and the place of ⏸ いったん止める／▶ つづける
+      // はじめて puts the place of ⏸ いったん止める／▶ つづける
       // (final call 21; the two take turns in it) under the stage, as on a video.
-      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#runPauseSlot')]){
+      for(const node of [$('#runPauseSlot')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry&&node.id==='runPauseSlot'){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
-        else if(entry){
-          // Keep もとに もどす before やり直す whichever control was moved last.
-          const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
-          if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
-        }
         else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
       }
       const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
@@ -410,7 +405,6 @@
         $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
         $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
       }
-      for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
       // What はじめて keeps but does not show: blocks and rules it has not in this body, and every body of another event
       // (keys, signals, ふれたとき …), which only the two buttons above could open. The holes of a block being put in
       // (〔くり返すことを入れる〕) are not such blocks.
@@ -2037,14 +2031,16 @@
       // A button shown or put away (a level, the list of all bodies) changes what the groups need, as a new width does.
       const sourceRowObserver = new ResizeObserver(placeSourceRow);
       for (const box of [code, sourceNav, debugbar, ...sourceNav.children, ...debugbar.children]) sourceRowObserver.observe(box);
+      const historyToolbarAnchor=document.createComment('toolbar history');
+      $('#sampleBtn').after(historyToolbarAnchor);
       const historyHomes=[$('#undoBtn'),$('#redoBtn')].map(button=>{const marker=document.createElement('span');button.before(marker);return {button,marker};}),
         callableTitle = $('#procModal > .dialog > .win-title');
       placeHistoryButtons=()=>{
         for(const {button,marker}of historyHomes){
           if($('#procModal').classList.contains('show')){if(button.parentElement!==callableTitle)callableTitle.append(button);}
-          else if(document.body.dataset.uiLevel==='entry'){
-            const anchor=button.id==='undoBtn'&&$('#redoBtn').parentElement===toolbar?$('#redoBtn'):$('#tutorialStart');
-            if(button.parentElement!==toolbar||button.nextElementSibling!==anchor)toolbar.insertBefore(button,anchor);
+          else if(document.body.dataset.editorMode==='blocks'){
+            const anchor=button.id==='undoBtn'&&$('#redoBtn').parentElement===toolbar?$('#redoBtn'):historyToolbarAnchor;
+            if(button.parentElement!==toolbar||button.nextSibling!==anchor)toolbar.insertBefore(button,anchor);
           }else if(marker.nextSibling!==button)marker.after(button);
         }
       };
@@ -2067,22 +2063,10 @@
       ])
         tools.append($('#' + id));
       // The right end of the toolbar, left to right: コード／ブロック, the level, the work name (the level's choices depend
-      // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
+      // on the view).
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
-      $('#sampleBtn').after($('#basicActionGuide'));
       installToolbarMenus(toolbar);
       toolbox.append(tools);
-      // A control described by a ヒント paragraph gets the paragraph's text as its own description (AX-09): a reference
-      // into the closed ヒント reads as nothing, and a paragraph with ruby would be read with its readings (「保存
-      // ほぞん」). Run once every such control is in the page (the 作品の道具 buttons are moved into the toolbox above).
-      for (const control of $$('[aria-describedby]')) {
-        const help = document.getElementById(control.getAttribute('aria-describedby'));
-        if (!help?.closest('#basicActionGuide')) continue;
-        const copy = help.cloneNode(true);
-        copy.querySelectorAll('rt').forEach((rt) => rt.remove());
-        control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
-        control.removeAttribute('aria-describedby');
-      }
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
         if (event.target.matches('button,select'))
@@ -2215,7 +2199,7 @@
         true,
       );
     }
-    // The toolbar's menus (ヒント, はじめて's 作品) open over the page: a second press of the summary, a press anywhere
+    // The toolbar's 作品 menu opens over the page: a second press of the summary, a press anywhere
     // else or Escape closes them (Escape gives the focus back to the summary). The toolbar stays at the top of the page
     // when it scrolls; scrolling to a place keeps it clear of the toolbar, whose height can change as it wraps.
     function installToolbarMenus(toolbar) {
@@ -2250,7 +2234,11 @@
         menu.addEventListener('toggle', () => placeMenu(menu));
       // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
-        if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
+        if (event.target.closest('.project-actions button')) {
+          const menu=$('#projectMenu');
+          menu.open=false;
+          if(!document.querySelector('.modal.show,.modal.open,dialog[open]'))menu.querySelector('summary').focus({preventScroll:true});
+        }
         if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
       const syncHeight = () => {
@@ -2668,11 +2656,11 @@
         if (n) n.disabled = locked;
       }
       // The other toolbar controls cannot be pressed while the work runs either (保存, いっしょに作る, はじめて's もとに もどす・
-      // やり直す, and the ヒント and 作品 menus): the run screen shows none of the locked toolbar controls, but keeps their
+      // やり直す, and the 作品 menu): the run screen shows none of the locked toolbar controls, but keeps their
       // room (final call 21), so ■ 止める stays where ▶ 動かす was.
       $('#saveBtn').disabled = locked;
       $('#tutorialStart').disabled = locked;
-      for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
+      for (const menu of [$('#projectMenu')]) {
         const summary = menu.querySelector(':scope > summary');
         if (locked) {
           menu.open = false;
@@ -2934,7 +2922,7 @@
     function finishOpenSelection() {
       openRequest = null;
       el.fileInput.value = '';
-      if (!document.querySelector('.modal.show,.modal.open,dialog[open]')) $('#openBtn').focus({preventScroll:true});
+      if (!document.querySelector('.modal.show,.modal.open,dialog[open]')) openButtonShown()?.focus({preventScroll:true});
     }
     function selectProjectForOpen() {
       if (!openRequest || modelLocked()) return;
@@ -3349,9 +3337,9 @@
         )
         ?.focus({ preventScroll: true });
     }
-    // はじめて has no ヒント, so what the handles' and the zoom's titles say is written under the screen (E-22): how the
+    // What the handles' and zoom's titles say is written under the screen at はじめて (E-22): how the
     // handles change a part's size while a part shows them, and how to see the screen at 100%. The other levels have it
-    // in ヒント.
+    // beside each relevant control.
     function updateDesignHelp(c = el.form.querySelector('.design-resize-handle') && componentById(selectedId)) {
       const help = $('#designHelp'), mode = c ? designResizeMode(c) : null,
         zoom = $('#stageZoomReset').textContent.trim();
@@ -3715,7 +3703,7 @@
       del.textContent = `🗑 この ${kind}を けす`;
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
-      // What the copy does is said by its title, its description and the ヒント (見た目のコピー); no line of its own.
+      // What the copy does is said by its title and description; no line of its own.
       duplicate.setAttribute('aria-description', `見た目と せっていが 同じ ${kind}を もう1つ 作ります。本文は もちません。`);
       actions.append(title, duplicate, del);
       (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
@@ -6053,8 +6041,9 @@
                 : focusable(current)[0] || current
               ).focus();
           } else if (lastTop) {
-            const old = previousFocus.get(lastTop);
-            if (old?.isConnected && !old.closest('.modal:not(.show):not(.open)')) old.focus();
+            const old = previousFocus.get(lastTop), closedMenu=old?.closest('details:not([open])');
+            const target=closedMenu?.querySelector(':scope > summary') || old;
+            if (target?.isConnected && !target.closest('.modal:not(.show):not(.open)')) target.focus();
           }
           lastTop = current;
         }
@@ -6452,9 +6441,9 @@
     // Every refusal of 開く stays on the screen until とじる; the work, its history and unsaved edits stay as they
     // were. A file of another project format says which あかり opens it; any other refusal asks for an あかり file.
     // The code and the full reason stay in 出力.
-    // At はじめて 開く is inside the 作品 menu; while that menu is closed its summary takes the focus.
+    // 開く is inside the shared 作品 menu; while that menu is closed its summary takes the focus.
     function openButtonShown() {
-      return [$('#openBtn'), $('#entryOpen'), $('#entryProjectMenu > summary')]
+      return [$('#openBtn'), $('#projectMenu > summary')]
         .find((n) => n && (n.checkVisibility ? n.checkVisibility({ visibilityProperty: true }) : n.getClientRects().length > 0)) || null;
     }
     function showOpenRefusal(error) {
@@ -8081,9 +8070,6 @@
       if(!document.querySelector('.modal.show:not(#procModal),dialog[open]'))$('#sampleBtn').focus({preventScroll:true});
     });
     $('#saveBtn').onclick = saveProject;
-    for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).onclick=()=>{
-      if(tutorial)return;$('#entryProjectMenu').open=false;$('#'+origin).click();
-    };
     $('#entryStartEvent').onclick=()=>selectEntryEvent('start');
     $('#entryClickEvent').onclick=()=>selectEntryEvent('click');
     $('#tutorialStart').onclick=beginTutorial;
@@ -8556,7 +8542,7 @@
       (event) => {
         const target = event.target.closest('button,.tree-item,.tool');
         // うごく作品を ファイルにする closes the input itself and says why it does not go on (exportProject), as ▶ does.
-        if (target?.matches('#exportBtn,#entryExport')) return;
+        if (target?.matches('#exportBtn')) return;
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           // The note under the code holds the way out of a pending edit (its rewrites and 書いた文のまま考える).
@@ -8674,7 +8660,7 @@
     setupModalAccessibility();
     checkRecovery();
     // The version is in 出力 (はじまりました); the status line says only what is true now.
-    setStatus(`からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
+    setStatus(document.body.dataset.uiLevel === 'entry' ? 'からっぽの 作品だよ。ブロックを 入れてね。「いっしょに作る」でも はじめられるよ。' : `からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
     app = {
       get editorState() {
         return {

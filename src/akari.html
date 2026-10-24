@@ -17,41 +17,25 @@
 <div id="app">
   <div class="titlebar">あかり</div>
   <div class="menutool">
-    <button id="newBtn">新しく作る</button>
-    <button id="sampleBtn">お手本を開く</button>
-    <button id="openBtn">開く</button>
-    <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
-    <button id="exportBtn" aria-label="うごく作品を ファイルにする" aria-describedby="exportActionHelp">うごく作品を ファイルにする</button>
-    <button id="undoBtn">↶ もとに もどす</button>
-    <button id="redoBtn">↷ やり直す</button>
+    <details id="projectMenu" class="toolbar-menu"><summary>作品</summary><div class="project-actions"><button id="newBtn">新しく作る</button><button id="openBtn">開く</button><button id="exportBtn" aria-label="うごく作品を ファイルにする">うごく作品を ファイルにする</button></div></details>
+    <button id="saveBtn" aria-label="保存"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
     <span class="sep"></span>
     <button id="runBtn">▶ 動かす</button>
     <button id="stopBtn">■ 止める</button>
+    <button id="tutorialStart" type="button">いっしょに作る</button>
+    <button id="sampleBtn">お手本を開く</button>
+    <button id="undoBtn">↶ もとに もどす</button>
+    <button id="redoBtn">↷ やり直す</button>
     <button id="resetBtn">はじめに もどす</button>
     <span class="sep"></span>
     <button id="imageObjectAdd" title="絵の ファイルを キャラクターにして 画面に おく">🖼 絵を おく</button>
     <button id="paintAdd" title="絵を かいて キャラクターにして 画面に おく">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="音の ファイルを 入れる">🔊 音を 入れる</button>
-    <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp">絵や音を まとめる</button>
+    <button id="assetBtn" aria-label="絵や音を まとめる">絵や音を まとめる</button>
     <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
-    <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
+    <button id="dataBtn" aria-label="へんすう・リスト"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <details id="entryProjectMenu" class="toolbar-menu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
-    <button id="tutorialStart" type="button">いっしょに作る</button>
     <label class="ui-level-label"><select id="uiLevel" aria-label="レベル"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
-    <details id="basicActionGuide" class="child-help toolbar-menu"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの 中を 指で 上に なぞると 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
-      <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
-      <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
-      <p id="assetActionHelp"><strong>絵や音を まとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたり します。</p>
-      <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
-      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ キャラクターが する ことを ならべた ものです。「きっかけ」で <span class="child-word">えらびます</span>。「いつ動く？」で きっかけを かえます。</p>
-      <p><strong>見た目のコピー</strong>：見た目と せっていが 同じ キャラクターや 部品を もう1つ 作ります。本文は もちません。動かしている ときに 本文で 作る「コピー」とは べつの ものです。</p>
-      <p id="addActionHelp"><strong>絵を おく・お絵かき・音を 入れる</strong>：絵の ファイルや かいた 絵を キャラクターにして 画面に おきます。「音を 入れる」は 音の ファイルを 入れます。</p>
-      <p id="stageSizeHelp"><strong>画面の 大きさ</strong>：画面の 見出しの「41%」のような 数を おすと、100%で 見られます。「全体」で 画面 全体が 入る 大きさに もどります。「大きく見る」は 画面を 100%で 重ねて 見せます。「もどる」か Escキーで もどります。</p>
-      <p id="resizeHelp"><strong>部品の 大きさ</strong>：えらんだ キャラクターや 部品の まわりの 青い 丸を おしたまま ひっぱると、大きさが かわります。Shiftキーを おしながら 角の 丸を ひっぱるか、指で そうさする ときは「たて・よこを そろえる」を おしてから ひっぱると、形を かえずに 大きさだけ かわります。</p>
-      <p id="workspaceSizeHelp"><strong>作業台の 大きさ</strong>：作業台の 下の「100%」のような 数を おすと、100%に <span class="child-word">もどります</span>。「−」「＋」では 50%から 200%まで かわります。2本の 指を 広げたり せばめたり しても かわります。</p>
-      <p><strong>もとに もどす・やり直す</strong>：決めた ことを 1つ もとに もどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけて いる 入力を やめます。</p>
-    </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
     <span id="projectNameText" class="project-name-text" hidden></span>
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
@@ -290,7 +274,7 @@
       <div class="win-title" id="codeHeading">本文</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>きっかけ <select id="eventSelect" aria-describedby="bodyActionHelp" title="どの きっかけの 本文を なおすかを えらびます"></select></label>
+        <label>きっかけ <select id="eventSelect" title="どの きっかけの 本文を なおすかを えらびます"></select></label>
         <button id="scriptAdd" type="button">同じ きっかけの 本文を ふやす</button>
         <button id="meijinDelete" type="button" hidden>この 名人の本文を けす</button>
       </div>
