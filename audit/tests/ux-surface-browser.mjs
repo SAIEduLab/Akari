@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {installGreetingFixture} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
@@ -26,7 +27,7 @@ try{await withBrowser(chrome,async browser=>{
   await installGreetingFixture(page);const sample=await page.evaluate(()=>Akari.app.project.scripts[0].source);await page.getByRole('button',{name:'すべての本文',exact:true}).click();assert.match(await page.locator('#sourceOverview').textContent(),/こんにちは/);await page.locator('#sourceEditBtn').click();await chooseView(page,'blocks');
   for(const schema of ['Say','MotionCommand:MOVE_BY']){const node=page.locator('#blockEditor .blockui-node[data-schema-id="'+schema+'"]').first();await U.openNodeMenu(node);await node.locator('[data-blockui-action="remove"]').first().click();}
   assert.equal(await page.locator('#blockEditor .blockui-node[data-schema-id="Say"],#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE_BY"]').count(),0);await page.locator('#undoBtn').click();await page.locator('#undoBtn').click();assert.equal(await page.evaluate(()=>Akari.app.project.scripts[0].source),sample);
-  await page.locator('#newBtn').click();assert.equal(await page.evaluate(()=>Akari.app.project.scripts.every(s=>!s.source.trim())),true);return{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true};
+  await projectAction(page, 'newBtn');assert.equal(await page.evaluate(()=>Akari.app.project.scripts.every(s=>!s.source.trim())),true);return{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true};
  });
  for(const [width,mode]of [[1366,'fit'],[1366,'100'],[390,'fit']])await run('ux/browser-bubble-'+width+'-'+mode,async page=>{
   const height=width===390?844:768;await page.setViewportSize({width,height});const long='あいうえおの言葉'.repeat(55)+'\n  「全文」🐈';

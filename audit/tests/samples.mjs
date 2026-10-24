@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import {verifySampleCatalog,verifySampleRuntime} from '../lib/samples-node-checks.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
@@ -128,7 +129,7 @@ try{await withBrowser(chrome,async browser=>{
    // insertion order is not project content. Still require every value/array
    // position, the selected owner, and the complete edited source to survive.
    assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project))),JSON.parse(changed));assert.equal(await page.locator('#objectSelect').inputValue(),metadata(id).targetId);assert.equal(await page.locator('#eventSelect').inputValue(),metadata(id).event);assert.equal(await source(page),JSON.parse(changed).scripts.find(s=>s.targetId===(metadata(id).targetId)&&s.event===(metadata(id).event)).source);
-   const exported=page.waitForEvent('download');await page.locator('#exportBtn').click();await page.locator('#exportControls').click();const player=await exported;await player.saveAs(path.join(dir,id+'-player.html'));assert.equal(await player.failure(),null);
+   const exported=page.waitForEvent('download');await projectAction(page, 'exportBtn');await page.locator('#exportControls').click();const player=await exported;await player.saveAs(path.join(dir,id+'-player.html'));assert.equal(await player.failure(),null);
    const context=await browser.newContext({offline:true});await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await context.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));try{await p.goto(pathToFileURL(path.join(dir,id+'-player.html')).href);await p.locator('#playerStart:not([disabled])').click();if(metadata(id).event==='click')await p.locator('#formSurface .component[data-id="'+metadata(id).targetId+'"]').click();await p.waitForFunction(()=>document.querySelector('#formSurface')?.textContent.includes('お手本の改造保存'),null,{timeout:25000});assert.ok(await p.locator('#formSurface img').evaluateAll(imgs=>imgs.length>0&&imgs.every(i=>i.complete&&i.naturalWidth>0)));await pressStop(p.locator('#playerStop'));}finally{await context.close();}
   }
  });

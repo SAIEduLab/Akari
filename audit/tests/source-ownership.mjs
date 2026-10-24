@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
@@ -104,7 +105,7 @@ await withBrowser(browserPath,async browser=>{
       const original='（（3をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。',changed='（（4をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。';
       for(const mode of ['code','blocks']){
         await showMode(p,mode);
-        await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();await productConfirmAnswered(p);
+        await p.locator('#sourceOverviewBtn').click();await projectAction(p, 'newBtn');await productConfirmAnswered(p);
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
         // A new work starts in はじめて (blocks); the check goes on in くわしく with the view it was in.
         assert.equal(await p.locator('#uiLevel').inputValue(),'entry','a new work starts in はじめて');

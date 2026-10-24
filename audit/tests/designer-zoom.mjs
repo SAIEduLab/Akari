@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
@@ -138,7 +139,7 @@ async function download(p, button, name) {
   const dest = path.resolve(artifacts, name); await (await pending).saveAs(dest); return dest;
 }
 async function openFile(p, file) {
-  const pending = p.waitForEvent('filechooser'); await p.locator('#openBtn').click();
+  const pending = p.waitForEvent('filechooser'); await projectAction(p, 'openBtn');
   await (await pending).setFiles(file);
   await p.waitForFunction(() => Akari.app.editorState.state === 'DESIGN');
   await settle(p);

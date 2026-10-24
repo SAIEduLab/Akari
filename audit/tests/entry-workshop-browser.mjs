@@ -6,7 +6,7 @@ import {pressStop,DOUBLE_PRESS_MS} from '../lib/stop-press.cjs';
 import {chooseView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
 // はじめて's 作品 menu, touched during the tutorial. The run screen keeps its place but does not show it (final call 21),
 // so a touch there lands on what is under that place and still opens nothing.
-async function tapEntryProjectMenu(p){const menu=p.locator('#entryProjectMenu > summary');if(await menu.isVisible()){await menu.tap();return;}
+async function tapEntryProjectMenu(p){const menu=p.locator('#projectMenu > summary');if(await menu.isVisible()){await menu.tap();return;}
  const at=await menu.evaluate(e=>{const r=e.getBoundingClientRect(),hidden=n=>getComputedStyle(n).visibility==='hidden';return{x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,hidden:hidden(e),running:document.body.classList.contains('runtime')};});
  assert.ok(at.running&&at.hidden&&at.width>0,'the 作品 menu is hidden only on the run screen, with its place kept');await p.touchscreen.tap(at.x,at.y);}
 const [chrome,out]=process.argv.slice(2);if(!chrome||!out)throw Error('browser and fresh report are required');
@@ -21,7 +21,7 @@ const save=()=>{report.artifacts=fs.readdirSync(artifacts).sort().map(file=>{con
 const read=p=>p.evaluate(()=>{const a=Akari.app,e=a.editorState,s=e.main;return{project:JSON.stringify(a.project),
  history:e.history,redo:e.redo,dirty:e.dirty,owner:s?.ownerKey,source:s?.sourceText,mode:document.querySelector('#uiLevel').value,
  state:e.state,pending:s?.pendingEdit&&{value:s.pendingEdit.value,field:s.pendingEdit.field,composing:s.pendingEdit.composing},
- step:document.body.dataset.tutorialStep||null,selectedScript:e.selectedScriptId,menuOpen:document.querySelector('#entryProjectMenu').open,dialogs:[...document.querySelectorAll('.modal.show,.modal.open,dialog[open]')].map(n=>n.id)};});
+ step:document.body.dataset.tutorialStep||null,selectedScript:e.selectedScriptId,menuOpen:document.querySelector('#projectMenu').open,dialogs:[...document.querySelectorAll('.modal.show,.modal.open,dialog[open]')].map(n=>n.id)};});
 const content=s=>({project:s.project,history:s.history,redo:s.redo,dirty:s.dirty,owner:s.owner,source:s.source,mode:s.mode,state:s.state,selectedScript:s.selectedScript,pending:s.pending,menuOpen:s.menuOpen,dialogs:s.dialogs});
 const waitStep=async(p,id)=>{try{await p.waitForFunction(id=>document.body.dataset.tutorialStep===id,id,{timeout:12000});}catch(error){throw Error('Expected '+id+'; observed '+JSON.stringify(await read(p))+'\n'+error.message);}};
 // The product asks before replacing unsaved work in its own dialog; the test answers it explicitly.
@@ -124,7 +124,7 @@ async function exitAndResume(p,id){
 async function deny(p,route){
  const ids={new:'newBtn',sample:'sampleBtn',open:'openBtn',export:'exportBtn',redo:'redoBtn',dialog:'loseConfirmProceed'};
  if(route==='sample')await p.locator('#sampleBtn').click({force:true});
- else if(route==='mouse-menu')await p.locator('#entryProjectMenu > summary').click({force:true});
+ else if(route==='mouse-menu')await p.locator('#projectMenu > summary').click({force:true});
  else if(route==='keyboard-enter'||route==='keyboard-space')await p.locator('#newBtn').evaluate((el,route)=>{const event=new KeyboardEvent('keydown',{key:route==='keyboard-enter'?'Enter':' ',bubbles:true,cancelable:true});el.dispatchEvent(event);if(!event.defaultPrevented)throw Error('Forbidden keyboard activation was not canceled');el.click();},route);
  else if(ids[route])await p.locator('#'+ids[route]).evaluate(el=>el.click());
  else if(route==='mode')await p.locator('#uiLevel').evaluate(el=>{el.value='advanced';el.dispatchEvent(new Event('change',{bubbles:true}));});

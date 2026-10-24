@@ -1,3 +1,4 @@
+import {verifyToolbarStage} from './toolbar-stage-contract.mjs';
 import {verifySamples,verifySamplesNegative} from './samples-contract.mjs';
 import {verifyLanguageBoundaries,checkLanguageBoundaryNegatives} from './language-boundaries-contract.mjs';
 import {verifyManualDocs,checkManualDocsNegatives} from './manual-docs-contract.mjs';
@@ -44,6 +45,7 @@ export function verifyGateResults(dir,inputs){
   for(const mode of ['inventory','documents'])verifyPublicationReport(read('publication-'+mode),mode,inputs);
   verifyAuditInventoryReport(read('audit-inventory'),inputs);
   verifyBrowserEnvironment(read('browser-environment'),inputs);
+  verifyToolbarStage(read('toolbar-stage'),inputs,path.join(dir,'toolbar-stage.json.artifacts'));
   const language=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
   for(const n of ['language-node','language-browser'])verifyLanguageResults(read(n),language,inputs);
   for(const [n,kind,env]of [['editor-node','editor','node'],['editor-browser-core','editor','chromium'],['editor-gui','gui','chromium']])verifySurfaceResults(read(n),kind,inputs,env);

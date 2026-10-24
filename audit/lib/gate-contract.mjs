@@ -31,6 +31,8 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['format-compatibility','audit/tests/format-compatibility.mjs',browser,file('format-compatibility')],
   ['editor-assets','audit/tests/editor-assets.mjs',browser,file('editor-assets')],
   ['designer','audit/tests/designer-zoom.mjs',browser,file('designer')],
+  ['toolbar-stage','audit/tests/toolbar-stage-browser.cjs',browser,file('toolbar-stage')],
+  ['toolbar-stage-verify','audit/tests/toolbar-stage-verify.mjs',file('toolbar-stage'),file('toolbar-stage-verify')],
   ['manual','audit/tests/manual-docs.mjs',browser,path.join(dir,'manual')],
   ['language-boundaries','audit/tests/language-boundaries.mjs',file('language-boundaries')],
   ['harness-negative','audit/tests/harness-negative.mjs',browser,file('product'),file('harness-negative')],

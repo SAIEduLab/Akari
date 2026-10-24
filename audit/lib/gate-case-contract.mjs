@@ -1,3 +1,4 @@
+import {toolbarStageIds,toolbarRejectionIds} from './toolbar-stage-contract.mjs';
 // Complete case sets for gate steps whose evidence is a list of named checks.
 // The case IDs are declared here, independently of the tests that produce them.
 // A step passes only with exactly these cases, each PASS, bound to the current inputs.
@@ -47,6 +48,8 @@ export const changeGuardCaseIds=Object.freeze([
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);
 import {boundaryRejectionIds} from './language-boundaries-contract.mjs';
 export const gateCaseIds=Object.freeze({
+  'toolbar-stage':toolbarStageIds,
+  'toolbar-stage-verify':['valid-evidence',...toolbarRejectionIds],
   'release-distribution':['current-distribution-recorded'],
   'workflow-contract':['current-workflows-accepted',...workflowRejectionIds],
   'change-guard-negative':[...changeGuardCaseIds],

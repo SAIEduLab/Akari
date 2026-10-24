@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import {chooseView} from '../browser/cases/view-toggle.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
@@ -135,7 +136,7 @@ try{
   const saved=await downloadProject(page,'unfinished-source'),read=await page.evaluate(async text=>(await Akari.parseProjectFile(text)).editorState,saved.text);assert.equal(read.pendingEditors[0].source,source);
   await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(source=>document.querySelector('#codeEditor').value===source&&!!Akari.app.editorState.main.pendingEdit,source);
   await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');
-  let exports=0;page.on('download',()=>exports++);await page.locator('#exportBtn').click();await page.waitForTimeout(100);assert.equal(exports,0);
+  let exports=0;page.on('download',()=>exports++);await projectAction(page, 'exportBtn');await page.waitForTimeout(100);assert.equal(exports,0);
   return {source,restored:await page.locator('#codeEditor').inputValue(),runBlocked:true,exportBlocked:true};
  });
  await run('SAVE/unfinished-return-hole','DRAFT_PERSISTENCE',async(page)=>{

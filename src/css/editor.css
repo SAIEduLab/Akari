@@ -5949,7 +5949,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .main>#designerWindow { gr
 
 #formSurface { font-family: var(--font-stage); }
 
-/* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
+/* ── 1.5.1 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
    The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
    error, finished) shows ■ 止める only, in ▶'s place. ⏸ いったん止める and ▶ つづける take turns in one place at every
    level, 1つずつ 動かす and 本文を見て たしかめる are for かんたん and up. The run screen never shows a button that cannot be
@@ -6146,7 +6146,7 @@ body.runtime .main:focus-visible { outline: 2px solid #2f6fd6; outline-offset: -
   body[data-editor-mode] .menutool > .editor-modes button { min-height: 40px; }
 }
 
-/* ── 1.5.0 block view (theme E) ──────────────────────────────────────────────────────────────────────────────────────
+/* ── 1.5.1 block view (theme E) ──────────────────────────────────────────────────────────────────────────────────────
    Nothing a child does to select or edit a block moves the other blocks: the tools of the selected block, the slot tools
    and 決める and its cancel (入れるのを やめる／入力を やめる) float over the workspace. */
 
@@ -6578,6 +6578,6 @@ html { overscroll-behavior-x: none; }
 .intent-choices [data-intent-input] label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
 .intent-choices [data-intent-input] input { width: 8em; min-width: 0; max-width: 100%; }
 
-/* Prototype: all levels share 作品; only the specified fourth action is shown. */
+/* All levels share 作品; only the level-specific fourth action is shown. */
 body[data-ui-level="entry"] #sampleBtn,
 body[data-meijin-level="on"] #sampleBtn { display:none !important; }

@@ -1,3 +1,4 @@
+import {openProjectMenu} from '../lib/project-actions.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -117,6 +118,7 @@ async function keyboardPanelTail(p,selector) {
   try {
     await summary.focus();await summary.press('Tab');
     assert.equal(await panel.evaluate(e=>document.activeElement===e),true,'Tab reaches scrollable explanation');
+    if(layout.maxScroll>0){const prepare=await marker();await panel.press('End');await completed(prepare,layout.maxScroll);}
     const beforeHome=await panelMetrics(panel),home=await marker();
     await panel.press('Home');
     await p.waitForFunction(s=>document.querySelector(s).scrollTop===0,panelSelector);
@@ -192,25 +194,19 @@ async function shot(p, name, inventoryOnly=false) {
 const cases = {
   async 'CHILD-UI-ACTION-HELP'(p) {
     await p.locator('#uiLevel').selectOption('basic');
-    const before=await state(p), summary=await keyboardDetails(p,'#basicActionGuide');
+    const before=await state(p), summary=await keyboardDetails(p,'#projectMenu');
     for (const [id,reading] of [['saveBtn','ほぞん'],['dataBtn','へんすう']])
       assert.ok((await p.locator('#'+id+' rt').allTextContents()).includes(reading),id+' visible reading');
     // The export label is written in words a child reads without a reading.
     assert.equal(await p.locator('#exportBtn').innerText(),'うごく作品を ファイルにする');assert.equal(await p.locator('#exportBtn rt').count(),0);
-    assert.match(await p.locator('#saveActionHelp').innerText(),/あとで つづきを 作るとき/);
-    assert.match(await p.locator('#exportActionHelp').innerText(),/動かして 見る/);
-    assert.match(await p.locator('#bodyActionHelp').innerText(),/する ことを ならべた もの/);
-    // The body selector is 「きっかけ」 (final call 19, F-23): one word per idea, never 「なおす動き」 or 「できごと」.
-    assert.match(await p.locator('#bodyActionHelp').innerText(),/「きっかけ」で えらびます/);assert.doesNotMatch(await p.locator('#bodyActionHelp').innerText(),/なおす動き|できごと/);
-    assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0,'きっかけ needs no reading');
-    // 見た目のコピー adds a part that holds no body, and is not the 「コピー」 a run makes (F-23, LANGUAGE.md 173).
-    assert.match(await p.locator('#basicActionGuide').innerText(),/本文は もちません/);
-    assert.match(await p.locator('#basicActionGuide').innerText(),/「コピー」とは べつの もの/);
-    assert.match(await p.locator('#basicActionGuide').innerText(),/決めた ことを 1つ もとに もどす/);
-    const help=await textFits(p.locator('#basicActionGuide p'));
-    const tailReach=await keyboardPanelTail(p,'#basicActionGuide');
-    await summary.press('Enter'); assert.equal(await p.locator('#basicActionGuide').getAttribute('open'),null);
-    assert.deepEqual(await state(p),before,'reading help must preserve project and history');
+    const editMeaning=await p.locator('#eventSelect').locator('xpath=..').innerText();
+    assert.match(editMeaning,/きっかけ/);assert.doesNotMatch(editMeaning,/なおす動き|できごと/);
+    assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0);
+    const help=await textFits(p.locator('#projectMenu .project-actions button'));
+    assert.deepEqual(help.map(r=>r.text),['新しく作る','開く','うごく作品を ファイルにする']);
+    await summary.press('Escape');assert.equal(await p.locator('#projectMenu').getAttribute('open'),null);
+    assert.equal(await p.locator('#basicActionGuide').count(),0);
+    assert.deepEqual(await state(p),before,'opening the menu preserves project and history');
     // The two labels describe different real downloads, not just different text.
     const saved=p.waitForEvent('download'); await click(p,'#saveBtn'); const save=await saved;
     assert.match(save.suggestedFilename(),/\.akari\.md$/);
@@ -218,7 +214,8 @@ const cases = {
     assert.match(exportedFile.suggestedFilename(),/\.html$/);
     const html=fs.readFileSync(await exportedFile.path(),'utf8');
     assert.ok(html.includes('⏸ いったん止める') && html.includes('■ 止める'),'generated player uses the same words');
-    return {keyboardHelp:true,help,tailReach,editReading:null,editMeaning:await p.locator('#bodyActionHelp').textContent(),downloadTypes:['akari.md','html'],saveFile:save.suggestedFilename(),
+    await reachable(p.locator('#dataBtn'));
+    return {keyboardHelp:true,help,editReading:null,editMeaning,downloadTypes:['akari.md','html'],saveFile:save.suggestedFilename(),
       exportFile:exportedFile.suggestedFilename(),generatedPlayerWords:true,
       projectSourcePreserved:(await state(p)).source===before.source};
   },
@@ -405,13 +402,13 @@ const cases = {
         await chooseView(p,mode,{reveal});
         const before=await state(p);
         // The edit screen shows ▶ 動かす; ■ 止める is on the run screen only, in the same place.
-        const controls={}; for(const id of ['saveBtn','exportBtn','runBtn'])controls[id]=await reachable(p.locator('#'+id));
-        const summary=await keyboardDetails(p,'#basicActionGuide');
-        const help=await textFits(p.locator('#basicActionGuide p'));
-        const tailReach=await keyboardPanelTail(p,'#basicActionGuide');
-        const reading=await p.locator('#basicActionGuide ruby').evaluateAll(es=>es.map(e=>({text:e.textContent,rects:e.getClientRects().length,whiteSpace:getComputedStyle(e).whiteSpace})));
-        for(const term of reading){assert.equal(term.rects,1,'term keeps a natural whole');assert.equal(term.whiteSpace,'nowrap');}
-        await summary.press('Enter'); assert.deepEqual(await state(p),before);
+        const controls={projectMenu:await reachable(p.locator('#projectMenu > summary'))}; for(const id of ['saveBtn','runBtn'])controls[id]=await reachable(p.locator('#'+id));
+        const summary=await keyboardDetails(p,'#projectMenu');
+        const help=await textFits(p.locator('#projectMenu .project-actions button'));
+        const menuControls={};for(const id of ['newBtn','openBtn','exportBtn'])menuControls[id]=await reachable(p.locator('#'+id));
+        const reading=await p.locator('#saveBtn ruby').evaluateAll(es=>es.map(e=>({text:e.textContent,rects:e.getClientRects().length,whiteSpace:getComputedStyle(e).whiteSpace})));
+        for(const term of reading){assert.equal(term.rects,1);assert.equal(term.whiteSpace,'nowrap');}
+        await summary.press('Escape');assert.deepEqual(await state(p),before);
         // ■ 止める shows on the run screen only, in ▶'s place: it is measured there, at the same sizes and in both views.
         const runAt=await p.locator('#runBtn').boundingBox(),scrollBefore=await p.evaluate(()=>({x:scrollX,y:scrollY}));
         await click(p,'#runBtn'); await p.waitForFunction(()=>document.body.classList.contains('runtime')&&!!document.querySelector('#stopBtn').getClientRects().length);
@@ -420,31 +417,34 @@ const cases = {
         // At 390x844 the run screen scrolls the page and ■ leaves it there (動かすもの then sits under the bar); the scroll
         // left by the run is recorded, and the page goes back to where the child was, so the edit screen is observed as before.
         runScreen.scrollLeftByRun=await p.evaluate(b=>scrollY-b.y,scrollBefore);await p.evaluate(b=>scrollTo(b.x,b.y),scrollBefore);
-        observations.push({viewport,mode,controls,runScreen,help,reading,tailReach});
+        observations.push({viewport,mode,controls,menuControls,runScreen,help,reading});
       }
       await shot(p,'child-words-'+viewport.width);
     }
     return {observations,ordinaryScroll:true,keyboard:true,helpPreservesEditing:true};
   },
   async 'CHILD-UI-TOUCH-HELP'(p) {
-    const context=await p.context().browser().newContext({offline:true,hasTouch:true,viewport:{width:390,height:844}});
+    const viewport={width:390,height:520};
+    const context=await p.context().browser().newContext({offline:true,hasTouch:true,viewport});
     const errors=[],network=[];
     try {
       await context.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();});
-      const touch=await context.newPage(); touch.on('pageerror',e=>errors.push(e.message));
-      await touch.goto(pathToFileURL(path.resolve(product)).href); await touch.waitForFunction(()=>!!globalThis.Akari?.app);
-      await installRegressionProject(touch); await touch.locator('#uiLevel').selectOption('basic');
-      const before=await state(touch), summary=touch.locator('#basicActionGuide > summary');
-      async function tap(locator){const r=await reachable(locator);assert.ok(r.width>=24&&r.height>=24);await touch.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);}
-      const touchTarget=await reachable(summary);
-      await tap(summary); assert.notEqual(await touch.locator('#basicActionGuide').getAttribute('open'),null);
-      const help=await textFits(touch.locator('#basicActionGuide p'));
-      assert.match(await touch.locator('#saveActionHelp').innerText(),/あとで つづきを 作るとき/);
+      const touch=await context.newPage();touch.on('pageerror',e=>errors.push(e.message));
+      await touch.goto(pathToFileURL(path.resolve(product)).href);await touch.waitForFunction(()=>!!globalThis.Akari?.app);
+      await installRegressionProject(touch);await touch.locator('#uiLevel').selectOption('advanced');
+      await click(touch,'#procBtn');
+      const before=await state(touch),summary=touch.locator('#callableConceptHelp > summary');
+      const touchTarget=await reachable(summary);assert.ok(touchTarget.width>=24&&touchTarget.height>=24);
+      await touch.touchscreen.tap(touchTarget.x+touchTarget.width/2,touchTarget.y+touchTarget.height/2);
+      assert.notEqual(await touch.locator('#callableConceptHelp').getAttribute('open'),null);
+      const help=await textFits(touch.locator('#callableConceptHelp p'));
+      assert.ok((await panelMetrics(touch.locator('#callableConceptHelp > .child-help-panel'))).maxScroll>0,'touch proof requires actual overflow');
       await shot(touch,'child-touch-help-top');
-      const tailReach=await touchPanelTail(touch,'#basicActionGuide');
-      await shot(touch,'child-touch-help-tail'); await tap(summary); assert.equal(await touch.locator('#basicActionGuide').getAttribute('open'),null);
-      assert.deepEqual(await state(touch),before); assert.deepEqual(errors,[]); assert.deepEqual(network,[]);
-      return {hasTouch:true,viewport:{width:390,height:844},help,touchTarget,tailReach,actualTouchscreenTap:true,editingPreserved:true};
+      const tailReach=await touchPanelTail(touch,'#callableConceptHelp');
+      await shot(touch,'child-touch-help-tail');
+      await summary.tap();assert.equal(await touch.locator('#callableConceptHelp').getAttribute('open'),null);
+      assert.deepEqual(await state(touch),before);assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
+      return {hasTouch:true,viewport,help,touchTarget,tailReach,actualTouchscreenTap:true,editingPreserved:true};
     } finally {await context.close();}
   },
 };
