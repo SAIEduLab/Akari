@@ -366,6 +366,11 @@
     const UI_LEVEL_NAMES={entry:'はじめて',basic:'かんたん',advanced:'くわしく',meijin:'名人'};
     // The view the main editor shows (the list of all bodies uses the remembered view).
     const shownEditorMode=()=>(!sourceOverviewOpen&&mainEditor.session?.mode)||chosenEditorMode('script','blocks');
+    function emptyProjectStatus() {
+      if (workIsMeijin()) return 'からっぽの 作品だよ。本文を 書いてね。';
+      if (document.body.dataset.uiLevel === 'entry') return 'からっぽの 作品だよ。ブロックを 入れてね。「いっしょに作る」でも はじめられるよ。';
+      return `からっぽの 作品だよ。${shownEditorMode() === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`;
+    }
     function uiLevelChoices(view=shownEditorMode()){return workIsMeijin()?['meijin']:view==='blocks'?['entry','basic','advanced']:['basic','advanced','meijin'];}
     // shown: the view the editor has just been laid out in (syncEditorShell). Returns true when the shown level changed.
     function applyUiLevel(shown=null){
@@ -379,6 +384,8 @@
       if([...select.options].map(o=>o.value).join()!==choices.join())
         select.replaceChildren(...choices.map(level=>{const option=document.createElement('option');option.value=level;option.textContent=UI_LEVEL_NAMES[level];return option;}));
       select.value=value;
+      const initialHint=emptyProjectStatus();
+      if(el.status.textContent.startsWith('からっぽの 作品だよ。') && el.status.textContent!==initialHint)setStatus(initialHint);
       // The コード／ブロック toggle is shown at every level: where it cannot switch (はじめて, a 名人 work) a press says why.
       if(mainEditor.session)paintBindingModeToggle(mainEditor);
       return before!==undefined&&before!==document.body.dataset.uiLevel;
@@ -8660,7 +8667,7 @@
     setupModalAccessibility();
     checkRecovery();
     // The version is in 出力 (はじまりました); the status line says only what is true now.
-    setStatus(document.body.dataset.uiLevel === 'entry' ? 'からっぽの 作品だよ。ブロックを 入れてね。「いっしょに作る」でも はじめられるよ。' : `からっぽの 作品だよ。${chosenEditorMode('script','blocks') === 'blocks' ? 'ブロックを 入れるか' : '本文を 書くか'}、「お手本を開く」で ためしてね`);
+    setStatus(emptyProjectStatus());
     app = {
       get editorState() {
         return {

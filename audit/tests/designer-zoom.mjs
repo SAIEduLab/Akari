@@ -135,7 +135,7 @@ async function stable(p, count = 60) {
   for (let j = 0; j < 4; j++) assert.ok(Math.max(...frames.map(r => r[j])) - Math.min(...frames.map(r => r[j])) < 0.1, 'idle preview must not oscillate');
 }
 async function download(p, button, name) {
-  const pending = p.waitForEvent('download'); await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();
+  const pending = p.waitForEvent('download'); if(button==='#exportBtn')await projectAction(p,'exportBtn');else await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();
   const dest = path.resolve(artifacts, name); await (await pending).saveAs(dest); return dest;
 }
 async function openFile(p, file) {
@@ -250,7 +250,7 @@ const cases = {
       assert.equal(await p.evaluate(() => Akari.app.editorState.state), 'RUNNING');
       await p.locator('#stageZoomFit').click(); await assertFit(p);
       await p.locator('#pauseBtn').click();
-      for (const button of ['#stageZoomIn', '#stageZoomFit']) await p.locator(button).click();
+      for (const button of ['#stageZoomIn', '#stageZoomFit']) if(button==='#exportBtn')await projectAction(p,'exportBtn');else await p.locator(button).click();
       assert.equal(await p.locator('#continueBtn').isEnabled(), true);
       assert.deepEqual(await state(p), before, 'zoom during run/pause preserves design');
       await pressStop(p.locator('#stopBtn')); await assertFit(p);
