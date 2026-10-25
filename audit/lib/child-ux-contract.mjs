@@ -89,9 +89,8 @@ export function verifyChildLanguage(r,inputs,provenance,file,inventory){
     'child-block-words-open':editor,'child-paint-transparent':['paintShape','paintUndo','paintRedo','paintCancel','paintCommit'],
     'child-materials':['imageObjectAdd','paintAdd','soundQuickAdd'],
     'child-words-1180':editor,'child-words-1188':editor,'child-words-390':editor,
-    // The I5 help panel ends with the three size helps (画面・部品・作業台の 大きさ); 本文 now shows in its first screen.
-    'child-touch-help-top':['saveActionHelp','exportActionHelp','dataActionHelp','bodyActionHelp'],
-    'child-touch-help-tail':['stageSizeHelp','resizeHelp','workspaceSizeHelp'],
+    'child-touch-help-top':['callableScrollHelp','callableProcedureHelp'],
+    'child-touch-help-tail':['callableFunctionHelp','callableBodyHelp'],
   };
   for(const [name,ids]of Object.entries(regions)){
     const frames=r.uiInventoryFrames.filter(f=>f.name===name);assert.equal(frames.length,1,'fixed observed UI region '+name);
@@ -99,8 +98,8 @@ export function verifyChildLanguage(r,inputs,provenance,file,inventory){
   }
   const words=r.uiInventoryFrames.find(f=>f.name==='child-block-words-open').rows;
   for(const expected of Object.values(childInsertionConceptHints))assert.ok(words.some(o=>o.text===expected),'fixed visible command/body/palette explanation');
-  const top=r.uiInventoryFrames.find(f=>f.name==='child-touch-help-top').rows;
-  for(const [id,term,reading]of [['saveActionHelp','保存','ほぞん'],['dataActionHelp','変数','へんすう']])assert.ok(top.find(o=>o.id===id).readings.some(r=>r.text.includes(term)&&r.reading===reading),'fixed visible reading support '+term);
+  const top=r.uiInventoryFrames.find(f=>f.name==='task-CHILD-UI-ACTION-HELP').rows;
+  for(const [id,term,reading]of [['saveBtn','保存','ほぞん'],['dataBtn','変数','へんすう']])assert.ok(top.find(o=>o.id===id).readings.some(r=>r.text.includes(term)&&r.reading===reading),'fixed visible reading support '+term);
   for(const f of r.uiInventoryFrames){
     assert.ok(f.viewport.width>0&&f.viewport.height>0&&f.dpr>0);assert.ok(f.font.declared&&f.font.width>0);assert.ok(f.rows.length);
     for(const o of f.rows){assert.equal(o.hit,true);assert.ok(o.text.trim()&&o.rect.width>0&&o.rect.height>0);const x=o.rect.x+o.rect.width/2,y=o.rect.y+o.rect.height/2;assert.ok(x>=0&&x<f.viewport.width&&y>=0&&y<f.viewport.height);assert.ok(Array.isArray(o.readings));}

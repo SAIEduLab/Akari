@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import {observePauseCycle} from '../lib/run-preview-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -53,7 +54,7 @@ async function actions(p){
   await a.locator('.prop-duplicate').click();await p.waitForFunction(()=>Akari.app.project.components.length===3);o.copyCount=await p.evaluate(()=>Akari.app.project.components.length);
   await p.locator('.prop-actions .prop-delete').click();await p.waitForFunction(()=>Akari.app.project.components.length===2);o.deleteCount=await p.evaluate(()=>Akari.app.project.components.length);o.originalName=await p.evaluate(()=>Akari.app.project.components.find(c=>c.id==='sprite-1').name);o.sourcePreserved=source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts));return o;
 }
-async function download(p,button,name){const pending=p.waitForEvent('download');await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();await (await pending).saveAs(path.join(dir,name));register(name);return path.join(dir,name);}
+async function download(p,button,name){const pending=p.waitForEvent('download');if(button==='#exportBtn')await projectAction(p,'exportBtn');else await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();await (await pending).saveAs(path.join(dir,name));register(name);return path.join(dir,name);}
 async function run(id,fn){const r={id,status:'RUNNING'};report.results.push(r);try{r.observed=await fn();r.status='PASS';}catch(e){r.status='FAIL';r.error=e.stack;save();throw e;}save();console.log('PASS '+id);}
 fs.copyFileSync(product,path.join(dir,'candidate.html'));register('candidate.html');save();
 try{
@@ -100,7 +101,7 @@ try{
   await run('DISPLAY-PERSISTENCE',async()=>{
    const rows=[];for(const show of [false,true])rows.push(await pageFor(browser,product,async p=>{
     await fixture(p,{show});const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),suffix=show?'on':'off',saved=await download(p,'#saveBtn','saved-'+suffix+'.md');
-    await p.locator('#newBtn').click();await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(()=>Akari.app.project.name==='操作契約02');const loaded=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames);
+    await projectAction(p, 'newBtn');await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(()=>Akari.app.project.name==='操作契約02');const loaded=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames);
     const html=await download(p,'#exportBtn','player-'+suffix+'.html'),context=await browser.newContext({offline:true});let player;
     try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await context.newPage();hooks(p);await p.goto(pathToFileURL(html).href);await p.locator('#playerStart:not([disabled])').click();await p.waitForFunction(()=>document.querySelectorAll('.sprite-bubble').length===2);player=await readBubbles(p);await shot(p,'player-'+suffix+'.png');await pressStop(p.locator('#playerStop'));}finally{await context.close();}
     await setNames(p,!show);await setNames(p,show);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:12000});await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));const restored=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames),recovered=await speech(p);await pressStop(p.locator('#stopBtn'));return{show,loaded,restored,player,recovered,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};

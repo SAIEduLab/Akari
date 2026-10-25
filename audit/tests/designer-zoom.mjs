@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
@@ -134,11 +135,11 @@ async function stable(p, count = 60) {
   for (let j = 0; j < 4; j++) assert.ok(Math.max(...frames.map(r => r[j])) - Math.min(...frames.map(r => r[j])) < 0.1, 'idle preview must not oscillate');
 }
 async function download(p, button, name) {
-  const pending = p.waitForEvent('download'); await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();
+  const pending = p.waitForEvent('download'); if(button==='#exportBtn')await projectAction(p,'exportBtn');else await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();
   const dest = path.resolve(artifacts, name); await (await pending).saveAs(dest); return dest;
 }
 async function openFile(p, file) {
-  const pending = p.waitForEvent('filechooser'); await p.locator('#openBtn').click();
+  const pending = p.waitForEvent('filechooser'); await projectAction(p, 'openBtn');
   await (await pending).setFiles(file);
   await p.waitForFunction(() => Akari.app.editorState.state === 'DESIGN');
   await settle(p);

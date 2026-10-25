@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -44,7 +45,7 @@ try{await withBrowser(chrome,async browser=>{
   await install(page,'正弦（30）を言う。\n10秒待つ。','stage');await revealMonitor(page);await page.locator('#runBtn').click();const full=page.locator('#console').getByRole('button',{name:'数を 短くして 見せているよ。もとの 数を 見る',exact:true});await full.waitFor();assert.match(await page.locator('#console').textContent(),/0\.5/);await full.click();assert.equal(await page.locator('#valueOutput').textContent(),'0.49999999999999994');await page.locator('#valueClose').click();await pressStop(page.locator('#stopBtn'));return{shown:'0.5',raw:'0.49999999999999994',detailExact:true};
  });
  await run('display/browser-export-offline',async page=>{
-  await install(page,'正弦（30）を言う。\n10秒待つ。');const pending=page.waitForEvent('download');await page.locator('#exportBtn').click();await page.locator('#exportControls').click();const download=await pending,file=path.join(dir,'display-player.html');await download.saveAs(file);
+  await install(page,'正弦（30）を言う。\n10秒待つ。');const pending=page.waitForEvent('download');await projectAction(page, 'exportBtn');await page.locator('#exportControls').click();const download=await pending,file=path.join(dir,'display-player.html');await download.saveAs(file);
   const context=await browser.newContext({offline:true}),errors=[],network=[];try{await context.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await context.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(file).href);await player.locator('#playerStart:not([disabled])').click();const bubble=player.locator('.sprite-bubble');await bubble.waitFor();assert.equal(await bubble.evaluate(n=>n.firstChild.textContent),'0.5');await bubble.getByRole('button',{name:'数を 短くして 見せて いるよ。もとの 数を 見る',exact:true}).click();assert.match(await player.locator('#playerOutput').textContent(),/もとの 数.*0\.49999999999999994/);await pressStop(player.locator('#playerStop'));}finally{await context.close();}assert.deepEqual(errors,[]);assert.deepEqual(network,[]);return{shown:'0.5',raw:'0.49999999999999994',offline:true};
  });
 },120000);}catch(error){report.hostFailure=error.stack;}

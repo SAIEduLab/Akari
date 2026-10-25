@@ -40,7 +40,7 @@ function panelMeasurement(observation) {
     assert.ok(row.ink.width>0&&row.ink.height>0);
   }
 }
-function panelReach(observation,method,basic=false) {
+function panelReach(observation,method) {
   assert.equal(observation?.method,method,'native input method required');
   panelMeasurement(observation.initial);panelMeasurement(observation.bottom);
   assert.equal(observation.initial.scrollTop,0,'explanation starts at the top');
@@ -51,11 +51,6 @@ function panelReach(observation,method,basic=false) {
     const r=row.ink,c=observation.bottom.clip;
     assert.ok(r.x>=c.x-1&&r.y>=c.y-1&&r.x+r.width<=c.x+c.width+1&&r.y+r.height<=c.y+c.height+1,
       'last explanation ink is fully inside the visible scroll panel');
-  }
-  if(basic) {
-    const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    // The last two explanations of the guide (1.5.0 adds 画面・部品・作業台の 大きさ after 見た目のコピー).
-    assert.ok(text.includes('作業台の 大きさ')&&text.includes('決めた ことを 1つ もとに もどす')&&text.includes('入力を やめる'),'the last explanations are reached: '+text.slice(0,80));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);
@@ -115,10 +110,10 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   }));
   const action=rows['CHILD-UI-ACTION-HELP'];
   for(const key of ['keyboardHelp','generatedPlayerWords','projectSourcePreserved'])assert.equal(action[key],true);
-  readable(action.help,8);panelReach(action.tailReach,'native-keyboard',true);
+  readable(action.help,3);assert.deepEqual(action.help.map(r=>r.text),['新しく作る','開く','うごく作品を ファイルにする']);
   assert.equal(action.editReading,null);
   // The body selector is 「きっかけ」 (final call 19, F-23): one word per idea, never 「なおす動き」 or 「できごと」.
-  assert.match(action.editMeaning,/「きっかけ」で えらびます/);assert.doesNotMatch(action.editMeaning,/なおす動き|できごと/);
+  assert.match(action.editMeaning,/きっかけ/);assert.doesNotMatch(action.editMeaning,/なおす動き|できごと/);
   assert.deepEqual(action.downloadTypes,['akari.md','html']);
   assert.match(action.saveFile,/\.akari\.md$/); assert.match(action.exportFile,/\.html$/);
   const copy=rows['CHILD-UI-COPY-SEMANTICS'];
@@ -190,21 +185,22 @@ export function verifyChildLanguageUi(report,inputs,environment) {
     [1180,757,'code'],[1180,757,'blocks'],[1188,848,'code'],[1188,848,'blocks'],[1024,768,'code'],[1024,768,'blocks'],[768,1024,'code'],[768,1024,'blocks'],[390,844,'code'],[390,844,'blocks'],
   ]);
   for(const observation of responsive.observations) {
-    assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn']);
+    assert.deepEqual(Object.keys(observation.controls),['projectMenu','saveBtn','runBtn']);
+    assert.deepEqual(Object.keys(observation.menuControls),['newBtn','openBtn','exportBtn']);for(const rect of Object.values(observation.menuControls))bounds(rect,observation.viewport);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
     // ■ 止める on the run screen: inside the viewport, the real hit target, and ▶ 動かす is not shown there.
     bounds(observation.runScreen?.stopBtn,observation.viewport);assert.equal(observation.runScreen.stopHit,true,'■ 止める is the hit target at its centre');assert.equal(observation.runScreen.runShown,false,'the run screen shows no ▶ 動かす');
     // ■ 止める comes where ▶ 動かす was, also where the toolbar wraps (D1-03).
     const {runAt,stopAt}=observation.runScreen;assert.ok(runAt&&stopAt&&Math.abs(stopAt.x-runAt.x)<=2&&Math.abs(stopAt.y-runAt.y)<=2,'■ 止める in ▶\'s place at '+observation.viewport.width+'x'+observation.viewport.height+' '+observation.mode+': '+JSON.stringify({runAt,stopAt}));
-    readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
+    readable(observation.help,3);assert.deepEqual(observation.help.map(r=>r.text),['新しく作る','開く','うごく作品を ファイルにする']);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん']);
     const text=observation.reading.map(r=>r.text).join(' ');
-    for(const reading of ['ほぞん','へんすう','ほんぶん'])assert.ok(text.includes(reading));
+    for(const reading of ['ほぞん'])assert.ok(text.includes(reading));
     for(const term of observation.reading){assert.equal(term.rects,1);assert.equal(term.whiteSpace,'nowrap');}
   }
   const touch=rows['CHILD-UI-TOUCH-HELP'];
   for(const key of ['hasTouch','actualTouchscreenTap','editingPreserved'])assert.equal(touch[key],true);
-  assert.deepEqual(touch.viewport,{width:390,height:844}); bounds(touch.touchTarget,touch.viewport,24);readable(touch.help,8);
-  panelReach(touch.tailReach,'native-touch',true);
+  assert.deepEqual(touch.viewport,{width:390,height:520}); bounds(touch.touchTarget,touch.viewport,24);readable(touch.help,4);
+  assert.ok(touch.tailReach.initial.maxScroll>0);panelReach(touch.tailReach,'native-touch');
   // Every screenshot the run takes, by name: paint, both ends of the touch explanation and one per responsive viewport.
   assert.ok(Array.isArray(report.artifacts),'visual artifacts are listed');
   assert.deepEqual(report.artifacts.map(a=>String(a.path).split('/').pop()),['child-data-examples','child-procedure-examples','child-paint-transparent','child-materials',
@@ -244,11 +240,11 @@ export function verifyChildLanguageUiNegatives(report,inputs,environment) {
     ['broken-word',r=>r.results[6].evidence.observations[0].reading[0].rects=2],
     ['clipped-tail',r=>{const o=r.results[7].evidence.tailReach.bottom;o.tail[1].ink.y=o.clip.y+o.clip.height;}],
     ['unreached-tail',r=>r.results[7].evidence.tailReach.bottom.scrollTop=0],
-    ['no-keyboard-scroll-proof',r=>r.results[6].evidence.observations[0].tailReach.keys=[]],
-    ['prevented-help-key',r=>r.results[6].evidence.observations[0].tailReach.keys.find(e=>e.key==='ArrowDown').defaultPrevented=true],
-    ['wrong-help-focus',r=>r.results[6].evidence.observations[0].tailReach.keys.find(e=>e.key==='ArrowDown').activeIsPanel=false],
-    ['keyboard-changes-project',r=>r.results[6].evidence.observations[0].tailReach.stateAfterArrow.source='changed'],
-    ['missing-home-completion',r=>r.results[6].evidence.observations[5].tailReach.scrollEvents.forEach(e=>{if(e.type==='scrollend'&&e.scrollTop===0)e.type='scroll';})],
+    ['no-keyboard-scroll-proof',r=>r.results[3].evidence.tailReach.keys=[]],
+    ['prevented-help-key',r=>r.results[3].evidence.tailReach.keys.find(e=>e.key==='ArrowDown').defaultPrevented=true],
+    ['wrong-help-focus',r=>r.results[3].evidence.tailReach.keys.find(e=>e.key==='ArrowDown').activeIsPanel=false],
+    ['keyboard-changes-project',r=>r.results[3].evidence.tailReach.stateAfterArrow.source='changed'],
+    ['missing-home-completion',r=>r.results[3].evidence.tailReach.scrollEvents.forEach(e=>{if(e.type==='scrollend'&&e.scrollTop===0)e.type='scroll';})],
     ['untrusted-touch-scroll',r=>r.results[7].evidence.tailReach.events.forEach(e=>e.trusted=false)],
     ['no-touch-proof',r=>r.results[7].evidence.actualTouchscreenTap=false],
     ['missing-edit-reading',r=>r.results[0].evidence.editReading=''],

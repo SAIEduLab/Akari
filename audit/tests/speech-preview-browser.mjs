@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import fs from 'node:fs';
 import {nameLegacyFixtureActor} from '../lib/gate-ui-fixture.mjs';
 import path from 'node:path';
@@ -17,7 +18,7 @@ const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 async function prepare(p,c){
  // 新しく作る starts in はじめて, where code cannot be shown: かんたん comes first.
- await p.locator('#newBtn').click();await p.locator('#uiLevel').selectOption('basic');await chooseView(p,'code');
+ await projectAction(p, 'newBtn');await p.locator('#uiLevel').selectOption('basic');await chooseView(p,'code');
  await nameLegacyFixtureActor(p);
  const dango=p.locator('.tool.sprite-preset[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
  const texts=c.kind==='short'?previewShortTexts:previewLongTexts,seconds=c.kind==='short'?2:10;

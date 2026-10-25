@@ -1,3 +1,4 @@
+import {projectAction} from '../lib/project-actions.cjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
@@ -38,12 +39,12 @@ async function importReviewRefusals(p) {
  const guidance='本文を 入れる ところを たしかめてね。「書いた 文を 本文に 入れる」か「取りこみを やめる」を おしてね',status=()=>p.locator('#statusText').innerText();
  const pending=await status();assert.equal(pending,guidance);assert.equal((await state(p)).project,before.project);
  assert.deepEqual(await p.evaluate(()=>[document.querySelector('#objectSelect').value,document.querySelector('#eventSelect').value]),context);
- await p.locator('#exportBtn').click();const exported=await status();assert.equal(exported,'まだ ファイルに できないよ。'+guidance+'。');assert.equal(await p.locator('#exportChoiceModal').isVisible(),false);
+ await projectAction(p, 'exportBtn');const exported=await status();assert.equal(exported,'まだ ファイルに できないよ。'+guidance+'。');assert.equal(await p.locator('#exportChoiceModal').isVisible(),false);
  await p.locator('#runBtn').click();const run=await status();assert.equal(run,'まだ 動かせないよ。'+guidance+'。');assert.equal((await state(p)).project,before.project);
  assert.doesNotMatch(await p.locator('#console').innerText(),/P201/);
  await p.locator('#sourceImportConfirm').click();const confirmed=await status();assert.equal(confirmed,'書いた 文を 本文に 入れたよ');
- await p.locator('#exportBtn').click();assert.equal(await p.locator('#exportChoiceModal').isVisible(),true);await p.locator('#exportChoiceCancel').click();
- await p.locator('#codeEditor').fill('ぜったいに書けない文。');await p.locator('#exportBtn').click();const error=await status();assert.match(error,/1行目/);assert.doesNotMatch(error,/本文を 入れる ところ/);
+ await projectAction(p, 'exportBtn');assert.equal(await p.locator('#exportChoiceModal').isVisible(),true);await p.locator('#exportChoiceCancel').click();
+ await p.locator('#codeEditor').fill('ぜったいに書けない文。');await projectAction(p, 'exportBtn');const error=await status();assert.match(error,/1行目/);assert.doesNotMatch(error,/本文を 入れる ところ/);
  return {pending,exported,run,confirmed,error,context,original,typedByKey:true,projectPreserved:true,exportAfterConfirmation:true};
 }
 async function importHistoryBoundary(p,delayMs) {

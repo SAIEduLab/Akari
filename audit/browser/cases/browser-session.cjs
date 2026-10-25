@@ -1,4 +1,5 @@
 const {pressStop,pressAfterDoublePress}=require('../../lib/stop-press.cjs');
+const {projectAction}=require('../../lib/project-actions.cjs');
 const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory, completeRegressionHoles, openPaletteTools} = require('./regression-setup.cjs');
 const {chooseView,refusedViewPress}=require('./view-toggle.cjs');
@@ -27,7 +28,7 @@ async function main(){
   await run('pending-input-blocks-transitions',async p=>{
    await fill(p,'点数を1にする。');await mode(p,'blocks');const before=await state(p);await numeric(p).fill('-');await p.waitForTimeout(350);
    const drafted=await state(p);assert.equal(drafted.project,before.project);assert.equal(drafted.main.source,before.main.source);assert.equal(drafted.history,before.history);
-   for(const id of ['editorModecode','runBtn','exportBtn']){await p.locator('#'+id).click();assert.deepEqual(stable(await state(p)),stable(drafted),id);assert.equal((await state(p)).main.mode,'blocks');}
+   for(const id of ['editorModecode','runBtn','exportBtn']){if(id==='exportBtn')await projectAction(p,id);else await p.locator('#'+id).click();assert.deepEqual(stable(await state(p)),stable(drafted),id);assert.equal((await state(p)).main.mode,'blocks');}
    const pending=p.waitForEvent('download');await p.locator('#saveBtn').click();const download=await pending,file=L.path.join(dir,'pending-number.akari.md');await download.saveAs(file);
    const read=await p.evaluate(t=>Akari.parseProjectFile(t).then(x=>({project:JSON.stringify(x.project),pending:x.editorState.pendingEditors[0]})),L.read(file));assert.equal(read.project,before.project);assert.equal(read.pending.pending.value,'-');assert.equal(read.pending.mode,'blocks');
    const saved=await state(p);assert.equal(saved.project,before.project);assert.equal(saved.history,drafted.history);assert.equal(saved.main.source,before.main.source);

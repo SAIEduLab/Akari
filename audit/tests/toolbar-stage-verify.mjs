@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {snapshot} from '../lib/input-snapshot.cjs';
+import {currentProductFile} from '../lib/product-path.cjs';
+import {writeCaseReport} from '../lib/gate-case-contract.mjs';
+import {verifyToolbarStage,rejectToolbarEvidence} from '../lib/toolbar-stage-contract.mjs';
+const [input,output]=process.argv.slice(2);assert.ok(input&&output&&!fs.existsSync(output),'fresh verifier report required');
+const report=JSON.parse(fs.readFileSync(input,'utf8')),inputs=snapshot(currentProductFile());
+const checked=verifyToolbarStage(report,inputs,input+'.artifacts'),negatives=rejectToolbarEvidence(report,inputs,input+'.artifacts');
+writeCaseReport(output,'toolbar-stage-verify',[{id:'valid-evidence',status:'PASS'},...negatives],{checked});console.log(JSON.stringify({...checked,negativeControls:negatives.length}));

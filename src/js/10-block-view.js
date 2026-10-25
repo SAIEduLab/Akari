@@ -2773,7 +2773,7 @@
         box.append(more);
       }
       if (!children.length) box.append(E('p', 'blockui-empty', parent.schemaId === 'Script'
-        ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね。動く お手本は「お手本を開く」で 見られるよ。'
+        ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね。' + (doc.body.dataset.uiLevel === 'entry' ? '' : '動く お手本は「お手本を開く」で 見られるよ。')
         : 'ここに ブロックを 入れられるよ'));
       return box;
     }
