@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import {createRequire} from 'node:module';
 import {languageFileForVersion,validateProductMetadata} from './product-path.cjs';
 
 const languageName = /^LANGUAGE(?:_\d+_\d+_\d+)?\.md$/;
@@ -13,60 +14,102 @@ const writable=(file,product,privateBoundary)=>file!==product&&!file.startsWith(
 
 // Only actual relative links to the root specification are release paths. Comments,
 // prose and fixture document identities do not need a release number.
-function linkText(file,text) {
-  const hide=value=>value.replace(/[^\r\n]/g,' ');
-  let visible=text.replace(/<!--[\s\S]*?-->|<(script|style|pre|code)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,hide);
-  if(file.endsWith('.md')){
-    let fence=null;
-    visible=visible.replace(/^.*(?:\n|$)/gm,line=>{
-      if(!line)return line;
-      if(fence){const close=new RegExp('^ {0,3}'+fence.char+'{'+fence.count+',}\\s*$').test(line.trimEnd());if(close)fence=null;return hide(line);}
-      const open=/^ {0,3}(`{3,}|~{3,})/.exec(line);
-      if(open){fence={char:open[1][0],count:open[1].length};return hide(line);}
-      return line;
-    });
-    const ticks=[...visible.matchAll(/`+/g)],ranges=[];
-    for(let i=0;i<ticks.length;i++){
-      let j=i+1;while(j<ticks.length&&ticks[j][0].length!==ticks[i][0].length)j++;
-      if(j<ticks.length){ranges.push([ticks[i].index,ticks[j].index+ticks[j][0].length]);i=j;}
-    }
-    for(const [start,end]of ranges.reverse())visible=visible.slice(0,start)+hide(visible.slice(start,end))+visible.slice(end);
+const require=createRequire(import.meta.url);
+let markdownParser,htmlParser;
+const offsets=node=>[node.position.start.offset,node.position.end.offset];
+
+function relativeLanguage(file,url) {
+  if(/^[a-z][a-z0-9+.-]*:|^\/\//i.test(url))return null;
+  const bare=url.split(/[?#]/)[0];let decoded;
+  try{decoded=decodeURIComponent(bare);}catch{return null;}
+  if(decoded.startsWith('/'))return null;
+  const resolved=path.posix.normalize(path.posix.join(path.posix.dirname(file),decoded));
+  if(!languageName.test(resolved))return null;
+  return {resolved,prefix:decoded.slice(0,decoded.lastIndexOf('/')+1),suffix:url.slice(bare.length)};
+}
+
+function destination(text,offset) {
+  let start=offset;
+  if(text[start]==='<'){const end=text.indexOf('>',start+1);assert.ok(end>=0,'unterminated parsed destination');return {start:start+1,end,angle:true};}
+  let end=start,depth=0;
+  for(;end<text.length;end++){
+    const char=text[end];
+    if(char==='\\'){end++;continue;}
+    if(/\s/.test(char))break;
+    if(char==='(')depth++;
+    if(char===')'){if(!depth)break;depth--;}
   }
-  return visible;
+  return {start,end,angle:false};
 }
 
 export function languageLinks(file,text) {
-  const rows=[],visible=linkText(file,text);
-  const patterns=[
-    ['markdown',/\]\(\s*(?:<([^<>\r\n]+)>|([^\s)]+))/g],
-    ['html',/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi],
-    ['reference',/^ {0,3}\[[^\]\r\n]+\]:[ \t]*(?:<([^<>\r\n]+)>|([^\s]+))/gm],
-  ];
-  for(const [kind,pattern]of patterns)for(const match of visible.matchAll(pattern)){
-    const target=match.slice(1).find(value=>value!==undefined);
-    if(!target||/^[a-z][a-z0-9+.-]*:|^\/\//i.test(target))continue;
-    const bare=target.split(/[?#]/)[0];
-    const resolved=path.posix.normalize(path.posix.join(path.posix.dirname(file),bare));
-    if(!languageName.test(resolved))continue;
-    const start=match.index+match[0].lastIndexOf(target);
-    rows.push({target,bare,resolved,kind,at:match.index,start,end:start+target.length});
+  const rows=[],htmlRanges=[],rawTextRanges=[];
+  const add=(url,span,kind,at,extra={})=>{
+    const relative=relativeLanguage(file,url);if(!relative)return;
+    rows.push({...relative,...span,...extra,url,target:text.slice(span.start,span.end),kind,at});
+  };
+  if(file.endsWith('.md')){
+    const tree=(markdownParser??=require('mdast-util-from-markdown').fromMarkdown)(text);
+    const walk=node=>{
+      if(node.type==='html')htmlRanges.push(offsets(node));
+      if(node.type==='link'&&relativeLanguage(file,node.url)){
+        const close=node.children.at(-1)?.position.end.offset??node.position.start.offset+1;
+        const opening=/^\]\(\s*/.exec(text.slice(close,node.position.end.offset));
+        assert.ok(opening,'parsed link destination position');
+        add(node.url,destination(text,close+opening[0].length),'markdown',close);
+      }
+      if(node.type==='definition'&&relativeLanguage(file,node.url)){
+        const [start,end]=offsets(node),opening=/^ {0,3}\[(?:\\.|[^\]\\])*\]:\s*/.exec(text.slice(start,end));
+        assert.ok(opening,'parsed definition destination position');
+        add(node.url,destination(text,start+opening[0].length),'reference',start);
+      }
+      for(const child of node.children??[])walk(child);
+    };
+    walk(tree);
+  }else htmlRanges.push([0,text.length]);
+  // Only HTML nodes emitted by the Markdown parser enter HTML parsing. Code,
+  // text, reference labels and attribute-like prose never become markup.
+  if(htmlRanges.length){
+    const visible=text.split('');
+    let cursor=0;
+    for(const [start,end]of htmlRanges.sort((a,b)=>a[0]-b[0])){for(;cursor<start;cursor++)if(visible[cursor]!=='\n')visible[cursor]=' ';cursor=Math.max(cursor,end);}
+    for(;cursor<visible.length;cursor++)if(visible[cursor]!=='\n')visible[cursor]=' ';
+    const fragment=(htmlParser??=require('parse5').parseFragment)(visible.join(''),{sourceCodeLocationInfo:true});
+    const walk=node=>{
+      if(['script','style','textarea','title','xmp','iframe','noembed','noframes','plaintext'].includes(node.tagName)&&node.sourceCodeLocation?.startTag)rawTextRanges.push([node.sourceCodeLocation.startTag.endOffset,node.sourceCodeLocation.endTag?.startOffset??node.sourceCodeLocation.endOffset]);
+      for(const attribute of node.attrs??[])if(attribute.name==='href'&&['a','area','link','base'].includes(node.tagName)){
+        const key=attribute.prefix?attribute.prefix+':href':'href';
+        const location=node.sourceCodeLocation?.attrs?.[key];if(!location)continue;
+        const raw=text.slice(location.startOffset,location.endOffset);
+        const opening=/^[^\s=]+\s*=\s*(["']?)/.exec(raw);if(!opening)continue;
+        const start=location.startOffset+opening[0].length,end=location.endOffset-(opening[1]?1:0);
+        const extra={};
+        if(node.tagName==='a'){
+          const after=node.sourceCodeLocation.startTag.endOffset,label=/^(LANGUAGE(?:_\d+_\d+_\d+)?\.md)(?=<\/a>)/i.exec(text.slice(after));
+          if(label){extra.labelStart=after;extra.labelEnd=after+label[1].length;}
+        }
+        add(attribute.value,{start,end},'html',location.startOffset,extra);
+      }
+      for(const child of node.childNodes??[])walk(child);
+      if(node.content)walk(node.content);
+    };
+    walk(fragment);
   }
-  return rows;
+  return rows.filter(row=>row.kind==='html'||!rawTextRanges.some(([start,end])=>row.start>=start&&row.start<end));
 }
 
 function updateLinks(file,text,current) {
-  // Recognition, rewriting and verification use the same actual URL spans.
   const edits=[];
   for(const row of languageLinks(file,text)){
-    edits.push({start:row.start,end:row.end,next:row.target.replace(/LANGUAGE(?:_\d+_\d+_\d+)?\.md/,current)});
+    let next=encodeURI(row.prefix+current)+row.suffix;
+    next=next.replace(/&/g,'&amp;').replace(/[<>"'\s]/g,char=>encodeURIComponent(char));
+    if(row.kind!=='html'&&!row.angle)next=next.replace(/[\\()]/g,char=>'\\'+char);
+    edits.push({start:row.start,end:row.end,next});
     if(row.kind==='markdown'){
       const label=/\[(`?)(LANGUAGE(?:_\d+_\d+_\d+)?\.md)\1$/.exec(text.slice(0,row.at));
       if(label){const start=row.at-label[0].length+1+label[1].length;edits.push({start,end:start+label[2].length,next:current});}
     }
-    if(row.kind==='html'&&/<a\b[^>]*$/i.test(text.slice(0,row.at))){
-      const label=/^["']?[^>]*>(LANGUAGE(?:_\d+_\d+_\d+)?\.md)(?=<\/a>)/i.exec(text.slice(row.end));
-      if(label){const start=row.end+label[0].lastIndexOf(label[1]);edits.push({start,end:start+label[1].length,next:current});}
-    }
+    if(row.labelStart!==undefined)edits.push({start:row.labelStart,end:row.labelEnd,next:current});
   }
   for(const edit of edits.sort((a,b)=>b.start-a.start))text=text.slice(0,edit.start)+edit.next+text.slice(edit.end);
   return text;
