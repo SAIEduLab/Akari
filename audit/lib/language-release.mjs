@@ -15,31 +15,19 @@ const writable=(file,product,privateBoundary)=>file!==product&&!file.startsWith(
 // Only actual relative links to the root specification are release paths. Comments,
 // prose and fixture document identities do not need a release number.
 const require=createRequire(import.meta.url);
-let markdownParser,htmlParser;
+let markdownParser,markdownTokenizer,htmlParser;
 const offsets=node=>[node.position.start.offset,node.position.end.offset];
 
 function relativeLanguage(file,url) {
-  if(/^[a-z][a-z0-9+.-]*:|^\/\//i.test(url))return null;
-  const bare=url.split(/[?#]/)[0];let decoded;
-  try{decoded=decodeURIComponent(bare);}catch{return null;}
-  if(decoded.startsWith('/'))return null;
-  const resolved=path.posix.normalize(path.posix.join(path.posix.dirname(file),decoded));
-  if(!languageName.test(resolved))return null;
-  return {resolved,prefix:decoded.slice(0,decoded.lastIndexOf('/')+1),suffix:url.slice(bare.length)};
-}
-
-function destination(text,offset) {
-  let start=offset;
-  if(text[start]==='<'){const end=text.indexOf('>',start+1);assert.ok(end>=0,'unterminated parsed destination');return {start:start+1,end,angle:true};}
-  let end=start,depth=0;
-  for(;end<text.length;end++){
-    const char=text[end];
-    if(char==='\\'){end++;continue;}
-    if(/\s/.test(char))break;
-    if(char==='(')depth++;
-    if(char===')'){if(!depth)break;depth--;}
-  }
-  return {start,end,angle:false};
+  if(!url.split(/[?#]/)[0].trim()||/^[a-z][a-z0-9+.-]*:|^\/\//i.test(url)||url.startsWith('/'))return null;
+  const root='https://akari.invalid/__akari_root__/';let parsed,filename;
+  try{
+    parsed=new URL(url,root+file.split('/').map(encodeURIComponent).join('/'));
+    if(!parsed.href.startsWith(root))return null;
+    filename=decodeURIComponent(parsed.pathname.slice('/__akari_root__/'.length));
+  }catch{return null;}
+  if(!languageName.test(filename))return null;
+  return {resolved:filename,explicitDot:url.startsWith('./'),suffix:parsed.search+parsed.hash};
 }
 
 export function languageLinks(file,text) {
@@ -50,18 +38,23 @@ export function languageLinks(file,text) {
   };
   if(file.endsWith('.md')){
     const tree=(markdownParser??=require('mdast-util-from-markdown').fromMarkdown)(text);
+    const {parse,postprocess,preprocess}=markdownTokenizer??=require('micromark');
+    const destinations=postprocess(parse().document().write(preprocess()(text,undefined,true)))
+      .filter(([event,token])=>event==='enter'&&['resourceDestinationString','definitionDestinationString'].includes(token.type))
+      .map(([,token])=>({type:token.type,start:token.start.offset,end:token.end.offset,angle:text[token.start.offset-1]==='<'}));
+    const destination=(node,type,after)=>{
+      const span=destinations.find(token=>token.type===type&&token.start>=after&&token.end<=node.position.end.offset);
+      assert.ok(span,'parsed Markdown destination source range');return span;
+    };
     const walk=node=>{
       if(node.type==='html')htmlRanges.push(offsets(node));
       if(node.type==='link'&&relativeLanguage(file,node.url)){
         const close=node.children.at(-1)?.position.end.offset??node.position.start.offset+1;
-        const opening=/^\]\(\s*/.exec(text.slice(close,node.position.end.offset));
-        assert.ok(opening,'parsed link destination position');
-        add(node.url,destination(text,close+opening[0].length),'markdown',close);
+        add(node.url,destination(node,'resourceDestinationString',close),'markdown',close);
       }
       if(node.type==='definition'&&relativeLanguage(file,node.url)){
-        const [start,end]=offsets(node),opening=/^ {0,3}\[(?:\\.|[^\]\\])*\]:\s*/.exec(text.slice(start,end));
-        assert.ok(opening,'parsed definition destination position');
-        add(node.url,destination(text,start+opening[0].length),'reference',start);
+        const [start]=offsets(node);
+        add(node.url,destination(node,'definitionDestinationString',start),'reference',start);
       }
       for(const child of node.children??[])walk(child);
     };
@@ -101,7 +94,9 @@ export function languageLinks(file,text) {
 function updateLinks(file,text,current) {
   const edits=[];
   for(const row of languageLinks(file,text)){
-    let next=encodeURI(row.prefix+current)+row.suffix;
+    let next=path.posix.relative(path.posix.dirname(file),current);
+    if(row.explicitDot&&!next.startsWith('.'))next='./'+next;
+    next+=row.suffix;
     next=next.replace(/&/g,'&amp;').replace(/[<>"'\s]/g,char=>encodeURIComponent(char));
     if(row.kind!=='html'&&!row.angle)next=next.replace(/[\\()]/g,char=>'\\'+char);
     edits.push({start:row.start,end:row.end,next});

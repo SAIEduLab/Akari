@@ -107,6 +107,13 @@ export function runLanguageReleaseChecks() {
       ['<a href=\"./LANGUAGE&#46;md?x=1&amp;y=2\">仕様</a>','<a href=\"./LANGUAGE_1_5_1.md?x=1&amp;y=2\">仕様</a>'],
     ])check(()=>{const root=fixture(false);write(root,'README.md',source);prepareLanguageRelease(root);assert.equal(read(root,'README.md'),expected);verifyLanguageRelease(root);});
     check(()=>{const root=fixture(false);write(root,'MANUAL.html','<a href=./LANGUAGE.md>仕様</a>');prepareLanguageRelease(root);assert.equal(read(root,'MANUAL.html'),'<a href=./LANGUAGE_1_5_1.md>仕様</a>');});
+    for(const [source,expected]of [
+      ['> [仕様](\n> ./LANGUAGE.md\n> )','> [仕様](\n> ./LANGUAGE_1_5_1.md\n> )'],
+      ['> [language]:\n> ./LANGUAGE.md\n>\n> [仕様][language]','> [language]:\n> ./LANGUAGE_1_5_1.md\n>\n> [仕様][language]'],
+      ['[仕様](./x%3F/../LANGUAGE.md)','[仕様](./LANGUAGE_1_5_1.md)'],
+      ['[仕様](./x%23/../LANGUAGE.md)','[仕様](./LANGUAGE_1_5_1.md)'],
+    ])check(()=>{const root=fixture(false);write(root,'README.md',source);prepareLanguageRelease(root);assert.equal(read(root,'README.md'),expected);verifyLanguageRelease(root);});
+    check(()=>{const root=fixture(false),source=read(root,'LANGUAGE.md')+'[この文書](#section)\n';write(root,'LANGUAGE.md',source);prepareLanguageRelease(root);assert.equal(read(root,'LANGUAGE_1_5_1.md'),source);});
     check(()=>assert.deepEqual(languageLinks('guide.md','[other](https://elsewhere.test/LANGUAGE.md) // LANGUAGE.md'),[]));
     return count;
   }finally{fs.rmSync(scratch,{recursive:true,force:true});}

@@ -7,7 +7,7 @@
 ## 実行の入口
 
 - Node.js 24、固定されたPlaywright / browser、必要なcodec依存を使う。
-- 文書の実リンクは `mdast-util-from-markdown@2.0.2` と `parse5@7.3.0` の構文木・ソース位置で検査する。配布準備コマンドもこの監査依存を使うため、既存の監査依存と同じ場所へインストールし、`NODE_PATH` に含める。文章、属性風の文字列、コード例をリンクとして置換しない。
+- 文書の実リンクは `mdast-util-from-markdown@2.0.2`・`micromark@4.0.3` と `parse5@7.3.0` の構文木・ソース位置で検査する。配布準備コマンドもこの監査依存を使うため、既存の監査依存と同じ場所へインストールし、`NODE_PATH` に含める。文章、属性風の文字列、コード例をリンクとして置換しない。
 - node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/local
 - node audit/browser/run-full-browser-audit.mjs --group all --evidence audit-evidence/browser
 - 公開ActionsのAkari audit / Akari fixed acceptanceで必要なsuiteを実行・集約する。現行の実行集合はgate-contractと各runner/validatorを正本とし、段階数をここへ手で複製しない。
