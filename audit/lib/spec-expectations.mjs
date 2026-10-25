@@ -1,3 +1,4 @@
+import {currentLanguageFile,resolveSpecificationFile} from './product-path.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -32,8 +33,8 @@ export function verifyExpectations(files, { root = path.resolve(expectationsRoot
   const problems = [];
   const fail = (where, message) => problems.push(where + ': ' + message);
   const docs = {};
-  const doc = file => (docs[file] ??= bareSpace(fs.readFileSync(path.join(root, file), 'utf8')));
-  const headings = specHeadings(fs.readFileSync(path.join(root, 'LANGUAGE.md'), 'utf8'));
+  const doc = file => (docs[file] ??= bareSpace(fs.readFileSync(path.join(root, resolveSpecificationFile(file)), 'utf8')));
+  const headings = specHeadings(fs.readFileSync(path.join(root, currentLanguageFile()), 'utf8'));
   const allCaseIds = new Set();
   const summary = {};
   for (const area of only) {

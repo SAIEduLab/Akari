@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
+import {languageFileForVersion} from './product-path.cjs';
+import {languageLinks} from './language-release.mjs';
 
 // The publication inventory is exactly the tracked tree; tracked documents name only the current release.
 export const publicationIds = {
@@ -57,6 +59,11 @@ const toolPrefix = /(?:@|\b(?:Playwright|jsdom|Chrome for Testing|Chrome|Chromiu
 export function releaseNameViolations(file, text, {productFile, productVersion}) {
   const violations = [];
   const lineOf = index => text.slice(0, index).split('\n').length;
+  const languageFile=languageFileForVersion(productVersion);
+  if(/^LANGUAGE(?:_\d+_\d+_\d+)?\.md$/.test(file)&&file!==languageFile)
+    violations.push({file,line:1,found:file,expected:languageFile});
+  for(const row of languageLinks(file,text))if(row.resolved!==languageFile)
+    violations.push({file,line:lineOf(row.at),found:row.target,expected:languageFile});
   for (const m of text.matchAll(productName))
     if (m[0] !== productFile) violations.push({file, line: lineOf(m.index), found: m[0], expected: productFile});
   for (const m of text.matchAll(versionNumber))

@@ -1,10 +1,13 @@
 # あかりの現行監査
 
-保証と受入条件は [AUDIT.md](../AUDIT.md)、製品意味は [LANGUAGE.md](../LANGUAGE.md) を参照する。現行製品pathは public-files.json から取得する。内部運用指示は公開しない。
+保証と受入条件は [AUDIT.md](../AUDIT.md)、製品意味は [LANGUAGE_1_5_1.md](../LANGUAGE_1_5_1.md) を参照する。現行製品pathは public-files.json から取得する。内部運用指示は公開しない。
+
+作業開始と変更受入は [明示指示と変更受入](WORK_AUTHORIZATION.md) に従う。
 
 ## 実行の入口
 
 - Node.js 24、固定されたPlaywright / browser、必要なcodec依存を使う。
+- 文書の実リンクは `mdast-util-from-markdown@2.0.2`・`micromark@4.0.3` と `parse5@7.3.0` の構文木・ソース位置で検査する。配布準備コマンドもこの監査依存を使うため、既存の監査依存と同じ場所へインストールし、`NODE_PATH` に含める。文章、属性風の文字列、コード例をリンクとして置換しない。
 - node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/local
 - node audit/browser/run-full-browser-audit.mjs --group all --evidence audit-evidence/browser
 - 公開ActionsのAkari audit / Akari fixed acceptanceで必要なsuiteを実行・集約する。現行の実行集合はgate-contractと各runner/validatorを正本とし、段階数をここへ手で複製しない。

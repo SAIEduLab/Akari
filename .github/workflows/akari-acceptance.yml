@@ -32,7 +32,7 @@ jobs:
           python-version: '3.12'
       - name: Install the approved fixed browser in runner temporary storage
         run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
           python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser"
       - name: Run and validate the required composition suites
@@ -64,7 +64,7 @@ jobs:
           python-version: '3.12'
       - name: Install the approved fixed browser in runner temporary storage
         run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
           python audit/install-codec-browser.py "$RUNNER_TEMP/editing-browser"
           mkdir -p audit-evidence/editing

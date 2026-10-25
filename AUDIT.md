@@ -15,6 +15,12 @@
 
 現行の実行証拠を製品hash、commit、試験入力、環境、run/attemptへ結び付ける。固定値の更新だけで実行成功としない。必須結果の欠落・重複・失敗・例外・timeout・別入力・偽PASSを拒否する。過去の台帳やsourceのbyte復元を現在の合格条件にしない。
 
+## 仕様書の配布名と更新
+
+言語仕様書の配布名は `LANGUAGE_<major>_<minor>_<patch>.md` とし、製品版と一致する現行ファイルを一つだけ置きます。現行pathは `audit/lib/product-path.cjs` が既存の `productVersion` から求めます。配布準備の `node audit/freeze-release.mjs --record` は仕様書名・実リンク・参照情報・配布一覧・配布記録を自動更新し、旧仕様書を置き換えます。検証モードは更新しません。内部repoは内部専用の配布準備入口を使います。仕様書の配布名と、版を持たない根拠参照・安定test IDを区別します。
+
+作業開始と変更受入は [明示指示と変更受入](audit/WORK_AUTHORIZATION.md) に従います。相談・計画への同意を実行許可と扱いません。
+
 ## 製品版から独立した命名と受入判定
 
 配布する製品HTMLは `Akari_<major>_<minor>_<patch>.html` とし、`Akari` 直後の `_` を必須にします。`audit/public-files.json` の `productFile` を現行pathの正本にします。製品を変更する作業では、mainの現行製品版からpatchを一度だけ上げます。それ以外の上げ方（minor・major・patchの複数）は所有者の判断であり、PRに所有者のラベル（後掲）を付けた場合だけ受け入れます。版を下げることは認めません。製品不変の指示・監査基盤整理では製品版を変更しません。同じ作業内の複数改修・commit・レビュー対応では版上げを繰り返さず、版上げと関連更新をmergeする作業branch/PRに含めます。製品版、ファイル名、公開リンクを一致させ、現行ツリーには製品HTMLを1つだけ置き、入れ替えた旧製品HTMLを削除します。製品ファイルとrelease freezeの版表示は配布ラベルであり、機能名・安定test ID・保存形式・言語とruntimeの契約番号には流用しません。

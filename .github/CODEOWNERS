@@ -10,3 +10,9 @@
 /audit/lib/workflow-contract.mjs @SAIEduLab
 /audit/tests/workflow-contract.mjs @SAIEduLab
 /audit/lib/verify-gate-results.mjs @SAIEduLab
+
+/AGENTS.md @SAIEduLab
+/audit/WORK_AUTHORIZATION.md @SAIEduLab
+/.github/workflows/akari-work-authorization.yml @SAIEduLab
+/audit/lib/work-authorization.mjs @SAIEduLab
+/audit/tests/work-authorization.mjs @SAIEduLab

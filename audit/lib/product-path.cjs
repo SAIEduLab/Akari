@@ -15,11 +15,28 @@ function validateProductMetadata(record) {
 const metadata = () => validateProductMetadata(JSON.parse(fs.readFileSync(path.join(root, 'audit/public-files.json'), 'utf8')));
 const currentProductFile = () => metadata().productFile;
 const currentProductVersion = () => metadata().productVersion;
+const languageFileForVersion = version => {
+  assert.match(version, /^\d+\.\d+\.\d+$/, 'language document release label');
+  return 'LANGUAGE_' + version.replaceAll('.', '_') + '.md';
+};
+const currentLanguageFile = () => languageFileForVersion(currentProductVersion());
+// Fixture references are stable document identities, not paths to historical files.
+const resolveSpecificationFile = reference => {
+  assert.ok(['LANGUAGE.md', 'EXTENSIONS.md'].includes(reference), 'unknown specification reference');
+  return reference === 'LANGUAGE.md' ? currentLanguageFile() : reference;
+};
 const currentReleaseFile = () => 'audit/manifests/release-' + currentProductVersion() + '.json';
+function assertLanguageInventory(record = metadata(), names = fs.readdirSync(root)) {
+  const expected = languageFileForVersion(record.productVersion);
+  const isLanguage = file => /^LANGUAGE(?:_\d+_\d+_\d+)?\.md$/.test(file);
+  assert.deepEqual(record.files.filter(isLanguage), [expected], 'one published current language document');
+  assert.deepEqual(names.filter(isLanguage), [expected], 'checkout must contain only the current language document');
+  return expected;
+}
 function assertProductInventory() {
   const record = metadata();
   const products = fs.readdirSync(root).filter(file => file === 'Akari.html' || /^Akari_?\d+_\d+_\d+\.html$/.test(file));
   assert.deepEqual(products, [record.productFile], 'checkout must contain exactly the current product');
   return record;
 }
-module.exports = {currentProductFile, currentProductVersion, currentReleaseFile, validateProductMetadata, assertProductInventory};
+module.exports = {currentProductFile, currentProductVersion, currentReleaseFile, currentLanguageFile, languageFileForVersion, resolveSpecificationFile, assertLanguageInventory, validateProductMetadata, assertProductInventory};

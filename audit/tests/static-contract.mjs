@@ -1,5 +1,6 @@
+import cp from 'node:child_process';
 import {samplesFeature,sampleTestIds} from '../lib/samples-contract.mjs';
-import { currentProductFile, currentProductVersion, assertProductInventory, validateProductMetadata } from "./../lib/product-path.cjs";
+import { currentProductFile, currentProductVersion, currentLanguageFile, assertLanguageInventory, assertProductInventory, validateProductMetadata } from "./../lib/product-path.cjs";
 import {blockFieldIds,checkBlockFieldValidatorNegatives} from '../lib/block-field-contract.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -15,7 +16,7 @@ import {assertSingleBrowserOwner} from '../lib/verify-browser-results.mjs';
 import {formatCompatibilityIds} from '../lib/format-compatibility-contract.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 import {componentControlsFeature,componentControlIds} from '../lib/component-controls-contract.mjs';
-const metadata=assertProductInventory();
+const metadata=assertProductInventory();assertLanguageInventory(metadata);
 for(const bad of [{productFile:"../Akari_1_0_1.html"},{productVersion:"invalid"},{productFile:"Akari_1_0_0.html"},{productFile:metadata.productFile.replace('Akari_','Akari')},{files:metadata.files.filter(f=>f!==metadata.productFile)},{files:[...metadata.files,metadata.productFile]},{files:[...metadata.files,"Akari.html"]},{files:[...metadata.files,"Akari1_0_0.html"]},{files:[...metadata.files,"Akari_1_0_0.html"]},{files:[...metadata.files,metadata.productFile.replace('Akari_','Akari')]}])assert.throws(()=>validateProductMetadata({...metadata,...bad}));
 const nextProductVersion=metadata.productVersion.replace(/\d+$/,patch=>String(Number(patch)+1));
 const nextProductFile='Akari_'+nextProductVersion.replaceAll('.','_')+'.html';
@@ -69,8 +70,12 @@ for(const id of blockFieldIds)functionalId(id,"block field test");checkBlockFiel
 const audit=fs.readFileSync('AUDIT.md','utf8'),capabilities=audit.split(/\r?\n/).filter(l=>/^\| [a-z]+:/.test(l));
 for(const row of capabilities)functionalId(row.split('|')[1].trim(),'capability');
 const files=JSON.parse(fs.readFileSync('audit/public-files.json')).files;
-assert.equal(new Set(files).size,files.length);assert.ok(files.includes(currentProductFile())&&files.includes('LANGUAGE.md')&&files.includes('AUDIT.md'));
-const publicationPathAllowed=file=>!/(AGENTS|PROJECT_INSTRUCTIONS|PUBLIC_SYNC|historical|checkpoint|records\/)/.test(file);
+assert.equal(new Set(files).size,files.length);assert.ok(files.includes(currentProductFile())&&files.includes(currentLanguageFile())&&files.includes('AUDIT.md'));
+const repositoryIdentity=process.env.GITHUB_REPOSITORY||cp.execFileSync('git',['remote','get-url','origin'],{encoding:'utf8'}).trim().replace(/^.*github.com[:/]/,'').replace(/\.git$/,'');
+const localInstructions=repositoryIdentity==='SAIEduLab/Akari-dev'?['AGENTS.md','PROJECT_INSTRUCTIONS.md','PUBLIC_SYNC.json']:['AGENTS.md'];
+const publicationPathAllowed=file=>localInstructions.includes(file)||!/(AGENTS|PROJECT_INSTRUCTIONS|PUBLIC_SYNC|historical|checkpoint|records\/)/.test(file);
+assert.ok(!publicationPathAllowed('audit/PROJECT_INSTRUCTIONS.md'));
+if(repositoryIdentity!=='SAIEduLab/Akari-dev'){assert.ok(!publicationPathAllowed('PROJECT_INSTRUCTIONS.md'));assert.ok(!publicationPathAllowed('PUBLIC_SYNC.json'));}
 for(const file of files){assert.ok(!path.isAbsolute(file)&&!file.split('/').includes('..'));assert.ok(fs.existsSync(file),file);assert.ok(publicationPathAllowed(file),file);}
 for(const file of files.filter(file=>/^(?:audit|\.github)\//.test(file))){
   nameIssues.push(...functionalNameIssues('audit file name',fileNameSegments(file)));

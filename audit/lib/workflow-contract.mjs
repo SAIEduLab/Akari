@@ -151,6 +151,7 @@ export const concurrencyCancel="${{ github.event_name == 'pull_request' }}";
 export const concurrencyGroup=file=>file.replace(/\.yml$/,'')+'-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}';
 export const workflowTriggers=Object.freeze({
   audit:{pull_request:{branches:['main']},push:{branches:['main']},workflow_dispatch:null},
+  authorization:{pull_request_target:{branches:['main'],types:['opened','synchronize','reopened','edited']}},
   guard:{pull_request:{branches:['main'],types:['opened','synchronize','reopened','labeled','unlabeled']}},
 });
 const topLevelKeys=['name','on','permissions','env','concurrency','jobs'];
@@ -172,7 +173,7 @@ export function workflowIssues(files,contract=workflowContract){
     for(const key of Object.keys(doc))if(!topLevelKeys.includes(key))issue('workflow-keys',file,key,'top-level key not allowed');
     if(!same(doc.env,spec.env))issue('workflow-env',file,'env','workflow environment differs from the contract');
     if(!same(doc.on,workflowTriggers[spec.triggers]))issue('triggers',file,'on','triggers must be exactly '+JSON.stringify(workflowTriggers[spec.triggers]));
-    if(!same(doc.permissions,{contents:'read'}))issue('permissions',file,'permissions','workflow permissions must be contents: read');
+    if(!same(doc.permissions,spec.permissions??{contents:'read'}))issue('permissions',file,'permissions','workflow permissions must be contents: read');
     const c=doc.concurrency;
     if(!c||typeof c!=='object')issue('concurrency',file,'concurrency','missing concurrency');
     else {
@@ -212,6 +213,7 @@ export function workflowIssues(files,contract=workflowContract){
             if(step.with?.['retention-days']!=='3')issue('artifact',file,at,'artifacts are kept for 3 days');
             if(step.with?.['if-no-files-found']!=='error')issue('artifact',file,at,'missing evidence must fail the upload');
           }
+          if(step.uses==='actions/checkout@v5'&&jobSpec.trustedBase&&step.with?.ref!=='${{ github.event.pull_request.base.sha }}')issue('checkout',file,at,'authorization must check out the trusted base');
           if(step.uses==='actions/checkout@v5'&&jobSpec.fullHistory&&step.with?.['fetch-depth']!=='0')issue('checkout',file,at,'the change guard needs the full history');
           return;
         }

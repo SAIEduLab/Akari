@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {currentProductFile} from '../lib/product-path.cjs';
+import {currentProductFile,currentLanguageFile} from '../lib/product-path.cjs';
 import {LICENSE_TEXT,COPYRIGHT,verifyLicenseText,verifyLicensedArtifact,licensingSnapshot,sha} from '../lib/license-contract.cjs';
 const results=[];
 function check(id,fn){fn();results.push({id,status:'PASS'});}
@@ -16,11 +16,11 @@ check('EXTENSION-MIT-SPDX',()=>{
   }
 });
 check('CURRENT-DOCUMENTS-MIT',()=>{
-  const language=fs.readFileSync('LANGUAGE.md','utf8'),readme=fs.readFileSync('README.md','utf8');
+  const language=fs.readFileSync(currentLanguageFile(),'utf8'),readme=fs.readFileSync('README.md','utf8');
   assert.ok(language.includes('MIT License'));assert.ok(!language.includes('Apache License 2.0'));
   assert.match(readme,/\]\((?:\.\/)?LICENSE\)/,'README routes to the canonical license');assert.ok(!readme.includes('Apache License 2.0'));
   const publicSurface=JSON.parse(fs.readFileSync('audit/public-files.json')).files.includes('index.html');if(publicSurface)assert.ok(readme.includes('MIT License'));
-  assert.ok(fs.readFileSync('LANGUAGE.md','utf8').includes(COPYRIGHT));
+  assert.ok(fs.readFileSync(currentLanguageFile(),'utf8').includes(COPYRIGHT));
 });
 check('COMPATIBILITY-TEST-ALIAS',()=>{const source=fs.readFileSync('audit/suites/runAkariSelfTests.js','utf8');assert.ok(source.includes('EXPORT Apache-2.0ライセンス保持'));assert.ok(source.includes('AKARI_LICENSE'));assert.ok(!source.includes('AKARI_APACHE_LICENSE'));});
 for(const [kind,bad] of [['copyright',product.replace(COPYRIGHT,'Copyright (c) 2026 WRONG')],['permission',product.replace('The above copyright notice and this permission notice','Wrong permission notice')],['disclaimer',product.replace('THE SOFTWARE IS PROVIDED "AS IS"','Wrong disclaimer')],['spdx',product.replaceAll('SPDX-License-Identifier: MIT','SPDX-License-Identifier: Apache-2.0')]])

@@ -160,6 +160,10 @@ export const workflowContract=Object.freeze({
       {run:'node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json',if:'always()',env:{GITHUB_TOKEN:'${{ github.token }}'}},
       {run:'node audit/tests/child-ux.mjs aggregate audit-evidence/child-ux/downloaded audit-evidence/child-ux/child-ux-aggregate.json',if:'always()',env:{AKARI_CHILD_UX_NEEDS:'${{ toJSON(needs) }}'}}]},
   }},
+  'akari-work-authorization.yml':{triggers:'authorization',permissions:{contents:'read','pull-requests':'read'},jobs:{
+    'owner-work-authorization':{needs:[],fullHistory:true,trustedBase:true,entries:[
+      {run:'node audit/tests/work-authorization.mjs --github audit-evidence/work-authorization/report.json',env:{GITHUB_TOKEN:'${{ github.token }}'}}]},
+  }},
   'akari-change-guard.yml':{triggers:'guard',jobs:{
     'audit-change-guard':{needs:[],fullHistory:true,entries:[
       {run:'node audit/tests/change-guard.mjs "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:{AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKARI_HEAD_SHA:'${{ github.event.pull_request.head.sha }}'}}]},

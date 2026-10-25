@@ -40,7 +40,7 @@
 ## ドキュメント
 
 - [`Akari_1_5_1.html`](./Akari_1_5_1.html) — あかり本体（[`src/`](./src/) から `node src/build.mjs` で生成）
-- [`LANGUAGE.md`](./LANGUAGE.md) — 操作方法・文法・言語仕様
+- [`LANGUAGE_1_5_1.md`](./LANGUAGE_1_5_1.md) — 操作方法・文法・言語仕様
 - [`index.html`](./index.html) — 紹介・本体・マニュアルへの公開入口
 - [`MANUAL.html`](./MANUAL.html) — はじめかた・保存・開く・うごく作品のファイル・困ったとき
 - [`Manual/`](./Manual/) — [ブロック](./Manual/block-mode.html)・[コード初級](./Manual/code-mode-beginner.html)・[中級](./Manual/code-mode-intermediate.html)・[上級](./Manual/code-mode-advanced.html)・[名人](./Manual/meijin-mode.html)
