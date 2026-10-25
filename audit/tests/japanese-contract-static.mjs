@@ -1,3 +1,4 @@
+import {currentLanguageFile} from '../lib/product-path.cjs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -64,7 +65,7 @@ export function verifyJapaneseContract(repositoryRoot = root) {
   // The fixture bytes are pinned above; completeness is the set relations below, not ledger counts.
   check('JAPANESE-CONTRACT/INDEPENDENT-ORACLE-COMPLETE', () => {
     const features = json('audit/manifests/features.json');
-    const language = read('LANGUAGE.md').toString();
+    const language = read(currentLanguageFile()).toString();
     unique(oracle.commands.map(c => c.id), 'oracle commands');
     unique(oracle.schemaIds, 'oracle schemas');
     unique(oracle.capabilities.map(c => c.id), 'oracle capabilities');

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {currentProductFile,currentProductVersion} from '../lib/product-path.cjs';
+import {currentProductFile,currentProductVersion,currentLanguageFile} from '../lib/product-path.cjs';
 import {snapshot,root} from '../lib/product-test-host.mjs';
 import {publicationIds,trackedFiles,assertInventoryMatches,releaseNameViolations,isDocument,verifyPublicationReport,checkPublicationValidatorNegatives} from '../lib/publication-contract.mjs';
 
@@ -45,6 +45,9 @@ if(mode==='inventory'){
     if(report.violations.length)throw Error('documents name another product file or release:\n'+report.violations.map(v=>v.file+':'+v.line+' '+v.found+' (current '+v.expected+')').join('\n'));
   });
   check('ACCEPT-CURRENT-RELEASE-AND-TOOL-VERSIONS',()=>{
+    assert.deepEqual(releaseNameViolations('guide.md','[仕様](./'+currentLanguageFile()+')',current),[]);
+    for(const bad of ['LANGUAGE.md','LANGUAGE_0_0_1.md'])assert.ok(releaseNameViolations('guide.md','[仕様](./'+bad+')',current).length);
+    assert.deepEqual(releaseNameViolations(productFile,'// LANGUAGE.md is a logical document identity',current),[]);
     const text=['# あかり '+productVersion,'現行製品は ['+productFile+'](./'+productFile+') です。v'+productVersion+'。','固定 Chrome for Testing 140.0.7339.207・Playwright 1.55.0、playwright@1.55.0 @babel/parser@7.28.4、jsdom 26.1.0、Node.js 24.0.0。'].join('\n');
     assert.deepEqual(releaseNameViolations('fixture.md',text,current),[]);
   });

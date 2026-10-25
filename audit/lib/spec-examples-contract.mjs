@@ -1,3 +1,4 @@
+import {resolveSpecificationFile} from './product-path.cjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,7 +24,7 @@ export const specExampleDocuments=Object.freeze([
 ]);
 export const specExampleModes=Object.freeze(['script','rejected','expression','meijin','meijin-rejected']);
 export const readSpecExampleDocuments=(root=path.resolve(import.meta.dirname,'../..'))=>
-  specExampleDocuments.map(({file,context})=>({file,context,text:fs.readFileSync(path.join(root,file),'utf8')}));
+  specExampleDocuments.map(({file,context})=>({file,context,text:fs.readFileSync(path.join(root,resolveSpecificationFile(file)),'utf8')}));
 export const specExampleNegativeIds=Object.freeze([
   'accepted-example-rejected-detected','rejected-example-accepted-detected','rejected-unit-masking-detected',
   'expression-example-rejected-detected','unknown-marker-detected','dangling-marker-detected','unclosed-block-detected',

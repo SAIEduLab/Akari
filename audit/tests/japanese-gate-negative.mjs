@@ -1,3 +1,4 @@
+import {currentLanguageFile} from '../lib/product-path.cjs';
 // Synthetic validator fixtures below are never product execution evidence.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -85,7 +86,7 @@ try{
  check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.fixtureSha256='0'.repeat(64));
  check('STATIC/execution-claim',fixed,vs,r=>r.contract.productDynamic.status='PASS');
  // The oracle's current lists: the schema set, LANGUAGE.md builtins and fixed sensors.
- const lists={oracle:JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json')),features:JSON.parse(fs.readFileSync('audit/manifests/features.json')),language:fs.readFileSync('LANGUAGE.md','utf8')},vl=r=>verifyOracleCurrentLists(r.oracle,r.features,r.language);vl(lists);
+ const lists={oracle:JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json')),features:JSON.parse(fs.readFileSync('audit/manifests/features.json')),language:fs.readFileSync(currentLanguageFile(),'utf8')},vl=r=>verifyOracleCurrentLists(r.oracle,r.features,r.language);vl(lists);
  check('STATIC/oracle-schema-set-differs',lists,vl,r=>r.features.schemaIds.push('MotionCommand:NOT_A_CURRENT_SCHEMA'));
  check('STATIC/language-builtin-list-changed',lists,vl,r=>{r.language=r.language.replace('`乱数`','`らんすう`');});
  check('STATIC/language-sensor-list-changed',lists,vl,r=>{r.language=r.language.replace('`タイマー` ／ ','');});

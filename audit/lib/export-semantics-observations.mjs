@@ -1,3 +1,4 @@
+import {currentLanguageFile} from './product-path.cjs';
 import fs from 'node:fs';import assert from 'node:assert/strict';import vm from 'node:vm';import crypto from 'node:crypto';
 import {buildProject}from'./spec-expectations-host.mjs';
 import {readExpectationFiles,areas}from'./spec-expectations.mjs';
@@ -28,7 +29,7 @@ function meijinFailureOrigin(api){const result={};for(const [event,source,label]
  return{...result,wrongFlagRejected:'X602',legacyAccepted:true};}
 
 export function observeExportRoundtrips(api){const files=readExpectationFiles(),attempted=[],restored=[],rejected=[],negativeFields=new Set();for(const area of areas)for(const c of files[area].cases.cases){if(!c.world)continue;const id=area+':'+c.id;attempted.push(id);const {project,refusals}=buildProject(api,c.world),compiled=api.compileProject(project);if(refusals.length||compiled.errors.length){assert.ok(!(c.kind==='run'||c.kind==='check'&&!c.expect.stops),id+' positive world must compile');rejected.push(id);continue;}try{const packed=api.packExecutable(project,storeFor(api,project)),opened=api.restoreExecutable(clone(packed));verifyRestored(api,project,compiled,opened,id);metadataNegatives(api,project,compiled,opened,id,negativeFields);restored.push(id);}catch(error){error.message=id+': '+error.message;throw error;}}
- const meijin=[];for(const block of readExampleBlocks(fs.readFileSync('LANGUAGE.md','utf8'),'LANGUAGE.md').blocks.filter(b=>b.mode==='meijin')){const id='LANGUAGE.md:'+block.line,p=meijinProject(api,block.body.join('\n')),compiled=api.compileProject(p);assert.deepEqual(Array.from(compiled.errors),[],id+' positive meijin example compiles');verifyRestored(api,p,compiled,api.restoreExecutable(clone(api.packExecutable(p,storeFor(api,p)))),id);meijin.push(id);}
+ const meijin=[];for(const block of readExampleBlocks(fs.readFileSync(currentLanguageFile(),'utf8'),'LANGUAGE.md').blocks.filter(b=>b.mode==='meijin')){const id='LANGUAGE.md:'+block.line,p=meijinProject(api,block.body.join('\n')),compiled=api.compileProject(p);assert.deepEqual(Array.from(compiled.errors),[],id+' positive meijin example compiles');verifyRestored(api,p,compiled,api.restoreExecutable(clone(api.packExecutable(p,storeFor(api,p)))),id);meijin.push(id);}
  const wanted=['args','definition','definitionKind','event','filter','meijin','targetId','targetType'];assert.deepEqual([...negativeFields].sort(),wanted);return{attempted,restored,rejected,meijin,metadata:{checked:true,negativeFields:wanted,origin:meijinFailureOrigin(api)}};}
 
 

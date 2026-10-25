@@ -12,6 +12,8 @@ const current=Object.fromEntries(fs.readdirSync(dir).filter(name=>/\.ya?ml$/.tes
 const {results,pass}=caseRecorder();
 const issues=workflowIssues(current);
 assert.deepEqual(issues,[],'current workflows:\n'+issues.map(i=>i.rule+' '+i.file+' '+i.where+': '+i.detail).join('\n'));
+const authorization='akari-work-authorization.yml';
+for(const [from,to,rule]of [['ref: ${{ github.event.pull_request.base.sha }}','ref: ${{ github.event.pull_request.head.sha }}','checkout'],['pull_request_target:','pull_request:','triggers'],['pull-requests: read','pull-requests: write','permissions']]){const changed={...current,[authorization]:current[authorization].replace(from,to)};assert.ok(workflowIssues(changed).some(issue=>issue.file===authorization&&issue.rule===rule),'owner authorization boundary '+rule);}
 pass('current-workflows-accepted');
 
 const audit='akari-audit.yml',acceptance='akari-acceptance.yml',guard='akari-change-guard.yml';

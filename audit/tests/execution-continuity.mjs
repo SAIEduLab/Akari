@@ -1,4 +1,6 @@
-import { currentProductFile, currentProductVersion, currentReleaseFile } from "./../lib/product-path.cjs";
+import {runWorkAuthorizationChecks} from './work-authorization.mjs';
+import {runLanguageReleaseChecks} from './language-release.mjs';
+import { currentProductFile, currentProductVersion, currentReleaseFile, currentLanguageFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -90,8 +92,8 @@ const fixtureContract={languageContractId:5,runtimeContractId:6,programFormatVer
 const currentRelease=path.posix.basename(currentReleaseFile());
 let frozen;
 function freezeRun(record,{changed=false,contract=fixtureContract,releases=[currentRelease]}={}){
- vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readdirSync(p){assert.equal(p,'audit/manifests');return ['features.json',...releases,'samples.json'];},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p==='audit/manifests/features.json')return JSON.stringify({EXECUTABLE_CONTRACT:contract});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
-check('freeze-record-and-verify',()=>{freezeRun(true);freezeRun(false);});
+ vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readdirSync(p){assert.equal(p,'audit/manifests');return ['features.json',...releases,'samples.json'];},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),currentLanguageFile()]});if(p==='audit/manifests/features.json')return JSON.stringify({EXECUTABLE_CONTRACT:contract});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,currentLanguageFile,assertLanguageInventory(){},prepareLanguageRelease(){},process:{argv:record?['--record']:[],cwd:()=>'.'},console:{log(){}}});}
+check('freeze-record-and-verify',()=>{freezeRun(true);freezeRun(false);runLanguageReleaseChecks();runWorkAuthorizationChecks();});
 check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,{changed:true}),/Current distribution differs/));
 check('freeze-contract-from-features',()=>{frozen=undefined;freezeRun(true);const r=JSON.parse(frozen);assert.deepEqual([r.languageContractId,r.runtimeContractId,r.programFormat,r.projectFormat],[5,6,7,8]);freezeRun(false);});
 check('freeze-changed-contract-refused',()=>{freezeRun(true);for(const key of Object.keys(fixtureContract))assert.throws(()=>freezeRun(false,{contract:{...fixtureContract,[key]:9}}),/Current distribution differs/,key);});

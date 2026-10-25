@@ -1,3 +1,4 @@
+import {currentLanguageFile} from './product-path.cjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -5,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 export const corpusPath='audit/fixtures/japanese-intent/child-intent-corpus.json';
 export const corpusMarkdownPath='audit/fixtures/japanese-intent/child-intent-corpus.md';
-export const capabilityInputPaths=['audit/lib/capability-contract.mjs','audit/fixtures/capability-oracle.json','audit/manifests/capability-traceability.json',corpusPath,corpusMarkdownPath,'LANGUAGE.md','AUDIT.md','audit/manifests/features.json'];
+export const capabilityInputPaths=['audit/lib/capability-contract.mjs','audit/fixtures/capability-oracle.json','audit/manifests/capability-traceability.json',corpusPath,corpusMarkdownPath,currentLanguageFile(),'AUDIT.md','audit/manifests/features.json'];
 // Fixed requirement identities of the traceability manifest; a dropped or substituted row fails.
 const semanticRequirementIds=['SELF-CALL-ORIGIN','SAVE-DRAFT-EDITOR-STATE','CLOSED-ACTOR-ORDER-EXTENSION','LITERAL-MULTILINE-STRINGS'];
 const languageContractIds=Array.from({length:11},(_,i)=>'LANGUAGE-CONTRACT-'+String(i+1).padStart(3,'0'));
