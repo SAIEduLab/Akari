@@ -13,28 +13,62 @@ const writable=(file,product,privateBoundary)=>file!==product&&!file.startsWith(
 
 // Only actual relative links to the root specification are release paths. Comments,
 // prose and fixture document identities do not need a release number.
+function linkText(file,text) {
+  const hide=value=>value.replace(/[^\r\n]/g,' ');
+  let visible=text.replace(/<!--[\s\S]*?-->|<(script|style|pre|code)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,hide);
+  if(file.endsWith('.md')){
+    let fence=null;
+    visible=visible.replace(/^.*(?:\n|$)/gm,line=>{
+      if(!line)return line;
+      if(fence){const close=new RegExp('^ {0,3}'+fence.char+'{'+fence.count+',}\\s*$').test(line.trimEnd());if(close)fence=null;return hide(line);}
+      const open=/^ {0,3}(`{3,}|~{3,})/.exec(line);
+      if(open){fence={char:open[1][0],count:open[1].length};return hide(line);}
+      return line;
+    });
+    const ticks=[...visible.matchAll(/`+/g)],ranges=[];
+    for(let i=0;i<ticks.length;i++){
+      let j=i+1;while(j<ticks.length&&ticks[j][0].length!==ticks[i][0].length)j++;
+      if(j<ticks.length){ranges.push([ticks[i].index,ticks[j].index+ticks[j][0].length]);i=j;}
+    }
+    for(const [start,end]of ranges.reverse())visible=visible.slice(0,start)+hide(visible.slice(start,end))+visible.slice(end);
+  }
+  return visible;
+}
+
 export function languageLinks(file,text) {
-  const rows=[];
-  const add=(target,at)=>{
-    if(/^[a-z][a-z0-9+.-]*:|^\/\//i.test(target))return;
+  const rows=[],visible=linkText(file,text);
+  const patterns=[
+    ['markdown',/\]\(\s*(?:<([^<>\r\n]+)>|([^\s)]+))/g],
+    ['html',/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi],
+    ['reference',/^ {0,3}\[[^\]\r\n]+\]:[ \t]*(?:<([^<>\r\n]+)>|([^\s]+))/gm],
+  ];
+  for(const [kind,pattern]of patterns)for(const match of visible.matchAll(pattern)){
+    const target=match.slice(1).find(value=>value!==undefined);
+    if(!target||/^[a-z][a-z0-9+.-]*:|^\/\//i.test(target))continue;
     const bare=target.split(/[?#]/)[0];
     const resolved=path.posix.normalize(path.posix.join(path.posix.dirname(file),bare));
-    if(languageName.test(resolved))rows.push({target,bare,resolved,at});
-  };
-  for(const match of text.matchAll(/\]\(<?([^\s<>)]*LANGUAGE(?:_\d+_\d+_\d+)?\.md(?:[?#][^\s<>)]*)?)>?(?:\s+"[^"]*")?\)|\bhref\s*=\s*["']([^"']*LANGUAGE(?:_\d+_\d+_\d+)?\.md(?:[?#][^"']*)?)["']/g))add(match[1]??match[2],match.index);
+    if(!languageName.test(resolved))continue;
+    const start=match.index+match[0].lastIndexOf(target);
+    rows.push({target,bare,resolved,kind,at:match.index,start,end:start+target.length});
+  }
   return rows;
 }
 
 function updateLinks(file,text,current) {
-  const targets=new Set(languageLinks(file,text).map(row=>row.target));
-  for(const target of targets){
-    const next=target.replace(/LANGUAGE(?:_\d+_\d+_\d+)?\.md/,current);
-    // Update actual links, retaining unlinked prose and fixture identities.
-    text=text.replaceAll(']('+target+')',']('+next+')').replaceAll('](<'+target+'>)','](<'+next+'>)');
-    text=text.replaceAll('href="'+target+'"','href="'+next+'"').replaceAll("href='"+target+"'","href='"+next+"'");
+  // Recognition, rewriting and verification use the same actual URL spans.
+  const edits=[];
+  for(const row of languageLinks(file,text)){
+    edits.push({start:row.start,end:row.end,next:row.target.replace(/LANGUAGE(?:_\d+_\d+_\d+)?\.md/,current)});
+    if(row.kind==='markdown'){
+      const label=/\[(`?)(LANGUAGE(?:_\d+_\d+_\d+)?\.md)\1$/.exec(text.slice(0,row.at));
+      if(label){const start=row.at-label[0].length+1+label[1].length;edits.push({start,end:start+label[2].length,next:current});}
+    }
+    if(row.kind==='html'&&/<a\b[^>]*$/i.test(text.slice(0,row.at))){
+      const label=/^["']?[^>]*>(LANGUAGE(?:_\d+_\d+_\d+)?\.md)(?=<\/a>)/i.exec(text.slice(row.end));
+      if(label){const start=row.end+label[0].lastIndexOf(label[1]);edits.push({start,end:start+label[1].length,next:current});}
+    }
   }
-  text=text.replace(/\[(`?)(LANGUAGE(?:_\d+_\d+_\d+)?\.md)\1\]\(([^)]+)\)/g,(all,quote,_name,target)=>languageLinks(file,all).some(row=>row.resolved===current)?'['+quote+current+quote+']('+target+')':all);
-  text=text.replace(/(<a\b[^>]*\bhref\s*=\s*["'][^"']*["'][^>]*>)(LANGUAGE(?:_\d+_\d+_\d+)?\.md)(<\/a>)/g,(all,open,_name,close)=>languageLinks(file,all).some(row=>row.resolved===current)?open+current+close:all);
+  for(const edit of edits.sort((a,b)=>b.start-a.start))text=text.slice(0,edit.start)+edit.next+text.slice(edit.end);
   return text;
 }
 
@@ -153,6 +187,12 @@ export function applyLanguageRelease(plan,{beforeWrite=()=>{}}={}) {
     // Preserve the backup directory only if recovery itself failed.
     if(!keepStaging)fs.rmSync(staging,{recursive:true,force:true});
   }
+}
+
+export function verifyLanguageRelease(root,options={}) {
+  const plan=planLanguageRelease(root,options);
+  assert.equal(plan.changes.size,0,'stale language release outputs: '+[...plan.changes.keys()].join(', '));
+  return plan.current;
 }
 
 export const prepareLanguageRelease=(root,options={})=>applyLanguageRelease(planLanguageRelease(root,options),options);

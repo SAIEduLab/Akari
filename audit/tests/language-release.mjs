@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
-import {planLanguageRelease,applyLanguageRelease,prepareLanguageRelease,languageLinks} from '../lib/language-release.mjs';
+import {planLanguageRelease,applyLanguageRelease,prepareLanguageRelease,verifyLanguageRelease,languageLinks} from '../lib/language-release.mjs';
 import {languageFileForVersion} from '../lib/product-path.cjs';
 
 export function runLanguageReleaseChecks() {
@@ -75,6 +75,21 @@ export function runLanguageReleaseChecks() {
       check(()=>{const r=fixture(privateBoundary),plan=planLanguageRelease(r,{privateBoundary});write(r,'README.md','concurrent edit');const before=snapshot(r);assert.throws(()=>applyLanguageRelease(plan),/release input changed/);assert.deepEqual(snapshot(r),before);});
       check(()=>{const r=fixture(privateBoundary),plan=planLanguageRelease(r,{privateBoundary}),before=snapshot(r);plan.changes.set('src/forbidden.js',{before:null,after:Buffer.from('changed'),mode:0o644});assert.throws(()=>applyLanguageRelease(plan),/protected/);assert.deepEqual(snapshot(r),before);});
     }
+    for(const [source,expected]of [
+      ['[仕様][language]\n\n[language]: ./LANGUAGE.md','[仕様][language]\n\n[language]: ./LANGUAGE_1_5_1.md'],
+      ['[仕様](./LANGUAGE.md \"仕様書\")','[仕様](./LANGUAGE_1_5_1.md \"仕様書\")'],
+      ['[仕様](<./LANGUAGE.md> \"仕様書\")','[仕様](<./LANGUAGE_1_5_1.md> \"仕様書\")'],
+      ['<a HREF=\"./LANGUAGE.md\">仕様</a>','<a HREF=\"./LANGUAGE_1_5_1.md\">仕様</a>'],
+      ['<a href = \"./LANGUAGE.md\">仕様</a>','<a href = \"./LANGUAGE_1_5_1.md\">仕様</a>'],
+      ['<a href=./LANGUAGE.md>仕様</a>','<a href=./LANGUAGE_1_5_1.md>仕様</a>'],
+    ])check(()=>{const root=fixture(false);write(root,'README.md',source);prepareLanguageRelease(root);assert.equal(read(root,'README.md'),expected);assert.equal(languageLinks('README.md',source).length,1);verifyLanguageRelease(root);});
+    for(const privateBoundary of [false,true])check(()=>{const root=fixture(privateBoundary);prepareLanguageRelease(root,{privateBoundary});write(root,'README.md','[stale](./LANGUAGE_0_0_1.md)');const before=snapshot(root);assert.throws(()=>verifyLanguageRelease(root,{privateBoundary}),/stale language/);assert.deepEqual(snapshot(root),before);});
+    for(const [file,source]of [
+      ['README.md','```text\n[例](./LANGUAGE.md)\n<a HREF=\"./LANGUAGE.md\">例</a>\n```\n'],
+      ['README.md','`[例](./LANGUAGE.md)` and `<a href=\"./LANGUAGE.md\">例</a>`\n'],
+      ['README.md','<!-- [例](./LANGUAGE.md) -->\n'],
+      ['MANUAL.html','<!-- <a href=\"./LANGUAGE.md\">例</a> --><script>const x=\'<a href=\"./LANGUAGE.md\">例</a>\';</script><pre>&lt;a href=\"./LANGUAGE.md\"&gt;</pre>'],
+    ])check(()=>{const root=fixture(false);write(root,file,source);prepareLanguageRelease(root);assert.equal(read(root,file),source);assert.deepEqual(languageLinks(file,source),[]);});
     check(()=>assert.deepEqual(languageLinks('guide.md','[other](https://elsewhere.test/LANGUAGE.md) // LANGUAGE.md'),[]));
     return count;
   }finally{fs.rmSync(scratch,{recursive:true,force:true});}

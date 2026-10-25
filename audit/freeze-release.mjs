@@ -1,10 +1,11 @@
 import {currentProductFile,currentProductVersion,currentReleaseFile,currentLanguageFile,assertLanguageInventory} from './lib/product-path.cjs';
-import {prepareLanguageRelease} from './lib/language-release.mjs';
+import {prepareLanguageRelease,verifyLanguageRelease} from './lib/language-release.mjs';
 import fs from 'node:fs';import assert from 'node:assert/strict';import {sha} from './lib/product-test-host.mjs';
 import {writeCaseReport} from './lib/gate-case-contract.mjs';
 // Verify mode: node audit/freeze-release.mjs [result.json]; record mode: --record.
 const output=process.argv.slice(2).find(arg=>arg!=='--record');
 if(process.argv.includes('--record'))prepareLanguageRelease(process.cwd());
+else verifyLanguageRelease(process.cwd());
 const meta=JSON.parse(fs.readFileSync('audit/public-files.json'));
 assertLanguageInventory(meta);
 const files=meta.files.filter(p=>p===currentProductFile()||p===currentLanguageFile()||['LICENSE','EXTENSIONS.md','MANUAL.html'].includes(p)||p.startsWith('Manual/')||p.startsWith('extensions/'));
