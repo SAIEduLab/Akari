@@ -281,6 +281,7 @@
       history = [],
       redo = [],
       historyTimer = null,
+      queuedHistory = null,
       autosaveTimer = null,
       recoveryData = null,
       appState = 'DESIGN',
@@ -920,14 +921,15 @@
       validateDesignProject(next);
       return next;
     }
-    function commitSource(binding, source, { atomic = false } = {}) {
+    function commitSource(binding, source, { atomic = false, flushQueued = false } = {}) {
       if (modelLocked()) return false;
       const ownerKey = bindingOwner(binding),
         before = readSource(binding, ownerKey);
       if (source === before) return false;
       const next = sourceCandidate(binding, ownerKey, source);
       if (atomic) {
-        clearTimeout(historyTimer);
+        if (flushQueued && queuedHistory) pushHistoryNow(queuedHistory);
+        dropHistoryTimer();
         const session = binding.session, pending = session?.pendingEdit;
         const importing = binding === mainEditor && pending?.kind === 'source-import' &&
           session.ownerKey === ownerKey && pending.ownerKey === ownerKey &&
@@ -959,7 +961,7 @@
       clearEditorFailure(binding);
       markDirty();
       if (atomic) {
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
       }
       if (binding.kind === 'draft') paintCallable();
@@ -1029,26 +1031,99 @@
       root.append(help); appendDiagnosticDetails(root, diagnostic, original);
     }
     function clearEditorFailure(binding) {
+      cancelAssist(binding);delete binding.assist;delete binding.failurePresentation;
       const indicator = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       indicator.textContent = ''; indicator.hidden = true; delete indicator.dataset.notice;
     }
+    function cancelAssist(binding) { clearTimeout(binding.assistTimer);binding.assistTimer=0; }
+    function closeAssist(binding) {
+      const n=$(binding.kind==='draft'?'#callablePending':'#editorPending');
+      n.querySelectorAll('.intent-choices,.assist-choices').forEach(node=>node.remove());
+      binding.textarea.focus();
+    }
+    function assistEligible(binding,error) {
+      const diagnostic=error?.diagnostics?.[0]||error;
+      return binding.session?.mode==='code'&&!binding.session.blockDraft&&!bindingContext(binding).meijin&&
+        typeof error?.proposalSource==='string'&&diagnostic?.line&&['P201','P205','S317'].includes(diagnostic.code);
+    }
+    function editorCheckScheduled(binding,source) {
+      return !!editorCheckTimer&&!editorChecks.has(bindingOwner(binding)+'\n'+source);
+    }
+    function stashAssist(binding,error) {
+      cancelAssist(binding);
+      if(!assistEligible(binding,error)){delete binding.assist;return false;}
+      const diagnostic=error.diagnostics?.[0]||error,proposals=error.proposals||diagnostic.proposals||diagnostic.choices||[];
+      binding.assist={basis:error.proposalSource,diagnostic:{...diagnostic,proposals},proposals,ownerKey:bindingOwner(binding),contextRevision:editorContextRevision};
+      return true;
+    }
+    function scheduleAssist(binding) {
+      cancelAssist(binding);binding.assistTimer=setTimeout(()=>{binding.assistTimer=0;runAssist(binding);},250);
+    }
+    function runAssist(binding) {
+      const a=binding.assist,n=$(binding.kind==='draft'?'#callablePending':'#editorPending'),normalize=text=>String(text).replace(/\r\n?/g,'\n');
+      const current=()=>a&&!modelLocked()&&bindingOwner(binding)===a.ownerKey&&editorContextRevision===a.contextRevision&&
+        normalize(binding.textarea.value)===normalize(a.basis)&&binding.session?.pendingEdit?.value===a.basis&&
+        !composingEditors.has(binding.textarea)&&!n.hidden&&binding.session.mode==='code'&&!binding.session.blockDraft;
+      if(!current()||n.querySelector('.assist-choices,.assist-none'))return;
+      const basis=normalize(a.basis),ctx={...bindingContext(binding),symbols:buildSymbols(project),signalNames:signalNameCache.names},range=assistSourceRange(basis,a.diagnostic,assistVerificationContext(ctx));
+      if(!range)return;
+      const existing=a.proposals;
+      if(existing.length&&!existing.every(p=>/【([^】]+)】という(?:手順|てじゅん)を行う/.test(p.source)&&!range.text.includes(/【([^】]+)】/.exec(p.source)?.[1])))return;
+      const data=assistSeeds(range.text,ctx.symbols,ctx);
+      if(!/(?:何|なに)も(?:しない|せず|ない)$/.test(data.text)&&/(?:ません|ない|ず|[うくぐすつぬぶむる]な)$/.test(data.text)||/しない ことは 書けません/.test(a.diagnostic.message||''))return;
+      const key=JSON.stringify([a.ownerKey,basis,a.diagnostic.code,a.contextRevision]);
+      let candidates=binding.assistCache?.key===key?binding.assistCache.candidates:null;
+      if(!candidates){candidates=assistCandidates(project,basis,ctx,a.diagnostic);binding.assistCache={key,candidates};}
+      if(!current())return;
+      if(!candidates.length){
+        if(!existing.length){const empty=document.createElement('p');empty.className='assist-none';empty.textContent='近い 書き方は ありません。「書ける ことば」で さがせます';n.append(empty);}return;
+      }
+      const choices=document.createElement('span');choices.className='assist-choices';choices.setAttribute('role','group');choices.setAttribute('aria-label','近い 書き方');
+      choices.addEventListener('mousedown',event=>event.preventDefault());
+      const lead=document.createElement('p');lead.className='assist-lead';lead.textContent=`近い 書き方は これですか？ えらぶと、${a.diagnostic.line}行目を その 文に 書きかえます`;choices.append(lead);
+      for(const [index,proposal]of candidates.entries()){
+        const button=document.createElement('button');button.type='button';button.dataset.assistChoice='';
+        const label=proposal.label||proposal.text,code=document.createElement('code');button.textContent=label;
+        if(label.replace(/[\s。]/g,'')!==proposal.text.replace(/[\s。]/g,'')){code.id=(binding.kind==='draft'?'callable':'editor')+'-assist-'+index;code.textContent=proposal.text;button.append(code);button.setAttribute('aria-describedby',code.id);}
+        button.onclick=()=>{
+          if(!current())return;
+          const source=basis.slice(0,proposal.start)+proposal.source+basis.slice(proposal.end),written=basis.slice(proposal.start,proposal.end);
+          try{
+            commitSource(binding,source,{atomic:true,flushQueued:true});binding.textarea.value=source;n.hidden=true;
+            let status=`✓ 「${written}」を 書きかえたよ`;
+            const signal=/「([^「」]+)」/.exec(proposal.text)?.[1];
+            if(signal&&proposal.origin==='S4')status+=proposal.schemaId==='Heading:message'?`。送る ほうにも「「${signal}」の合図を送る。」と 書いてね`:proposal.schemaId==='Broadcast'&&proposal.description?`。受ける ほうには「「${signal}」という合図を受けたとき、」と 書いてね`:'';
+            setStatus(status);renderEditorBinding(binding);refreshEditor();binding.textarea.focus();binding.textarea.setSelectionRange(proposal.start,proposal.start+proposal.source.length);
+          }catch(error){binding.textarea.value=source;if(binding.session)binding.session.pendingEdit={ownerKey:bindingOwner(binding),kind:'code',value:source,originalSource:basis,reason:error.message};scheduleAutosave();showEditorFailure(binding,error);}
+        };
+        choices.append(button);
+        if(proposal.description){const small=document.createElement('small');small.textContent=proposal.description;choices.append(small);}
+      }
+      const other=data.headerEvent==='valueChanged'?null:project.components.find(c=>c.id!==ctx.targetId&&(c.name===data.subject||/止まる|止める|とまる|とめる/.test(data.text)&&data.names.some(n=>n.kind==='part'&&n.name===c.name)));
+      if(other){const note=document.createElement('small');note.className='assist-note';note.textContent=`${other.name}が する ことは、${other.name}の 本文に 書きます`;choices.append(note);}
+      const cancel=n.querySelector('[data-intent-cancel]')||document.createElement('button');cancel.type='button';cancel.dataset.intentCancel='';cancel.textContent='この あんないを とじる';cancel.onclick=()=>closeAssist(binding);choices.append(cancel);n.append(choices);
+      if(!n.assistKeyHandler){n.addEventListener('keydown',event=>{if(event.key==='Escape'&&event.target.closest('.intent-choices,.assist-choices')){event.preventDefault();event.stopPropagation();closeAssist(binding);}});n.assistKeyHandler=true;}
+    }
     function showEditorFailure(binding, error, { preservePending = false } = {}) {
+      const proposalSource=error?.proposalSource;
       // A reading error that a 名人 text would read says S317 here too, once the code view has checked it (FM2-04).
       if (binding.textarea && genericReadingError(error?.diagnostics?.[0] || error)) {
         const shown = error?.diagnostics?.length ? error.diagnostics : [error], checked = checkedEditorErrors(binding, binding.textarea.value, shown);
         if (checked && checked !== shown && checked[0]?.code === 'S317')
-          error = Object.assign(new AkariError(checked[0].code, checked[0].message, checked[0].line, checked[0].column), { diagnostics: checked });
+          error = Object.assign(new AkariError(checked[0].code, checked[0].message, checked[0].line, checked[0].column), { diagnostics: checked, proposalSource });
       }
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       delete n.dataset.notice;
+      if(!n.assistKeyHandler){n.addEventListener('keydown',event=>{if(event.key==='Escape'&&event.target.closest('.intent-choices,.assist-choices')){event.preventDefault();event.stopPropagation();closeAssist(binding);}});n.assistKeyHandler=true;}
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
           d.line ? d.line + '行目 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
-      showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);
-      n.querySelector('.intent-choices')?.remove();
       const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
-      if (proposals.length) {
+      const presentation=JSON.stringify([error?.proposalSource,editorContextRevision,proposals.map(p=>p.source),reason]);
+      const retain=binding.failurePresentation===presentation;
+      if(!retain){cancelAssist(binding);showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);binding.failurePresentation=presentation;}
+      if (proposals.length&&!retain) {
         const original = binding.textarea.value, basis=error.proposalSource,
           sameSource=typeof basis==='string'&&basis.replace(/\r\n?/g,'\n')===original.replace(/\r\n?/g,'\n');
         const boundary=at=>Number.isInteger(at)&&at>=0&&at<=basis.length&&
@@ -1081,7 +1156,7 @@
             const apply=replacement=>{
               if(!current())return;
               const source=original.slice(0,range.start)+replacement+original.slice(range.end);
-              try {commitSource(binding,source,{atomic:true});binding.textarea.value=source;n.hidden=true;renderEditorBinding(binding);refreshEditor();}
+              try {commitSource(binding,source,{atomic:true});binding.textarea.value=source;n.hidden=true;setStatus(`✓ 「${original.slice(range.start,range.end)}」を 書きかえたよ`);renderEditorBinding(binding);refreshEditor();binding.textarea.focus();binding.textarea.setSelectionRange(range.start,range.start+replacement.length);}
               catch(nextError){binding.textarea.value=source;if(binding.session)binding.session.pendingEdit={ownerKey:bindingOwner(binding),kind:'code',value:source,originalSource:original,reason:nextError.message};scheduleAutosave();showEditorFailure(binding,nextError);}
             };
             const input=proposal.input;
@@ -1104,10 +1179,11 @@
         }
         const cancel = document.createElement('button');
         cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = 'この あんないを とじる';
-        cancel.onclick = () => { choices.remove(); binding.textarea.focus(); };
+        cancel.onclick = () => closeAssist(binding);
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
+      if(stashAssist(binding,error)&&!editorCheckScheduled(binding,error.proposalSource))scheduleAssist(binding);
       // The status line speaks in Akari's voice (F-18): in code it points at the line and the explanation by the code,
       // which keeps the rule's own wording; a block view's message is said as it is.
       const firstDiagnostic = error?.diagnostics?.[0] || error, issueLine = firstDiagnostic?.line || error?.line;
@@ -1227,13 +1303,13 @@
         validateDesignProject(next);
         if (plan.projectFingerprint !== currentFingerprint() || plan.ownerKey !== bindingOwner(binding))
           throw new AkariError('F503', '取りこむ ところが かわりました。もう一度 中身を たしかめて ください');
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         binding.session.pendingEdit = null; binding.textarea.value = readSource(binding);
         hideSourceImport(); pushHistoryNow();
         project = next;
         if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
         invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
-        clearTimeout(historyTimer); pushHistoryNow();
+        dropHistoryTimer(); pushHistoryNow();
         setStatus('いまの 本文は のこして、えらんだ ところに 本文を 入れたよ'); return true;
       } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
     }
@@ -1424,11 +1500,11 @@
             if(JSON.stringify([row.event,row.filter||null])===JSON.stringify([metadata.event,metadata.filter||null]))return {ok:true,changed:false};
             if(!row.id)row.id=ensureUniqueId('script');
             Object.assign(row,metadata);if(metadata.filter===undefined)delete row.filter;
-            validateDesignProject(next);clearTimeout(historyTimer);
+            validateDesignProject(next);dropHistoryTimer();
             if(!hasPendingEditor())pushHistoryNow();
             project=next;currentEvent=row.event;selectedScriptId=row.id;
             invalidateEditors();getEditorSession(binding,{force:true});binding.session.pendingEdit=null;
-            clearEditorFailure(binding);markDirty();clearTimeout(historyTimer);pushHistoryNow();
+            clearEditorFailure(binding);markDirty();dropHistoryTimer();pushHistoryNow();
             renderSelectors();renderEditorBinding(binding);refreshEditor();
             return {ok:true,changed:true};
           }
@@ -1883,7 +1959,7 @@
       if (modelLocked() || !meijinProcedureId) return;
       try {
         const next = prepareMeijinProcedureRename(project, meijinProcedureId, $('#meijinProcName').value);
-        clearTimeout(historyTimer); pushHistoryNow();
+        dropHistoryTimer(); pushHistoryNow();
         project = next;
         invalidateEditors(); markDirty(); pushHistoryNow();
         renderCallableOptions('meijin:' + meijinProcedureId); showMeijinProcedure(meijinProcedureId);
@@ -2522,7 +2598,7 @@
     }
     function pushHistoryNow(e = snapshot()) {
       // An immediate snapshot supersedes the queued edit's older view state.
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       lastObservedFingerprint = e.stateFingerprint;
       if (!history.length || history.at(-1).stateFingerprint !== e.stateFingerprint) {
         history.push(e);
@@ -2753,7 +2829,7 @@
       };
     }
     function resetHistory() {
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       initialSnapshot = snapshot();
       history = [initialSnapshot];
       redo = [];
@@ -2763,10 +2839,12 @@
       dirty = false;
       updateDirty();
     }
+    function dropHistoryTimer() { clearTimeout(historyTimer); historyTimer=0; queuedHistory=null; }
     function queueHistory(fingerprint, stateFingerprint) {
       if (modelLocked()) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       const queued = snapshot(fingerprint, stateFingerprint);
+      queuedHistory = queued;
       historyTimer = setTimeout(() => {
         pushHistoryNow(queued);
       }, 250);
@@ -2859,7 +2937,7 @@
       if (!tutorialAllows(tutorial,'undo')) return;
       if (modelLocked() || composingAny() || activeDragCleanup || colorEdit) return;
       flushActiveEditor();
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       const cur = snapshot();
       if (history.at(-1)?.stateFingerprint !== cur.stateFingerprint) history.push(cur);
       if (history.length <= 1) return;
@@ -2873,7 +2951,7 @@
       if (modelLocked() || composingAny() || activeDragCleanup || colorEdit || !redo.length) return;
       flushActiveEditor();
       if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       const e = redo.pop();
       history.push(e);
       restoreSnap(e);
@@ -3205,7 +3283,7 @@
       }
       captureEditorView(mainEditor);
       if (!modelLocked()) {
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
       }
       const sameObject = selectedId === id;
@@ -3334,7 +3412,7 @@
       validateDesignProject(candidate);
       Object.assign(c, next);
       markDirty();
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       return true;
     }
@@ -3433,7 +3511,7 @@
           e.preventDefault();
           e.stopPropagation();
           if (!flushActiveEditor()) return;
-          clearTimeout(historyTimer);
+          dropHistoryTimer();
           pushHistoryNow();
           let next;
           if (mode === 'scale') {
@@ -3896,11 +3974,11 @@
       const candidate = cloneDesignProject(project);
       candidate.components.find((x) => x.id === c.id)[field] = next;
       validateDesignProject(candidate);
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       c[field] = next;
       markDirty();
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       return true;
     }
@@ -3979,7 +4057,7 @@
     function openColorPicker(c, field, label) {
       if (modelLocked() || colorEdit || !flushActiveEditor() || componentById(c.id) !== c)
         return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       colorEdit = {
         id: c.id,
@@ -4192,7 +4270,7 @@
       activeDragCleanup?.();
       const c = componentById(id);
       if (!c) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       const pointerId = ev.pointerId,
         before = { ...c },
@@ -4288,7 +4366,7 @@
       activeDragCleanup?.();
       const c = componentById(id);
       if (!designResizeMode(c)) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       const pointerId = ev.pointerId,
         before = { ...c },
@@ -4424,7 +4502,7 @@
         next.components.push(copy);
         // Validate before committing; image bytes remain shared immutable assets.
         serializeProject(next, assetStore);
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
         project = next;
         selectedId = copy.id;
@@ -4434,7 +4512,7 @@
         renderAll();
         loadEditor();
         refreshEditor();
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
         setStatus(`「${source.name}」の 見た目のコピー「${copy.name}」を 作ったよ`);
       } catch (error) {
@@ -4448,7 +4526,7 @@
       if (!c) return;
       if (!allowResourceDelete('component:' + c.id, $('#properties'), c.id)) return;
       if (!confirm('「' + c.name + '」を けす？')) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       const id = c.id;
       project.components = project.components.filter((x) => x.id !== id);
@@ -4621,7 +4699,7 @@
     // x/y (a drop) is the new centre; without them the part is placed where it can be seen (newPartPlace).
     function addComponent(type, x = null, y = null, spritePreset = '') {
       if (modelLocked() || !flushActiveEditor()) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       if (modelLocked() || !['label', 'button', 'input', 'box', 'sprite'].includes(type)) return;
       if (project.components.length >= LIMITS.components) {
@@ -5358,6 +5436,7 @@
     // mistake or with an edit not yet decided shows no notice. Until the work is checked again, a body whose text has not
     // changed keeps its notices and a changed body shows none. 作品チェック (くわしく・名人) keeps its list.
     let noticeKey = null, noticeWanted = null, noticeList = [], noticeTimer = 0, noticeSources = new Map(), pointedNotices = '';
+    let signalNameCache={key:null,names:{sent:[],received:[],unfilteredReceivers:0}};
     function noticeSourceOf(owner) {
       return scriptBySourceKey(project, owner)?.source ?? project.actions.find(a => owner === 'action:' + a.id)?.source
         ?? project.functions.find(f => owner === 'function:' + f.id)?.source ?? null;
@@ -5381,9 +5460,14 @@
       if (busy) { noticeTimer = setTimeout(checkNotices, 400); return; }
       noticeWanted = null;
       const key = JSON.stringify(project);
+      let namesChanged=false;
       if (key !== noticeKey) {
         let checked = { items: [], notes: [] };
         try { checked = compileProject(project); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+        if(!checked.errors?.length){
+          const names=collectSignalNames(checked);namesChanged=JSON.stringify([names.sent,names.received])!==JSON.stringify([signalNameCache.names.sent,signalNameCache.names.received]);
+          signalNameCache={key,names};
+        }
         // A 名人 text's flows are items of their own: a notice belongs to the body (the document) its item comes from.
         const owner = where => checked.items?.find(item => item.key === where)?.documentKey || where;
         noticeList = (checked.notes || []).map(d => ({ ...d, owner: owner(d.where) }));
@@ -5393,6 +5477,7 @@
       const shown = b => (b.session?.notices || []).map(d => d.line + ':' + d.code).join();
       for (const binding of [mainEditor, draftEditor]) {
         if (!binding.view || !binding.session) continue;
+        if(namesChanged&&binding.session.mode==='blocks'){renderEditorBinding(binding);continue;}
         if (shown(binding) === bodyNotices(binding.session).map(d => d.line + ':' + d.code).join()) continue;
         if (binding === mainEditor) refreshEditor(); else renderEditorBinding(binding);
       }
@@ -5460,7 +5545,7 @@
         // The note under the code that holds the text not yet taken says the same.
         if (!headingAst && found !== errs && binding.session?.pendingEdit?.value === source &&
             !$(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden)
-          showEditorFailure(binding, Object.assign(new AkariError(found[0].code, found[0].message, found[0].line, found[0].column), { diagnostics: found }));
+          showEditorFailure(binding, Object.assign(new AkariError(found[0].code, found[0].message, found[0].line, found[0].column), { diagnostics: found, proposalSource:source }));
         // The status line points to the line, as for a reading error (and says so no more once it is fixed).
         if (headingAst && found.length && binding.session?.pendingEdit?.value === source) {
           // As ▶ would say it: a body that could be taken has a mistake in the work (作品に), one that could not in its text.
@@ -5468,6 +5553,10 @@
           setStatus(editorFailureStatus);
         }
         if (binding === mainEditor) refreshEditor();
+        if(!headingAst&&binding.session?.pendingEdit?.value===source&&binding.assist?.contextRevision===editorContextRevision){
+          const first=found[0];
+          if(first&&stashAssist(binding,Object.assign(new AkariError(first.code,first.message,first.line,first.column),{diagnostics:found,proposalSource:source})))runAssist(binding);
+        }
       }, 250);
       return headingAst ? null : errs;
     }
@@ -5591,6 +5680,10 @@
         root.appendChild(note);
         }
       }
+      if(root===el.hints&&/合図|あいず|しらせ|知らせ|受け|うけ/.test(query)){
+        const names=signalNameCache.names,name=names.sent.find(name=>!names.received.includes(name))||names.sent[0]||'開始';
+        const note=document.createElement('p');note.className='hint-heading-note';note.textContent=`合図を 受けて 動かすには、本文の はじめに「「${name}」という合図を受けたとき、」を 書いてね`;root.append(note);
+      }
       for (const h of filtered.slice(begin, begin + 24)) {
         const b = document.createElement('button');
         b.className = 'hint-button';
@@ -5619,6 +5712,7 @@
           end: el.editor.selectionEnd,
           event: currentEvent,
           level: document.body.dataset.uiLevel,
+          signalNames: signalNameCache.names,
         }),
         list = $('#hintUnavailable').checked ? all : all.filter((x) => x.enabled),
         r = drawHints(el.hints, list, $('#hintSearch').value, hintPage, insertHint);
@@ -5700,12 +5794,12 @@
         const at = script ? project.scripts.indexOf(script) : -1;
         if (at >= 0) next.scripts.splice(at, 1, row); else next.scripts.push(row);
         validateDesignProject(next);
-        clearTimeout(historyTimer); pushHistoryNow();
+        dropHistoryTimer(); pushHistoryNow();
         // The draft is now the 名人 text: its reading error is not shown any more.
         if (draft != null) { if (mainEditor.session) { mainEditor.session.pendingEdit = null; mainEditor.session.blockDraft = null; } clearEditorFailure(mainEditor); }
         project = next; selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = id;
         hideSourceOverview(); invalidateEditors(); markDirty(); renderTree(); renderProperties(); loadEditor(); renderComponents();
-        clearTimeout(historyTimer); pushHistoryNow();
+        dropHistoryTimer(); pushHistoryNow();
         setStatus('「名人の本文」に うつしたよ。この 本文は コードモードで 書いてね');
       } catch (error) { showEditorFailure(mainEditor, error); }
     }
@@ -5806,7 +5900,7 @@
       }
       refreshEditor();
       if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから 動かして ください','error');refuse('書きかけの ところを 直してから「▶ 動かす」を おしてね。');return;}
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       if (hasCallableDraft()) {
         log('自分で作ったブロックを なおして いる とちゅうです。ほぞんしてから 動かして ください', 'error');
@@ -6076,6 +6170,9 @@
             }
           }
           if (e.key === 'Escape') {
+            if(m.id==='procModal'&&e.target?.closest?.('#callablePending .intent-choices,#callablePending .assist-choices')){
+              e.preventDefault();e.stopPropagation();closeAssist(draftEditor);return;
+            }
             const blockRoot = e.target?.closest?.('#callableBlocks,#blockEditor');
             if (blockRoot) return; // The block editor closes only its local interaction.
             const close = {
@@ -6199,7 +6296,7 @@
         if (why) setStatus('まだ ファイルに できないよ。' + why + (why.endsWith('。') ? '' : '。'));
         return;
       }
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
@@ -6371,7 +6468,7 @@
       if (approval?.fingerprint !== observed.fingerprint && !(await askLose(observed))) return;
       if (tutorial || modelLocked()) return;
       let previous = null;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
       appState = 'IMPORTING';
@@ -6840,7 +6937,7 @@
             const name=prompt('へんすう・リストの 名前',d.name);if(name===null||name.trim()===d.name)return;
             try{
               const next=prepareResourceRename(project,'data:'+d.id,name.trim(),{drafts:resourceDraftRecords()});
-              clearTimeout(historyTimer);pushHistoryNow();project=next;invalidateEditors();markDirty();pushHistoryNow();renderDataModal();refreshEditor();
+              dropHistoryTimer();pushHistoryNow();project=next;invalidateEditors();markDirty();pushHistoryNow();renderDataModal();refreshEditor();
             }catch(error){showResourceImpact({resource:d,references:[],uncertain:[{title:'名前を かえる',line:1,reason:error.message}]},body,'名前を かえる');}
           };
           row.append(info, rename, del);
@@ -6929,6 +7026,7 @@
           end: t.selectionEnd,
           definitionKind: $('#callableType').value,
           args,
+          signalNames: signalNameCache.names,
         }).filter((x) => x.enabled);
       } catch (_) {
         root.textContent = '';
@@ -7016,7 +7114,7 @@
       if (!hasCallableDraft()) return true;
       if (!confirm('自分で作ったブロックに、まだ 決めていない なおしが あるよ。なおしを すてて つづける？'))
         return false;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       if (callableLoadedKey) loadCallable(callableLoadedKey);
       else clearCallable(callableDraftCore.type);
@@ -7098,7 +7196,7 @@
           source: d.source,
         });
         validateDesignProject(next);
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
         project = next;
         invalidateEditors();
@@ -7120,7 +7218,7 @@
       const kind = project.actions.some(x => x.id === id) ? 'action' : 'function';
       if (!allowResourceDelete(`${kind}:${id}`, $('#procModal .dialog-body'))) return;
       if (!confirm(`「${d.name}」を けす？`)) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       project.actions = project.actions.filter((x) => x.id !== id);
       project.functions = project.functions.filter((x) => x.id !== id);
@@ -7196,7 +7294,7 @@
             const options = { drafts: resourceDraftRecords() }, impact = resourceChangeImpact(project, `${kind}:${obj.id}`, options);
             if (impact.uncertain.length) { showResourceImpact(impact, body, '名前を かえる'); return; }
             const next = prepareResourceRename(project, `${kind}:${obj.id}`, v, options);
-            clearTimeout(historyTimer); pushHistoryNow(); project = next;
+            dropHistoryTimer(); pushHistoryNow(); project = next;
             markDirty();
             pushHistoryNow();
             renderAll(); loadEditor();
@@ -7544,7 +7642,7 @@
     async function runAssetImport(label, work, onError) {
       if (modelLocked()) return;
       if (!flushActiveEditor()) return;
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       pushHistoryNow();
       recoveryEpoch++;
       appState = 'IMPORTING';
@@ -7808,6 +7906,7 @@
       t.addEventListener('compositionstart', () => {
         recoveryEpoch++;
         composingEditors.add(t);
+        cancelAssist(t===el.editor?mainEditor:draftEditor);
         if (t === el.editor) refreshEditor();
       });
       t.addEventListener('compositionend', () => {
@@ -7833,7 +7932,7 @@
       }
       captureEditorView(mainEditor);
       if (!modelLocked()) {
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
       }
       hideSourceOverview();
@@ -7850,12 +7949,12 @@
       if (modelLocked() || !currentIsMeijin() || !flushActiveEditor()) return;
       const row = (selectedScriptId && project.scripts.find(x => x.id === selectedScriptId)) || meijinScripts()[0];
       if (!row || !confirm('この 名人の本文を けす？')) return;
-      clearTimeout(historyTimer); pushHistoryNow();
+      dropHistoryTimer(); pushHistoryNow();
       project.scripts = project.scripts.filter(x => x !== row);
       const rest = meijinScripts();
       if (rest.length) { selectedScriptId = rest[0].id; } else { selectedId = 'stage'; currentEvent = 'start'; selectedScriptId = null; }
       hideSourceOverview(); markDirty(); renderAll(); loadEditor(); refreshEditor();
-      clearTimeout(historyTimer); pushHistoryNow();
+      dropHistoryTimer(); pushHistoryNow();
       setStatus('名人の本文を けしたよ');
     };
     $('#scriptAdd').onclick = () => {
@@ -7865,10 +7964,10 @@
         const next = cloneDesignProject(project), id = ensureUniqueId('script');
         next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '', ...newBodyFilter(currentEvent) });
         validateDesignProject(next);
-        clearTimeout(historyTimer); pushHistoryNow();
+        dropHistoryTimer(); pushHistoryNow();
         project = next; selectedScriptId = id;
         hideSourceOverview(); markDirty(); loadEditor();
-        clearTimeout(historyTimer); pushHistoryNow();
+        dropHistoryTimer(); pushHistoryNow();
         el.editor.focus();
       } catch (error) { showEditorFailure(mainEditor, error); }
     };
@@ -7972,7 +8071,7 @@
       draftEditor.view.cancel();
       headerPending=null;
       for(const control of [mainEditor.textarea,draftEditor.textarea,$('#callableName'),$('#callableArgs'),$('#callablePhrase')])composingEditors.delete(control);
-      clearTimeout(historyTimer);
+      dropHistoryTimer();
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
       activeDragCleanup?.();
@@ -8325,7 +8424,7 @@
       try {
         const {frames,cursor}=recoveryData.restored;
         workspaceIdentity++;
-        clearTimeout(historyTimer);clearTimeout(autosaveTimer);
+        dropHistoryTimer();clearTimeout(autosaveTimer);
         lastSavedFingerprint=recoveryData.lastSavedFingerprint;
         lastSavedEditorFingerprint=recoveryData.lastSavedEditorFingerprint;
         history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
@@ -8423,7 +8522,7 @@
         },
         getSession: () => getEditorSession(binding),
         getProject: () => project,
-        getContext: () => bindingContext(binding),
+        getContext: () => ({...bindingContext(binding),signalNames:()=>signalNameCache.names}),
         tutorialActive: () => !!tutorial,
         onDestinationSelected: selectTutorialInsertion,
         onPresentation: refreshTutorialPresentation,
@@ -8564,7 +8663,7 @@
           event.stopImmediatePropagation();
           return;
         }
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
       },
       true,
@@ -8585,7 +8684,7 @@
           event.stopImmediatePropagation();
           return;
         }
-        clearTimeout(historyTimer);
+        dropHistoryTimer();
         pushHistoryNow();
       },
       true,

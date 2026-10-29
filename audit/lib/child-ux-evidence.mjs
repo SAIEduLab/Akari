@@ -11,7 +11,8 @@ import {verifySpeechNameLayoutReport} from './speech-name-layout-contract.mjs';
 import {verifyPreviewReport} from './speech-preview-contract.mjs';
 import {verifyComponentControls} from './component-controls-contract.mjs';
 import {verifyChildDiagnosticsReport} from './child-diagnostics-contract.mjs';
-export const requiredBundleFiles={composition:['execution.json','child-ux-static.json','child-ux-matrix.json','ux-normal-matrix.json','aggregate.json'],editing:['execution.json','child-ux-language.json','child-language-ui.json','insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json']};
+import {verifyCodeAssistReport,verifyCodeAssistBrowserReport,verifyCodeAssistVerification} from './code-assist-contract.mjs';
+export const requiredBundleFiles={composition:['execution.json','child-ux-static.json','child-ux-matrix.json','ux-normal-matrix.json','aggregate.json','code-assist-node.json','code-assist-browser.json','code-assist-verify.json'],editing:['execution.json','child-ux-language.json','child-language-ui.json','insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json']};
 export function verifyReportPlatform(file,report,platform){
   const actual={
     'insertion-context.json':()=>report.execution?.platform,
@@ -40,6 +41,7 @@ export function verifyBundleResults(kind,dir,inputs,provenance){
   const execution=read(dir,'execution.json');verifyAcceptanceExecution(execution,kind,inputs);
   for(const row of execution.steps){assert.equal(path.basename(row.log),row.log);assert.ok(fs.statSync(path.join(dir,row.log)).isFile());}
   if(kind==='composition'){
+    verifyCodeAssistReport(read(dir,'code-assist-node.json'));verifyCodeAssistBrowserReport(read(dir,'code-assist-browser.json'));verifyCodeAssistVerification(read(dir,'code-assist-verify.json'),fs.readFileSync(path.join(dir,'code-assist-node.json')),fs.readFileSync(path.join(dir,'code-assist-browser.json')));
     const fixed=read(dir,'aggregate.json');assert.equal(fixed.status,'MACHINE_PASS');assert.equal(fixed.uxAcceptance,false);
     // Execute only the unchanged independent validators, never the browser tasks again.
     const before=sha(fs.readFileSync(path.join(dir,'aggregate.json')));

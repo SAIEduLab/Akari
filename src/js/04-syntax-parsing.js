@@ -2515,8 +2515,8 @@
     const now=condition?'もし'+formatCondition(condition,'if')+'、':'もし〜なら、',wait=condition?formatCondition(condition,'until')+'待つ。':'〜になるまで待つ。';
     return `「${written}になったら、」は、いくつかの 意味に とれます。いま しらべるなら「${now}」、そう なるまで 待つなら「${wait}」、そうなる たびに するなら 名人の本文で「${written}になったとき、」と 書きます`;
   }
-  function sentenceDiagnostic(message,line,choices=[],draftRole=null) {
-    const error=new AkariError(message.startsWith(MEIJIN_ONLY_MESSAGE)?'S317':'P205',message.replace(/\n/g,' '),line?.lineNo||0,1),range=sourceRange(line?.mapped?.positions||[]);
+  function sentenceDiagnostic(message,line,choices=[],draftRole=null,code=null) {
+    const error=new AkariError(code||(message.startsWith(MEIJIN_ONLY_MESSAGE)?'S317':'P205'),message.replace(/\n/g,' '),line?.lineNo||0,1),range=sourceRange(line?.mapped?.positions||[]);
     if(choices.length)error.proposals=choices.map(choice=>({...choice,source:choice.source.replace(/\n/g,'\n'+' '.repeat(line?.indent||0)),start:range?.start??line?.start??0,end:range?.end??line?.end??0}));
     if(draftRole)error.draftRole=draftRole;
     return error;
@@ -2553,6 +2553,7 @@
       return {label:choice===0?'前の 文と 回る 文の 両方を くり返す':'前の 文は 一度、回る 文だけを くり返す',source:replacement,start:firstRange.start,end};
     });
   }
+  let checkingSentenceIntentReads = false;
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null,source=null) {
     const code=line.code,mask=surfaceMask(code);let p;
     const inlineIf=/^(もし[^、]+?、)(.+)$/.exec(mask);
@@ -2601,7 +2602,14 @@
         throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?'。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かす ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます':''),line,parseSyntax(split+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split}]:[],{kind:'Sequence'});}}
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).
-    const reads=source=>{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。',source+'。\n  何もしない。']){try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
+    const reads=source=>{
+      // A failed trial needs no further correction trials; only its readable AST is used here.
+      if(checkingSentenceIntentReads)return false;
+      checkingSentenceIntentReads=true;
+      try{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。',source+'。\n  何もしない。']){
+        try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}
+      }return false;}finally{checkingSentenceIntentReads=false;}
+    };
     const wholeScreenTouch=/(^|もし、?|、|が|は)画面に(?:ふれ|触れ)/.exec(mask);
     if(wholeScreenTouch&&symbols?.project&&namesStage(symbols.project,'画面')){const at=wholeScreenTouch.index+wholeScreenTouch[1].length,source=code.slice(0,at)+'画面のはし'+code.slice(at+2);throw sentenceDiagnostic('画面の はしの ことなら「画面のはし」と 書きます',line,reads(source)?[{label:'画面の はしに する',source}]:[],{kind:'IfStatement'});}
     // 画面の下にふれていれば / 画面の右にふれたとき: one side of the screen is 画面の下のはし (no part may be named 画面).
@@ -2736,7 +2744,7 @@
         // 1秒ごとに、 is a 名人 heading: the S317 text (LANGUAGE.md: 名人の本文だけの種類), then how an ordinary body repeats
         // with a wait (T2-05, MC-044).
         if((p=surfaceCapture(/^(?:[^、。\u0001]+?は、?)?([^、。]+?)秒(?:間)?ごとに、?(.*)$/d,code,mask))&&unread())
-          throw sentenceDiagnostic(`${MEIJIN_ONLY_MESSAGE}。ふつうの 本文では「ずっとくり返す。」の 中に、する ことと「${p[0].text}秒待つ。」を 書きます`,line,[],{kind:'Forever'});
+          throw sentenceDiagnostic(ctx.definitionKind==='function'?'「答えを もとめる」の 中では、「1秒ごとに、」も「1秒待つ。」も 使えません':ctx.definitionKind==='action'?`ここでは「ずっとくり返す。」の 中に、する ことと「${p[0].text}秒待つ。」を 書きます`:`${MEIJIN_ONLY_MESSAGE}。ふつうの 本文では「ずっとくり返す。」の 中に、する ことと「${p[0].text}秒待つ。」を 書きます`,line,[],{kind:'Forever'},'S317');
       }
       // 2秒かけて、ねこは、…: the time is written after who does it (ねこは、2秒かけて、…).
       if((p=surfaceCapture(/^([^、。\u0001]+?秒(?:間)?かけて)、?([^、。\u0001]+?)(?:は|が)、?(.+)$/d,code,mask))&&(p[1].text==='自分'||parts.some(c=>c.name===p[1].text.replace(/^【(.*)】$/,'$1')))&&unread()){

@@ -56568,6 +56568,117 @@
           }
         ]
       }
+    },
+    {
+      "id": "MC-766",
+      "item": "MI-334",
+      "kind": "check",
+      "polarity": "negative",
+      "title": "相手に受け手がない",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "名人の本文で相手の部品に合図を送るとき、その相手に受ける本文が無ければ、相手ごとに知らせます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ"
+          },
+          {
+            "name": "犬"
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、\n  犬に「出発」と知らせる。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": false,
+        "notices": [
+          {
+            "line": 2,
+            "contains": "犬には、「出発」の 合図を 受ける 本文が ありません"
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-767",
+      "item": "MI-334",
+      "kind": "check",
+      "polarity": "positive",
+      "title": "相手に受け手がある",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "名人の本文で相手の部品に合図を送るとき、その相手に受ける本文が無ければ、相手ごとに知らせます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ"
+          },
+          {
+            "name": "犬"
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、\n  犬に「出発」と知らせる。"
+          },
+          {
+            "owner": "犬",
+            "source": "「出発」という合図を受けたとき、\n  何もしない。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": false,
+        "noNotices": true
+      }
+    },
+    {
+      "id": "MC-768",
+      "item": "MI-334",
+      "kind": "check",
+      "polarity": "positive",
+      "title": "相手をリストで決める",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "名人の本文で相手の部品に合図を送るとき、その相手に受ける本文が無ければ、相手ごとに知らせます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ"
+          },
+          {
+            "name": "犬"
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、\n  なかまに「出発」と知らせる。"
+          }
+        ],
+        "lists": {
+          "なかま": []
+        }
+      },
+      "expect": {
+        "stops": false,
+        "noNotices": true
+      }
     }
   ]
 }

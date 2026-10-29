@@ -2055,6 +2055,59 @@
     }
     return notes;
   }
+  function collectSignalNames(compiled) {
+    const sent=[],received=[],senders=[],receivers=[];let unfilteredReceivers=0,dynamicSenders=0;
+    const append=(list,name)=>{if(!list.includes(name))list.push(name);};
+    for(const item of compiled.items||[]){
+      const ast=compiled.astByKey?.get(item.key)||item.ast;if(!ast)continue;
+      if(item.event==='message'){
+        const name=item.filter?.message;
+        receivers.push({name:name??null,item,ast});
+        if(name==null)unfilteredReceivers++;
+        else if(!String(name).startsWith('拡張:')||EXTENSION_HOST.describe(String(name).slice(3),'events'))append(received,name);
+      }
+      const visit=node=>{if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
+        if(['Broadcast','BroadcastAndWait'].includes(node.kind)){
+          if(node.message?.kind==='StringLiteral'){const name=node.message.value;senders.push({name,node,item});if(!String(name).startsWith('拡張:'))append(sent,name);}
+          else dynamicSenders++;
+        }
+        for(const [key,value]of Object.entries(node))if(key!=='sourceSpan'&&value&&typeof value==='object')visit(value);
+      };visit(ast);
+    }return {sent,received,unfilteredReceivers,dynamicSenders,senders,receivers};
+  }
+  function signalNotes(project,compiled) {
+    if(compiled.errors?.length)return [];
+    const names=collectSignalNames(compiled),notes=[],symbols=compiled.symbols||buildSymbols(project),unreceived=names.sent.filter(n=>!names.received.includes(n)),unsent=names.received.filter(n=>!names.sent.includes(n));
+    const note=(code,item,node,message)=>({code,notice:true,line:node?.sourceSpan?.startLine||item.ast?.sourceSpan?.startLine||1,column:node?.sourceSpan?.startColumn||1,where:item.key,message});
+    const proposal=(n,item,node,text,label)=>{
+      const location=SOURCE_RANGES.get(node),range=location&&!location.rewritten?location.range:null,script=scriptBySourceKey(project,item.documentKey||item.key);if(!range||!script)return;
+      const original=script.source,source=text.endsWith('。')&&original[range.end]==='。'?text.slice(0,-1):text;
+      try{if(parseSyntax(original.slice(0,range.start)+source+original.slice(range.end),{symbols,targetId:item.targetId,event:item.event,meijin:item.meijin}).ast)n.proposals=[{label,source,start:range.start,end:range.end,original}];}catch{}
+    };
+    const headingProposal=(n,receiver,name)=>{
+      const script=scriptBySourceKey(project,receiver.item.documentKey||receiver.item.key);if(!script)return;
+      const original=script.source,ctx={symbols,targetId:receiver.item.targetId,event:receiver.item.event,meijin:receiver.item.meijin};
+      for(const line of normalizeSource(original).lines){
+        let found;try{found=readSentenceHeading(line.code,symbols,null,ctx);}catch{continue;}
+        if(found?.heading?.event!=='message'||found.heading.filter?.message!==receiver.name)continue;
+        const token='「'+receiver.name+'」',at=line.code.indexOf(token);if(at<0||at>found.body.start)continue;
+        const range=sourceRange(line.mapped.positions,at,at+token.length),source='「'+name+'」';
+        try{if(range&&parseSyntax(original.slice(0,range.start)+source+original.slice(range.end),ctx).ast){n.proposals=[{label:'「'+name+'」の 合図に かえる',source,start:range.start,end:range.end,original}];n.line=line.lineNo;return;}}catch{}
+      }
+    };
+    for(const s of names.senders){if(s.name.startsWith('拡張:')||names.unfilteredReceivers)continue;
+      if(s.node.targets){const targets=Array.isArray(s.node.targets)?s.node.targets:[s.node.targets];
+        for(const target of targets)if(target.kind==='PartRef'&&!names.receivers.some(r=>r.item.targetId===project.components.find(c=>c.name===target.name)?.id&&(r.name===s.name||r.name==null)))notes.push(note('I138',s.item,s.node,`${target.name}には、「${s.name}」の 合図を 受ける 本文が ありません。${target.name}の 本文の はじめに「${target.name}が「${s.name}」の合図を受けたとき、」と 書きます`));
+      }else if(!names.received.includes(s.name)){
+        const n=note('I136',s.item,s.node,`「${s.name}」の 合図を 受ける 本文が、この 作品に ありません。受ける 部品の 本文の はじめに「「${s.name}」という合図を受けたとき、」と 書きます`);
+        if(unsent.length===1)proposal(n,s.item,s.node,formatScript({kind:'Script',body:[{...s.node,message:{kind:'StringLiteral',value:unsent[0]}}]}),`「${unsent[0]}」の 合図に かえる`);notes.push(n);
+      }
+    }
+    if(!names.dynamicSenders)for(const r of names.receivers){if(r.name==null||r.name.startsWith('拡張:')||names.sent.includes(r.name))continue;
+      const heading=r.ast.heading,n=note('I137',r.item,heading||r.ast,`「${r.name}」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`);
+      if(heading&&unreceived.length===1)headingProposal(n,r,unreceived[0]);notes.push(n);
+    }return notes;
+  }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -2138,6 +2191,10 @@
         };
         visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
       }
+    }
+    for(const note of signalNotes(project,compiled)){
+      const key=note.where+'|'+note.line+'|'+note.column+'|'+note.code;
+      if(!seen.has(key)){seen.add(key);notes.push(note);}
     }
     return notes;
   }
