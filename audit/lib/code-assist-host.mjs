@@ -66,5 +66,5 @@ export function assistObservation(api,project,test){
   let parsed,exception;try{parsed=api.parseSyntax(source,trigger);}catch(error){exception=String(error);}
   const diagnostic=parsed?.syntaxDiagnostics?.[0];
   const candidates=exception?[]:api.assistCandidates(project,source,verify,diagnostic);
-  return {code:diagnostic?.code||null,exception,candidates:clone(candidates),seeds:clone(api.assistSeeds(source,verify.symbols,verify)),sourceUnchanged:source===test.input.source,projectUnchanged:JSON.stringify(project)===before,historyUnchanged:application===null&&api.app===null};
+  return {code:diagnostic?.code||null,inputUnreadable:parsed?.ast===null,exception,candidates:clone(candidates),seeds:clone(api.assistSeeds(source,verify.symbols,verify)),sourceUnchanged:source===test.input.source,projectUnchanged:JSON.stringify(project)===before,historyUnchanged:application===null&&api.app===null};
 }

@@ -2079,33 +2079,35 @@
     if(compiled.errors?.length)return [];
     const names=collectSignalNames(compiled),notes=[],symbols=compiled.symbols||buildSymbols(project),unreceived=names.sent.filter(n=>!names.received.includes(n)),unsent=names.received.filter(n=>!names.sent.includes(n));
     const note=(code,item,node,message)=>({code,notice:true,line:node?.sourceSpan?.startLine||item.ast?.sourceSpan?.startLine||1,column:node?.sourceSpan?.startColumn||1,where:item.key,message});
-    const proposal=(n,item,node,text,label)=>{
-      const location=SOURCE_RANGES.get(node),range=location&&!location.rewritten?location.range:null,script=scriptBySourceKey(project,item.documentKey||item.key);if(!range||!script)return;
-      const original=script.source,source=text.endsWith('。')&&original[range.end]==='。'?text.slice(0,-1):text;
+    const proposal=(n,item,node,text,label,name)=>{
+      const location=SOURCE_RANGES.get(node),range=location&&!location.rewritten?location.range:SOURCE_RANGES.get(node.message)?.range,script=scriptBySourceKey(project,item.documentKey||item.key);if(!range||!script)return;
+      const original=script.source,source=location?.rewritten?formatExpression({kind:'StringLiteral',value:name}):text.endsWith('。')&&original[range.end]==='。'?text.slice(0,-1):text;
       try{if(parseSyntax(original.slice(0,range.start)+source+original.slice(range.end),{symbols,targetId:item.targetId,event:item.event,meijin:item.meijin}).ast)n.proposals=[{label,source,start:range.start,end:range.end,original}];}catch{}
     };
-    const headingProposal=(n,receiver,name)=>{
+    const receiverHeading=receiver=>{
       const script=scriptBySourceKey(project,receiver.item.documentKey||receiver.item.key);if(!script)return;
       const original=script.source,ctx={symbols,targetId:receiver.item.targetId,event:receiver.item.event,meijin:receiver.item.meijin};
       for(const line of normalizeSource(original).lines){
+        if(line.lineNo<(receiver.ast.sourceSpan?.startLine||1)||line.lineNo>(receiver.ast.sourceSpan?.endLine||Infinity))continue;
         let found;try{found=readSentenceHeading(line.code,symbols,null,ctx);}catch{continue;}
         if(found?.heading?.event!=='message'||found.heading.filter?.message!==receiver.name)continue;
+        const actor=found.heading.actorRef;if(actor?.kind==='named'&&(namesStage(project,actor.name)?'stage':project.components.find(c=>c.name===actor.name)?.id)!==receiver.item.targetId)continue;
         const token='「'+receiver.name+'」',at=line.code.indexOf(token);if(at<0||at>found.body.start)continue;
-        const range=sourceRange(line.mapped.positions,at,at+token.length),source='「'+name+'」';
-        try{if(range&&parseSyntax(original.slice(0,range.start)+source+original.slice(range.end),ctx).ast){n.proposals=[{label:'「'+name+'」の 合図に かえる',source,start:range.start,end:range.end,original}];n.line=line.lineNo;return;}}catch{}
+        return{line:line.lineNo,range:sourceRange(line.mapped.positions,at,at+token.length),original,ctx};
       }
     };
+    const headingProposal=(n,location,name)=>{const {range,original,ctx}=location,source=formatExpression({kind:'StringLiteral',value:name});try{if(range&&parseSyntax(original.slice(0,range.start)+source+original.slice(range.end),ctx).ast)n.proposals=[{label:'「'+name+'」の 合図に かえる',source,start:range.start,end:range.end,original}];}catch{}};
     for(const s of names.senders){if(s.name.startsWith('拡張:')||names.unfilteredReceivers)continue;
       if(s.node.targets){const targets=Array.isArray(s.node.targets)?s.node.targets:[s.node.targets];
         for(const target of targets)if(target.kind==='PartRef'&&!names.receivers.some(r=>r.item.targetId===project.components.find(c=>c.name===target.name)?.id&&(r.name===s.name||r.name==null)))notes.push(note('I138',s.item,s.node,`${target.name}には、「${s.name}」の 合図を 受ける 本文が ありません。${target.name}の 本文の はじめに「${target.name}が「${s.name}」の合図を受けたとき、」と 書きます`));
       }else if(!names.received.includes(s.name)){
         const n=note('I136',s.item,s.node,`「${s.name}」の 合図を 受ける 本文が、この 作品に ありません。受ける 部品の 本文の はじめに「「${s.name}」という合図を受けたとき、」と 書きます`);
-        if(unsent.length===1)proposal(n,s.item,s.node,formatScript({kind:'Script',body:[{...s.node,message:{kind:'StringLiteral',value:unsent[0]}}]}),`「${unsent[0]}」の 合図に かえる`);notes.push(n);
+        if(unsent.length===1)proposal(n,s.item,s.node,formatScript({kind:'Script',body:[{...s.node,message:{kind:'StringLiteral',value:unsent[0]}}]}),`「${unsent[0]}」の 合図に かえる`,unsent[0]);notes.push(n);
       }
     }
     if(!names.dynamicSenders)for(const r of names.receivers){if(r.name==null||r.name.startsWith('拡張:')||names.sent.includes(r.name))continue;
       const heading=r.ast.heading,n=note('I137',r.item,heading||r.ast,`「${r.name}」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`);
-      if(heading&&unreceived.length===1)headingProposal(n,r,unreceived[0]);notes.push(n);
+      const location=heading?receiverHeading(r):null;if(location)n.line=location.line;if(location&&unreceived.length===1)headingProposal(n,location,unreceived[0]);notes.push(n);
     }return notes;
   }
   function projectNotes(project, compiled) {
@@ -2193,7 +2195,7 @@
       }
     }
     for(const note of signalNotes(project,compiled)){
-      const key=note.where+'|'+note.line+'|'+note.column+'|'+note.code;
+      const key=note.where+'|'+note.line+'|'+note.column+'|'+note.code+(note.code==='I138'?'|'+note.message:'');
       if(!seen.has(key)){seen.add(key);notes.push(note);}
     }
     return notes;

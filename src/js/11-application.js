@@ -1122,7 +1122,7 @@
       const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
       const presentation=JSON.stringify([error?.proposalSource,editorContextRevision,proposals.map(p=>p.source),reason]);
       const retain=binding.failurePresentation===presentation;
-      if(!retain){cancelAssist(binding);showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);binding.failurePresentation=presentation;}
+      if(!retain){cancelAssist(binding);for(const choices of n.querySelectorAll('.intent-choices,.assist-choices,.assist-none'))choices.remove();showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);binding.failurePresentation=presentation;}
       if (proposals.length&&!retain) {
         const original = binding.textarea.value, basis=error.proposalSource,
           sameSource=typeof basis==='string'&&basis.replace(/\r\n?/g,'\n')===original.replace(/\r\n?/g,'\n');

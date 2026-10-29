@@ -1241,7 +1241,7 @@ export const codeAssistIds=[
  "ASSIST-1596"
 ];
 
-export const codeAssistBrowserIds=['ui/keyboard','ui/mouse','ui/close','ui/escape','ui/callable-escape','ui/ime','ui/cached-error','ui/two-sentences','ui/multiline','ui/history-queued','ui/history-after-undo','ui/original-proposals','ui/short-call-proposals','ui/stale-source','ui/runtime','ui/1180','ui/1024','ui/390','signals/send','signals/receive','signals/switch','signals/refresh'];
+export const codeAssistBrowserIds=['ui/keyboard','ui/mouse','ui/close','ui/escape','ui/callable-escape','ui/ime','ui/cached-error','ui/two-sentences','ui/multiline','ui/history-queued','ui/history-after-undo','ui/original-proposals','ui/short-call-proposals','ui/stale-source','ui/revision-same-message','ui/runtime','ui/1180','ui/1024','ui/390','signals/send','signals/receive','signals/switch','signals/refresh'];
 export const signalNameCases=[
   {id:'signals/unique',world:{parts:['ねこ'],signals:{sent:['出発','出発','開始'],received:['開始','受取る','開始']}},expected:{sent:['出発','開始'],received:['開始','受取る'],unfilteredReceivers:0,dynamicSenders:0}},
   {id:'signals/exact',world:{parts:['ねこ'],signals:{sent:[' ａ ','A','a','あ'],received:['あ','ア',' ａ ']}},expected:{sent:[' ａ ','A','a','あ'],received:['あ','ア',' ａ '],unfilteredReceivers:0,dynamicSenders:0}},
@@ -1249,6 +1249,47 @@ export const signalNameCases=[
   {id:'signals/dynamic',world:{parts:['ねこ'],variables:['点数'],scripts:[{id:'dynamic-signal',targetId:'sprite-1',event:'start',source:'点数の合図を送る。'}]},expected:{sent:[],received:[],unfilteredReceivers:0,dynamicSenders:1}},
   {id:'signals/action',world:{parts:['ねこ'],actions:['知らせる']},actionSource:'「定義から」の合図を送る。',expected:{sent:['定義から'],received:[],unfilteredReceivers:0,dynamicSenders:0}},
 ];
+const assistRegressionInputs=[
+  ['compose-default-number','10歩進んで、音を出す。'],
+  ['compose-duplicate','止まって、この動きを止める。'],
+  ['heading-target','コピーを作ったとき、\n  何もしない。',{targetId:'button-1'}],
+  ['first-diagnostic-range','もし点数が10より上なら、\n  10歩進む。\n右へ30歩行く。'],
+  ['function-forever','ずっとずっとくり返す。\n  0を答えとして返す。',{definitionKind:'function',definition:'計算'}],
+  ['function-until','点数が10になるまでループする。\n  0を答えとして返す。',{definitionKind:'function',definition:'計算'}],
+  ['argument-unit','ジャンプを5秒で行う。'],
+  ['local-scope','体力を1あげる。'],
+  ['costume-scope','「犬のすがた」にかえる。'],
+];
+const repeatedReceiverSource='犬が「開始」の合図を受けたとき、\n  何もしない。\n猫が「開始」の合図を受けたとき、\n  何もしない。\n作品を動かしたとき、\n  犬は「出発」の合図を送る。';
+const chainedSenderSource='「出発」の合図を送って、前へ10歩進む。';
+function observeAssistRegressions(api){
+  const project=assistWorld(api,{parts:['ねこ','犬'],uiParts:['ボタン1（ボタン）'],variables:['点数'],lists:['持ち物'],sounds:['ベル'],actions:[{name:'ジャンプ',args:['高さ','時間']}],functions:[{name:'計算',args:['値']}]});
+  project.components[1].localData.variables.push({id:'dog-health',name:'体力',initialValue:0});project.components[1].costumes[0].name='犬のすがた';api.validateDesignProject(project);
+  const engine=assistRegressionInputs.map(([id,source,context={}])=>{const {trigger,verify}=assistContexts(api,project,context),parsed=api.parseSyntax(source,trigger);assert.equal(parsed.ast,null,id+' unreadable input');return{id,candidates:plain(api.assistCandidates(project,source,verify,parsed.syntaxDiagnostics[0]))};});
+  const signals=assistWorld(api,{parts:['犬','猫']});
+  signals.scripts=[{id:'s1',mode:'meijin',targetId:'meijin',event:'start',source:repeatedReceiverSource}];
+  const receivers=api.compileProject(signals);assert.deepEqual(plain(receivers.errors),[]);
+  signals.scripts[0].source='作品を動かしたとき、\n  犬と猫に「出発」と知らせる。';
+  const targeted=api.compileProject(signals);assert.deepEqual(plain(targeted.errors),[]);
+  const chained=assistWorld(api,{parts:['ねこ'],signals:{received:['開始']}});chained.scripts[0].source=chainedSenderSource;
+  const sent=api.compileProject(chained);assert.deepEqual(plain(sent.errors),[]);
+  return{engine,readings:[['パーセント','％'],['1パー','1％']].map(([a,b])=>[api.searchReading(a),api.searchReading(b)]),intents:['前へ10歩ふみだす','前に10歩およぐ','3回やる','3回する','3回おなじことをする'].map(q=>api.searchIntent(q)?.schemaId||null),receivers:plain(receivers.notes.filter(n=>n.code==='I137')),targeted:plain(targeted.notes.filter(n=>n.code==='I138')),sender:plain(sent.notes.find(n=>n.code==='I136'))};
+}
+function verifyAssistRegressions(o){
+  assert.deepEqual(o.engine.map(r=>r.id),assistRegressionInputs.map(([id])=>id));const rows=Object.fromEntries(o.engine.map(r=>[r.id,r.candidates]));
+  assert.ok(rows['compose-default-number'].some(c=>c.text.includes('「ベル」を鳴らす。')));assert.ok(rows['compose-default-number'].every(c=>!c.text.includes('440Hz')));
+  assert.ok(rows['compose-duplicate'].every(c=>c.text!=='この動きを止める。\nこの動きを止める。'));
+  assert.ok(rows['heading-target'].every(c=>c.schemaId!=='Heading:cloneStart'));
+  assert.ok(rows['first-diagnostic-range'].every(c=>c.start<13&&c.end<=13),'only the first diagnosed line is replaced');
+  for(const id of ['function-forever','function-until'])assert.ok(rows[id].every(c=>!['Forever','RepeatUntil'].includes(c.schemaId)));
+  assert.ok(rows['argument-unit'].some(c=>c.schemaId==='UserActionCall'));assert.ok(rows['argument-unit'].filter(c=>c.schemaId==='UserActionCall').every(c=>!c.text.includes('5')));
+  assert.ok(rows['local-scope'].every(c=>!c.text.includes('体力')));assert.ok(rows['costume-scope'].every(c=>c.schemaId!=='LooksCommand:SET_COSTUME'));
+  for(const pair of o.readings)assert.equal(pair[0],pair[1]);assert.deepEqual(o.intents,['MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount','RepeatCount','RepeatCount']);
+  assert.deepEqual(o.receivers.map(n=>n.line),[1,3]);assert.deepEqual(o.receivers.map(n=>n.proposals?.[0]?.start),[2,28]);
+  for(const n of o.receivers){const p=n.proposals[0];assert.equal(p.source,'「出発」');assert.equal(repeatedReceiverSource.slice(p.start,p.end),'「開始」');assert.equal(p.original,repeatedReceiverSource);}
+  assert.equal(o.targeted.length,2);assert.ok(o.targeted[0].message.startsWith('犬には、'));assert.ok(o.targeted[1].message.startsWith('猫には、'));
+  assert.equal(o.sender.proposals.length,1);assert.deepEqual(o.sender.proposals.map(p=>({source:p.source,start:p.start,end:p.end,original:p.original})),[{source:'「開始」',start:0,end:4,original:chainedSenderSource}]);
+}
 export function observeAssistChecks(api){
   const signals=signalNameCases.map(test=>{
     const p=assistWorld(api,test.world);if(test.actionSource)p.actions[0].source=test.actionSource;
@@ -1256,12 +1297,13 @@ export function observeAssistChecks(api){
     const names=api.collectSignalNames(compiled),observed=Object.fromEntries(['sent','received','unfilteredReceivers','dynamicSenders'].map(key=>[key,plain(names[key])]));return{id:test.id,observed};
   });
   const project=assistWorld(api,{parts:['ねこ']}),{trigger}=assistContexts(api,project),regression=api.parseSyntax('「やあ」とひとりごとを言う。',trigger).syntaxDiagnostics[0]?.code;
-  return{signals,regression,static:assistStaticChecks()};
+  return{signals,regression,regressions:observeAssistRegressions(api),static:assistStaticChecks()};
 }
 export function verifyAssistChecks(checks){
   assert.deepEqual(checks.signals.map(row=>row.id),signalNameCases.map(row=>row.id));
   for(let i=0;i<signalNameCases.length;i++)assert.deepEqual(checks.signals[i].observed,signalNameCases[i].expected,signalNameCases[i].id);
   assert.ok(['P201','P205'].includes(checks.regression),'known recursion regression');
+  verifyAssistRegressions(checks.regressions);
   assert.deepEqual(checks.static,assistStaticChecks(),'independent fixture and specification checks');
 }
 function assistStaticChecks(){
@@ -1290,6 +1332,7 @@ const walk=(node,visit)=>{if(!node||typeof node!=='object')return;if(Array.isArr
 
 export function verifyCodeAssistObservation(test,o,api,project){
   assert.equal(o.exception,undefined,test.id+' parser/assist exception');
+  assert.equal(o.inputUnreadable,true,test.id+' original input must be unreadable');
   assert.ok(String(test.expect.code).split('|').includes(o.code),test.id+' diagnostic: '+o.code);
   assert.equal(o.sourceUnchanged,true,test.id+' source changed');assert.equal(o.projectUnchanged,true,test.id+' project changed');assert.equal(o.historyUnchanged,true,test.id+' history changed');
   assert.ok(Array.isArray(o.candidates));assert.ok(o.candidates.length<=test.expect.maxAssist,test.id+' cap');
@@ -1344,6 +1387,7 @@ export function verifyCodeAssistReport(report){
 
 const candidate=report=>report.results.find(r=>r.observed.candidates.length)?.observed.candidates[0];
 export const codeAssistWrongMeaning=[
+  ['readable-input-accepted',r=>r.results[0].observed.inputUnreadable=false],
   ['wrong-first-candidate',r=>candidate(r).schemaId='WaitTime'],
   ['absent-candidate-shown',r=>r.results[0].observed.candidates.push({...candidate(r),schemaId:'MotionCommand:GOTO',text:'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。'})],
   ['candidate-text-changed',r=>candidate(r).text='前へ999歩進む。'],
@@ -1373,6 +1417,7 @@ export function verifyCodeAssistBrowserObservation(id,o){
   if(id==='ui/original-proposals'){unchanged(o.before,o.after);assert.equal(o.originalChoices,2);assert.equal(o.assistChoices,0);assert.equal(o.cancels,1);return;}
   if(id==='ui/short-call-proposals'){unchanged(o.before,o.after);assert.equal(o.originalChoices,1);assert.ok(o.assistChoices>0&&o.assistChoices<=4);assert.equal(o.originalBeforeAssist,true);return;}
   if(id==='ui/stale-source'){unchanged(o.pending,o.after);assert.equal(o.after.value,'左に行く。');assert.equal(o.after.pending.value,'左に行く。');return;}
+  if(id==='ui/revision-same-message'){unchanged(o.before,o.pending);assert.equal(o.replaced,true);assert.equal(o.pending.value,'右に行く。 ');assert.equal(o.after.source,'いまのばしょから、右へ10歩動く。 ');assert.equal(o.after.pending,null);assert.equal(o.after.history,o.pending.history+1);return;}
   if(id==='ui/runtime'){assert.equal(o.runtime,true);assert.equal(o.choices,0);assert.equal(o.readOnly,true);return;}
   if(id==='ui/callable-escape'){verifyChoiceView(o.view);assert.equal(o.modalOpen,true);assert.equal(o.choices,0);assert.equal(o.focus,'callableCode');return;}
   if(id.startsWith('signals/')){

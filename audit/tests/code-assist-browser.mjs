@@ -63,6 +63,7 @@ async function exercise(p,id){
   }
   await p.locator('#codeEditor').fill(input);await awaitChoices(p);await p.waitForTimeout(350);const pending=await state(p),view=await candidateView(p);
   if(id==='ui/stale-source'){await p.locator('[data-assist-choice]').first().evaluate(button=>{window.staleAssistButton=button;});await p.locator('#codeEditor').fill('左に行く。');const pending=await state(p);await p.evaluate(()=>window.staleAssistButton.click());return{pending,after:await state(p)};}
+  if(id==='ui/revision-same-message'){await p.locator('[data-assist-choice]').first().evaluate(button=>{window.staleAssistButton=button;});await p.locator('#codeEditor').fill('右に行く。 ');await p.waitForTimeout(700);await awaitChoices(p);const pending=await state(p),replaced=await p.locator('[data-assist-choice]').first().evaluate(button=>button!==window.staleAssistButton&&!document.contains(window.staleAssistButton));await p.locator('[data-assist-choice]').first().click();return{before,pending,replaced,after:await state(p)};}
   if(id==='ui/close'||id==='ui/escape'){
     if(id==='ui/close')await p.locator('[data-intent-cancel]').click();else{await p.locator('[data-assist-choice]').first().focus();await p.keyboard.press('Escape');}
     return{before,pending,view,after:await state(p),choices:await p.locator('[data-assist-choice]').count()};

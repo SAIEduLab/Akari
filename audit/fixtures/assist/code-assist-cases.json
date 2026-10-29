@@ -1935,12 +1935,8 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE_BY",
-          "text": "いまのばしょから、右へ10歩動く。\n1秒待つ。"
-        },
         "absent": [],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -4849,8 +4845,8 @@
       "expect": {
         "code": "P201",
         "first": {
-          "schemaId": "MotionCommand:GOTO",
-          "text": "もし画面のはしにふれていれば、\n  画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。"
+          "schemaId": "MotionCommand:BOUNCE",
+          "text": "画面のはしにふれていれば、はね返る。"
         },
         "contains": [
           {
@@ -4858,7 +4854,9 @@
             "text": "画面のはしにふれていれば、はね返る。"
           }
         ],
-        "absent": [],
+        "absent": [
+          "MotionCommand:GOTO"
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -33079,12 +33077,8 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "NumericUpdate:SUB",
-          "text": "点数を1へらす。\n1秒待つ。"
-        },
         "absent": [],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
