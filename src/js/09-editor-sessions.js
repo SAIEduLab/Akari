@@ -1655,7 +1655,7 @@
     if(/^\d+(?:\.\d+)?(?:秒|びょう)(?:を)?(?:待|まち|まつ)/.test(q))return {schemaId:'WaitTime'};
     if(/^\d+(?:\.\d+)?(?:秒|びょう)(?:ぐらい|くらい|のあいだ)?(?:待つ|まつ|ウエイト|うえいと|あける)$/.test(q))return {schemaId:'WaitTime'};
     if(/^(?:ゆっくり|のんびり)(?:待つ|まつ)$/.test(q))return {schemaId:'WaitTime',value:1};
-    if(/^\d+回(?:くり返|繰り返|くりかえ|やる|する|おなじことをする)/.test(q))return {schemaId:'RepeatCount'};
+    if(/^\d+回(?:くり返|繰り返|くりかえ|やる|する|(?:同じ|おなじ)ことをする)/.test(q))return {schemaId:'RepeatCount'};
     if(/(?:音楽|曲|bgm|おんがく|きょく).*かけ|(?:鳴らし|ならし)(?:おわる|終わる)まで(?:待つ|まつ)/.test(q))return {schemaId:'SoundCommand:SAMPLE_WAIT'};
     if(/みゅーと|消音/.test(q))return {schemaId:'SoundCommand:SET_VOLUME',scale:0};
     if(/(?:音量|ぼりゅーむ|音の大きさ).*(?:上げ|あげ|あっぷ|下げ|さげ|だうん)/.test(q))return {schemaId:'SoundCommand:SET_VOLUME',scale:/下げ|さげ|だうん/.test(q)?50:100};
@@ -1671,7 +1671,7 @@
     if(number&&/(?:倍|ばい)/.test(q))return {schemaId:'LooksCommand:SET_SCALE',scale:n*100};
     const color=/(黄色|茶色|水色|灰色|ぴんく|おれんじ|むらさき|赤|青|緑|白|黒)/.exec(q);
     if(color)return {schemaId:/ぺん|ペン|線|せん|かく/.test(q)?'PenCommand:SET_COLOR':'LooksCommand:SET_COLOR',color:({ぴんく:'ピンク',おれんじ:'オレンジ'})[color[1]]||color[1]};
-    const motion=/行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動|いどう|のぼる|上がる|あがる|おちる|落ちる|ずれる|とぶ|さがる|下がる|すらいど|ずらす|おりる|降りる|よける|走る|はしる|だっしゅ|わーぷ|じゃんぷ|うつる|移る|もぐる|潜る|すきっぷ|走りぬける|かけだす|とびあがる|とびおりる|ころがる|歩く|あるく|ふみだす|およぐ/;
+    const motion=/行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動|いどう|のぼる|上がる|あがる|おちる|落ちる|ずれる|とぶ|さがる|下がる|すらいど|ずらす|おりる|降りる|よける|走る|はしる|だっしゅ|わーぷ|じゃんぷ|うつる|移る|もぐる|潜る|すきっぷ|走りぬける|かけだす|とびあがる|とびおりる|ころがる|歩く|あるく|踏み出す|ふみだす|泳ぐ|およぐ/;
     if(/あいだ|間/.test(q)&&motion.test(q))return {schemaId:'ContinuousRule',direction:direction[0]?.[0]||'right'};
     if(/(?:よこ|横|たて|縦)/.test(q)&&motion.test(q)&&!/回|まわ|向|むく/.test(q))return {schemaId:'MotionCommand:MOVE_BY',direction:/よこ|横/.test(q)?'right':'up',directions:/よこ|横/.test(q)?['right','left']:['up','down']};
     if(/(?:前|まえ|前方|先)(?:へ|に)|まっすぐ/.test(q)&&!/(?:手前|てまえ)/.test(q)&&motion.test(q))return {schemaId:'MotionCommand:MOVE',direction:'forward'};
@@ -2996,12 +2996,12 @@
       const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン))').exec(text);
       if(m){subject=name;text=text.slice(m[0].length);break;}
     }
-    const strings=[...text.matchAll(/「([^「」]*)」|『([^『』]*)』|｢([^｢｣]*)｣|["‘’]([^"‘’]*)["‘’]|（([^（）]*)）|\(([^()]*)\)|〈([^〈〉]*)〉|《([^《》]*)》|［([^［］]*)］/g)].map(m=>m.slice(1).find(x=>x!==undefined));
+    const stringValues=[...text.matchAll(/「([^「」]*)」|『([^『』]*)』|｢([^｢｣]*)｣|["‘’]([^"‘’]*)["‘’]|（([^（）]*)）|\(([^()]*)\)|〈([^〈〉]*)〉|《([^《》]*)》|［([^［］]*)］/g)].map(m=>({value:m.slice(1).find(x=>x!==undefined),at:m.index,end:m.index+m[0].length})),strings=stringValues.map(s=>s.value);
     const nameText=text.replace(/^もし、?/,'');
     const extractedNames=names.filter(n=>strings.includes(n.name)||text.includes('【'+n.name+'】')||new RegExp('(?:^|[はがをにへとの、 ])'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:$|[はがをにへとの、 ])').test(nameText));
     for(const name of names.filter(n=>['action','function'].includes(n.kind)))if(!extractedNames.includes(name)&&new RegExp(name.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:させ|する|して|という)').test(text))extractedNames.push(name);
     if(text.includes('マウス'))extractedNames.push({name:'マウス',kind:'part'});
-    const outside=text.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"|【[^【】]*】/g,'');
+    const outside=text.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"|【[^【】]*】/g,s=>' '.repeat(s.length));
     const keys=[...new Set(strings.map(keyWord).filter(Boolean))];
     for(const word of [...Object.keys(KEY_ALIASES),...KEY_WORDS].sort((a,b)=>b.length-a.length)){
       const escaped=word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -3011,7 +3011,7 @@
     for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)([A-Za-z%％°ァ-ヶぁ-ゖ一-龯]*)(?:半|はん)?/g)){
       let unit=Object.keys(unitNames).sort((a,b)=>b.length-a.length).find(u=>m[2].startsWith(u));
       if(m[2]&&!unit&&!/^(?:[をにへとでがは]|から|まで|より|なら)/.test(m[2])&&!searchQueryVariants(m[2]).some(form=>Object.values(BLOCK_SEARCH_SYNONYMS).flat().some(word=>form.startsWith(word))))continue;const suffix=outside.slice(m.index+m[1].length+(unit?.length||0));
-      numbers.push({value:Number(m[1])+(/^(?:半|はん)/.test(suffix)&&(!unit||unitNames[unit]==='秒')?0.5:0),unit:unit?unitNames[unit]:null,at:m.index});
+      numbers.push({value:Number(m[1])+(/^(?:半|はん)/.test(suffix)&&(!unit||unitNames[unit]==='秒')?0.5:0),unit:unit?unitNames[unit]:null,at:m.index,end:m.index+m[1].length});
     }
     let clauseText='',stack=[];
     const pairs={'「':'」','【':'】','『':'』','｢':'｣'},teWords=[...SENTENCE_TE_FORMS].map(([te])=>te).sort((a,b)=>b.length-a.length);
@@ -3040,7 +3040,7 @@
     const headerEvent=(!/^もし/.test(text)||/(?:おされた|おした)とき$/.test(text))&&/(?:とき(?:に)?|時|たびに|ごとに|たら)(?:、.*)?$/.test(text)?/合図/.test(text)?'message':/(?:はいけい|背景).*(?:かわ|変わ|かえ|切り)/.test(text)?'backdropChanged':/コピー|クローン/.test(text)?'cloneStart':/中身.*かわ|中身.*変わ|文字が入った/.test(text)?'valueChanged':/キー|矢印/.test(text)||keys.length?'keyDown':/タップ|クリック|タッチされ|おされた|おした/.test(text)?'click':/ふれ|触れ|タッチした/.test(text)?'touchStart':/スタート|始ま|はじま|開始|実行|はじめ|作品を動かした/.test(text)?'start':null:null;
     const grouped=/^(.+?)(?:は|も、)(.+)$/.exec(text),subjectNames=grouped?.[1].split(/と|も/).filter(Boolean).map(name=>name.replace(/[「」]/g,''));
     const subjects=subjectNames?.length>=3&&subjectNames.every(name=>components.some(c=>c.name===name))?{names:subjectNames,body:grouped[2]}:null;
-    return {text,subject,strings,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
+    return {text,subject,strings,stringValues,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
   }
   function assistVerificationContext(ctx) {const {key,ownerKey,...rest}=ctx;return rest;}
   function assistCanonical(text, ctx, previous='') {
@@ -3117,7 +3117,11 @@
     }
     if(hint.binding){const name=data.names.find(n=>['variable','list','argument','local'].includes(n.kind));if(name){for(const s of slots){const old=get(node,s.path);if(old&&old.name===hint.binding.name){old.name=name.name;filled.add(s.path);boundKinds.add(name.kind);}}}}
     if(['Say','ReturnStatement','LooksCommand'].includes(node.kind)){const name=data.names.find(n=>['variable','list','argument','local'].includes(n.kind));if(name){const s=slots.find(s=>['value','args.1'].includes(s.path));if(s){try{put(node,s.path,parseExpression(nameSource(name.name),ctx.symbols,ctx));filled.add(s.path);boundKinds.add(name.kind);}catch{}}}}
-    if(node.kind==='UserActionCall'){const values=[...data.numbers.filter(n=>!n.unit).map(n=>({at:n.at,value:literal(n.value)})),...data.strings.map(value=>({at:data.text.indexOf('「'+value+'」'),value:{kind:'StringLiteral',value}})),...data.names.filter(n=>['variable','list','local','argument'].includes(n.kind)).map(n=>({at:data.text.indexOf(n.name),value:parseExpression(nameSource(n.name),ctx.symbols,ctx)}))].sort((a,b)=>a.at-b.at);for(let i=0;i<Math.min(node.args.length,values.length);i++){node.args[i]=values[i].value;filled.add('args.'+i);}}
+    if(node.kind==='UserActionCall'){
+      const values=[...data.numbers.filter(n=>!n.unit).map(n=>({at:n.at,end:n.end,value:literal(n.value)})),...data.stringValues.map(s=>({...s,value:{kind:'StringLiteral',value:s.value}})),...data.names.filter(n=>['variable','list','local','argument'].includes(n.kind)).map(n=>({at:data.text.indexOf(n.name),end:data.text.indexOf(n.name)+n.name.length,value:parseExpression(nameSource(n.name),ctx.symbols,ctx)})).filter(n=>!data.stringValues.some(s=>s.at<=n.at&&n.end<=s.end))].sort((a,b)=>a.at-b.at),args=project.actions.find(a=>a.name===node.name)?.args||[],assigned=new Set();
+      for(const value of values){value.index=args.findIndex(name=>{const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return new RegExp(escaped+'(?:を|は)$').test(data.text.slice(0,value.at))||new RegExp('^(?:を)?'+escaped+'として').test(data.text.slice(value.end));});if(value.index>=0){node.args[value.index]=value.value;assigned.add(value.index);filled.add('args.'+value.index);}}
+      for(const value of values.filter(v=>v.index<0)){const index=node.args.findIndex((_,i)=>!assigned.has(i));if(index<0)break;node.args[index]=value.value;assigned.add(index);filled.add('args.'+index);}
+    }
     if(node.kind==='CloneCommand'&&['CREATE_SELF','CREATE_TARGET'].includes(node.op)){const n=data.numbers.find(n=>['count','つ'].includes(n.unit));if(n){node.count=literal(n.value);filled.add('count');}}
     if(['LocalVariableDeclaration','LocalListDeclaration'].includes(node.kind)){
       const name=/【([^【】]+)】/.exec(data.text)?.[1]||/^(.+?)という(?:変数|へんすう|リスト)/.exec(data.text)?.[1];if(name){node.name=name;filled.add('name');}

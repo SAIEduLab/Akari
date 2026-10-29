@@ -2086,14 +2086,15 @@
     };
     const receiverHeading=receiver=>{
       const script=scriptBySourceKey(project,receiver.item.documentKey||receiver.item.key);if(!script)return;
-      const original=script.source,ctx={symbols,targetId:receiver.item.targetId,event:receiver.item.event,meijin:receiver.item.meijin};
+      const original=script.source,ctx={symbols,targetId:receiver.item.targetId,event:receiver.item.event,meijin:receiver.item.meijin},span=receiver.ast.sourceSpan,extent=SOURCE_RANGES.get(receiver.ast)?.range||{start:original.split('\n').slice(0,(span?.startLine||1)-1).reduce((n,s)=>n+s.length+1,0)+(span?.startColumn||1)-1,end:original.length};
       for(const line of normalizeSource(original).lines){
         if(line.lineNo<(receiver.ast.sourceSpan?.startLine||1)||line.lineNo>(receiver.ast.sourceSpan?.endLine||Infinity))continue;
-        let found;try{found=readSentenceHeading(line.code,symbols,null,ctx);}catch{continue;}
+        const begin=line.mapped.positions.findIndex(p=>p>=extent.start&&p<extent.end),end=line.mapped.positions.findIndex(p=>p>=extent.end);if(begin<0)continue;const code=line.code.slice(begin,end<0?undefined:end);
+        let found;try{found=readSentenceHeading(code,symbols,null,ctx);}catch{continue;}
         if(found?.heading?.event!=='message'||found.heading.filter?.message!==receiver.name)continue;
         const actor=found.heading.actorRef;if(actor?.kind==='named'&&(namesStage(project,actor.name)?'stage':project.components.find(c=>c.name===actor.name)?.id)!==receiver.item.targetId)continue;
-        const token='「'+receiver.name+'」',at=line.code.indexOf(token);if(at<0||at>found.body.start)continue;
-        return{line:line.lineNo,range:sourceRange(line.mapped.positions,at,at+token.length),original,ctx};
+        const token='「'+receiver.name+'」',at=code.indexOf(token);if(at<0||at>found.body.start)continue;
+        return{line:line.lineNo,range:sourceRange(line.mapped.positions,begin+at,begin+at+token.length),original,ctx};
       }
     };
     const headingProposal=(n,location,name)=>{const {range,original,ctx}=location,source=formatExpression({kind:'StringLiteral',value:name});try{if(range&&parseSyntax(original.slice(0,range.start)+source+original.slice(range.end),ctx).ast)n.proposals=[{label:'「'+name+'」の 合図に かえる',source,start:range.start,end:range.end,original}];}catch{}};

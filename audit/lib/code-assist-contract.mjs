@@ -1257,10 +1257,16 @@ const assistRegressionInputs=[
   ['function-forever','ずっとずっとくり返す。\n  0を答えとして返す。',{definitionKind:'function',definition:'計算'}],
   ['function-until','点数が10になるまでループする。\n  0を答えとして返す。',{definitionKind:'function',definition:'計算'}],
   ['argument-unit','ジャンプを5秒で行う。'],
+  ['argument-quoted-order','ジャンプを3と『やあ』で行う。'],
+  ['argument-halfquote-order','ジャンプを3と｢やあ｣で行う。'],
+  ['argument-string-first','ジャンプを『やあ』と3で行う。'],
+  ['argument-named-first','時間を5として、ジャンプを行う。'],
+  ['argument-named-after','5を時間として、ジャンプを行う。'],
   ['local-scope','体力を1あげる。'],
   ['costume-scope','「犬のすがた」にかえる。'],
 ];
 const repeatedReceiverSource='犬が「開始」の合図を受けたとき、\n  何もしない。\n猫が「開始」の合図を受けたとき、\n  何もしない。\n作品を動かしたとき、\n  犬は「出発」の合図を送る。';
+const inlineReceiverSource='犬が「開始」の合図を受けたとき、何もしない。犬が「開始」の合図を受けたとき、何もしない。\n作品を動かしたとき、犬は「出発」の合図を送る。';
 const chainedSenderSource='「出発」の合図を送って、前へ10歩進む。';
 function observeAssistRegressions(api){
   const project=assistWorld(api,{parts:['ねこ','犬'],uiParts:['ボタン1（ボタン）'],variables:['点数'],lists:['持ち物'],sounds:['ベル'],actions:[{name:'ジャンプ',args:['高さ','時間']}],functions:[{name:'計算',args:['値']}]});
@@ -1269,11 +1275,12 @@ function observeAssistRegressions(api){
   const signals=assistWorld(api,{parts:['犬','猫']});
   signals.scripts=[{id:'s1',mode:'meijin',targetId:'meijin',event:'start',source:repeatedReceiverSource}];
   const receivers=api.compileProject(signals);assert.deepEqual(plain(receivers.errors),[]);
+  signals.scripts[0].source=inlineReceiverSource;const inline=api.compileProject(signals);assert.deepEqual(plain(inline.errors),[]);
   signals.scripts[0].source='作品を動かしたとき、\n  犬と猫に「出発」と知らせる。';
   const targeted=api.compileProject(signals);assert.deepEqual(plain(targeted.errors),[]);
   const chained=assistWorld(api,{parts:['ねこ'],signals:{received:['開始']}});chained.scripts[0].source=chainedSenderSource;
   const sent=api.compileProject(chained);assert.deepEqual(plain(sent.errors),[]);
-  return{engine,readings:[['パーセント','％'],['1パー','1％']].map(([a,b])=>[api.searchReading(a),api.searchReading(b)]),intents:['前へ10歩ふみだす','前に10歩およぐ','3回やる','3回する','3回おなじことをする'].map(q=>api.searchIntent(q)?.schemaId||null),receivers:plain(receivers.notes.filter(n=>n.code==='I137')),targeted:plain(targeted.notes.filter(n=>n.code==='I138')),sender:plain(sent.notes.find(n=>n.code==='I136'))};
+  return{engine,readings:[['パーセント','％'],['1パー','1％']].map(([a,b])=>[api.searchReading(a),api.searchReading(b)]),intents:['前へ10歩ふみだす','前に10歩およぐ','3回やる','3回する','3回おなじことをする','前へ10歩踏み出す','前に10歩泳ぐ','3回同じことをする'].map(q=>api.searchIntent(q)?.schemaId||null),receivers:plain(receivers.notes.filter(n=>n.code==='I137')),inline:plain(inline.notes.filter(n=>n.code==='I137')),targeted:plain(targeted.notes.filter(n=>n.code==='I138')),sender:plain(sent.notes.find(n=>n.code==='I136'))};
 }
 function verifyAssistRegressions(o){
   assert.deepEqual(o.engine.map(r=>r.id),assistRegressionInputs.map(([id])=>id));const rows=Object.fromEntries(o.engine.map(r=>[r.id,r.candidates]));
@@ -1283,10 +1290,12 @@ function verifyAssistRegressions(o){
   assert.ok(rows['first-diagnostic-range'].every(c=>c.start<13&&c.end<=13),'only the first diagnosed line is replaced');
   for(const id of ['function-forever','function-until'])assert.ok(rows[id].every(c=>!['Forever','RepeatUntil'].includes(c.schemaId)));
   assert.ok(rows['argument-unit'].some(c=>c.schemaId==='UserActionCall'));assert.ok(rows['argument-unit'].filter(c=>c.schemaId==='UserActionCall').every(c=>!c.text.includes('5')));
+  for(const [id,prefix]of [['argument-quoted-order','高さを3、時間を「やあ」として、'],['argument-halfquote-order','高さを3、時間を「やあ」として、'],['argument-string-first','高さを「やあ」、時間を3として、'],['argument-named-first','高さを1、時間を5として、'],['argument-named-after','高さを1、時間を5として、']])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   assert.ok(rows['local-scope'].every(c=>!c.text.includes('体力')));assert.ok(rows['costume-scope'].every(c=>c.schemaId!=='LooksCommand:SET_COSTUME'));
-  for(const pair of o.readings)assert.equal(pair[0],pair[1]);assert.deepEqual(o.intents,['MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount','RepeatCount','RepeatCount']);
+  for(const pair of o.readings)assert.equal(pair[0],pair[1]);assert.deepEqual(o.intents,['MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount','RepeatCount','RepeatCount','MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount']);
   assert.deepEqual(o.receivers.map(n=>n.line),[1,3]);assert.deepEqual(o.receivers.map(n=>n.proposals?.[0]?.start),[2,28]);
   for(const n of o.receivers){const p=n.proposals[0];assert.equal(p.source,'「出発」');assert.equal(repeatedReceiverSource.slice(p.start,p.end),'「開始」');assert.equal(p.original,repeatedReceiverSource);}
+  assert.deepEqual(o.inline.map(n=>n.proposals?.[0]?.start),[2,24]);for(const n of o.inline){const p=n.proposals[0];assert.equal(p.source,'「出発」');assert.equal(inlineReceiverSource.slice(p.start,p.end),'「開始」');assert.equal(p.original,inlineReceiverSource);}
   assert.equal(o.targeted.length,2);assert.ok(o.targeted[0].message.startsWith('犬には、'));assert.ok(o.targeted[1].message.startsWith('猫には、'));
   assert.equal(o.sender.proposals.length,1);assert.deepEqual(o.sender.proposals.map(p=>({source:p.source,start:p.start,end:p.end,original:p.original})),[{source:'「開始」',start:0,end:4,original:chainedSenderSource}]);
 }
