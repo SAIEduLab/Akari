@@ -1267,6 +1267,10 @@ const assistRegressionInputs=[
   ['argument-square','ジャンプを［7］と3で行う。'],
   ['argument-repeated-name','ジャンプを点数と点数で行う。'],
   ['argument-suffix-name','回数を5として、ジャンプを行う。',{},['数','回数']],
+  ['argument-label-data','高さを3として、ジャンプを行う。',{},null,['高さ']],
+  ['argument-wrapped-first','時間を【点数】として、ジャンプを行う。'],
+  ['argument-wrapped-after','【点数】を時間として、ジャンプを行う。'],
+  ...[['「','」'],['『','』'],['｢','｣'],['"','"'],['‘','’'],['’','’'],['（','）'],['(',')'],['〈','〉'],['《','》'],['［','］'],['[',']']].map(([open,close],i)=>['argument-quoted-width-'+i,'ジャンプを3と'+open+'７'+close+'で行う。']),
   ['local-scope','体力を1あげる。'],
   ['costume-scope','「犬のすがた」にかえる。'],
 ];
@@ -1276,7 +1280,7 @@ const chainedSenderSource='「出発」の合図を送って、前へ10歩進む
 function observeAssistRegressions(api){
   const project=assistWorld(api,{parts:['ねこ','犬'],uiParts:['ボタン1（ボタン）'],variables:['点数'],lists:['持ち物'],sounds:['ベル'],actions:[{name:'ジャンプ',args:['高さ','時間']}],functions:[{name:'計算',args:['値']}]});
   project.components[1].localData.variables.push({id:'dog-health',name:'体力',initialValue:0});project.components[1].costumes[0].name='犬のすがた';api.validateDesignProject(project);
-  const engine=assistRegressionInputs.map(([id,source,context={},actionArgs])=>{const p=actionArgs?plain(project):project;if(actionArgs){p.actions[0].args=actionArgs;api.validateDesignProject(p);}const {trigger,verify}=assistContexts(api,p,context),parsed=api.parseSyntax(source,trigger);assert.equal(parsed.ast,null,id+' unreadable input');return{id,candidates:plain(api.assistCandidates(p,source,verify,parsed.syntaxDiagnostics[0]))};});
+  const engine=assistRegressionInputs.map(([id,source,context={},actionArgs,variables])=>{const p=actionArgs||variables?plain(project):project;if(actionArgs)p.actions[0].args=actionArgs;for(const name of variables||[])p.projectData.variables.push({id:'extra-'+p.projectData.variables.length,name,initialValue:0});api.validateDesignProject(p);const {trigger,verify}=assistContexts(api,p,context),parsed=api.parseSyntax(source,trigger);assert.equal(parsed.ast,null,id+' unreadable input');return{id,candidates:plain(api.assistCandidates(p,source,verify,parsed.syntaxDiagnostics[0]))};});
   const signals=assistWorld(api,{parts:['犬','猫']});
   signals.scripts=[{id:'s1',mode:'meijin',targetId:'meijin',event:'start',source:repeatedReceiverSource}];
   const receivers=api.compileProject(signals);assert.deepEqual(plain(receivers.errors),[]);
@@ -1298,6 +1302,7 @@ function verifyAssistRegressions(o){
   assert.ok(rows['argument-unit'].some(c=>c.schemaId==='UserActionCall'));assert.ok(rows['argument-unit'].filter(c=>c.schemaId==='UserActionCall').every(c=>!c.text.includes('5')));
   for(const [id,prefix]of [['argument-quoted-order','高さを3、時間を「やあ」として、'],['argument-halfquote-order','高さを3、時間を「やあ」として、'],['argument-string-first','高さを「やあ」、時間を3として、'],['argument-named-first','高さを1、時間を5として、'],['argument-named-after','高さを1、時間を5として、']])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   for(const [id,prefix]of [['argument-parentheses','高さを「7」、時間を3として、'],['argument-angle','高さを「7」、時間を3として、'],['argument-square','高さを「7」、時間を3として、'],['argument-repeated-name','高さを点数、時間を点数として、'],['argument-suffix-name','数を1、回数を5として、']])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
+  for(const [id,prefix]of [['argument-label-data','高さを3、時間を1として、'],['argument-wrapped-first','高さを1、時間を点数として、'],['argument-wrapped-after','高さを1、時間を点数として、'],...Array.from({length:12},(_,i)=>['argument-quoted-width-'+i,'高さを3、時間を「７」として、'])])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   assert.ok(rows['local-scope'].every(c=>!c.text.includes('体力')));assert.ok(rows['costume-scope'].every(c=>c.schemaId!=='LooksCommand:SET_COSTUME'));
   for(const pair of o.readings)assert.equal(pair[0],pair[1]);assert.deepEqual(o.intents,['MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount','RepeatCount','RepeatCount','MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount']);
   assert.deepEqual(o.receivers.map(n=>n.line),[1,3]);assert.deepEqual(o.receivers.map(n=>n.proposals?.[0]?.start),[2,28]);
