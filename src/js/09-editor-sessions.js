@@ -2996,12 +2996,12 @@
       const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン))').exec(text);
       if(m){subject=name;text=text.slice(m[0].length);break;}
     }
-    const stringValues=[...text.matchAll(/「([^「」]*)」|『([^『』]*)』|｢([^｢｣]*)｣|["‘’]([^"‘’]*)["‘’]|（([^（）]*)）|\(([^()]*)\)|〈([^〈〉]*)〉|《([^《》]*)》|［([^［］]*)］/g)].map(m=>({value:m.slice(1).find(x=>x!==undefined),at:m.index,end:m.index+m[0].length})),strings=stringValues.map(s=>s.value);
+    const stringValues=[...text.matchAll(/「([^「」]*)」|『([^『』]*)』|｢([^｢｣]*)｣|["‘’]([^"‘’]*)["‘’]|（([^（）]*)）|\(([^()]*)\)|〈([^〈〉]*)〉|《([^《》]*)》|［([^［］]*)］|\[([^\[\]]*)\]/g)].map(m=>({value:m.slice(1).find(x=>x!==undefined),at:m.index,end:m.index+m[0].length})),strings=stringValues.map(s=>s.value);
     const nameText=text.replace(/^もし、?/,'');
-    const extractedNames=names.filter(n=>strings.includes(n.name)||text.includes('【'+n.name+'】')||new RegExp('(?:^|[はがをにへとの、 ])'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:$|[はがをにへとの、 ])').test(nameText));
+    const extractedNames=names.filter(n=>strings.includes(n.name)||text.includes('【'+n.name+'】')||new RegExp('(?:^|[はがをにへとので、 ])'+n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:$|[はがをにへとので、 ])').test(nameText));
     for(const name of names.filter(n=>['action','function'].includes(n.kind)))if(!extractedNames.includes(name)&&new RegExp(name.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:させ|する|して|という)').test(text))extractedNames.push(name);
     if(text.includes('マウス'))extractedNames.push({name:'マウス',kind:'part'});
-    const outside=text.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"|【[^【】]*】/g,s=>' '.repeat(s.length));
+    let outside=text;for(const s of stringValues)outside=outside.slice(0,s.at)+' '.repeat(s.end-s.at)+outside.slice(s.end);outside=outside.replace(/【[^【】]*】/g,s=>' '.repeat(s.length));
     const keys=[...new Set(strings.map(keyWord).filter(Boolean))];
     for(const word of [...Object.keys(KEY_ALIASES),...KEY_WORDS].sort((a,b)=>b.length-a.length)){
       const escaped=word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
@@ -3118,8 +3118,9 @@
     if(hint.binding){const name=data.names.find(n=>['variable','list','argument','local'].includes(n.kind));if(name){for(const s of slots){const old=get(node,s.path);if(old&&old.name===hint.binding.name){old.name=name.name;filled.add(s.path);boundKinds.add(name.kind);}}}}
     if(['Say','ReturnStatement','LooksCommand'].includes(node.kind)){const name=data.names.find(n=>['variable','list','argument','local'].includes(n.kind));if(name){const s=slots.find(s=>['value','args.1'].includes(s.path));if(s){try{put(node,s.path,parseExpression(nameSource(name.name),ctx.symbols,ctx));filled.add(s.path);boundKinds.add(name.kind);}catch{}}}}
     if(node.kind==='UserActionCall'){
-      const values=[...data.numbers.filter(n=>!n.unit).map(n=>({at:n.at,end:n.end,value:literal(n.value)})),...data.stringValues.map(s=>({...s,value:{kind:'StringLiteral',value:s.value}})),...data.names.filter(n=>['variable','list','local','argument'].includes(n.kind)).map(n=>({at:data.text.indexOf(n.name),end:data.text.indexOf(n.name)+n.name.length,value:parseExpression(nameSource(n.name),ctx.symbols,ctx)})).filter(n=>!data.stringValues.some(s=>s.at<=n.at&&n.end<=s.end))].sort((a,b)=>a.at-b.at),args=project.actions.find(a=>a.name===node.name)?.args||[],assigned=new Set();
-      for(const value of values){value.index=args.findIndex(name=>{const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return new RegExp(escaped+'(?:を|は)$').test(data.text.slice(0,value.at))||new RegExp('^(?:を)?'+escaped+'として').test(data.text.slice(value.end));});if(value.index>=0){node.args[value.index]=value.value;assigned.add(value.index);filled.add('args.'+value.index);}}
+      const nameValues=data.names.filter(n=>['variable','list','local','argument'].includes(n.kind)).flatMap(n=>{const escaped=n.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return [...data.text.matchAll(new RegExp('(?:^|(?<=[はがをにへとので、 【]))'+escaped+'(?=$|[はがをにへとので、 】])','g'))].map(m=>({at:m.index,end:m.index+m[0].length,value:parseExpression(nameSource(n.name),ctx.symbols,ctx)}));}).filter(n=>!data.stringValues.some(s=>s.at<=n.at&&n.end<=s.end));
+      const values=[...data.numbers.filter(n=>!n.unit).map(n=>({at:n.at,end:n.end,value:literal(n.value)})),...data.stringValues.map(s=>({...s,value:{kind:'StringLiteral',value:s.value}})),...nameValues].sort((a,b)=>a.at-b.at),args=project.actions.find(a=>a.name===node.name)?.args||[],namedArgs=args.map((name,index)=>({name,index})).sort((a,b)=>b.name.length-a.name.length),assigned=new Set();
+      for(const value of values){value.index=namedArgs.find(({name})=>{const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return new RegExp('(?:^|[、はがをにへとので])'+escaped+'(?:を|は)$').test(data.text.slice(0,value.at))||new RegExp('^(?:を)?'+escaped+'として').test(data.text.slice(value.end));})?.index??-1;if(value.index>=0){node.args[value.index]=value.value;assigned.add(value.index);filled.add('args.'+value.index);}}
       for(const value of values.filter(v=>v.index<0)){const index=node.args.findIndex((_,i)=>!assigned.has(i));if(index<0)break;node.args[index]=value.value;assigned.add(index);filled.add('args.'+index);}
     }
     if(node.kind==='CloneCommand'&&['CREATE_SELF','CREATE_TARGET'].includes(node.op)){const n=data.numbers.find(n=>['count','つ'].includes(n.unit));if(n){node.count=literal(n.value);filled.add('count');}}
