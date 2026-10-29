@@ -180,6 +180,8 @@
     "audit/lib/search-layout-contract.mjs",
     "audit/lib/semantic-extension-contract.mjs",
     "audit/lib/sentence-form-coverage.mjs",
+    "audit/lib/shard-evidence.mjs",
+    "audit/lib/shard-plan.cjs",
     "audit/lib/spec-examples-contract.mjs",
     "audit/lib/spec-expectations-host.mjs",
     "audit/lib/spec-expectations.mjs",

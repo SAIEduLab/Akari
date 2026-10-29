@@ -4,7 +4,9 @@ import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {sha} from './product-test-host.mjs';
-import {verifyAcceptanceExecution} from './gate-contract.mjs';
+import {verifyAcceptanceExecution,acceptanceCommands,acceptanceIds} from './gate-contract.mjs';
+import {acceptanceShards} from './shard-plan.cjs';
+import {verifyAcceptanceShardReceipt,mergeAcceptanceShards} from './shard-evidence.mjs';
 import {verifyChildMatrix,verifyChildLanguage,verifyProvenance,verifyNeeds,verifyRetryHistory} from './child-ux-contract.mjs';
 import {verifyInsertionContextReport} from './insertion-context-contract.mjs';
 import {verifySpeechNameLayoutReport} from './speech-name-layout-contract.mjs';
@@ -89,4 +91,40 @@ export function verifyChildAggregate(dirs,needs,history,inputs,provenance){
   controls.push({id:aggregateControlIds.at(-1),rejected:true});
   return {schema:'akari-child-ux-aggregate-v1',status:'MACHINE_PASS',snapshot:inputs,provenance,bundles:bundles.map(b=>({kind:b.kind,required:b.required,files:Object.keys(b.files).length})),
     tasks:24,machineRoutes:48,controls,controlClassification:'SYNTHETIC_VALIDATION_ONLY',retry,humanAcceptance:'UNVERIFIED',realIME:'UNVERIFIED',scratchComparison:'UNVERIFIED',realChild:'UNVERIFIED'};
+}
+// CI shards of a sharded acceptance kind: each seals its own steps; the aggregate verifies every
+// shard, merges them into the kind directory and seals that as the ordinary kind bundle.
+const shardFiles=dir=>evidenceFiles(dir).filter(f=>f!=='child-ux-shard.json');
+function verifyShardHeader(b,kind,shard,inputs,provenance){
+  assert.equal(b.schema,'akari-child-ux-shard-v1');assert.equal(b.kind,kind);assert.equal(b.shard,shard);assert.equal(b.status,'PASS');assert.deepEqual(b.snapshot,inputs);verifyProvenance(b.provenance,provenance);
+  for(const [f,h]of Object.entries(b.files)){assert.ok(!path.isAbsolute(f)&&!f.split(/[\/]/).includes('..'));assert.match(h,/^[a-f0-9]{64}$/);}
+  assert.equal(b.humanAcceptance,'UNVERIFIED');assert.equal(b.realIME,'UNVERIFIED');
+}
+function verifyShardSteps(kind,shard,dir,inputs){
+  const receipt=read(dir,'execution-shard.json');verifyAcceptanceShardReceipt(receipt,kind,shard,inputs,acceptanceIds(kind));
+  for(const row of receipt.steps)assert.ok(fs.statSync(path.join(dir,row.log)).isFile(),'log '+row.log);
+}
+export function sealChildShard(kind,shard,dir,inputs,provenance){
+  assert.ok(!fs.existsSync(path.join(dir,'child-ux-shard.json')),'fresh shard bundle required');verifyShardSteps(kind,shard,dir,inputs);
+  fs.writeFileSync(path.join(dir,'input-inventory.json'),JSON.stringify(inputInventory(),null,2)+'\n');
+  const files=Object.fromEntries(shardFiles(dir).map(f=>[f,sha(fs.readFileSync(path.join(dir,f)))]));
+  const b={schema:'akari-child-ux-shard-v1',kind,shard,status:'PASS',snapshot:inputs,provenance,files,humanAcceptance:'UNVERIFIED',realIME:'UNVERIFIED'};
+  verifyShardHeader(b,kind,shard,inputs,provenance);fs.writeFileSync(path.join(dir,'child-ux-shard.json'),JSON.stringify(b,null,2)+'\n');return b;
+}
+export function verifyChildShard(kind,shard,dir,inputs,provenance){
+  const b=read(dir,'child-ux-shard.json');verifyShardHeader(b,kind,shard,inputs,provenance);
+  assert.deepEqual(Object.keys(b.files),shardFiles(dir),'shard file set');verifyBundleFileHashes(b,dir);
+  assert.deepEqual(read(dir,'input-inventory.json'),inputInventory());verifyShardSteps(kind,shard,dir,inputs);return b;
+}
+// shards: {kind: {shard: directory}}. Returns {kind: merged directory} after sealing each merged kind.
+export function mergeChildShards(shards,inputs,provenance,outFor){
+  const merged={};
+  for(const [kind,dirs] of Object.entries(shards)){
+    assert.ok(Object.hasOwn(acceptanceShards,kind),'unsharded kind delivered as shards: '+kind);
+    for(const [shard,dir] of Object.entries(dirs))verifyChildShard(kind,shard,dir,inputs,provenance);
+    const out=outFor(kind);mergeAcceptanceShards(kind,dirs,out,inputs,acceptanceCommands[kind],acceptanceIds(kind));
+    sealChildBundle(kind,out,inputs,provenance);merged[kind]=out;
+  }
+  for(const kind of Object.keys(acceptanceShards))assert.ok(merged[kind],'missing shards of '+kind);
+  return merged;
 }

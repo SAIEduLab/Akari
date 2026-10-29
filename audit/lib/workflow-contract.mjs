@@ -198,6 +198,12 @@ export function workflowIssues(files,contract=workflowContract){
       if(!same(job.defaults,{run:{shell:'bash'}}))issue('runner',file,id+'.defaults','Windows CI entry commands require the declared bash shell');
       const rows=matrixRows(job.strategy?.matrix);
       if(!rows)issue('job-keys',file,id+'.strategy','unsupported matrix form');
+      // A sharded job runs exactly the planned shards (audit/lib/shard-plan.cjs), each to completion.
+      if(jobSpec.shards){
+        if(!same(job.strategy?.matrix,{shard:jobSpec.shards}))issue('matrix',file,id+'.strategy.matrix','shards must be exactly '+JSON.stringify(jobSpec.shards));
+        if(job.strategy?.['fail-fast']!=='false')issue('matrix',file,id+'.strategy','a failing shard must not cancel the other shards');
+        for(const key of Object.keys(job.strategy||{}))if(!['matrix','fail-fast'].includes(key))issue('matrix',file,id+'.strategy.'+key,'strategy key not allowed');
+      }else if(job.strategy!==undefined)issue('matrix',file,id+'.strategy','only planned shard jobs use a matrix');
       const steps=Array.isArray(job.steps)?job.steps:[];
       if(!steps.length)issue('jobs',file,id+'.steps','job has no steps');
       const entries=jobSpec.entries,seen=new Set();let next=0;

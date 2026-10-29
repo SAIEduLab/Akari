@@ -32,7 +32,7 @@ export const workflowRejectionIds=Object.freeze([
   'artifact/retention-days','artifact/missing-retention','artifact/missing-files-allowed',
   'commands/ad-hoc-audit-check','commands/ad-hoc-shell-check','commands/missing-entry','commands/reordered-entries','commands/duplicate-entry',
   'step-condition/disabled-entry','step-env/entry-env-changed','step-env/undeclared','step-keys/shell-override','actions/unknown-action',
-  'bundles/matrix-group-dropped','acceptance/kind-dropped','checkout/guard-shallow-history']);
+  'bundles/matrix-group-dropped','acceptance/kind-dropped','matrix/shard-dropped','matrix/fail-fast','matrix/unplanned-matrix','checkout/guard-shallow-history']);
 // Synthetic base/head trees for every change-guard rule, plus accepted controls.
 export const changeGuardCaseIds=Object.freeze([
   'real-tree/identity-extracted','control/documentation-only','control/additions-only','control/pin-moved','control/base-advanced-after-branch',

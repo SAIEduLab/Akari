@@ -8,6 +8,7 @@ import {snapshot,sha} from './product-test-host.mjs';
 import {verifyGateResults} from './verify-gate-results.mjs';
 import {verifyBrowserGroup} from './verify-browser-results.mjs';
 import {verifyAudio} from './feature-contract.mjs';
+import {verifyGateShard,verifyBrowserShard} from './shard-evidence.mjs';
 export function selectBundleDirectory(kind,directory,provenance){
   const current=Number(provenance.attempt);
   assert.ok(Number.isSafeInteger(current)&&current>0,'positive current attempt');
@@ -34,6 +35,9 @@ export function evidenceFiles(dir,prefix=''){
 }
 export function verifyEvidence(kind,dir,inputs){
   if(kind==='selftest')return verifyGateResults(dir,inputs);
+  // CI shards: the shard's own steps and tasks; the aggregate merges them for the full validators.
+  const shard=/^(selftest|full-browser)-([a-z][0-9]{2})$/.exec(kind);
+  if(shard)return shard[1]==='selftest'?verifyGateShard(dir,shard[2],inputs):verifyBrowserShard(dir,shard[2],inputs);
   if(kind.startsWith('full-browser-'))return verifyBrowserGroup(dir,kind.slice(13),inputs);
   if(kind.startsWith('audio-codecs-')){
     const report=JSON.parse(fs.readFileSync(path.join(dir,'report.json')));

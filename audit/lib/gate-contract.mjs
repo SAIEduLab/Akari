@@ -1,7 +1,9 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 import assert from 'node:assert/strict';
-export const auditBundleKinds=['selftest','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
+import {selftestShards,browserShards,acceptanceShards} from './shard-plan.cjs';
+// One sealed bundle per CI shard (audit/lib/shard-plan.cjs); the aggregate merges them for the full validators.
+export const auditBundleKinds=[...Object.keys(selftestShards).map(s=>'selftest-'+s),'audio-codecs-win32',...Object.keys(browserShards).map(s=>'full-browser-'+s)];
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
@@ -143,12 +145,12 @@ const afterNeeds="${{ always() && (github.event_name != 'pull_request' || github
 const requestedSha={AKARI_REQUESTED_SHA:'${{ github.event.pull_request.head.sha || github.sha }}'};
 export const workflowContract=Object.freeze({
   'akari-audit.yml':{triggers:'audit',env:requestedSha,jobs:{
-    selftest:{if:sameRepository,needs:[],entries:[
-      {run:'node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest'},
-      {run:'node audit/verify-evidence.mjs seal selftest audit-evidence/selftest',if:'always()'}]},
-    'full-browser-gate':{if:sameRepository,needs:[],entries:[
-      {run:'node audit/browser/run-full-browser-audit.mjs --group "${{ matrix.group }}" --evidence "audit-evidence/full-browser-${{ matrix.group }}"'},
-      {run:'node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" "audit-evidence/full-browser-${{ matrix.group }}"',if:'always()'}]},
+    selftest:{if:sameRepository,needs:[],shards:Object.keys(selftestShards),entries:[
+      {run:'node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"'},
+      {run:'node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"',if:'always()'}]},
+    'full-browser-gate':{if:sameRepository,needs:[],shards:Object.keys(browserShards),entries:[
+      {run:'node audit/browser/run-full-browser-audit.mjs --shard "${{ matrix.shard }}" --evidence "audit-evidence/full-browser-${{ matrix.shard }}"'},
+      {run:'node audit/verify-evidence.mjs seal "full-browser-${{ matrix.shard }}" "audit-evidence/full-browser-${{ matrix.shard }}"',if:'always()'}]},
     'audio-codecs':{if:sameRepository,needs:[],entries:[
       {run:'node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json'},
       {run:'node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json'},
@@ -157,7 +159,7 @@ export const workflowContract=Object.freeze({
       {run:'node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json',env:{AKARI_NEEDS:'${{ toJSON(needs) }}'}}]},
   }},
   'akari-acceptance.yml':{triggers:'audit',env:requestedSha,jobs:{
-    'composition-acceptance':{if:sameRepository,needs:[],entries:[{run:'node audit/run-acceptance.mjs composition'}]},
+    'composition-acceptance':{if:sameRepository,needs:[],shards:Object.keys(acceptanceShards.composition),entries:[{run:'node audit/run-acceptance.mjs composition --shard "${{ matrix.shard }}"'}]},
     'ux-editing':{if:sameRepository,needs:[],entries:[{run:'node audit/run-acceptance.mjs editing'}]},
     'child-ux-aggregate':{if:afterNeeds,needs:['composition-acceptance','ux-editing'],entries:[
       {run:'node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json',if:'always()',env:{GITHUB_TOKEN:'${{ github.token }}'}},
@@ -174,4 +176,10 @@ export const workflowContract=Object.freeze({
 });
 export const changeGuardLabel='owner-approved-audit-change';
 
-export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','wrong-platform','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure'),...['valid','wrong-schema','wrong-step','failed-status','stale-snapshot','missing-results','missing-case','extra-case','duplicate-case','failed-case','release-record-changed','release-record-missing','node-product-suite-missing'].map(n=>'gate-cases:'+n)];
+export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job','merged-selftest','merged-full-browser'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','wrong-platform','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure'),...['valid','wrong-schema','wrong-step','failed-status','stale-snapshot','missing-results','missing-case','extra-case','duplicate-case','failed-case','release-record-changed','release-record-missing','node-product-suite-missing'].map(n=>'gate-cases:'+n),
+  // CI shards (audit/lib/shard-plan.cjs, audit/lib/shard-evidence.mjs).
+  'gate-shard-continuity:pass','gate-shard-continuity:fail','acceptance-shard:planned-steps',
+  ...['valid','missing-step','duplicate-step','undeclared-part','reader-in-other-shard','reader-before-producer','after-merge-sharded','missing-browser-task','missing-acceptance-step','acceptance-reader-in-other-shard'].map(n=>'shard-plan:'+n),
+  ...['valid','missing-part','undeclared-part','duplicate-item','wrong-assignment'].map(n=>'shard-parts:'+n),
+  ...['valid','other-steps','failed-step','timeout','stale-snapshot','wrong-shard','missing-log','acceptance-valid','acceptance-other-steps','acceptance-failed','acceptance-wrong-log'].map(n=>'shard-receipt:'+n),
+  ...['valid','collision','shared-input-differs','missing-shard','extra-shard','parts-row','failed-part','missing-part-row','whole-and-part-row'].map(n=>'shard-merge:'+n)];

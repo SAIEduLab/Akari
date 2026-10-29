@@ -6,7 +6,7 @@ import {sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {childUxProvenance} from '../lib/child-ux-observations.mjs';
 import {plan,currentInputs,verifyFrozenInputs,verifyProvenance,verifyNeeds,verifyRetryHistory,verifyManualSession,verifyManualSessions,verifyChildMatrix,verifyChildLanguage,vocabularyCandidates} from '../lib/child-ux-contract.mjs';
-import {matrixControlIds,languageControlIds,staticControlIds,verifyReportPlatform,sealChildBundle,verifyChildAggregate} from '../lib/child-ux-evidence.mjs';
+import {matrixControlIds,languageControlIds,staticControlIds,verifyReportPlatform,sealChildBundle,verifyChildAggregate,sealChildShard,mergeChildShards} from '../lib/child-ux-evidence.mjs';
 const [mode,input,output]=process.argv.slice(2),provenance=childUxProvenance(),snapshot=currentInputs();
 const read=f=>JSON.parse(fs.readFileSync(f));
 const write=(file,r)=>{assert.ok(file&&!fs.existsSync(file),'fresh result required: '+file);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(r,null,2)+'\n');};
@@ -106,15 +106,22 @@ try{
     write(output,{schema:'akari-child-ux-manual-validation-v1',status:'VALID_PROTOCOL_RECORDS',snapshot,provenance,records,machinePassCount:0,childComprehension:'UNVERIFIED',productFinalAcceptance:'UNVERIFIED'});
   }else if(mode==='history')write(input,await retryHistory());
   else if(mode==='seal'){const b=sealChildBundle(input,output,snapshot,provenance);console.log(JSON.stringify({kind:b.kind,status:b.status,files:Object.keys(b.files).length}));}
+  else if(mode==='seal-shard'){const [kind,shard]=input.split('/'),b=sealChildShard(kind,shard,output,snapshot,provenance);console.log(JSON.stringify({kind,shard,status:b.status,files:Object.keys(b.files).length}));}
   else if(mode==='aggregate'){
-    const dirs={},root=path.resolve(input);
-    for(const e of fs.readdirSync(root,{withFileTypes:true})){if(!e.isDirectory())continue;const d=path.join(root,e.name),f=path.join(d,'child-ux-bundle.json');if(fs.existsSync(f)){const kind=read(f).kind;assert.ok(!dirs[kind],'duplicate evidence kind');dirs[kind]=d;}}
+    const dirs={},shards={},root=path.resolve(input);
+    for(const e of fs.readdirSync(root,{withFileTypes:true})){if(!e.isDirectory())continue;const d=path.join(root,e.name),f=path.join(d,'child-ux-bundle.json'),s=path.join(d,'child-ux-shard.json');
+      assert.ok(!(fs.existsSync(f)&&fs.existsSync(s)),'a directory is one bundle or one shard');
+      if(fs.existsSync(f)){const kind=read(f).kind;assert.ok(!dirs[kind],'duplicate evidence kind');dirs[kind]=d;}
+      if(fs.existsSync(s)){const {kind,shard}=read(s);shards[kind]??={};assert.ok(!shards[kind][shard],'duplicate evidence shard '+kind+'/'+shard);shards[kind][shard]=d;}}
+    // Sharded kinds are merged into their usual directory and sealed there as the ordinary kind bundle.
+    for(const kind of Object.keys(shards))assert.ok(!dirs[kind],'kind delivered both whole and as shards: '+kind);
+    Object.assign(dirs,mergeChildShards(shards,snapshot,provenance,kind=>path.resolve(kind==='composition'?'audit-evidence/acceptance':'audit-evidence/editing')));
     const result=verifyChildAggregate(dirs,JSON.parse(process.env.AKARI_CHILD_UX_NEEDS||'null'),read(path.join(path.dirname(output),'retry-history.json')),snapshot,provenance);write(output,result);writeSummary(result,result.bundles?.map(b=>({id:b.kind,status:'PASS'}))||[]);
   }else throw Error('Unknown child UX mode: '+mode);
   const status={'manual-template':'UNVERIFIED_TEMPLATE','manual-verify':'VALID_PROTOCOL_RECORDS',history:'HISTORY_RECORDED'}[mode]||'PASS';
   console.log('Child UX '+mode+': '+status+' (machine evidence only; independent UX / real child / real IME are UNVERIFIED)');
 }catch(error){
-  const target=['matrix','language','aggregate','manual-verify'].includes(mode)?output:mode==='seal'?null:input;
+  const target=['matrix','language','aggregate','manual-verify'].includes(mode)?output:mode==='seal'||mode==='seal-shard'?null:input;
   if(target&&!fs.existsSync(target)){fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,JSON.stringify({schema:'akari-child-ux-failure-v1',status:'FAIL',snapshot,provenance,error:error.stack},null,2)+'\n');}
   console.error(error.stack);process.exitCode=1;
 }

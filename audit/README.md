@@ -11,6 +11,7 @@
 - node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/local
 - node audit/browser/run-full-browser-audit.mjs --group all --evidence audit-evidence/browser
 - 公開ActionsのAkari audit / Akari fixed acceptanceで必要なsuiteを実行・集約する。現行の実行集合はgate-contractと各runner/validatorを正本とし、段階数をここへ手で複製しない。
+- Actionsは [分割計画](lib/shard-plan.cjs) のとおり並列のjobへ分けて実行し、最終集約で全shardを結合してから全件を検証する。
 
 公開CIはWindows上で実行する。固定browserと媒体fixtureを使い、OS・入力・run/attemptの一致を検証する。Windowsの結果をLinuxの実行証拠として扱わない。
 
