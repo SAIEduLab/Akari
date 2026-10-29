@@ -27,8 +27,8 @@ function reject(id,rule,detail,mutate,contract=workflowContract){
   assert.ok(found.some(i=>i.rule===rule&&detail.test(i.detail)),id+' must be rejected by '+rule+' '+detail+'; got '+JSON.stringify(found));
   pass(id);
 }
-const gateStep='      - run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest\n';
-const sealStep='      - run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest\n        if: always()\n';
+const gateStep='      - run: node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"\n';
+const sealStep='      - run: node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"\n        if: always()\n';
 const sameRepositoryIf="    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}\n";
 const any=/./;
 
@@ -70,7 +70,7 @@ reject('artifact/missing-retention','artifact',/3 days/,f=>edit(f,guard,'       
 reject('artifact/missing-files-allowed','artifact',/missing evidence/,f=>edit(f,guard,'if-no-files-found: error','if-no-files-found: warn'));
 reject('commands/ad-hoc-audit-check','commands',/ad-hoc command: node audit\/tests\/license-verify/,f=>edit(f,audit,sealStep,'      - run: node audit/tests/license-verify.mjs audit-evidence/selftest/license-browser.json\n'+sealStep));
 reject('commands/ad-hoc-shell-check','commands',/ad-hoc command: test -f/,f=>edit(f,audit,'          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"\n','          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"\n          test -f Akari.html || exit 1\n'));
-reject('commands/missing-entry','commands',/missing entry: node audit\/verify-evidence\.mjs seal selftest/,f=>edit(f,audit,sealStep,''));
+reject('commands/missing-entry','commands',/missing entry: node audit\/verify-evidence\.mjs seal "selftest-/,f=>edit(f,audit,sealStep,''));
 reject('commands/reordered-entries','commands',/out of order/,f=>edit(f,audit,gateStep+sealStep,sealStep+gateStep));
 reject('commands/duplicate-entry','commands',/repeated/,f=>edit(f,audit,gateStep,gateStep+gateStep));
 reject('step-condition/disabled-entry','step-condition',any,f=>edit(f,audit,gateStep,gateStep+'        if: ${{ false }}\n'));
@@ -78,10 +78,14 @@ reject('step-env/entry-env-changed','step-env',/entry environment/,f=>edit(f,aud
 reject('step-env/undeclared','step-env',/undeclared/,f=>edit(f,guard,"        with:\n          node-version: '24'\n","        with:\n          node-version: '24'\n        env:\n          NODE_OPTIONS: --require ./preload.cjs\n"));
 reject('step-keys/shell-override','step-keys',/not allowed/,f=>edit(f,audit,gateStep,gateStep+'        shell: python\n'));
 reject('actions/unknown-action','actions',/not allowed/,f=>edit(f,guard,'      - uses: actions/setup-node@v4\n','      - uses: someone/setup-node@main\n'));
-reject('bundles/matrix-group-dropped','bundles',/full-browser-extra/,f=>edit(f,audit,'group: [session, ui, limits, schemas, extra]','group: [session, ui, limits, schemas]'));
+reject('bundles/matrix-group-dropped','bundles',/full-browser-b07/,f=>edit(f,audit,'shard: [b01, b02, b03, b04, b05, b06, b07]','shard: [b01, b02, b03, b04, b05, b06]'));
 // The kinds rule is independent of the declared entries: change both the workflow and its declaration.
-const singleKind=structuredClone(workflowContract);singleKind[acceptance].jobs['composition-acceptance'].entries=[{run:'node audit/run-acceptance.mjs editing'}];
+const singleKind=structuredClone(workflowContract);singleKind[acceptance].jobs['composition-acceptance'].entries=[{run:'node audit/run-acceptance.mjs editing --shard "${{ matrix.shard }}"'}];
 reject('acceptance/kind-dropped','acceptance',/acceptance kinds/,f=>edit(f,acceptance,'run: node audit/run-acceptance.mjs composition','run: node audit/run-acceptance.mjs editing'),singleKind);
+// Shard matrices: exactly the planned shards, each run to completion, and no other matrix.
+reject('matrix/shard-dropped','matrix',/shards must be exactly/,f=>edit(f,audit,'shard: [s01, s02, s03, s04, s05, s06]','shard: [s01, s02, s03, s04, s05]'));
+reject('matrix/fail-fast','matrix',/must not cancel/,f=>edit(f,acceptance,'      fail-fast: false\n','      fail-fast: true\n'));
+reject('matrix/unplanned-matrix','matrix',/only planned shard jobs/,f=>edit(f,audit,'    timeout-minutes: 25\n','    timeout-minutes: 25\n    strategy:\n      matrix:\n        shard: [s01]\n'));
 reject('checkout/guard-shallow-history','checkout',/full history/,f=>edit(f,guard,'      - uses: actions/checkout@v5\n        with:\n          fetch-depth: 0\n','      - uses: actions/checkout@v5\n'));
 
 writeCaseReport(output,'workflow-contract',results,{workflows:Object.keys(current)});

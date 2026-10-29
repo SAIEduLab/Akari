@@ -159,6 +159,11 @@ try {
   failed('identity/head-evaluation-failure',await guard(derive({'audit/lib/gate-contract.mjs':text('audit/lib/gate-contract.mjs')+'\nexport const broken = ;\n'})),'errors',/./);
   const unrelated=commitFiles(new Map([...baseFiles,['AUDIT.md',blob(documentation['AUDIT.md'])]]),[]);
   failed('identity/no-merge-base',await guard(docHead,{from:unrelated}),'errors',/no merge base/);
+  const tableChanged=derive({[product]:replaced(product,'const SENTENCE_TE_FORMS = Object.freeze([',"const SENTENCE_TE_FORMS = Object.freeze([['未知て','未知る'],")});
+  failed('language/reader-table-changed',await guard(tableChanged),'errors',/reader tables changed/);
+  failed('language/verbs-changed',await guard(derive({[product]:replaced(product,"const verbs={MotionCommand:['動く'","const verbs={MotionCommand:['別の動詞'")})),'errors',/reader tables changed/);
+  failed('language/reader-change-with-label',await guard(tableChanged,{eventPath:approved}),'errors',/reader tables changed/);
+  failed('language/candidate-not-base-canonical',await guard(derive({'audit/fixtures/assist/code-assist-cases.json':json('audit/fixtures/assist/code-assist-cases.json',data=>{data.cases[0].expect.first.text='存在しない書き方。';})})),'errors',/not a base canonical sentence/);
 } finally {
   fs.rmSync(tmp,{recursive:true,force:true});
 }

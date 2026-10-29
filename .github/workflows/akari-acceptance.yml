@@ -20,6 +20,10 @@ jobs:
     defaults:
       run:
         shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [c01, c02, c03]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -35,12 +39,12 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
           python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser"
-      - name: Run and validate the required composition suites
-        run: node audit/run-acceptance.mjs composition
+      - name: Run and seal the planned composition shard
+        run: node audit/run-acceptance.mjs composition --shard "${{ matrix.shard }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: akari-fixed-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          name: akari-fixed-acceptance-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: audit-evidence/acceptance/
           if-no-files-found: error
           retention-days: 3
@@ -105,7 +109,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json
-      - name: Require complete current-attempt evidence and successful required jobs
+      - name: Merge the composition shards and require complete current-attempt evidence and successful required jobs
         if: always()
         env:
           AKARI_CHILD_UX_NEEDS: ${{ toJSON(needs) }}
@@ -114,6 +118,12 @@ jobs:
         if: always()
         with:
           name: akari-child-ux-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/child-ux/*.json
+          path: |
+            audit-evidence/child-ux/*.json
+            audit-evidence/acceptance/execution.json
+            audit-evidence/acceptance/aggregate.json
+            audit-evidence/acceptance/step-38.log
+            audit-evidence/acceptance/child-ux-bundle.json
+            audit-evidence/acceptance/shards/
           if-no-files-found: error
           retention-days: 3

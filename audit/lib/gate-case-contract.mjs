@@ -32,7 +32,7 @@ export const workflowRejectionIds=Object.freeze([
   'artifact/retention-days','artifact/missing-retention','artifact/missing-files-allowed',
   'commands/ad-hoc-audit-check','commands/ad-hoc-shell-check','commands/missing-entry','commands/reordered-entries','commands/duplicate-entry',
   'step-condition/disabled-entry','step-env/entry-env-changed','step-env/undeclared','step-keys/shell-override','actions/unknown-action',
-  'bundles/matrix-group-dropped','acceptance/kind-dropped','checkout/guard-shallow-history']);
+  'bundles/matrix-group-dropped','acceptance/kind-dropped','matrix/shard-dropped','matrix/fail-fast','matrix/unplanned-matrix','checkout/guard-shallow-history']);
 // Synthetic base/head trees for every change-guard rule, plus accepted controls.
 export const changeGuardCaseIds=Object.freeze([
   'real-tree/identity-extracted','control/documentation-only','control/additions-only','control/pin-moved','control/base-advanced-after-branch',
@@ -42,7 +42,8 @@ export const changeGuardCaseIds=Object.freeze([
   'label/approves-removal','label/other-label-only','label/missing-event','label/payload-without-labels','label/unreadable-payload',
   'version/source-changed-without-bump','version/product-changed-without-bump','version/patch-bump-accepted','version/patch-skipped','version/patch-skipped-with-label','version/minor-bump','version/minor-bump-with-label','version/major-bump-with-label','version/lower-with-label','version/bump-without-product-change','version/label-does-not-excuse',
   'release/two-manifests','release/wrong-name','release/missing',
-  'identity/head-evaluation-failure','identity/no-merge-base']);
+  'identity/head-evaluation-failure','identity/no-merge-base',
+  'language/reader-table-changed','language/verbs-changed','language/reader-change-with-label','language/candidate-not-base-canonical']);
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);

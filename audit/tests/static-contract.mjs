@@ -12,6 +12,7 @@ import {verifyAuthority} from '../lib/verify-test-results.mjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {assertReleasePolicy,functionalNameIssue,functionalNameIssues,fileNameSegments,auditRegistry,manifestFieldIssues} from '../lib/release-policy.mjs';
 import {gateSteps,acceptanceCommands,acceptanceIds} from '../lib/gate-contract.mjs';
+import {verifyShardPlan} from '../lib/shard-plan.cjs';
 import {assertSingleBrowserOwner} from '../lib/verify-browser-results.mjs';
 import {formatCompatibilityIds} from '../lib/format-compatibility-contract.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
@@ -58,6 +59,9 @@ const browserTests=JSON.parse(fs.readFileSync('audit/manifests/browser-results.j
 for(const entry of browserTests.entries){functionalId(entry.task,'browser task');for(const id of entry.keys)functionalId(id,'browser test');}
 // A browser case runs once: two tasks never register the same case key.
 assertSingleBrowserOwner(browserTests.entries);
+// CI shards run every gate step, browser task and acceptance step exactly once, readers with their producers.
+const browserTasks=Object.values(JSON.parse(fs.readFileSync('audit/browser/browser-audit-manifest.json')).groups).flat();
+assert.deepEqual(verifyShardPlan({steps:gateSteps('',''),tasks:browserTasks,acceptance:Object.fromEntries(Object.keys(acceptanceCommands).map(k=>[k,{ids:acceptanceIds(k),commands:acceptanceCommands[k]}]))}),[],'CI shard plan');
 const languageTests=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
 for(const id of expectedLanguageIds(languageTests))functionalId(id,'language test');
 for(const id of formatCompatibilityIds)functionalId(id,'format compatibility test');

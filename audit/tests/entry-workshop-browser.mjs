@@ -4,6 +4,7 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';import
 import {tutorialSteps,browserIds,deniedRoutes,verifyEntryReport,entryProvenance} from '../lib/entry-workshop-contract.mjs';
 import {pressStop,DOUBLE_PRESS_MS} from '../lib/stop-press.cjs';
 import {chooseView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
+import {currentPart,partItems} from '../lib/shard-plan.cjs';
 // はじめて's 作品 menu, touched during the tutorial. The run screen keeps its place but does not show it (final call 21),
 // so a touch there lands on what is under that place and still opens nothing.
 async function tapEntryProjectMenu(p){const menu=p.locator('#projectMenu > summary');if(await menu.isVisible()){await menu.tap();return;}
@@ -11,12 +12,14 @@ async function tapEntryProjectMenu(p){const menu=p.locator('#projectMenu > summa
  assert.ok(at.running&&at.hidden&&at.width>0,'the 作品 menu is hidden only on the run screen, with its place kept');await p.touchscreen.tap(at.x,at.y);}
 const [chrome,out]=process.argv.slice(2);if(!chrome||!out)throw Error('browser and fresh report are required');
 const product=currentProductFile(),output=path.resolve(out),artifacts=output+'.artifacts';
+// A CI part (AKARI_PART) runs only its planned rows; the aggregate merges the parts before the full validation.
+const part=currentPart('entry-browser'),selectedRows=partItems('entry-browser',browserIds,part);
 assert.ok(!fs.existsSync(output)&&!fs.existsSync(artifacts),'fresh evidence');fs.mkdirSync(artifacts,{recursive:true});
 const report={schema:'akari-entry-workshop-v1',kind:'browser',status:'RUNNING',productFile:product,snapshot:snapshot(product),
  commitSha:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),command:process.argv.join(' '),startedAt:new Date().toISOString(),
  executionBasis:entryProvenance(product),browser:null,platform:process.platform,node:process.version,browserZoom:1,deviceScaleFactor:1,realIME:false,realChild:false,realChromebook:false,
  input:'native Playwright mouse/keyboard; separately identified synthetic touch, composition, drag/drop and forbidden hidden-control events',
- results:[],pageErrors:[],networkRequests:[]};
+ results:[],pageErrors:[],networkRequests:[],...(part?{part:{name:'entry-browser',part,items:selectedRows}}:{})};
 const save=()=>{report.artifacts=fs.readdirSync(artifacts).sort().map(file=>{const bytes=fs.readFileSync(path.join(artifacts,file));return{path:file,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');};
 const read=p=>p.evaluate(()=>{const a=Akari.app,e=a.editorState,s=e.main;return{project:JSON.stringify(a.project),
  history:e.history,redo:e.redo,dirty:e.dirty,owner:s?.ownerKey,source:s?.sourceText,mode:document.querySelector('#uiLevel').value,
@@ -32,7 +35,7 @@ async function loseQuestion(p){await p.locator('#loseConfirmModal.show').waitFor
 // The guided number is fully inside the editor's scroll viewport.
 const fieldInView=id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;};
 const picture=async(p,name)=>{const file=name+'.png';await p.screenshot({path:path.join(artifacts,file)});return file;};
-async function row(browser,id,fn,contextOptions={}){const result={id,status:'RUNNING',observations:{}};report.results.push(result);
+async function row(browser,id,fn,contextOptions={}){if(!selectedRows.includes(id))return;const result={id,status:'RUNNING',observations:{}};report.results.push(result);
  try{result.observations=await pageFor(browser,product,async p=>{p.setDefaultTimeout(8000);await p.setViewportSize({width:1280,height:720});
  p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
  try{return await fn(p);}catch(error){await picture(p,id+'-failure').catch(()=>{});throw error;}},{initialUiLevel:null,...contextOptions});result.status='PASS';}
@@ -320,4 +323,4 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
 
 },600000);
 report.status=report.results.every(r=>r.status==='PASS')&&report.pageErrors.length===0?'PASS':'FAIL';save();
-if(report.status==='PASS')verifyEntryReport(report,'browser',snapshot(product),{allowWorkingCopy:true,file:output});else process.exitCode=1;
+if(report.status==='PASS'){if(!part)verifyEntryReport(report,'browser',snapshot(product),{allowWorkingCopy:true,file:output});}else process.exitCode=1;

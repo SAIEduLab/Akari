@@ -2008,7 +2008,11 @@
         for (const info of index.values())
           if (['LocalVariableDeclaration', 'LocalListDeclaration'].includes(info.node.schemaId))
             names.push(info.node.fields.name);
-      } else if (field.type === 'string')
+      } else if (field.type === 'string') {
+        const info=index.get(node.id),parent=index.get(info?.parentId)?.node;
+        if(info?.input==='message'&&['Broadcast','BroadcastAndWait'].includes(parent?.schemaId)){
+          const signals=c.signalNames?.()||{received:[],sent:[]};names.push(...signals.received.filter(name=>!name.startsWith('拡張:')),...signals.sent);
+        }
         names.push(
           ...p.components.map((x) => x.name),
           ...p.stage.backdrops.map((x) => x.name),
@@ -2026,6 +2030,7 @@
           'エンター',
           'エスケープ',
         );
+      }
       return [...new Set(names)];
     }
     // A field named like its block is read once, not as "文字 文字".
@@ -2166,10 +2171,14 @@
           const subject = actor(currentActor, 'actorRef.');
           const filter = choice('どれで動くか', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この合図']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
           const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? '');
+          const signals=document.createElement('datalist');signals.id=viewId+'-signals-'+node.id;group.append(signals);
           const sync = () => {
             for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
             filterValue.parentElement.hidden = filter.value === 'all';
+            const names=context().signalNames?.()||{sent:[],received:[]},values=filter.value==='message'?[...names.sent,...names.received]:['スペース','上','下','左','右','エンター','エスケープ'];
+            signals.replaceChildren(...[...new Set(values)].map(value=>{const option=document.createElement('option');option.value=value;return option;}));
+            filterValue.setAttribute('list',signals.id);
             for (const child of group.querySelectorAll('input,select'))
               if (child !== enabled&&child!==event&&child!==touchTarget) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
           };

@@ -20,6 +20,10 @@ jobs:
     defaults:
       run:
         shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [s01, s02, s03, s04, s05, s06]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -30,14 +34,14 @@ jobs:
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --no-shell chromium
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
-      - run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
-      - run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest
+      - run: node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"
+      - run: node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"
         if: always()
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: akari-selftest-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/selftest/
+          name: akari-selftest-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/selftest-${{ matrix.shard }}/
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
@@ -51,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [session, ui, limits, schemas, extra]
+        shard: [b01, b02, b03, b04, b05, b06, b07]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -67,14 +71,14 @@ jobs:
           python -m pip install Pillow imageio-ffmpeg==0.6.0
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser" --media
           echo "AKARI_PYTHON=python" >> "$GITHUB_ENV"
-      - run: node audit/browser/run-full-browser-audit.mjs --group "${{ matrix.group }}" --evidence "audit-evidence/full-browser-${{ matrix.group }}"
-      - run: node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" "audit-evidence/full-browser-${{ matrix.group }}"
+      - run: node audit/browser/run-full-browser-audit.mjs --shard "${{ matrix.shard }}" --evidence "audit-evidence/full-browser-${{ matrix.shard }}"
+      - run: node audit/verify-evidence.mjs seal "full-browser-${{ matrix.shard }}" "audit-evidence/full-browser-${{ matrix.shard }}"
         if: always()
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: akari-full-browser-${{ matrix.group }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/full-browser-${{ matrix.group }}/
+          name: akari-full-browser-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/full-browser-${{ matrix.shard }}/
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
@@ -134,6 +138,14 @@ jobs:
         if: always()
         with:
           name: akari-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/aggregate.json
+          path: |
+            audit-evidence/aggregate.json
+            audit-evidence/merged/selftest/gate.json
+            audit-evidence/merged/selftest/entry-browser.json
+            audit-evidence/merged/selftest/entry-verify.json
+            audit-evidence/merged/selftest/entry-verify.log
+            audit-evidence/merged/full-browser/summary.json
+            audit-evidence/merged/full-browser/candidate/browser-schemas.json
+            audit-evidence/merged/full-browser/candidate/modern-browser.json
           if-no-files-found: error
           retention-days: 3

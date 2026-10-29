@@ -742,6 +742,7 @@
         ...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id] || BLOCK_SEARCH_SYNONYMS[schemaKey.split(':')[0]]) || []),
         ...semanticForms.flatMap(form => [form.intent, ...(form.kind==='MotionCommand'?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'), ...(form.acceptedReadings || [])]),
       ];
+      const assistForms = SENTENCE_FORMS.filter(form => semanticForms.includes(form) || schemaKey === form.kind);
       out.push({
         id,
         category,
@@ -750,6 +751,14 @@
         enabled: !reason,
         reason,
         binding,
+        terms: {
+          text: [text.split('\n')[0]],
+          synonyms: [...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id] || BLOCK_SEARCH_SYNONYMS[schemaKey.split(':')[0]]) || [])],
+          verbForms: assistForms.flatMap(form => form.kind === 'MotionCommand' ? [] : form.verbForms || []),
+          nounForms: assistForms.flatMap(form => (form.nounForms || []).filter(word => word !== '動く対象')),
+          acceptedReadings: assistForms.flatMap(form => form.acceptedReadings || []),
+          intent: [...(intentTerms[category] || []), ...assistForms.map(form => form.intent)],
+        },
         searchTerms: [...new Set([...(intentTerms[category] || []), ...idTerms])],
       });
     };
@@ -879,13 +888,18 @@
       // A character's line is said in its own voice (F-18: no です・ます in what a part says).
       if (x.id === 'Say')
         text = '「やったね」と言う';
+      if(['Broadcast','BroadcastAndWait'].includes(x.kind)){
+        const names=options.signalNames||{sent:[],received:[]},received=(names.received||[]).filter(name=>!name.startsWith('拡張:'));
+        const name=received.find(name=>!(names.sent||[]).includes(name))||received[0]||'開始';
+        text=text.replace('「開始」','「'+name+'」');
+      }
       if (x.kind === 'WaitUntil')
         text = '「スペース」キーがおされるまで待つ';
       // With data named 色, 色を「赤」にする would change that data: the character's colour is then 表示色 (F-25).
       if (x.id === 'LooksCommand:SET_COLOR' && usedNames.has('色'))
         text = '表示色を「赤」にする';
       const actorRequired =
-        ['MotionCommand', 'PenCommand'].includes(x.kind) ||
+        (['MotionCommand', 'PenCommand'].includes(x.kind) && x.id !== 'PenCommand:CLEAR') ||
         (x.kind === 'LooksCommand' &&
           ![
             'SET_BACKDROP',

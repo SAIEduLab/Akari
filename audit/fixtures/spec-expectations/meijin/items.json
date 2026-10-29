@@ -2826,6 +2826,18 @@
         "MC-764",
         "MC-765"
       ]
+    },
+    {
+      "id": "MI-334",
+      "section": "名人の本文の知らせ",
+      "summary": "相手つきの合図は相手ごとに受ける本文が無いときに知らせる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-766",
+        "MC-767",
+        "MC-768"
+      ]
     }
   ],
   "specGaps": []

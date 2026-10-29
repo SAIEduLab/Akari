@@ -99,7 +99,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 能力・安定ID・期待値の変更は仕様変更と対応させます。実測結果から期待値を自動生成して追認しません。固定集合と独立したvalidatorで、欠落・重複・失敗・異なるsnapshotを拒否します。negative testでvalidator自身の拒否能力を検査します。
 
-ローカル監査の入口は `audit/run-local-gate.mjs`、ブラウザー群の入口は `audit/browser/run-full-browser-audit.mjs` です。CIでも同じ入口を使います。証拠は `audit-evidence/` に出し、Gitに含めません。Actions artifactの保持期間は3日です。
+ローカル監査の入口は `audit/run-local-gate.mjs`、ブラウザー群の入口は `audit/browser/run-full-browser-audit.mjs` です。CIでも同じ入口を使い、`--shard` で分割計画の一部を並列のジョブとして実行します。証拠は `audit-evidence/` に出し、Gitに含めません。Actions artifactの保持期間は3日です。
 
 ## 監査基盤の保証
 
@@ -109,7 +109,8 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 - **文書の整合**（`publication-documents`）: 追跡する文書は、現行の製品ファイルと現行のリリース表示だけを挙げます。
 - **配布の固定**（`release-distribution`）: `audit/manifests/release-<版>.json`は1つだけで、製品・文書・契約番号のhashと一致します。契約番号は`features.json`のEXECUTABLE_CONTRACTから読みます。
 - **監査ファイルの到達性**（`audit-inventory`）: `audit/`の追跡ファイルは、gate段・受入コマンド・ブラウザー群・workflow・runnerの読込み・本書とREADMEの案内のいずれかから到達できます。到達できないファイルはFAILで、合成した孤立ファイルで拒否能力を示します。
-- **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。
+- **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。分割したジョブのmatrixは計画のshardと一致し、一つの失敗で他のshardを取り消しません。
+- **CIの分割と結合**（`static`・`integrity`）: Actionsは`audit/lib/shard-plan.cjs`の計画どおり、gate段・ブラウザー群の課題・合成受入の段を並列のジョブ（shard）へ分けます。各段・課題は計画上ちょうど一度ずつ実行し、他の段の出力を読む段は、その段と同じshardでその後に実行します。単独で長い検査は、自分のケース集合を宣言した部分へ分け、部分がすべてのケースをちょうど一度ずつ覆うことを確かめます。最終集約（`aggregate`、`child-ux-aggregate`）は、計画どおりのshardがすべてそろい、同じ入力・commit・runで封印され、どの証拠ファイルも生成元が一つであることを確かめてから一つの証拠へ結合し、従来の全件validatorをそのまま実行します。欠落・重複・失敗・timeout・別snapshotのshardは結合せず、FAILにします。
 - **結果の形式**: 終了コードだけで判定していた段も、case IDを持つ結果（`akari-gate-cases-v1`）を書き、validatorが全case PASSの集合を確認します。
 - **文の形の網羅**（`sentence-form-coverage`）: 製品の有限な文型表（`SENTENCE_FORMS`、`CONDITION_FORMS`、`SENTENCE_TE_FORMS`等）の全項目に、独立した入力と期待値を持つ事例が必要です。到達できない項目は網羅の不足としてFAILになり、製品の表から消します。項目を外しても結果が変わらないことで、各項目が必要なことを確かめます。
 - **仕様の例文**（`spec-examples`）: LANGUAGE.mdとEXTENSIONS.mdの`text`ブロックは、製品の構文解析器で読めます。読めない例は`<!-- akari-example: rejected -->`で明示し、拒否されることを確かめます。名人の本文の例は`<!-- akari-example: meijin -->`（一つの名人の本文として読め、作品チェックが誤りを出さない）と`<!-- akari-example: meijin-rejected -->`（一文ずつ、作品チェックが止める）で明示します。名人の例を読む作品は、例が名前を挙げる部品・データ・音・すがたを持ちます（`audit/lib/meijin-example-world.mjs`）。
@@ -586,7 +587,7 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
-| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.1の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.2の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
 | EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。

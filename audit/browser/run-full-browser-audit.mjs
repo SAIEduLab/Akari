@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import {snapshot as inputSnapshot} from '../lib/product-test-host.mjs';
 import {verifyBrowserGroup} from '../lib/verify-browser-results.mjs';
+import {browserShards,parseUnit} from '../lib/shard-plan.cjs';
+import {partLog,verifyBrowserShard} from '../lib/shard-evidence.mjs';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../..');
@@ -18,10 +20,12 @@ const product=value('--product',currentProductFile());
 const audit=value('--audit','AUDIT.md');
 const manifestPath=value('--manifest',path.join(here,'browser-audit-manifest.json'));
 const evidence=path.resolve(root,value('--evidence','audit-evidence/full-browser'));
-const group=value('--group','all');
+// A CI shard (--shard <id>) runs the tasks and task parts the shard plan gives it, across groups.
+const shard=value('--shard',null),group=shard?null:value('--group','all');
+if(shard&&!Object.hasOwn(browserShards,shard))throw new Error('Unknown browser audit shard: '+shard);
 const before=inputSnapshot(product);
 const config=JSON.parse(fs.readFileSync(path.resolve(root,manifestPath),'utf8'));
-if(group!=='all'&&!Object.hasOwn(config.groups,group))throw new Error('Unknown browser audit group: '+group);
+if(group&&group!=='all'&&!Object.hasOwn(config.groups,group))throw new Error('Unknown browser audit group: '+group);
 for(const p of [product,audit,manifestPath])if(!fs.existsSync(path.resolve(root,p)))throw new Error('Missing audit input: '+p);
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const run=(cmd,a,opts={})=>{
@@ -84,7 +88,9 @@ const groups={
     task('perf-input',[candidate,'keyboard-insert','16666']),task('perf-input',[candidate,'clipboard-paste','16666']),
     task('modern-browser'),task('long-regression')]
 };
-const selected=group==='all'?Object.values(groups).flat():groups[group];
+const taskKey=t=>t.name+(t.name==='perf-input'?':'+t.args[1]:'');
+const selected=shard?browserShards[shard].map(text=>{const {name,part}=parseUnit(text),item=Object.values(groups).flat().find(t=>taskKey(t)===name);if(!item)throw new Error('Unknown browser task '+name);return {...item,part};})
+  :(group==='all'?Object.values(groups).flat():groups[group]).map(item=>({...item,part:null}));
 for(const [name,tasks] of Object.entries(groups))assert.deepEqual(tasks.map(t=>t.name+(t.name==='perf-input'?':'+t.args[1]:'')),config.groups[name],'manifest/runner divergence '+name);
 const records=[];
 for(const item of selected){
@@ -93,15 +99,15 @@ for(const item of selected){
   // Native tab activation is required by the trusted window-blur check.
   // Keep this suite headed; never substitute a synthetic blur or headless fallback.
   const headed=item.name==='ui-stage-gesture'&&process.platform==='linux';
-  const r=run(headed?'xvfb-run':process.execPath,headed?['-a',process.execPath,item.script,...item.args]:[item.script,...item.args],{timeout});
-  const log=item.name+(item.name==='perf-input'?'-'+item.args[1]:'')+'.log';
+  const r=run(headed?'xvfb-run':process.execPath,headed?['-a',process.execPath,item.script,...item.args]:[item.script,...item.args],{timeout,...(item.part?{env:{...process.env,AKARI_PART:item.part}}:{})});
+  const base=item.name+(item.name==='perf-input'?'-'+item.args[1]:''),log=item.part?partLog(base,item.part):base+'.log';
   fs.writeFileSync(path.join(evidence,log),(r.stdout||'')+'\n'+(r.stderr||''));
-  records.push({task:item.name+(item.name==='perf-input'?':'+item.args[1]:''),name:item.name,args:item.args.map(x=>path.relative(root,x)||x),status:r.status,signal:r.signal,started,finished:new Date().toISOString(),log});
+  records.push({task:taskKey(item),...(shard?{part:item.part}:{}),name:item.name,args:item.args.map(x=>path.relative(root,x)||x),status:r.status,signal:r.signal,started,finished:new Date().toISOString(),log});
   if(r.status!==0)process.stderr.write(((r.stdout||'')+'\n'+(r.stderr||'')).slice(-6000));
 }
-const summary={head,group,productVersion:config.productVersion,records,passed:records.filter(r=>r.status===0).length,failed:records.filter(r=>r.status!==0).length};
+const summary={head,...(shard?{shard}:{group}),productVersion:config.productVersion,records,passed:records.filter(r=>r.status===0).length,failed:records.filter(r=>r.status!==0).length};
 fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify(summary,null,2));
 assert.deepEqual(inputSnapshot(product),before,'inputs changed during browser run');
-if(!summary.failed)verifyBrowserGroup(evidence,group,before);
+if(!summary.failed){if(shard)verifyBrowserShard(evidence,shard,before);else verifyBrowserGroup(evidence,group,before);}
 console.log(JSON.stringify(summary,null,2));
 if(summary.failed)process.exitCode=1;

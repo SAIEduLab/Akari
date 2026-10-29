@@ -1,6 +1,6 @@
 # Standard limits and derived profiles
 
-The standard values below retain the existing editor and player behavior. A host registers and selects a profile before loading a project. A saved requirement identifies that selection; it cannot register a profile or grant permissions. The canonical meaning and saved-project contract are in [LANGUAGE_1_5_1.md](../LANGUAGE_1_5_1.md).
+The standard values below retain the existing editor and player behavior. A host registers and selects a profile before loading a project. A saved requirement identifies that selection; it cannot register a profile or grant permissions. The canonical meaning and saved-project contract are in [LANGUAGE_1_5_2.md](../LANGUAGE_1_5_2.md).
 
 For adjustable policies, an omitted value or JavaScript `undefined` inherits the standard value, a positive finite value replaces it, and JSON `null` removes the software maximum. Zero is invalid. The effective runtime value for `null` is `Infinity`; serialized profile definitions retain `null`. Integer policies require positive safe integers. Only audio duration policies accept positive fractional numbers. Unlimited software policies remain subject to available memory, browser allocation and media capabilities.
 

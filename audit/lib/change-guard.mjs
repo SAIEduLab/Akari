@@ -8,6 +8,8 @@ import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {changeGuardLabel} from './gate-contract.mjs';
+import {verifyAssistLanguageInvariance} from './assist-language-invariance.mjs';
+const assistInvarianceCache=new Map();
 
 export const guardReportSchema='akari-change-guard-v1';
 export const identityCategories=Object.freeze(['gate-step','gate-case','integrity-control','acceptance-suite','browser-group','browser-task','browser-case','product-suite','product-test','language-test','workflow-job','workflow-entry','pin']);
@@ -127,6 +129,15 @@ export async function changeGuard({repo,base,head,eventPath,workDir}){
     }
     for(const value of report.removed.pin||[])report.pinFiles[value]=before.pins.get(value);
     const productChanged=before.source!==after.source||before.product!==after.product;
+    const assistFixture=optionalObject(repo,headCommit+':audit/fixtures/assist/code-assist-cases.json');
+    if(assistFixture){
+      const key=[before.product,after.product,assistFixture].join(':');
+      if(!assistInvarianceCache.has(key)){
+        const objects=readBlobs(repo,[before.product,after.product,assistFixture]);
+        assistInvarianceCache.set(key,verifyAssistLanguageInvariance(objects.get(before.product).toString('utf8'),objects.get(after.product).toString('utf8'),JSON.parse(objects.get(assistFixture).toString('utf8'))));
+      }
+      report.languageInvariance=assistInvarianceCache.get(key);
+    }
     const expected=productChanged?nextPatch(before.version):before.version;
     report.version={base:before.version,head:after.version,expected,productChanged};
     // A product change raises the version: one patch by default; any other raise is the owner's decision (label).
