@@ -32379,7 +32379,7 @@ function createAkariExtensionHost(options) {
     const ast=parsed.ast, node=ast.body?.[0]||ast.rules?.[0];if(!node||hint.id.startsWith('Heading:'))return {...hint,text:parsed.text,filled:0};
     if(node.kind==='Say'&&data.numbers.some(n=>n.unit==='秒'))node.seconds=sentenceQuantity({kind:'NumberLiteral',value:data.numbers.find(n=>n.unit==='秒').value},'秒');
     const filled=new Set(),boundKinds=new Set(),slots=sentenceRoleSlots(node.kind,node.op,node.seconds?'timedSpeech':null),get=(o,p)=>p.split('.').reduce((v,k)=>v?.[k],o),put=(o,p,v)=>{const keys=p.split('.');for(const k of keys.slice(0,-1)){if(!o[k])return false;o=o[k];}o[keys.at(-1)]=v;return true;};
-    const literal=value=>({kind:'NumberLiteral',value}),isNumber=node=>node?.kind==='NumberLiteral'||node?.kind==='QuantityLiteral'&&node.value?.kind==='NumberLiteral';
+    const literal=value=>value<0?{kind:'UnaryExpression',op:'NEG',value:{kind:'NumberLiteral',value:-value}}:{kind:'NumberLiteral',value},isNumber=node=>node?.kind==='NumberLiteral'||node?.kind==='QuantityLiteral'&&node.value?.kind==='NumberLiteral';
     const numberAt=(slot,value)=>{const old=get(node,slot.path),changed=put(node,slot.path,old?.kind==='QuantityLiteral'?{...old,value:literal(value)}:literal(value));if(changed)filled.add(slot.path);return changed;};
     if(intent){
       if(intent.schemaId==='MotionCommand:MOVE_BY'&&intent.direction){const vertical=['up','down'].includes(intent.direction);if(vertical&&node.x){node.y=node.x;delete node.x;}node[vertical?'yDir':'xDir']=intent.direction;}
