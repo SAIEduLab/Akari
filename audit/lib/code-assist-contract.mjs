@@ -1306,7 +1306,7 @@ function verifyAssistRegressions(o){
   for(const [id,prefix]of [['argument-parentheses','高さを「7」、時間を3として、'],['argument-angle','高さを「7」、時間を3として、'],['argument-square','高さを「7」、時間を3として、'],['argument-repeated-name','高さを点数、時間を点数として、'],['argument-suffix-name','数を1、回数を5として、']])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   for(const [id,prefix]of [['argument-label-data','高さを3、時間を1として、'],['argument-wrapped-first','高さを1、時間を点数として、'],['argument-wrapped-after','高さを1、時間を点数として、'],...Array.from({length:12},(_,i)=>['argument-quoted-width-'+i,'高さを3、時間を「７」として、'])])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   assert.equal(rows['argument-label-data-after'].find(c=>c.schemaId==='UserActionCall')?.text,'高さを1、時間を高さとして、【ジャンプ】というてじゅんを行う。');
-  assert.equal(rows['argument-negative'].find(c=>c.schemaId==='UserActionCall')?.text,'高さを1、時間を-2として、【ジャンプ】というてじゅんを行う。');
+  assert.equal(rows['argument-negative'].find(c=>c.schemaId==='UserActionCall')?.text,'高さを1、時間を－2として、【ジャンプ】というてじゅんを行う。');
   assert.ok(rows['local-scope'].every(c=>!c.text.includes('体力')));assert.ok(rows['costume-scope'].every(c=>c.schemaId!=='LooksCommand:SET_COSTUME'));
   for(const pair of o.readings)assert.equal(pair[0],pair[1]);assert.deepEqual(o.intents,['MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount','RepeatCount','RepeatCount','MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount']);
   assert.deepEqual(o.receivers.map(n=>n.line),[1,3]);assert.deepEqual(o.receivers.map(n=>n.proposals?.[0]?.start),[2,28]);
