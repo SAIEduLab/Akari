@@ -137,18 +137,24 @@ export function mergeGateShards(dirs,out,inputs){
   fs.writeFileSync(path.join(out,'gate.json'),JSON.stringify(gate,null,2)+'\n');
   return gate;
 }
-export function mergedRow(id,found,dirs,out,log=id+'.log'){
-  assert.ok(found.length,'no shard ran '+id);
-  if(found.length===1&&!found[0].part){const {shard,part,...row}=found[0];return {...row,shard};}
+// The rows of a split step or task in its declared part order (shards may hold the parts in any order).
+export function orderedParts(id,found){
   assert.ok(found.every(f=>f.part),id+' ran whole and in parts');
-  assert.deepEqual(found.map(f=>f.part),[...splits[id].parts],id+' parts');
+  const order=splits[id]?.parts||[],sorted=[...found].sort((a,b)=>order.indexOf(a.part)-order.indexOf(b.part));
+  assert.deepEqual(sorted.map(f=>f.part),[...order],id+' parts');return sorted;
+}
+export function mergedRow(id,rows,dirs,out,log=id+'.log'){
+  assert.ok(rows.length,'no shard ran '+id);
+  if(rows.length===1&&!rows[0].part){const {shard,part,...row}=rows[0];return {...row,shard};}
+  const found=orderedParts(id,rows);
   fs.writeFileSync(path.join(out,log),found.map(f=>'=== '+id+'@'+f.part+' (shard '+f.shard+')\n'+fs.readFileSync(path.join(dirs[f.shard],f.log),'utf8')).join('\n'));
   return {id,status:found.every(f=>f.status==='PASS')?'PASS':'FAIL',exit:found.find(f=>f.exit!==0)?.exit??0,signal:found.find(f=>f.signal)?.signal??null,ms:found.reduce((n,f)=>n+f.ms,0),log,parts:found.map(f=>({part:f.part,shard:f.shard,ms:f.ms,log:f.log}))};
 }
 function runAfterMerge(id,args,out,log=id+'.log'){
   const started=Date.now(),r=cp.spawnSync(process.execPath,args,{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024});
-  fs.writeFileSync(path.join(out,log),(r.stdout||'')+'\n'+(r.stderr||'')+(r.error?.stack||''));
-  return {id,status:r.status===0&&!r.signal&&!r.error?'PASS':'FAIL',exit:r.status,signal:r.signal||null,ms:Date.now()-started,log,afterMerge:true};
+  const text=(r.stdout||'')+'\n'+(r.stderr||'')+(r.error?.stack||''),status=r.status===0&&!r.signal&&!r.error?'PASS':'FAIL';fs.writeFileSync(path.join(out,log),text);
+  if(status==='FAIL')console.error(id+' (after merge) failed:\n'+text.slice(-4000));
+  return {id,status,exit:r.status,signal:r.signal||null,ms:Date.now()-started,log,afterMerge:true,...(status==='FAIL'?{reason:text.slice(-1500)}:{})};
 }
 // Copies every shard file into out. A path produced by two shards is rejected unless `shared`
 // accepts it (identical bytes are then required) or `merged` claims it for a part merge.
@@ -212,10 +218,10 @@ export function mergeBrowserShards(dirs,out,inputs){
   }
   const config=readJson('audit/browser/browser-audit-manifest.json'),records=[];
   for(const task of Object.values(config.groups).flat()){
-    const found=Object.entries(summaries).flatMap(([shard,s])=>s.records.filter(r=>r.task===task).map(r=>({...r,shard})));
-    assert.ok(found.length,'no shard ran '+task);
-    if(found.length===1&&!found[0].part){const {part,...r}=found[0];records.push(r);continue;}
-    assert.ok(found.every(f=>f.part));assert.deepEqual(found.map(f=>f.part),[...splits[task].parts],task+' parts');
+    const rows=Object.entries(summaries).flatMap(([shard,s])=>s.records.filter(r=>r.task===task).map(r=>({...r,shard})));
+    assert.ok(rows.length,'no shard ran '+task);
+    if(rows.length===1&&!rows[0].part){const {part,...r}=rows[0];records.push(r);continue;}
+    const found=orderedParts(task,rows);
     const log=task.replace(':','-')+'.log';
     fs.writeFileSync(path.join(out,log),found.map(f=>'=== '+task+'@'+f.part+' (shard '+f.shard+')\n'+fs.readFileSync(path.join(dirs[f.shard],f.log),'utf8')).join('\n'));
     records.push({task,name:found[0].name,args:found[0].args,status:found.every(f=>f.status===0)?0:found.find(f=>f.status!==0).status,signal:found.find(f=>f.signal)?.signal??null,

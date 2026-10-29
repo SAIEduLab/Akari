@@ -138,6 +138,14 @@ jobs:
         if: always()
         with:
           name: akari-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/aggregate.json
+          path: |
+            audit-evidence/aggregate.json
+            audit-evidence/merged/selftest/gate.json
+            audit-evidence/merged/selftest/entry-browser.json
+            audit-evidence/merged/selftest/entry-verify.json
+            audit-evidence/merged/selftest/entry-verify.log
+            audit-evidence/merged/full-browser/summary.json
+            audit-evidence/merged/full-browser/candidate/browser-schemas.json
+            audit-evidence/merged/full-browser/candidate/modern-browser.json
           if-no-files-found: error
           retention-days: 3

@@ -11,7 +11,10 @@ import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {sealBundle,verifyBundle,selectBundleDirectory} from '../lib/evidence-bundle.mjs';
 import {gateCaseIds,nodeProductCaseIds,caseReport,verifyGateCaseReports,currentReleaseRecord} from '../lib/gate-case-contract.mjs';
 import {selftestShards,acceptanceShards,browserShards,parseUnit,partItems,verifyPartCoverage,verifyShardPlan} from '../lib/shard-plan.cjs';
-import {partLog,verifyGateShard,verifyAcceptanceShardReceipt,copyUnion,mergedRow,mergeGateShards,mergedKinds} from '../lib/shard-evidence.mjs';
+import {partLog,verifyGateShard,verifyAcceptanceShardReceipt,copyUnion,mergedRow,mergeGateShards,mergeAcceptanceShards,mergedKinds} from '../lib/shard-evidence.mjs';
+import {sealChildShard,verifyChildShard} from '../lib/child-ux-evidence.mjs';
+import {childUxProvenance} from '../lib/child-ux-observations.mjs';
+import {browserIds as entryBrowserIds} from '../lib/entry-workshop-contract.mjs';
 const inputs=snapshot(currentProductFile()),results=[];
 const check=(id,fn)=>{fn();results.push({id,pass:true});};
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -217,6 +220,62 @@ check('shard-merge:parts-row',()=>{const row=mergedRow('entry-browser',partRows(
 check('shard-merge:failed-part',()=>{const rows=partRows();Object.assign(rows[1],{status:'FAIL',exit:1});const row=mergedRow('entry-browser',rows,rowDirs,rowOut());assert.equal(row.status,'FAIL');assert.equal(row.exit,1);});
 check('shard-merge:missing-part-row',()=>assert.throws(()=>mergedRow('entry-browser',partRows().slice(0,1),rowDirs,rowOut()),/parts/));
 check('shard-merge:whole-and-part-row',()=>{const rows=partRows();rows[0].part=null;assert.throws(()=>mergedRow('entry-browser',rows,rowDirs,rowOut()),/whole and in parts/);});
+check('shard-merge:parts-row-shard-order',()=>{const rows=partRows().reverse(),row=mergedRow('entry-browser',rows,rowDirs,rowOut());assert.equal(row.status,'PASS');assert.deepEqual(row.parts.map(p=>[p.part,p.shard]),[['1/2','r0'],['2/2','r1']]);});
+// The whole selftest merge over every planned shard, with the split step's parts in shard order.
+function gateTree(name,{mutate=()=>{}}={}){
+  const dirs={};
+  for(const [shard,units] of Object.entries(selftestShards)){
+    const dir=path.join(shardBase,name,shard);fs.mkdirSync(dir,{recursive:true});
+    const steps=units.map(parseUnit).map(u=>{const log=u.part?partLog(u.name,u.part):u.name+'.log';fs.writeFileSync(path.join(dir,log),'fixture '+u.name);
+      if(u.part){const items=partItems('entry-browser',entryBrowserIds,u.part);fs.mkdirSync(path.join(dir,'entry-browser.json.artifacts'),{recursive:true});fs.writeFileSync(path.join(dir,'entry-browser.json.artifacts',u.part.replace('/','-')+'.png'),u.part);
+        fs.writeFileSync(path.join(dir,'entry-browser.json'),JSON.stringify({schema:'akari-entry-workshop-v1',kind:'browser',status:'PASS',snapshot:inputs,command:'fixture '+u.part,startedAt:'2026-01-01T00:00:0'+u.part[0]+'Z',browser:'fixture',
+          results:items.map(id=>({id,status:'PASS',observations:{fixture:true}})),pageErrors:[],networkRequests:[],artifacts:[{path:u.part.replace('/','-')+'.png',bytes:3,sha256:sha(Buffer.from(u.part))}],part:{name:'entry-browser',part:u.part,items}}));}
+      else fs.writeFileSync(path.join(dir,u.name+'.json'),JSON.stringify({fixture:u.name}));
+      return {id:u.name,part:u.part,status:'PASS',exit:0,signal:null,ms:1,log};});
+    fs.writeFileSync(path.join(dir,'gate-shard.json'),JSON.stringify({schema:'akari-gate-shard-v1',shard,status:'PASS',snapshot:inputs,steps}));dirs[shard]=dir;
+  }
+  mutate(dirs);return dirs;
+}
+check('shard-merge:gate-tree',()=>{
+  const out=path.join(shardBase,'gate-tree-out'),gate=mergeGateShards(gateTree('gate-tree'),out,inputs);
+  assert.deepEqual(gate.steps.map(s=>s.id),gateSteps('','').map(s=>s[0]),'canonical step order');
+  const entry=gate.steps.find(s=>s.id==='entry-browser');assert.deepEqual(entry.parts.map(p=>[p.part,p.shard]),[['1/2','s02'],['2/2','s01']]);assert.equal(entry.status,'PASS');
+  const verify=gate.steps.find(s=>s.id==='entry-verify');assert.equal(verify.afterMerge,true);assert.equal(verify.status,'FAIL','the after-merge validator rejects the synthetic reports');assert.ok(verify.reason);assert.equal(gate.status,'FAIL');
+  const merged=JSON.parse(fs.readFileSync(path.join(out,'entry-browser.json')));assert.deepEqual(merged.results.map(r=>r.id),[...entryBrowserIds]);assert.deepEqual(merged.artifacts.map(a=>a.path),['1-2.png','2-2.png']);
+  assert.deepEqual(fs.readdirSync(path.join(out,'entry-browser.json.artifacts')).sort(),['1-2.png','2-2.png']);
+  for(const f of ['gate-shard.json','bundle.json'])assert.equal(fs.existsSync(path.join(out,f)),false,'shard receipts are not merged evidence');
+});
+check('shard-merge:gate-collision',()=>assert.throws(()=>mergeGateShards(gateTree('gate-collision',{mutate:d=>fs.writeFileSync(path.join(d.s01,'designer.json'),'{}')}),path.join(shardBase,'gate-collision-out'),inputs),/designer\.json produced by shards/));
+check('shard-merge:gate-part-rows',()=>assert.throws(()=>mergeGateShards(gateTree('gate-part-rows',{mutate:d=>{const f=path.join(d.s01,'entry-browser.json'),r=JSON.parse(fs.readFileSync(f));r.results.pop();fs.writeFileSync(f,JSON.stringify(r));}}),path.join(shardBase,'gate-part-rows-out'),inputs),/entry-browser part rows/));
+// The composition merge over every planned shard; a shard file produced twice is rejected.
+function acceptanceTree(name,{mutate=()=>{}}={}){
+  const ids=acceptanceIds('composition'),dirs={};
+  for(const shard of Object.keys(acceptanceShards.composition)){
+    const dir=path.join(shardBase,name,shard);fs.mkdirSync(dir,{recursive:true});const r=acceptanceReceipt(shard);
+    for(const s of r.steps){fs.writeFileSync(path.join(dir,s.log),'fixture');fs.writeFileSync(path.join(dir,'out-'+s.log.replace('.log','.json')),'{}');}
+    fs.writeFileSync(path.join(dir,'execution-shard.json'),JSON.stringify(r));dirs[shard]=dir;
+  }
+  mutate(dirs);return {dirs,ids};
+}
+const afterMergeCommands=out=>acceptanceCommands.composition.map(c=>c.startsWith('node audit/tests/actions-transfer-verify.mjs ')?'node audit/tests/actions-transfer-verify.mjs '+out:c);
+check('shard-merge:acceptance-tree',()=>{
+  const {dirs,ids}=acceptanceTree('acceptance-tree'),out=path.join(shardBase,'acceptance-tree-out'),report=mergeAcceptanceShards('composition',dirs,out,inputs,afterMergeCommands(out),ids);
+  assert.deepEqual(report.steps.map(s=>s.id),ids);const after=report.steps.filter(s=>s.afterMerge);assert.deepEqual(after.map(s=>s.id),['audit/tests/actions-transfer-verify.mjs']);
+  assert.equal(after[0].status,'FAIL','the after-merge validator rejects the synthetic evidence');assert.equal(report.status,'FAIL');
+  assert.deepEqual(Object.keys(report.shards),Object.keys(acceptanceShards.composition));for(const shard of Object.keys(dirs))assert.ok(fs.existsSync(path.join(out,'shards',shard,'execution-shard.json')));
+});
+check('shard-merge:acceptance-collision',()=>{const {dirs,ids}=acceptanceTree('acceptance-collision',{mutate:d=>fs.writeFileSync(path.join(d.c01,'out-step-38.json'),'{}')}),out=path.join(shardBase,'acceptance-collision-out');
+  fs.writeFileSync(path.join(dirs.c03,'out-step-38.json'),'{}');assert.throws(()=>mergeAcceptanceShards('composition',dirs,out,inputs,afterMergeCommands(out),ids),/produced by shards/);});
+// A sealed composition shard: its files, its steps and its run identity are bound.
+const childProvenance=childUxProvenance();
+function childShard(name){const {dirs}=acceptanceTree(name),dir=dirs.c03;sealChildShard('composition','c03',dir,inputs,childProvenance);return dir;}
+check('child-shard:valid',()=>verifyChildShard('composition','c03',childShard('child-valid'),inputs,childProvenance));
+for(const [name,mutate,message] of [
+  ['changed-file',dir=>fs.appendFileSync(path.join(dir,'step-01.log'),' changed'),/step-01\.log/],
+  ['extra-file',dir=>fs.writeFileSync(path.join(dir,'unlisted.json'),'{}'),/shard file set/],
+  ['provenance-attempt',dir=>{const f=path.join(dir,'child-ux-shard.json'),b=JSON.parse(fs.readFileSync(f));b.provenance.attempt='99';fs.writeFileSync(f,JSON.stringify(b));},/attempt/],
+  ['other-steps',dir=>{const f=path.join(dir,'execution-shard.json'),r=JSON.parse(fs.readFileSync(f));r.steps.pop();fs.writeFileSync(f,JSON.stringify(r));},/execution-shard\.json|ran other steps/],
+])check('child-shard:'+name,()=>{const dir=childShard('child-'+name);mutate(dir);assert.throws(()=>verifyChildShard('composition','c03',dir,inputs,childProvenance),message);});
 assert.deepEqual(results.map(r=>r.id),integrityControlIds);
 assert.deepEqual(snapshot(currentProductFile()),inputs);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:inputs,results},null,2)+'\n');

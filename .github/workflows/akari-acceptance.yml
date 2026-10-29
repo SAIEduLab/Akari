@@ -118,6 +118,12 @@ jobs:
         if: always()
         with:
           name: akari-child-ux-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/child-ux/*.json
+          path: |
+            audit-evidence/child-ux/*.json
+            audit-evidence/acceptance/execution.json
+            audit-evidence/acceptance/aggregate.json
+            audit-evidence/acceptance/step-38.log
+            audit-evidence/acceptance/child-ux-bundle.json
+            audit-evidence/acceptance/shards/
           if-no-files-found: error
           retention-days: 3

@@ -182,4 +182,5 @@ export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),.
   ...['valid','missing-step','duplicate-step','undeclared-part','reader-in-other-shard','reader-before-producer','after-merge-sharded','missing-browser-task','missing-acceptance-step','acceptance-reader-in-other-shard'].map(n=>'shard-plan:'+n),
   ...['valid','missing-part','undeclared-part','duplicate-item','wrong-assignment'].map(n=>'shard-parts:'+n),
   ...['valid','other-steps','failed-step','timeout','stale-snapshot','wrong-shard','missing-log','acceptance-valid','acceptance-other-steps','acceptance-failed','acceptance-wrong-log'].map(n=>'shard-receipt:'+n),
-  ...['valid','collision','shared-input-differs','missing-shard','extra-shard','parts-row','failed-part','missing-part-row','whole-and-part-row'].map(n=>'shard-merge:'+n)];
+  ...['valid','collision','shared-input-differs','missing-shard','extra-shard','parts-row','failed-part','missing-part-row','whole-and-part-row','parts-row-shard-order','gate-tree','gate-collision','gate-part-rows','acceptance-tree','acceptance-collision'].map(n=>'shard-merge:'+n),
+  ...['valid','changed-file','extra-file','provenance-attempt','other-steps'].map(n=>'child-shard:'+n)];

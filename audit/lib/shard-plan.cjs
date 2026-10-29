@@ -1,6 +1,7 @@
 // CI shard plan: which runner job executes which gate step, browser task and acceptance step.
 // Sharding only distributes execution. Every step, task, case and validator negative still runs
-// exactly once, and the final aggregates merge the shard evidence and run the unchanged full
+// exactly once (only the schema-contract check inside schema-shards runs in both of its parts, and
+// the merge requires the two results to be equal), and the final aggregates merge the shard evidence and run the unchanged full
 // validators (verifyGateResults, verifyBrowserGroup, the child UX bundle checks) on the merged tree.
 //
 // Sizing ground (Actions runs 40881943995 and 40881943951, windows-latest, one runner per job):
@@ -30,8 +31,8 @@ const splits={
   'modern-browser':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
 };
 
-// Gate steps (audit/lib/gate-contract.mjs gateSteps). Order inside a shard is the gate order.
-// Steps that read another step's output stay with that producer. `selftestAfterMerge` steps read
+// Gate steps (audit/lib/gate-contract.mjs gateSteps), run in the listed order. Steps that read another
+// step's output stay with that producer and run after it. `selftestAfterMerge` steps read
 // a split step's merged output and run in the aggregate job, before the full validation.
 const selftestShards={
   s01:[unit('entry-browser','2/2'),'samples','samples-negative'],
