@@ -48,6 +48,24 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 - 書き出したプレイヤーは `createAkariProfiles`・`createAkariExtensionHost`・`createAkariRuntime`・`createAkariStageView`・`mountAkariPlayer` を `toString()` で埋め込むので、これらは互いのほかに一番外側の名前を使えず、製品が広域に置く名前（`globalThis.Akari` など）も読めません。どちらもFAILです。`toString()` で埋め込む関数の一覧は、製品が関数を文字列にする箇所（`名前.toString()`、`String(名前)`、テンプレートへの埋め込み、文字列との `+`）と一致しなければFAILです。広域は、局所の変数ではない `globalThis`・`window`・`self` だけを数え、分割代入による読み取りも数えます。さらに、これらだけを別の実行環境で動かし、キーのきっかけの名前を作れることを確かめます。
 - 解析するスクリプトは、製品の `<script>` の中身と1文字ずつ一致することを確かめます。スコープ解決は、影になった名前・プロパティ名・ラベル・宣言を参照と数えず、既定値や計算されたキーを数えること、引数の既定値が本体の宣言を見ないこと、静的ブロックの `var` がその中にとどまることを、合成した短いスクリプトで確かめます。宣言の欠け・余り・欠けた宣言ファイル・埋め込む関数からの参照を、それぞれ拒否できることも確かめます。
 
+#### ソースの置き場所・向き・大きさ
+
+製品のソースは、多くの作業者（LLMを含む）が並行して変えても崩れないように、次の規則で置きます。selftestの `product-source` が機械で確かめます。
+
+- 群と向き: `src/js` のファイルは、`src/akari.html` が取り込む順に並ぶ群に属します。言語の処理（`src/js/02`〜`09`。約束・素材・構文・表示・整形・意味解析・書き出し・編集の会話）は、読む・整える・調べる処理が互いに呼び合う一つの部品なので一つの群とし、ほかのファイルはそれぞれ一つの群です。拡張の取り込みは、それを取り込むファイルの群に入ります。ファイルは、自分の群と、それより前の群の名前だけを使えます。後ろの群を使う、群のファイルが続いて並ばない、のどちらもFAILです。
+- 編集画面のアプリケーション: `initApp`（`src/js/11-application.js`）は状態を `appVars` に置き、関数を次の順のファイルの `createApp…(appVars, appCalls, appRedraw)` に置きます。
+  1. `11-app-tools-core.js`・`11-app-tools.js`: 描き直しにつながらない道具（ほかの道具が使うものが core）
+  2. `11-app-services.js`: ほかの操作が使う操作
+  3. `11-app-commands.js`: ほかの操作が使わない操作（子どもの操作から始まる入口）
+  4. `11-app-drawing.js`: 描き直す関数（`render`・`refresh`・`repaint`・`paint` で始まる）
+
+  前のファイルの関数は `appCalls.名前` で呼びます。前のファイルが描き直しを頼むときは、自分で宣言した依頼口 `appRedraw.名前()` を戻り値を使わない文として呼び、呼ぶファイルより後ろのファイル（今は描画のファイル）が登録の文でその関数を入れます（`appRedraw.properties` には `renderProperties`）。後のファイルが `appVars` に入れた関数（ドラッグの後始末など）も、前のファイルからは戻り値を使わない文としてだけ呼べ、値として渡せません。条件や比較に使う読み取りは認めます。その欄に自分でも関数を入れるファイルも例外ではなく、自分の関数を渡すときは、その関数を自分の名前（`const` など）に置き、その名前を渡します。`null` や数のように、書き方から関数でないと分かる値だけを入れるファイル（`initApp` の最初の値を含む）は、入れた側に数えません。関数かどうかは、入れるときの書き方と、欄を写した名前を呼んでいることから判断します。関数は、関数式か関数の名前で入れます。関数の名前には、関数が入る `const`・`let`（後から `=`・`||=`・`&&=`・`??=` で入れるものを含む）、`appCalls.名前`、`.bind(…)` の結果、それらを選ぶ条件式・論理式、関数が入った別の欄（ローカルの名前を通して写すものを含む）を含みます。書き方から関数と分からない入れ方（関数を返す呼び出しや `new` の結果、別の物のプロパティ、欄やローカルの名前への分割代入）をした欄を、どこでも呼ばずに値のまま（ローカルの名前に写してからでも）他の関数へ渡すと、検査では見分けられません。新しい関数は、役目に合うファイルのうち、使う名前がすべて前にあるファイルに置きます。
+- 宣言: `audit/boundaries/<ファイル名>.json` に、`uses` に加えて、登録する名前と呼ぶ名前（`appCalls.provides`・`appCalls.uses`）、使う状態（`appVars`）、呼ぶ依頼口と入れる依頼口（`appRedraw.requests`・`appRedraw.fills`）を書きます。実際と食い違えばFAILです。
+- アプリケーションでFAILにするもの: 二つのファイルが同じ名前を登録する、登録したのに誰も呼ばない、どのファイルも登録しない名前を呼ぶ、自分の関数でないものや別の名前で登録する、登録の文の外で `appCalls` に書く、計算したキーや別名などプロパティ名以外で三つの物に触れる、factory の引数が `(appVars, appCalls, appRedraw)` でない、factory が関数の宣言と登録のほかの文を持つ、ファイルが factory のほかのものを持つ、factory を二回呼ぶ、どのファイルも入れない `appVars` を読む、後のファイルが入れる `appVars` の関数を戻り値を使って呼ぶ（`.call`・`.apply` を通す場合も）・値として渡す、依頼口の戻り値を使う・値として渡す・宣言せずに呼ぶ、誰も入れない依頼口を呼ぶ、誰も呼ばない依頼口を入れる、依頼口を二重に入れる・別の関数で入れる・呼ぶファイルより前で入れる。
+- 追えない書き方: 広域（`globalThis`・`window`・`self`）を値として使う（別名、`Object.assign`・`Reflect` への受け渡し、計算したキー、`window.window` のように広域そのものを指すプロパティ）、読む以外の `Reflect`、対象に `addEventListener`・`removeEventListener` 以外をする `on` は、解決を追えないのでFAILです。名前を付けたプロパティの読み書き、`typeof`、比較（`===` など）、`on(window, …)` は使えます。`on` は、いちばん近くで宣言されたものがその形のイベントの登録の関数であるときだけ認めます（引数や分割代入で受けた `on` は認めません）。
+- 大きさ: 一つのファイルは2000行までです（分ける時期の目安で、特定のLLMの読み込みの上限ではありません）。2000行を超え、その中のどの単位（アプリケーションのfactoryではその中の関数、ほかのファイルでは一番外側の宣言。互いに使い合う単位はひとかたまり）も2000行以下ならFAILで、分けます。一つの単位だけで2000行を超えるもの、どこで切っても読み込みの順が変わるもの（関数の宣言のほかは、`const` に入れた関数も、ファイルが読み込まれた時点で使えるようになるので、元の順を保ちます）、`00`・`12`（閉じた範囲を開く・閉じる）、拡張を取り込むファイル（`01`）は分けることを求めず、`product-source` の結果の `sourceSizes` に一覧します。
+- 分け方: `node audit/split-source.mjs <src/js のファイル>`。単位を依存の順（使われるものが先、互いに使い合うものはひとかたまり、同じなら元の並び）に並べ、行の合計が半分にいちばん近い切れ目で切り、前の半分を `<名前>-core.js` として元のファイルの前に置きます。前の半分は後ろを使わないので一方向が保たれます。テンプレート・`initApp` の factory の呼び出し・すべての宣言を合わせて直し、製品を作り直します。版は通常の製品の変更と同じく変更ガードに従います。`product-source` は、分割が境界・製品が読む広域の名前・すべての単位を保つことと、分けられないものを拒むことを確かめます。
+
 ### 並行した製品PRの版の振り直し
 
 同じbaseから作った製品PRが先にmergeされると、後のPRは同じ版を名乗り、製品HTMLと配布記録が衝突します。後のPRはmainをmergeで取り込み、手書きのファイルの衝突だけを手で解いてから、repoの直下で `node audit/renumber-release.mjs`（既定のbaseは `origin/main`、`--base <ref>` で変更）を実行し、結果をstageしてcommitします。rebaseでは取り込みません。rebaseは途中の停止ごとに振り直した出力と次のcommitが衝突するので、rebaseの途中では止めます。
@@ -613,7 +631,7 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
-| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.4の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.5の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
 | EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。

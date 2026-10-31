@@ -6,7 +6,9 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIssues,CHILD_SPACING_RUN} from '../lib/product-source-contract.mjs';
 import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources,productScript} from '../lib/source-boundaries.mjs';
+import {sourceSizes,splitSource,sourceUnits,SOURCE_SPLIT_LINES} from '../lib/source-split.mjs';
 import vm from 'node:vm';
+import {spawnSync} from 'node:child_process';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
 assert.ok(!fs.existsSync(output),'fresh result required: '+output);
@@ -93,6 +95,158 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
   const arrow=boundaryIssues(usesWith({[parser]:read(parser).replace(anchor,'  const KEY_ALIASES_ARROW=()=>keyName;\n'+anchor),[exporter]:exportText.replace(call,call+'${KEY_ALIASES_ARROW.toString()}')}),boundaries);
   assert.ok(arrow.some(i=>i.startsWith('the product embeds ')&&i.includes('KEY_ALIASES_ARROW')),JSON.stringify(arrow));
 });
+// The application's shared state and calls (AUDIT.md「ソースの境界」): an undeclared call or state, a name registered
+// twice or under another name, a call nothing registers, a registration nothing calls, a computed key, a write to
+// appCalls, a state nothing assigns, a factory of another shape, and a factory holding other statements are each refused.
+const variantIssues=(changes,expected)=>{const issues=boundaryIssues(usesWith(changes),state().boundaries);assert.ok(issues.some(i=>i.startsWith(expected)),expected+' '+JSON.stringify(issues.slice(0,4)));};
+const services='src/js/11-app-services.js',servicesHead='  function createAppServices(appVars, appCalls, appRedraw) {\n',register='    Object.assign(appCalls, {\n';
+check('REJECT-APP-INTERFACE-MISMATCH',()=>{
+  const {boundaries,uses}=state(),file=services,call=boundaries[file].appCalls.uses[0],shared=boundaries[file].appVars[0];
+  const drop=(field,name)=>({...boundaries,[file]:{...boundaries[file],...(field==='appVars'?{appVars:boundaries[file].appVars.filter(n=>n!==name)}:{appCalls:{...boundaries[file].appCalls,uses:boundaries[file].appCalls.uses.filter(n=>n!==name)}})}});
+  assert.ok(boundaryIssues(uses,drop('appCalls',call)).some(i=>i.startsWith(file+' calls appCalls ["'+call+'"] undeclared')));
+  assert.ok(boundaryIssues(uses,drop('appVars',shared)).some(i=>i.startsWith(file+' uses appVars ["'+shared+'"] undeclared')));
+  const text=read(file);assert.ok(text.includes(servicesHead)&&text.includes(register));
+  const own=boundaries[file].appCalls.provides[0],other=Object.keys(boundaries).find(f=>f!==file&&boundaries[f].appCalls?.provides?.length),theirs=boundaries[other].appCalls.provides[0];
+  const variants=[
+    [text.replace(register,register+'      '+theirs+',\n'),file+': a registration that is not one of the factory\'s own functions under its own name'],
+    [text.replace(register,register+'      alias: '+own+',\n'),file+': a registration that is not one of the factory\'s own functions under its own name'],
+    [text.replace(servicesHead,servicesHead+'    function neverCalledFromElsewhere() {}\n').replace(register,register+'      neverCalledFromElsewhere,\n'),file+' registers appCalls.neverCalledFromElsewhere but nothing calls it'],
+    [text.replace(servicesHead,servicesHead+'    function noSuchUse() { return appCalls.noSuchApplicationCall; }\n'),file+' calls appCalls.noSuchApplicationCall that no file registers'],
+    [text.replace(servicesHead,servicesHead+"    function dynamicUse() { return appCalls['dynamic']; }\n"),file+': appCalls used other than by a plain property name'],
+    [text.replace(servicesHead,servicesHead+'    function aliasUse() { const calls = appCalls; return calls; }\n'),file+': appCalls used other than by a plain property name'],
+    [text.replace(servicesHead,servicesHead+'    function writeCalls() { appCalls.'+own+' = null; }\n'),file+': appCalls.'+own+' written outside the registration'],
+    [text.replace(servicesHead,servicesHead+'    function readUnset() { return appVars.noSuchState; }\n'),'appVars.noSuchState is read but no file assigns it'],
+    [text.replace(servicesHead,'  function createAppServices(appCalls, appVars, appRedraw) {\n'),file+': createAppServices takes other than (appVars, appCalls, appRedraw)'],
+    [text.replace(servicesHead,servicesHead+'    appVars.loose = 1;\n'),file+': createAppServices holds a statement that is neither a function declaration nor a registration'],
+  ];
+  for(const [changed,expected]of variants)variantIssues({[file]:changed},expected);
+  const shell='src/js/11-application.js',call0='createAppServices(appVars, appCalls, appRedraw);';assert.ok(read(shell).includes(call0));
+  variantIssues({[shell]:read(shell).replace(call0,'createAppServices(appCalls, appVars, appRedraw);')},shell+': createAppServices called with other than (appVars, appCalls, appRedraw)');
+  variantIssues({[shell]:read(shell).replace(call0,call0+'\n    '+call0)},'createAppServices is declared 1 and called 2 times');
+  variantIssues({[file]:text+'  function outsideTheFactory() {}\n'},file+': an application part holds something besides its one factory');
+});
+// One way (AUDIT.md「ソースの境界」): an application file reaching a file after it, other than by a redraw request, is
+// refused: an appCalls name a later file registers, a top-level name of a later file, and the result of a function a
+// later file keeps in appVars.
+check('REJECT-APP-AGAINST-ORDER',()=>{
+  const {boundaries}=state(),tools='src/js/11-app-tools-core.js',toolsText=read(tools),head='  function createAppToolsCore(appVars, appCalls, appRedraw) {\n';assert.ok(toolsText.includes(head));
+  const later=boundaries[services].appCalls.provides[0];
+  variantIssues({[tools]:toolsText.replace(head,head+'    function upward() { return appCalls.'+later+'(); }\n')},tools+' calls appCalls.'+later+' of '+services+', which comes after it');
+  variantIssues({[tools]:toolsText.replace(head,head+'    function upwardName() { return createAppDrawing; }\n')},tools+' uses src/js/11-app-drawing.js, which comes after it');
+  const kept='appVars.activeDragCleanup?.();';assert.ok(read(services).includes(kept));
+  assert.ok((boundaries['src/js/11-app-commands.js'].appVars??[]).includes('activeDragCleanup'));
+  variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.();')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.call(null);')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[services]:read(services).replace(kept,'const cleanup = appVars.activeDragCleanup; cleanup?.();')},services+' hands on appVars.activeDragCleanup as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  // A function only ever called through a name, and one initApp assigns later than its first values, count too.
+  const commands='src/js/11-app-commands.js',commandsHead='  function createAppCommands(appVars, appCalls, appRedraw) {\n';assert.ok(read(commands).includes(commandsHead));
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  const shellText=read('src/js/11-application.js'),setup='    createAppDrawing(appVars, appCalls, appRedraw);\n';assert.ok(shellText.includes(setup));
+  variantIssues({'src/js/11-application.js':shellText.replace(setup,setup+'    const setLater = () => { appVars.laterFn = () => 42; };\n'),[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
+  // initApp's first values count when they put in a function.
+  const direct=shellText.replace(setup,setup+'    appVars.laterFn = () => 42;\n');
+  variantIssues({'src/js/11-application.js':direct,[services]:read(services).replace(kept,'const answer = appVars.laterFn();')},services+' uses the result of appVars.laterFn(), which src/js/11-application.js (a later file) assigns');
+  variantIssues({'src/js/11-application.js':direct,[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
+  // A function put in through ?:, &&, .bind, appCalls or another field is still one.
+  for(const value of ['flag ? () => 1 : null','flag && (() => 1)','(() => 1).bind(null)','appCalls.setStatus','appVars.activeDragCleanup'])
+    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { appVars.extraKept = '+value+'; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  // So is one kept first in a local const, and a field whose local copy is called, however the function was put in;
+  // a file that also assigns the field gets no exception.
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { const h = flag ? () => 1 : null; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  for(const put of ['appVars.extraKept = obj.handler;','({ handler: appVars.extraKept } = obj);','appVars.extraKept = obj.make();'])
+    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(obj) { '+put+' }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; const kept = extra.call(null);')},services+' uses the result of appVars.extraKept(), which src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'appVars.extraKept = null; const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  // A let assigned a function after its first value, and a field copied through a local, count; a later file that only
+  // clears the field supplies no function.
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { let h = null; h = () => 1; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { const h = appVars.activeDragCleanup; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  for(const put of ['let h = null; appVars.extraKept = (h ||= () => 1);','let h = null; h ??= () => 1; appVars.extraKept = h;'])
+    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { '+put+' }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  // A new instance may be a function (new Function(…)); it supplies one.
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = new Function(\'return 1\'); }\n'),[services]:read(services).replace(kept,'const kept = appVars.extraKept();')},services+' uses the result of appVars.extraKept(), which src/js/11-app-commands.js (a later file) assigns');
+  const cleared=boundaryIssues(usesWith({[commands]:read(commands).replace(commandsHead,commandsHead+'    function clearExtra() { appVars.extraKept = null; }\n'),[services]:read(services).replace(kept,'appVars.extraKept = () => 1; setTimeout(appVars.extraKept);')}),state().boundaries);
+  assert.ok(!cleared.some(i=>/appVars\.extraKept(?: as a value|\(\))/.test(i)),'a field a later file only clears: '+JSON.stringify(cleared.filter(i=>i.includes('extraKept'))));
+  // The language processing is one group: its files may use each other, but not a group after it; its files come together.
+  const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
+  variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');
+  const tpl='src/akari.html',tplText=read(tpl),line='<!-- @include js/10-block-view.js -->\n',second='<!-- @include js/03-default-assets.js -->\n';assert.ok(tplText.includes(line)&&tplText.includes(second));
+  variantIssues({[tpl]:tplText.replace(line,'').replace(second,line+second)},'the files of the language processing (src/js/02-09) do not come together in src/akari.html');
+});
+// Redraw requests (AUDIT.md「ソースの境界」): a request used for its result or as a value, an undeclared request, a slot
+// nothing fills, filled by an earlier file, filled twice or with another function, written outside the registration, and
+// a filled slot nothing calls are each refused.
+check('REJECT-APP-REDRAW-MISUSE',()=>{
+  const {boundaries,uses}=state(),drawing='src/js/11-app-drawing.js',drawingText=read(drawing),fills='    Object.assign(appRedraw, {\n',request='appRedraw.tree();';
+  assert.ok(drawingText.includes(fills)&&read(services).includes(request)&&boundaries[drawing].appRedraw.fills.tree==='renderTree');
+  variantIssues({[services]:read(services).replace(request,'const drawn = appRedraw.tree();')},services+': appRedraw.tree used other than as a call whose result nothing uses');
+  variantIssues({[services]:read(services).replace(request,'setTimeout(appRedraw.tree);')},services+': appRedraw.tree used other than as a call whose result nothing uses');
+  variantIssues({[services]:read(services).replace(request,request+' appRedraw.noSuchSlot();')},'appRedraw.noSuchSlot is called by '+services+' but no file fills it');
+  const requests=boundaries[services].appRedraw.requests;
+  assert.ok(boundaryIssues(uses,{...boundaries,[services]:{...boundaries[services],appRedraw:{requests:requests.filter(s=>s!=='tree')}}}).some(i=>i.startsWith(services+' calls appRedraw ["tree"] undeclared')));
+  variantIssues({[drawing]:drawingText.replace('      tree: renderTree,\n','      tree: renderProperties,\n')},drawing+': an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');
+  variantIssues({[drawing]:drawingText.replace('      tree: renderTree,\n','      tree: renderTree,\n      tree: renderTree,\n')},drawing+': an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');
+  variantIssues({[services]:read(services).replace(servicesHead,servicesHead+'    function renderLocal() {}\n').replace(register,'    Object.assign(appRedraw, {\n      local: renderLocal,\n    });\n'+register).replace(request,request+' appRedraw.local();')},services+' calls appRedraw.local, which '+services+' fills; the filling file must come after it');
+  variantIssues({[services]:read(services).replace(request,request+' appRedraw.tree = null;')},services+': appRedraw.tree used other than as a call whose result nothing uses');
+  const unasked=drawingText.replace(fills,fills+'      monitorSection: renderMonitorSection,\n');assert.ok(drawingText.includes('    function renderMonitorSection('));
+  variantIssues({[drawing]:unasked},drawing+' fills appRedraw.monitorSection but nothing calls it');
+});
+// What the reading cannot follow (AUDIT.md「ソースの境界」): the global object as a value, Reflect other than reading,
+// an on helper that does more with its target, and a function's text taken through toString.apply are each refused.
+check('REJECT-OPAQUE-GLOBAL-USE',()=>{
+  const stage='src/js/08-stage-and-export.js',text=read(stage),line="on(window, 'resize', fitStage);",helper='      target.addEventListener(type, fn, opts);\n';assert.ok(text.includes(line)&&text.includes(helper));
+  for(const [form,expected]of [['const g = globalThis;',stage+': the global object used as a value (globalThis)'],['Object.assign(globalThis, {});',stage+': the global object used as a value (globalThis)'],
+    ["Reflect.get(window, 'Akari');",stage+': Reflect used other than to read'],['globalThis[String(1)];',stage+': the global object used as a value (globalThis)'],['((g) => g)(self);',stage+': the global object used as a value (self)']])
+    variantIssues({[stage]:text.replace(line,line+' '+form)},expected);
+  for(const form of ['((on) => on(window, {}))(Object.assign);','{ const {assign: on} = Object; on(window, {}); }','try { throw 0; } catch (on) { on(window, {}); }',
+    'for (const on of [Object.assign]) on(window, {});','({m(on) { on(window, {}); }}).m(Object.assign);'])variantIssues({[stage]:text.replace(line,line+' '+form)},stage+': the global object used as a value (window)');
+  variantIssues({[stage]:text.replace(line,line+' Object.assign(window.window, {});')},stage+': the global object used as a value (window.window)');
+  assert.ok(!boundaryIssues(usesWith({[stage]:text.replace(line,line+' if (globalThis === window) {}')}),state().boundaries).some(i=>i.includes('global object')),'a comparison with the global object is allowed');
+  variantIssues({[stage]:text.replace(helper,helper+'      target.flag = 1;\n')},stage+': an on helper that does more with its target than add and remove event listeners');
+  const call='${createAkariStageView.toString()}';assert.ok(text.includes(call));
+  variantIssues({[stage]:text.replace(call,call+'${Function.prototype.toString.apply(keyName)}')},'the product embeds ');
+});
+// Sizes (AUDIT.md「ソースの境界」): a file over the size whose units all fit in it is due to be split and fails;
+// every file over the size is listed, with its largest unit (a unit over the size alone is not split by the rule).
+let sizes=[];
+const productFiles=reader=>[...new Set(productScript(reader).pieces.map(p=>p.label))];
+check('SOURCE-SIZE',()=>{
+  sizes=sourceSizes(read,productFiles(read));
+  assert.deepEqual(sizes.filter(s=>s.due).map(s=>s.file),[],'split them by node audit/split-source.mjs <file>');
+  const padded=file=>({...Object.fromEntries([[file,read(file)+'  //\n'.repeat(SOURCE_SPLIT_LINES)]])}),grown='src/js/11-app-drawing.js',over=padded(grown);
+  const reader=f=>f in over?over[f]:read(f);assert.ok(sourceSizes(reader,productFiles(reader)).some(s=>s.file===grown&&s.due),'a file over the size is due');
+  // A file the rule should read but cannot is an error, never a quiet exemption.
+  const broken={[grown]:read(grown)+'  function outsideTheFactory() {}\n'};assert.throws(()=>sourceSizes(f=>f in broken?broken[f]:read(f),[grown]),/holds one application factory/);
+});
+// The split rule (AUDIT.md「ソースの境界」): splitting a plain file and an application file keeps every boundary, the
+// product's free names and every unit; the new file comes just before; neither part is larger than the file; and what
+// the rule cannot split is refused.
+check('SOURCE-SPLIT-RULE',()=>{
+  const free=reader=>[...new Set(closureReferences(productScript(reader)).free.map(x=>x.name))].sort();
+  for(const file of ['src/js/07-semantic-analysis.js',services]){
+    const s=splitSource(read,file,f=>fs.existsSync(path.join(repositoryRoot,f))),after=p=>p in s.changes?s.changes[p]:read(p);
+    const records={...state().boundaries};for(const [p,t]of Object.entries(s.changes))if(p.startsWith('audit/boundaries/'))records[JSON.parse(t).file]=JSON.parse(t);
+    assert.deepEqual(boundaryIssues(sourceUses(after),records),[],file);
+    assert.deepEqual(free(after),free(read),file+' free names');
+    const tpl=after('src/akari.html');assert.ok(tpl.includes('<!-- @include '+s.created.slice(4)+' -->\n<!-- @include '+file.slice(4)+' -->\n'),file+' comes right after the new file');
+    const lines=t=>t.split('\n').length;assert.ok(lines(after(s.created))<lines(read(file))&&lines(after(file))<lines(read(file)),file+' parts');
+    const moved=new Set(s.moved),restore=t=>t.replace(/\b(\w+): appCalls\.\1\b/g,(m,n)=>moved.has(n)?n:m).replace(/\bappCalls\.(\w+)\b/g,(m,n)=>moved.has(n)?n:m);
+    const now=[...sourceUnits(after,s.created),...sourceUnits(after,file)],key=u=>u.names.join(',')||u.text;
+    const was=sourceUnits(read,file);assert.equal(now.length,was.length,file+' units');
+    for(const u of was){const v=now.find(x=>key(x)===key(u));assert.ok(v&&(v.text===u.text||restore(v.text)===u.text),file+' keeps '+key(u).slice(0,40));}
+  }
+  const opening=productFiles(read).find(f=>f.endsWith('-prelude.js'));assert.ok(opening);assert.throws(()=>splitSource(read,opening),/opens or closes the closure/);
+  // The command refuses a call without one src/js file and changes nothing.
+  const cli=spawnSync(process.execPath,[path.join(repositoryRoot,'audit/split-source.mjs')],{cwd:repositoryRoot,encoding:'utf8'});
+  assert.notEqual(cli.status,0);assert.match(cli.stderr,/usage: node audit\/split-source\.mjs/);
+  assert.throws(()=>splitSource(read,'src/js/01-execution-core.js'),/portable extension/);
+  const cyclic='src/js/05-command-presentation.js',loop={[cyclic]:'  function loopA() { return loopB(); }\n  function loopB() { return loopA(); }\n'};
+  assert.throws(()=>splitSource(f=>f in loop?loop[f]:read(f),cyclic),/form one cycle/);
+  // A const, even one bound to a function, is ready only when the file reaches it, and another file of the group may read
+  // it while loading (zzV's initializer calls into another file, which may call zzA): the middle cut would move zzV before
+  // zzA, so the split is refused.
+  const ordered={[cyclic]:'  const zzA = () => zzH();\n  const zzV = otherFileFunction();\n  function zzH() {\n'+'    void 0;\n'.repeat(50)+'  }\n'};
+  assert.throws(()=>splitSource(f=>f in ordered?ordered[f]:read(f),cyclic),/zzV would move before zzA/);
+});
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
 // portable extension files built into the product are the fork developers' interface and are left out.
@@ -117,7 +271,8 @@ check('REJECT-BANNED-CHILD-WORD',()=>{
   assert.deepEqual(words([productInput(productText.replace(hint,'今の 動きを のこして 自動保存'))]),['自動保存']);
   assert.ok(words([{file:currentProductFile(),kind:'product',text:productText}]).includes('できごと'),'the embedded extension files are in the scanned script');
 });
-// F-19 (lead decision 32): no unspaced child text beyond the allowlist, and no allowlist entry that is gone.
+// F-19 (lead decision 32): no unspaced child text beyond the allowlist. An entry no scanned text has any more is a note
+// for the next re-record, not a failure (product-source-contract.mjs).
 const spacing=JSON.parse(read('audit/fixtures/child-spacing-allowlist.json')),spacingInputs=[productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))];
 const allowed=spacing;
 check('CHILD-SPACING-RUNS',()=>{assert.equal(spacing.schema,'akari-child-spacing-allowlist-v2');assert.equal(spacing.run,CHILD_SPACING_RUN);assert.deepEqual(childSpacingIssues(spacingInputs,allowed),[]);});
@@ -140,7 +295,7 @@ check('REJECT-UNSPACED-CHILD-TEXT',()=>{
   assert.ok(childSpacingIssues([productInput(productText.replace(label,"'先に じゅんびできたよ'"))],spacing).some(i=>i.run==='じゅんびできたよ'));
 });
 
-const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results};
+const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results,sourceSizes:sizes.filter(s=>s.lines>SOURCE_SPLIT_LINES)};
 assert.deepEqual(results.map(r=>r.id),productSourceIds);
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 if(report.status!=='PASS'){console.error(JSON.stringify(results.filter(r=>r.status!=='PASS'),null,2));process.exitCode=1;}

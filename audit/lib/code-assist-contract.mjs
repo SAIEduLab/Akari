@@ -1342,7 +1342,9 @@ function assistStaticChecks(){
     for(const candidate of [test.expect.first,...test.expect.contains||[]].filter(Boolean)){assert.ok(candidate.schemaId.startsWith('Heading:')?schemas.has('Script'):schemas.has(candidate.schemaId),test.id+' destination in features.json');assert.ok(candidate.text);}
   }
   for(const code of ['I136','I137','I138'])assert.ok(new RegExp('^\\|[^\\n]*'+code+'[^\\n]*\\|','m').test(language),code+' specification table');
-  const application=fs.readFileSync('src/js/11-application.js','utf8');for(const text of ['近い 書き方は これですか？','近い 書き方は ありません。「書ける ことば」で さがせます','この あんないを とじる']){assert.ok(application.includes(text),text+' fixed screen text');verifyAssistUiText(text);}
+  // The application is src/js/11-application.js and its parts src/js/11-app-*.js.
+  const application=fs.readdirSync('src/js').filter(name=>/^11-/.test(name)).sort().map(name=>fs.readFileSync('src/js/'+name,'utf8')).join('\n');
+  for(const text of ['近い 書き方は これですか？','近い 書き方は ありません。「書ける ことば」で さがせます','この あんないを とじる']){assert.ok(application.includes(text),text+' fixed screen text');verifyAssistUiText(text);}
   return{cases:data.cases.length,citations,noticeCodes:['I136','I137','I138']};
 }
 function verifyAssistUiText(text){

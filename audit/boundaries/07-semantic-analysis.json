@@ -10,6 +10,7 @@
     "src/js/04-syntax-sentences.js",
     "src/js/05-command-presentation.js",
     "src/js/06-source-formatting.js",
+    "src/js/07-semantic-analysis-core.js",
     "src/js/09-editor-sessions.js"
   ]
 }
