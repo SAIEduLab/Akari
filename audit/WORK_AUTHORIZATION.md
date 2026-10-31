@@ -19,7 +19,9 @@ GitHub側の受入では、所有者本人の未編集のPRコメントにある
 ```
 ````
 
-実際の変更pathすべてが許可範囲内で、凍結pathに触れていないことを検査します。改名は旧pathと新pathの両方を対象にします。未知の行為、任意のglob、別repo・branch・base・head、編集されたコメント、所有者以外のコメントは許可になりません。内部repoでは `repository` をそのrepoにします。
+実際の変更pathすべてが許可範囲内で、凍結pathに触れていないことを検査します。改名は旧pathと新pathの両方を対象にします。未知の行為、任意のglob、別repo・branch・base・head、編集されたコメント、所有者以外のコメントは許可になりません。
+
+内部repoにはこのチェックを置きません。内部repoでは保護設定でチェックを必須にできず、外部からのPRもないためです。内部repoのPRはActionsを使わず、ローカル監査のうえ所有者の明示指示で受け入れます。
 
 `Akari work authorization / owner-work-authorization` は `pull_request_target` で信頼されたbaseをcheckoutし、そこにある検査コードでGitHub APIのコメントとGit差分を読みます。候補のコードは実行しません。許可を投稿した後は、このチェックを再実行します。候補SHAが変われば所有者がそのSHAに対する許可を発行します。
 
