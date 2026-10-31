@@ -54,12 +54,13 @@ function checkoutFiles(root,git){
 }
 
 export function planReleaseRenumber(root,{base='origin/main'}={}){
-  root=fs.realpathSync(root);
+  // The native form expands short (8.3) names on Windows, as git reports the top level.
+  root=fs.realpathSync.native(root);
   const {run,git}=gitIn(root),full=file=>path.join(root,...file.split('/'));
   const exists=file=>fs.existsSync(full(file)),bytes=file=>fs.readFileSync(full(file)),read=file=>bytes(file).toString('utf8');
   const text=file=>exists(file)&&!bytes(file).includes(0);
   const top=git(['rev-parse','--show-toplevel']).trim();
-  assert.equal(fs.realpathSync(top),root,'run from the repository root '+top);
+  assert.equal(fs.realpathSync.native(top),root,'run from the repository root '+top);
   assert.ok(!exists('PUBLIC_SYNC.json'),'renumbering belongs to the public development repository; a private product changes only by an authorized synchronization');
   const gitPath=name=>path.resolve(root,git(['rev-parse','--git-path',name]).trim());
   // A rebase replays each commit against outputs renumbered at an earlier stop, so the base comes in by a merge.
