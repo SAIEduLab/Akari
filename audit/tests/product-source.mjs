@@ -78,9 +78,13 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
   assert.ok(issues.some(i=>i.startsWith(core+' uses src/js/04-syntax-parsing.js without declaring')));
   const global=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : globalThis.Akari && key;')}),boundaries);
   assert.ok(global.includes('createAkariRuntime is embedded through toString() but reads what the product puts on the global object: Akari'),JSON.stringify(global));
+  const destructured=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : (({Akari: q} = globalThis), key);')}),boundaries);
+  assert.ok(destructured.includes('createAkariRuntime is embedded through toString() but reads what the product puts on the global object: Akari'),JSON.stringify(destructured));
   const exporter='src/js/08-stage-and-export.js',exportText=read(exporter),call='${createAkariStageView.toString()}';assert.ok(exportText.includes(call));
-  const listed=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+'${keyName.toString()}')}),boundaries);
-  assert.ok(listed.some(i=>i.startsWith('the product embeds ')&&i.includes('keyName')),JSON.stringify(listed));
+  for(const form of ['${keyName.toString()}','${String(keyName)}','${keyName}']){
+    const listed=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+form)}),boundaries);
+    assert.ok(listed.some(i=>i.startsWith('the product embeds ')&&i.includes('keyName')),form+' '+JSON.stringify(listed));
+  }
 });
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The

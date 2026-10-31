@@ -156,7 +156,8 @@ export function closureReferences(script){
     else if(s.type==='ClassDeclaration'){walk(s.superClass,topScopes,s,'superClass');walk(s.body,topScopes,s,'body');}
     else walk(s,topScopes,closure,'body');
   }
-  return {top,refs,free,ast};
+  const functions=new Set(closure.body.filter(s=>s.type==='FunctionDeclaration'&&s.id).map(s=>s.id.name));
+  return {top,refs,free,ast,functions};
 }
 
 function eachNode(node,visit){
@@ -165,14 +166,14 @@ function eachNode(node,visit){
   if(typeof node.type==='string')visit(node);
   for(const [key,value]of Object.entries(node))if(!skipKeys.has(key)&&value&&typeof value==='object')eachNode(value,visit);
 }
-const globalObject=node=>node?.type==='Identifier'&&['globalThis','window','self'].includes(node.name);
+const globalNames=['globalThis','window','self'];
 const memberName=node=>!node.computed&&node.property?.type==='Identifier'?node.property.name:node.computed&&node.property?.type==='StringLiteral'?node.property.value:null;
 
 // The file each top-level name belongs to, and the files each file uses with the names it uses from each.
 export function sourceUses(read){
   const script=productScript(read);
   const labelAt=at=>script.pieces.find(p=>p.start<=at&&at<p.end)?.label;
-  const {top,refs,free,ast}=closureReferences(script);
+  const {top,refs,free,ast,functions}=closureReferences(script);
   const owner=new Map([...top].map(([name,d])=>[name,labelAt(d.start)]));
   const uses={};
   for(const r of refs){
@@ -187,10 +188,24 @@ export function sourceUses(read){
   }
   // Names the product writes on the global object; an embedded function must not read them (the player has none).
   const productGlobals=new Set(),toStrings=new Set(),globalReads=[];
+  // The global object is a free globalThis, window or self (a local binding of that name is not it).
+  const freeAt=new Set(free.map(r=>r.at));
+  const globalObject=node=>node?.type==='Identifier'&&globalNames.includes(node.name)&&freeAt.has(node.start);
+  const keyName=p=>!p.computed&&p.key?.type==='Identifier'?p.key.name:p.key?.type==='StringLiteral'?p.key.value:null;
+  // A top-level function turned into text: X.toString(), Function.prototype.toString.call(X), String(X), `${X}`, X + ''.
+  const fn=node=>node?.type==='Identifier'&&functions.has(node.name)&&!freeAt.has(node.start)?node.name:null;
   eachNode(ast,node=>{
     if(node.type==='AssignmentExpression'&&node.left.type==='MemberExpression'&&globalObject(node.left.object)&&memberName(node.left))productGlobals.add(memberName(node.left));
-    if(node.type==='CallExpression'&&node.arguments.length===0&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='toString'&&node.callee.object.type==='Identifier'&&top.has(node.callee.object.name))toStrings.add(node.callee.object.name);
+    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='defineProperty'&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&globalObject(node.arguments[0])&&node.arguments[1]?.type==='StringLiteral')productGlobals.add(node.arguments[1].value);
+    if(node.type==='CallExpression'&&node.arguments.length===0&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='toString'&&fn(node.callee.object))toStrings.add(fn(node.callee.object));
+    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='call'&&node.callee.object.type==='MemberExpression'&&memberName(node.callee.object)==='toString'&&fn(node.arguments[0]))toStrings.add(fn(node.arguments[0]));
+    if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&node.callee.name==='String'&&freeAt.has(node.callee.start)&&fn(node.arguments[0]))toStrings.add(fn(node.arguments[0]));
+    if(node.type==='TemplateLiteral')for(const e of node.expressions)if(fn(e))toStrings.add(fn(e));
+    if(node.type==='BinaryExpression'&&node.operator==='+')for(const side of [node.left,node.right])if(fn(side))toStrings.add(fn(side));
     if((node.type==='MemberExpression'||node.type==='OptionalMemberExpression')&&globalObject(node.object)&&memberName(node))globalReads.push({at:node.start,name:memberName(node)});
+    // Destructuring the global object reads each key: ({Akari} = globalThis), const {Akari} = window.
+    const target=node.type==='VariableDeclarator'?[node.id,node.init]:node.type==='AssignmentExpression'?[node.left,node.right]:null;
+    if(target&&target[0]?.type==='ObjectPattern'&&globalObject(target[1]))for(const p of target[0].properties)if(p.type==='ObjectProperty'&&keyName(p))globalReads.push({at:p.start,name:keyName(p)});
   });
   const inside=(name,at)=>{const d=top.get(name);return d.start<=at&&at<d.end;};
   for(const name of embeddedFunctions)globalsRead[name]=[...new Set([...free.filter(r=>r.from===name&&productGlobals.has(r.name)),...globalReads.filter(r=>inside(name,r.at)&&productGlobals.has(r.name))].map(r=>r.name))].sort();
