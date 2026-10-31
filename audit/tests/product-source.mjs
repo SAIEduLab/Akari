@@ -38,10 +38,13 @@ check('REJECT-UNLISTED-PORTABLE',()=>{const other='extensions/other.js',text="co
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
 // portable extension files built into the product are the fork developers' interface and are left out.
-const manuals=['MANUAL.html',...list('Manual').filter(file=>file.endsWith('.html'))];
+// The manuals are public only (PUBLIC_SYNC.json); an internal checkout scans the product alone, the public one both.
+const boundary=fs.existsSync(path.join(repositoryRoot,'PUBLIC_SYNC.json'))?JSON.parse(read('PUBLIC_SYNC.json')):null;
+if(boundary)assert.ok(['MANUAL.html','Manual/**'].every(file=>boundary.publicOnly.includes(file))&&!fs.existsSync(path.join(repositoryRoot,'Manual')),'an internal checkout holds no public-only manual');
+const manuals=boundary?[]:['MANUAL.html',...list('Manual').filter(file=>file.endsWith('.html'))];
 const embedded=['extensions/foundation.js','extensions/profiles.js'].map(file=>{const text=read(file).replace(/\n$/,'');return text.slice(0,text.lastIndexOf('\n')+1);});
 const productText=product.toString('utf8'),productInput=text=>({file:currentProductFile(),kind:'product',text,embedded});
-check('CHILD-GLOSSARY-ONE-WORD',()=>{assert.ok(manuals.length>=6,'the manuals are scanned');assert.deepEqual(childGlossaryIssues([productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))]),[]);});
+check('CHILD-GLOSSARY-ONE-WORD',()=>{assert.ok(boundary||manuals.length>=6,'the manuals are scanned');assert.deepEqual(childGlossaryIssues([productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))]),[]);});
 // The scan finds a banned word in a string, a template and markup, and in the real product text; it skips comments,
 // キャラクター, the code name 拡張「できごとの値」 (not a banned word next to it), only the exact not-screen strings, and only
 // the embedded extension files (the product scanned without them reports their できごと).
