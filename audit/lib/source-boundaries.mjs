@@ -271,18 +271,28 @@ function eachNodeWithAncestors(node,visit,ancestors=[]){
 // declaration directly in an enclosing block, function body or the closure) is `const on = (target, …) => {…}` or
 // `function on(target, …) {…}`. A parameter or a destructured `on` is not a helper.
 const bindsName=(pattern,name)=>!!pattern&&(pattern.type==='Identifier'?pattern.name===name:pattern.type==='ObjectPattern'?pattern.properties.some(p=>bindsName(p.type==='RestElement'?p.argument:p.value,name)):pattern.type==='ArrayPattern'?pattern.elements.some(e=>bindsName(e,name)):pattern.type==='AssignmentPattern'?bindsName(pattern.left,name):pattern.type==='RestElement'?bindsName(pattern.argument,name):false);
-function onHelperBinding(callee,ancestors){
+function onHelperBinding(callee,ancestors){return localFunctionBinding('on',ancestors)==='helper';}
+// The nearest binding of a name seen from a node (its ancestors, nearest last): 'helper' when it is a function declared
+// as `function name(…)` or `const name = (…) => …`, 'other' for any other binding (a parameter of a function or method,
+// a catch parameter, a for declaration, a var anywhere in the function, a destructured or non-function const, a class, a
+// named function expression), or null when nothing in the closure binds it.
+function localFunctionBinding(name,ancestors){
   for(let i=ancestors.length-1;i>=0;i--){
     const a=ancestors[i];
-    if(/Function/.test(a.type)&&a.params?.some(p=>bindsName(p,'on')))return false;
+    if(a.params?.some(p=>bindsName(p,name)))return 'other';
+    if(a.type==='FunctionExpression'&&a.id?.name===name)return 'other';
+    if(a.type==='CatchClause'&&bindsName(a.param,name))return 'other';
+    if(['ForStatement','ForInStatement','ForOfStatement'].includes(a.type)){const d=a.type==='ForStatement'?a.init:a.left;if(d?.type==='VariableDeclaration'&&d.declarations.some(x=>bindsName(x.id,name)))return 'other';}
+    if(isFunction(a)&&a.body?.type==='BlockStatement'&&hoistedVars(a.body.body).has(name))return 'other';
     const statements=a.type==='BlockStatement'||a.type==='Program'?a.body:null;
     if(!statements)continue;
     for(const s of statements){
-      if(s.type==='FunctionDeclaration'&&s.id?.name==='on')return true;
-      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,'on'))return d.id.type==='Identifier'&&/Function|Arrow/.test(d.init?.type||'');
+      if(s.type==='FunctionDeclaration'&&s.id?.name===name)return 'helper';
+      if(s.type==='ClassDeclaration'&&s.id?.name===name)return 'other';
+      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,name))return d.id.type==='Identifier'&&s.kind==='const'&&/Function|Arrow/.test(d.init?.type||'')?'helper':'other';
     }
   }
-  return false;
+  return null;
 }
 function eachNodeWithParents(node,visit,parent=null,grand=null){
   if(!node||typeof node!=='object')return;
@@ -311,7 +321,7 @@ function testRead(node,ancestors){
 // A call whose result nothing uses: the whole expression of a statement.
 const statementCall=(node,parent,grand)=>(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node&&grand?.type==='ExpressionStatement'&&grand.expression===parent;
 function applicationInterfaces(ast,labelAt){
-  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),fills:{},calls:new Set(),vars:new Set(),sets:new Set(),redraws:new Set(),varCalls:[],varReads:[],factories:[],factoryCalls:[],hidden:[]});return per.get(label);};
+  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),fills:{},calls:new Set(),vars:new Set(),sets:new Set(),redraws:new Set(),varCalls:[],varReads:[],writes:[],factories:[],factoryCalls:[],hidden:[]});return per.get(label);};
   const allowed=new Set(),closure=ast.program.body[0].expression.callee.body;
   // Factories are closure top-level declarations taking (appVars, appCalls, appRedraw); a body holds only function
   // declarations and at most one registration statement for each object.
@@ -350,7 +360,10 @@ function applicationInterfaces(ast,labelAt){
       if(!name)return;
       allowed.add(node.object.start);
       const written=writtenAt(node,parent,grand);
-      if(object==='appVars'){f.vars.add(name);if(written)f.sets.add(name);
+      if(object==='appVars'){f.vars.add(name);if(written){f.sets.add(name);const rhs=parent?.type==='AssignmentExpression'&&parent.left===node?parent.right:null;
+          // A first value is an assignment initApp itself makes at the top of its body (where the state was declared).
+          const fn=!!rhs&&(/Function|Arrow/.test(rhs.type)||rhs.type==='Identifier'&&localFunctionBinding(rhs.name,ancestors)==='helper'),nearest=[...ancestors].reverse().find(isFunction);
+          f.writes.push({name,fn,first:nearest?.type==='FunctionDeclaration'&&nearest.id?.name==='initApp'});}
         const called=(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node;
         // appVars.f.call(…) and .apply(…) call it too; .bind(…) hands it on as a value.
         const through=(parent?.type==='MemberExpression'||parent?.type==='OptionalMemberExpression')&&parent.object===node&&!parent.computed&&['call','apply'].includes(parent.property.name)&&(grand?.type==='CallExpression'||grand?.type==='OptionalCallExpression')&&grand.callee===parent;
@@ -363,7 +376,7 @@ function applicationInterfaces(ast,labelAt){
   });
   eachNode(ast,node=>{if(node.type==='Identifier'&&applicationObjects.includes(node.name)&&!allowed.has(node.start))get(labelAt(node.start)).hidden.push(node.name+' used other than by a plain property name');});
   const sorted=set=>[...set].sort();
-  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:sorted(v.provides),fills:Object.fromEntries(Object.entries(v.fills).sort()),calls:sorted(v.calls),vars:sorted(v.vars),sets:sorted(v.sets),redraws:sorted(v.redraws),varCalls:v.varCalls,varReads:v.varReads,factories:v.factories,factoryCalls:v.factoryCalls,hidden:v.hidden}]));
+  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:sorted(v.provides),fills:Object.fromEntries(Object.entries(v.fills).sort()),calls:sorted(v.calls),vars:sorted(v.vars),sets:sorted(v.sets),redraws:sorted(v.redraws),varCalls:v.varCalls,varReads:v.varReads,writes:v.writes,factories:v.factories,factoryCalls:v.factoryCalls,hidden:v.hidden}]));
 }
 
 // The source text of each embedded function, as the exported player receives it through toString().
@@ -426,11 +439,14 @@ export function boundaryIssues(analysis,declarations){
   // what it does, never for its result.
   const setBy=new Map();for(const [file,i]of Object.entries(analysis.interfaces))for(const n of i.sets??[])setBy.set(n,[...(setBy.get(n)||[]),file]);
   for(const n of new Set(Object.values(analysis.interfaces).flatMap(i=>i.vars??[])))if(!setBy.has(n))issues.push('appVars.'+n+' is read but no file assigns it');
-  for(const [file,i]of Object.entries(analysis.interfaces))for(const c of i.varCalls??[])if(!c.statement)for(const w of setBy.get(c.name)??[])if(before(file,w))issues.push(file+' uses the result of appVars.'+c.name+'(), which '+w+' (a later file) assigns');
+  // A function kept in appVars: a name some file calls, or assigns a function (or a name bound to one). Who supplies it:
+  // the files that assign it, apart from initApp's first values.
+  const fnVars=new Set(Object.values(analysis.interfaces).flatMap(i=>[...(i.varCalls??[]).map(c=>c.name),...(i.writes??[]).filter(w=>w.fn).map(w=>w.name)]));
+  const suppliedBy=new Map();for(const [file,i]of Object.entries(analysis.interfaces))for(const w of i.writes??[])if(!w.first)suppliedBy.set(w.name,[...new Set([...(suppliedBy.get(w.name)||[]),file])]);
+  for(const [file,i]of Object.entries(analysis.interfaces))for(const c of i.varCalls??[])if(!c.statement)for(const w of suppliedBy.get(c.name)??[])if(before(file,w))issues.push(file+' uses the result of appVars.'+c.name+'(), which '+w+' (a later file) assigns');
   // Nor is such a function handed on as a value (kept in a name, passed, returned, bound), where a call of it could no
-  // longer be seen: a read of it only decides (a test, a comparison). initApp's own first values do not count.
-  const calledVars=new Set(Object.values(analysis.interfaces).flatMap(i=>(i.varCalls??[]).map(c=>c.name)));
-  for(const [file,i]of Object.entries(analysis.interfaces))for(const r of i.varReads??[])if(!r.test&&calledVars.has(r.name))for(const w of setBy.get(r.name)??[])if(w!=='src/js/11-application.js'&&before(file,w))issues.push(file+' hands on appVars.'+r.name+' as a value, a function '+w+' (a later file) assigns');
+  // longer be seen: a read of it only decides (a test, a comparison).
+  for(const [file,i]of Object.entries(analysis.interfaces))for(const r of i.varReads??[])if(!r.test&&fnVars.has(r.name))for(const w of suppliedBy.get(r.name)??[])if(before(file,w))issues.push(file+' hands on appVars.'+r.name+' as a value, a function '+w+' (a later file) assigns');
   // Each factory is declared once and called once.
   const declaredFactories=Object.values(analysis.interfaces).flatMap(i=>i.factories??[]),calledFactories=Object.values(analysis.interfaces).flatMap(i=>i.factoryCalls??[]);
   for(const n of new Set([...declaredFactories,...calledFactories]))if(declaredFactories.filter(x=>x===n).length!==1||calledFactories.filter(x=>x===n).length!==1)issues.push(n+' is declared '+declaredFactories.filter(x=>x===n).length+' and called '+calledFactories.filter(x=>x===n).length+' times');

@@ -137,6 +137,11 @@ check('REJECT-APP-AGAINST-ORDER',()=>{
   variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.();')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
   variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.call(null);')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
   variantIssues({[services]:read(services).replace(kept,'const cleanup = appVars.activeDragCleanup; cleanup?.();')},services+' hands on appVars.activeDragCleanup as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  // A function only ever called through a name, and one initApp assigns later than its first values, count too.
+  const commands='src/js/11-app-commands.js',commandsHead='  function createAppCommands(appVars, appCalls, appRedraw) {\n';assert.ok(read(commands).includes(commandsHead));
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  const shellText=read('src/js/11-application.js'),setup='    createAppDrawing(appVars, appCalls, appRedraw);\n';assert.ok(shellText.includes(setup));
+  variantIssues({'src/js/11-application.js':shellText.replace(setup,setup+'    const setLater = () => { appVars.laterFn = () => 42; };\n'),[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
   // The language processing is one group: its files may use each other, but not a group after it; its files come together.
   const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
   variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');
@@ -168,7 +173,8 @@ check('REJECT-OPAQUE-GLOBAL-USE',()=>{
   for(const [form,expected]of [['const g = globalThis;',stage+': the global object used as a value (globalThis)'],['Object.assign(globalThis, {});',stage+': the global object used as a value (globalThis)'],
     ["Reflect.get(window, 'Akari');",stage+': Reflect used other than to read'],['globalThis[String(1)];',stage+': the global object used as a value (globalThis)'],['((g) => g)(self);',stage+': the global object used as a value (self)']])
     variantIssues({[stage]:text.replace(line,line+' '+form)},expected);
-  for(const form of ['((on) => on(window, {}))(Object.assign);','{ const {assign: on} = Object; on(window, {}); }'])variantIssues({[stage]:text.replace(line,line+' '+form)},stage+': the global object used as a value (window)');
+  for(const form of ['((on) => on(window, {}))(Object.assign);','{ const {assign: on} = Object; on(window, {}); }','try { throw 0; } catch (on) { on(window, {}); }',
+    'for (const on of [Object.assign]) on(window, {});','({m(on) { on(window, {}); }}).m(Object.assign);'])variantIssues({[stage]:text.replace(line,line+' '+form)},stage+': the global object used as a value (window)');
   variantIssues({[stage]:text.replace(line,line+' Object.assign(window.window, {});')},stage+': the global object used as a value (window.window)');
   assert.ok(!boundaryIssues(usesWith({[stage]:text.replace(line,line+' if (globalThis === window) {}')}),state().boundaries).some(i=>i.includes('global object')),'a comparison with the global object is allowed');
   variantIssues({[stage]:text.replace(helper,helper+'      target.flag = 1;\n')},stage+': an on helper that does more with its target than add and remove event listeners');

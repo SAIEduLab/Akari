@@ -64,6 +64,8 @@ const unitLines=(f,i)=>lineCount(f.text.slice(f.units[i].start,f.units[i].end));
 // units keep their order against each other, so a moved one must not have come after one that stays.
 function splitBlocked(f,lower){
   if(!lower.size||lower.size===f.units.length)return 'its units form one cycle';
+  // A factory runs nothing while the file loads: its body is function declarations, run once initApp calls it.
+  if(f.kind==='factory')return null;
   const ordered=u=>u.node.type!=='FunctionDeclaration';
   const firstStaying=f.units.findIndex((u,i)=>!lower.has(i)&&ordered(u));
   const late=f.units.find((u,i)=>lower.has(i)&&ordered(u)&&firstStaying>=0&&i>firstStaying);
