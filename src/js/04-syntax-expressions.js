@@ -1,5 +1,5 @@
   // ────────────────────────────────────────────────────────────────────────
-  // 04 — Syntax parsing: expressions and conditions (no persistent block representation)
+  // 04 — Syntax parsing: expressions, conditions and the sentence form records (no persistent block representation)
   // ────────────────────────────────────────────────────────────────────────
   // An extension operation registered with scope "meijin" is written only in 名人 text.
   const extensionMeijinOnly = (extension, operation, calculation = false) =>

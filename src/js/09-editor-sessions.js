@@ -1,5 +1,5 @@
   // ────────────────────────────────────────────────────────────────────────
-  // 09 — Pure editor sessions and atomic block transactions
+  // 09 — Pure editor sessions, atomic block transactions and the search readings
   // ────────────────────────────────────────────────────────────────────────
   function editorError(message) {
     throw new AkariError('E901', message);
