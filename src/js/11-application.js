@@ -249,11 +249,12 @@
     // The state initApp shares with the parts of the application (src/js/11-*): assigned where it was declared.
     const appVars = {};
     const appCalls = {};
-    createAppScreens(appVars, appCalls);
-    createAppDesign(appVars, appCalls);
-    createAppProject(appVars, appCalls);
-    createAppEditors(appVars, appCalls);
-    createAppRuntimeView(appVars, appCalls);
+    const appRedraw = {};
+    createAppToolsCore(appVars, appCalls, appRedraw);
+    createAppTools(appVars, appCalls, appRedraw);
+    createAppServices(appVars, appCalls, appRedraw);
+    createAppCommands(appVars, appCalls, appRedraw);
+    createAppDrawing(appVars, appCalls, appRedraw);
     appVars.initialSnapshot = null,
       appVars.autosaveQueue = Promise.resolve(),
       appVars.recoveryEpoch = 0,

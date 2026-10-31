@@ -6,6 +6,7 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIssues,CHILD_SPACING_RUN} from '../lib/product-source-contract.mjs';
 import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources,productScript} from '../lib/source-boundaries.mjs';
+import {sourceSizes,splitSource,sourceUnits,SOURCE_SPLIT_LINES} from '../lib/source-split.mjs';
 import vm from 'node:vm';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
@@ -94,22 +95,111 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
   assert.ok(arrow.some(i=>i.startsWith('the product embeds ')&&i.includes('KEY_ALIASES_ARROW')),JSON.stringify(arrow));
 });
 // The application's shared state and calls (AUDIT.md「ソースの境界」): an undeclared call or state, a name registered
-// twice, a call nothing registers, and a computed key are each refused.
+// twice or under another name, a call nothing registers, a registration nothing calls, a computed key, a write to
+// appCalls, a state nothing assigns, a factory of another shape, and a factory holding other statements are each refused.
+const variantIssues=(changes,expected)=>{const issues=boundaryIssues(usesWith(changes),state().boundaries);assert.ok(issues.some(i=>i.startsWith(expected)),expected+' '+JSON.stringify(issues.slice(0,4)));};
+const services='src/js/11-app-services.js',servicesHead='  function createAppServices(appVars, appCalls, appRedraw) {\n',register='    Object.assign(appCalls, {\n';
 check('REJECT-APP-INTERFACE-MISMATCH',()=>{
-  const {boundaries,uses}=state(),withCalls=Object.keys(boundaries).filter(f=>boundaries[f].appCalls?.uses?.length&&boundaries[f].appVars?.length);assert.ok(withCalls.length);
-  const file=withCalls[0],call=boundaries[file].appCalls.uses[0],shared=boundaries[file].appVars[0];
+  const {boundaries,uses}=state(),file=services,call=boundaries[file].appCalls.uses[0],shared=boundaries[file].appVars[0];
   const drop=(field,name)=>({...boundaries,[file]:{...boundaries[file],...(field==='appVars'?{appVars:boundaries[file].appVars.filter(n=>n!==name)}:{appCalls:{...boundaries[file].appCalls,uses:boundaries[file].appCalls.uses.filter(n=>n!==name)}})}});
   assert.ok(boundaryIssues(uses,drop('appCalls',call)).some(i=>i.startsWith(file+' calls appCalls ["'+call+'"] undeclared')));
   assert.ok(boundaryIssues(uses,drop('appVars',shared)).some(i=>i.startsWith(file+' uses appVars ["'+shared+'"] undeclared')));
-  const part=Object.keys(boundaries).find(f=>read(f).includes('  function createAppEditors(appVars, appCalls) {')),head='  function createAppEditors(appVars, appCalls) {\n';assert.ok(part);
-  const other=Object.keys(boundaries).find(f=>f!==part&&boundaries[f].appCalls?.provides?.length),twice=boundaries[other].appCalls.provides[0];
-  const register='Object.assign(appCalls, {';assert.ok(read(part).includes(register));
+  const text=read(file);assert.ok(text.includes(servicesHead)&&text.includes(register));
+  const own=boundaries[file].appCalls.provides[0],other=Object.keys(boundaries).find(f=>f!==file&&boundaries[f].appCalls?.provides?.length),theirs=boundaries[other].appCalls.provides[0];
   const variants=[
-    [read(part).replace(register,register+twice+', '),'appCalls.'+twice+' is registered by '],
-    [read(part).replace(head,head+'    appCalls.noSuchApplicationCall;\n'),part+' calls appCalls.noSuchApplicationCall that no file registers'],
-    [read(part).replace(head,head+"    appCalls['dynamic'];\n"),part+': appCalls used other than by a plain property name'],
+    [text.replace(register,register+'      '+theirs+',\n'),file+': a registration that is not one of the factory\'s own functions under its own name'],
+    [text.replace(register,register+'      alias: '+own+',\n'),file+': a registration that is not one of the factory\'s own functions under its own name'],
+    [text.replace(servicesHead,servicesHead+'    function neverCalledFromElsewhere() {}\n').replace(register,register+'      neverCalledFromElsewhere,\n'),file+' registers appCalls.neverCalledFromElsewhere but nothing calls it'],
+    [text.replace(servicesHead,servicesHead+'    function noSuchUse() { return appCalls.noSuchApplicationCall; }\n'),file+' calls appCalls.noSuchApplicationCall that no file registers'],
+    [text.replace(servicesHead,servicesHead+"    function dynamicUse() { return appCalls['dynamic']; }\n"),file+': appCalls used other than by a plain property name'],
+    [text.replace(servicesHead,servicesHead+'    function aliasUse() { const calls = appCalls; return calls; }\n'),file+': appCalls used other than by a plain property name'],
+    [text.replace(servicesHead,servicesHead+'    function writeCalls() { appCalls.'+own+' = null; }\n'),file+': appCalls.'+own+' written outside the registration'],
+    [text.replace(servicesHead,servicesHead+'    function readUnset() { return appVars.noSuchState; }\n'),'appVars.noSuchState is read but no file assigns it'],
+    [text.replace(servicesHead,'  function createAppServices(appCalls, appVars, appRedraw) {\n'),file+': createAppServices takes other than (appVars, appCalls, appRedraw)'],
+    [text.replace(servicesHead,servicesHead+'    appVars.loose = 1;\n'),file+': createAppServices holds a statement that is neither a function declaration nor a registration'],
   ];
-  for(const [text,expected]of variants){const issues=boundaryIssues(usesWith({[part]:text}),boundaries);assert.ok(issues.some(i=>i.startsWith(expected)),expected+' '+JSON.stringify(issues.slice(0,4)));}
+  for(const [changed,expected]of variants)variantIssues({[file]:changed},expected);
+  const shell='src/js/11-application.js',call0='createAppServices(appVars, appCalls, appRedraw);';assert.ok(read(shell).includes(call0));
+  variantIssues({[shell]:read(shell).replace(call0,'createAppServices(appCalls, appVars, appRedraw);')},shell+': createAppServices called with other than (appVars, appCalls, appRedraw)');
+  variantIssues({[shell]:read(shell).replace(call0,call0+'\n    '+call0)},'createAppServices is declared 1 and called 2 times');
+});
+// One way (AUDIT.md「ソースの境界」): an application file reaching a file after it, other than by a redraw request, is
+// refused: an appCalls name a later file registers, a top-level name of a later file, and the result of a function a
+// later file keeps in appVars.
+check('REJECT-APP-AGAINST-ORDER',()=>{
+  const {boundaries}=state(),tools='src/js/11-app-tools-core.js',toolsText=read(tools),head='  function createAppToolsCore(appVars, appCalls, appRedraw) {\n';assert.ok(toolsText.includes(head));
+  const later=boundaries[services].appCalls.provides[0];
+  variantIssues({[tools]:toolsText.replace(head,head+'    function upward() { return appCalls.'+later+'(); }\n')},tools+' calls appCalls.'+later+' of '+services+', which comes after it');
+  variantIssues({[tools]:toolsText.replace(head,head+'    function upwardName() { return createAppDrawing; }\n')},tools+' uses src/js/11-app-drawing.js, which comes after it');
+  const kept='appVars.activeDragCleanup?.();';assert.ok(read(services).includes(kept));
+  assert.ok((boundaries['src/js/11-app-commands.js'].appVars??[]).includes('activeDragCleanup'));
+  variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.();')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
+  // The language processing is one group: its files may use each other, but not a group after it; its files come together.
+  const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
+  variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');
+  const tpl='src/akari.html',tplText=read(tpl),line='<!-- @include js/10-block-view.js -->\n',second='<!-- @include js/03-default-assets.js -->\n';assert.ok(tplText.includes(line)&&tplText.includes(second));
+  variantIssues({[tpl]:tplText.replace(line,'').replace(second,line+second)},'the files of the language processing (src/js/02-09) do not come together in src/akari.html');
+});
+// Redraw requests (AUDIT.md「ソースの境界」): a request used for its result or as a value, an undeclared request, a slot
+// nothing fills, filled by an earlier file, filled twice or with another function, written outside the registration, and
+// a filled slot nothing calls are each refused.
+check('REJECT-APP-REDRAW-MISUSE',()=>{
+  const {boundaries,uses}=state(),drawing='src/js/11-app-drawing.js',drawingText=read(drawing),fills='    Object.assign(appRedraw, {\n',request='appRedraw.tree();';
+  assert.ok(drawingText.includes(fills)&&read(services).includes(request)&&boundaries[drawing].appRedraw.fills.tree==='renderTree');
+  variantIssues({[services]:read(services).replace(request,'const drawn = appRedraw.tree();')},services+': appRedraw.tree used other than as a call whose result nothing uses');
+  variantIssues({[services]:read(services).replace(request,'setTimeout(appRedraw.tree);')},services+': appRedraw.tree used other than as a call whose result nothing uses');
+  variantIssues({[services]:read(services).replace(request,request+' appRedraw.noSuchSlot();')},'appRedraw.noSuchSlot is called by '+services+' but no file fills it');
+  const requests=boundaries[services].appRedraw.requests;
+  assert.ok(boundaryIssues(uses,{...boundaries,[services]:{...boundaries[services],appRedraw:{requests:requests.filter(s=>s!=='tree')}}}).some(i=>i.startsWith(services+' calls appRedraw ["tree"] undeclared')));
+  variantIssues({[drawing]:drawingText.replace('      tree: renderTree,\n','      tree: renderProperties,\n')},drawing+': an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');
+  variantIssues({[drawing]:drawingText.replace('      tree: renderTree,\n','      tree: renderTree,\n      tree: renderTree,\n')},drawing+': an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');
+  variantIssues({[services]:read(services).replace(servicesHead,servicesHead+'    function renderLocal() {}\n').replace(register,'    Object.assign(appRedraw, {\n      local: renderLocal,\n    });\n'+register).replace(request,request+' appRedraw.local();')},services+' calls appRedraw.local, which '+services+' fills; the filling file must come after it');
+  variantIssues({[services]:read(services).replace(request,request+' appRedraw.tree = null;')},services+': appRedraw.tree used other than as a call whose result nothing uses');
+  const unasked=drawingText.replace(fills,fills+'      monitorSection: renderMonitorSection,\n');assert.ok(drawingText.includes('    function renderMonitorSection('));
+  variantIssues({[drawing]:unasked},drawing+' fills appRedraw.monitorSection but nothing calls it');
+});
+// What the reading cannot follow (AUDIT.md「ソースの境界」): the global object as a value, Reflect other than reading,
+// an on helper that does more with its target, and a function's text taken through toString.apply are each refused.
+check('REJECT-OPAQUE-GLOBAL-USE',()=>{
+  const stage='src/js/08-stage-and-export.js',text=read(stage),line="on(window, 'resize', fitStage);",helper='      target.addEventListener(type, fn, opts);\n';assert.ok(text.includes(line)&&text.includes(helper));
+  for(const [form,expected]of [['const g = globalThis;',stage+': the global object used as a value (globalThis)'],['Object.assign(globalThis, {});',stage+': the global object used as a value (globalThis)'],
+    ["Reflect.get(window, 'Akari');",stage+': Reflect used other than to read'],['globalThis[String(1)];',stage+': the global object used as a value (globalThis)'],['((g) => g)(self);',stage+': the global object used as a value (self)']])
+    variantIssues({[stage]:text.replace(line,line+' '+form)},expected);
+  variantIssues({[stage]:text.replace(helper,helper+'      target.flag = 1;\n')},stage+': an on helper that does more with its target than add and remove event listeners');
+  const call='${createAkariStageView.toString()}';assert.ok(text.includes(call));
+  variantIssues({[stage]:text.replace(call,call+'${Function.prototype.toString.apply(keyName)}')},'the product embeds ');
+});
+// Sizes (AUDIT.md「ソースの境界」): a file over the size whose units all fit in it is due to be split and fails;
+// every file over the size is listed, with its largest unit (a unit over the size alone is not split by the rule).
+let sizes=[];
+const productFiles=reader=>[...new Set(productScript(reader).pieces.map(p=>p.label))];
+check('SOURCE-SIZE',()=>{
+  sizes=sourceSizes(read,productFiles(read));
+  assert.deepEqual(sizes.filter(s=>s.due).map(s=>s.file),[],'split them by node audit/split-source.mjs <file>');
+  const padded=file=>({...Object.fromEntries([[file,read(file)+'  //\n'.repeat(SOURCE_SPLIT_LINES)]])}),grown='src/js/11-app-drawing.js',over=padded(grown);
+  const reader=f=>f in over?over[f]:read(f);assert.ok(sourceSizes(reader,productFiles(reader)).some(s=>s.file===grown&&s.due),'a file over the size is due');
+});
+// The split rule (AUDIT.md「ソースの境界」): splitting a plain file and an application file keeps every boundary, the
+// product's free names and every unit; the new file comes just before; neither part is larger than the file; and what
+// the rule cannot split is refused.
+check('SOURCE-SPLIT-RULE',()=>{
+  const free=reader=>[...new Set(closureReferences(productScript(reader)).free.map(x=>x.name))].sort();
+  for(const file of ['src/js/07-semantic-analysis.js',services]){
+    const s=splitSource(read,file,f=>fs.existsSync(path.join(repositoryRoot,f))),after=p=>p in s.changes?s.changes[p]:read(p);
+    const records={...state().boundaries};for(const [p,t]of Object.entries(s.changes))if(p.startsWith('audit/boundaries/'))records[JSON.parse(t).file]=JSON.parse(t);
+    assert.deepEqual(boundaryIssues(sourceUses(after),records),[],file);
+    assert.deepEqual(free(after),free(read),file+' free names');
+    const tpl=after('src/akari.html');assert.ok(tpl.includes('<!-- @include '+s.created.slice(4)+' -->\n<!-- @include '+file.slice(4)+' -->\n'),file+' comes right after the new file');
+    const lines=t=>t.split('\n').length;assert.ok(lines(after(s.created))<lines(read(file))&&lines(after(file))<lines(read(file)),file+' parts');
+    const moved=new Set(s.moved),restore=t=>t.replace(/\b(\w+): appCalls\.\1\b/g,(m,n)=>moved.has(n)?n:m).replace(/\bappCalls\.(\w+)\b/g,(m,n)=>moved.has(n)?n:m);
+    const now=[...sourceUnits(after,s.created),...sourceUnits(after,file)],key=u=>u.names.join(',')||u.text;
+    const was=sourceUnits(read,file);assert.equal(now.length,was.length,file+' units');
+    for(const u of was){const v=now.find(x=>key(x)===key(u));assert.ok(v&&(v.text===u.text||restore(v.text)===u.text),file+' keeps '+key(u).slice(0,40));}
+  }
+  assert.throws(()=>splitSource(read,'src/js/00-prelude.js'),/parses inside the closure/);
+  assert.throws(()=>splitSource(read,'src/js/01-execution-core.js'),/portable extension/);
+  const cyclic='src/js/05-command-presentation.js',loop={[cyclic]:'  function loopA() { return loopB(); }\n  function loopB() { return loopA(); }\n'};
+  assert.throws(()=>splitSource(f=>f in loop?loop[f]:read(f),cyclic),/form one cycle/);
 });
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
@@ -159,7 +249,7 @@ check('REJECT-UNSPACED-CHILD-TEXT',()=>{
   assert.ok(childSpacingIssues([productInput(productText.replace(label,"'先に じゅんびできたよ'"))],spacing).some(i=>i.run==='じゅんびできたよ'));
 });
 
-const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results};
+const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results,sourceSizes:sizes.filter(s=>s.lines>SOURCE_SPLIT_LINES)};
 assert.deepEqual(results.map(r=>r.id),productSourceIds);
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 if(report.status!=='PASS'){console.error(JSON.stringify(results.filter(r=>r.status!=='PASS'),null,2));process.exitCode=1;}

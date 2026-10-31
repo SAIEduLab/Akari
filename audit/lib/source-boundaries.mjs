@@ -16,6 +16,17 @@ export const boundaryFileFor=file=>boundaryDirectory+'/'+path.posix.basename(fil
 // Functions the exported player embeds through toString(): they must use no closure name but each other.
 export const embeddedFunctions=Object.freeze(['createAkariProfiles','createAkariExtensionHost','createAkariRuntime','createAkariStageView','mountAkariPlayer']);
 
+// Groups for the one-way rule (AUDIT.md「ソースの境界」). The language processing (src/js/02-09: contracts, assets,
+// syntax, presentation, formatting, analysis, stage and export, editor sessions) is one module whose parts use each other
+// (parsing, formatting and analysis call one another to read and to explain); every other src/js file is a group of its
+// own. A portable extension belongs to the file that embeds it. Files split off by the rule keep their prefix, so they
+// stay in their group.
+export const languageGroup=/^src\/js\/0[2-9]-/;
+export function sourceGroup(file,files){
+  if(languageGroup.test(file))return 'the language processing (src/js/02-09)';
+  if(file.startsWith('extensions/')){const host=files.slice(0,files.indexOf(file)).filter(f=>f.startsWith('src/js/')).at(-1);return host?sourceGroup(host,files):file;}
+  return file;
+}
 const includeLine=/^<!-- @include (js\/[a-z0-9._-]+) -->$/;
 const portableLine=/^\/\/ @portable (extensions\/[a-z0-9._-]+\.js)$/;
 // The product script as src/build.mjs assembles it, with the source of every character.
@@ -201,7 +212,7 @@ export function sourceUses(read){
     if(node.type==='AssignmentExpression'&&node.left.type==='MemberExpression'&&globalObject(node.left.object)&&memberName(node.left))productGlobals.add(memberName(node.left));
     if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='defineProperty'&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&globalObject(node.arguments[0])&&node.arguments[1]?.type==='StringLiteral')productGlobals.add(node.arguments[1].value);
     if(node.type==='CallExpression'&&node.arguments.length===0&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='toString'&&fn(node.callee.object))toStrings.add(fn(node.callee.object));
-    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='call'&&node.callee.object.type==='MemberExpression'&&memberName(node.callee.object)==='toString'&&fn(node.arguments[0]))toStrings.add(fn(node.arguments[0]));
+    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&['call','apply','bind'].includes(memberName(node.callee))&&node.callee.object.type==='MemberExpression'&&memberName(node.callee.object)==='toString'&&fn(node.arguments[0]))toStrings.add(fn(node.arguments[0]));
     if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&node.callee.name==='String'&&freeAt.has(node.callee.start)&&fn(node.arguments[0]))toStrings.add(fn(node.arguments[0]));
     if(node.type==='TemplateLiteral')for(const e of node.expressions)if(fn(e))toStrings.add(fn(e));
     if(node.type==='BinaryExpression'&&node.operator==='+')for(const side of [node.left,node.right])if(fn(side))toStrings.add(fn(side));
@@ -210,37 +221,96 @@ export function sourceUses(read){
     const target=node.type==='VariableDeclarator'?[node.id,node.init]:node.type==='AssignmentExpression'?[node.left,node.right]:null;
     if(target&&target[0]?.type==='ObjectPattern'&&globalObject(target[1]))for(const p of target[0].properties)if(p.type==='ObjectProperty'&&keyName(p))globalReads.push({at:p.start,name:keyName(p)});
   });
+  // What the reading above cannot follow, refused: the global object as a value (an alias, an argument to Object.assign
+  // or Reflect, a computed key) other than reading or writing a named property, typeof, or the target of the event helper
+  // on(target, …); Reflect other than its reading methods; and an on helper that does more with its target than add and
+  // remove event listeners.
+  const opaque=[],readingReflect=['ownKeys','has','getPrototypeOf','getOwnPropertyDescriptor'];
+  eachNodeWithParents(ast,(node,parent)=>{
+    const member=(parent?.type==='MemberExpression'||parent?.type==='OptionalMemberExpression')&&parent.object===node;
+    if(globalObject(node)&&!(member&&memberName(parent)||parent?.type==='UnaryExpression'&&parent.operator==='typeof'||parent?.type==='CallExpression'&&parent.callee.type==='Identifier'&&parent.callee.name==='on'&&parent.arguments[0]===node))
+      opaque.push(labelAt(node.start)+': the global object used as a value ('+node.name+')');
+    if(node.type==='Identifier'&&node.name==='Reflect'&&freeAt.has(node.start)&&!(member&&!parent.computed&&readingReflect.includes(parent.property.name)))opaque.push(labelAt(node.start)+': Reflect used other than to read ('+readingReflect.join(', ')+')');
+    const helper=node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&node.id.name==='on'&&/Function|Arrow/.test(node.init?.type||'')?node.init:node.type==='FunctionDeclaration'&&node.id?.name==='on'?node:null;
+    if(helper){const target=helper.params[0]?.type==='Identifier'?helper.params[0].name:null;let bad=!target;
+      eachNodeWithParents(helper.body,(n,p)=>{if(n.type==='Identifier'&&n.name===target&&!((p?.type==='MemberExpression'||p?.type==='OptionalMemberExpression')&&p.object===n&&!p.computed&&['addEventListener','removeEventListener'].includes(p.property.name)))bad=true;});
+      if(bad)opaque.push(labelAt(node.start)+': an on helper that does more with its target than add and remove event listeners');}
+  });
   const inside=(name,at)=>{const d=top.get(name);return d.start<=at&&at<d.end;};
   for(const name of embeddedFunctions)globalsRead[name]=[...new Set([...free.filter(r=>r.from===name&&productGlobals.has(r.name)),...globalReads.filter(r=>inside(name,r.at)&&productGlobals.has(r.name))].map(r=>r.name))].sort();
   const files=[...new Set(script.pieces.map(p=>p.label))];
   const interfaces=applicationInterfaces(ast,labelAt);
-  return {files,owner,interfaces,embeddedThroughToString:[...toStrings].sort(),globalsRead,productGlobals:[...productGlobals].sort(),uses:Object.fromEntries(Object.entries(uses).map(([f,t])=>[f,Object.fromEntries(Object.entries(t).map(([k,v])=>[k,[...v].sort()]))])),embedded,refs:refs.length};
+  return {files,owner,interfaces,opaque,embeddedThroughToString:[...toStrings].sort(),globalsRead,productGlobals:[...productGlobals].sort(),uses:Object.fromEntries(Object.entries(uses).map(([f,t])=>[f,Object.fromEntries(Object.entries(t).map(([k,v])=>[k,[...v].sort()]))])),embedded,refs:refs.length};
 }
 
-// The application's parts (src/js/11-*) share state through appVars and call each other through appCalls. Per file:
-// the appCalls names it registers (Object.assign(appCalls, {…})), the appCalls names and appVars names it uses, and
-// every other use of the two objects (a computed key, an alias, passing them on), which would hide what is used.
-export const applicationObjects=Object.freeze(['appVars','appCalls']);
+// The application's files (src/js/11-*) share state through appVars, offer functions to the files after them through
+// appCalls, and take redraw requests from the files before them through appRedraw. Per file: the appCalls names it
+// registers (Object.assign(appCalls, {name, …}), each a function the factory itself declares, under its own name), the
+// appRedraw slots it fills (Object.assign(appRedraw, {slot: renderSlot, …})), the appCalls names, appVars names and
+// appRedraw slots it uses, the appVars names it assigns, its calls of a function kept in appVars (and whether the result
+// is used), the factories it declares and calls, and every other use of the three objects, which would hide what is used.
+export const applicationObjects=Object.freeze(['appVars','appCalls','appRedraw']);
 const factoryName=/^createApp[A-Z]\w*$/;
+// A redraw slot is the name of a drawing function without its verb: renderProperties fills appRedraw.properties.
+export const redrawSlot=name=>{const m=/^(?:render|refresh|repaint|paint)([A-Z]\w*)$/.exec(name);return m?m[1][0].toLowerCase()+m[1].slice(1):null;};
+const functionStatement=s=>s.type==='FunctionDeclaration'||s.type==='VariableDeclaration'&&s.kind==='const'&&s.declarations.every(d=>d.id.type==='Identifier'&&['FunctionExpression','ArrowFunctionExpression'].includes(d.init?.type));
+const declaredNames=s=>s.type==='FunctionDeclaration'?[s.id.name]:s.declarations.map(d=>d.id.name);
+const objectAssign=(node,target)=>node?.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&node.callee.property.name==='assign'&&node.arguments.length===2&&node.arguments[0].type==='Identifier'&&node.arguments[0].name===target&&node.arguments[1].type==='ObjectExpression';
+function eachNodeWithParents(node,visit,parent=null,grand=null){
+  if(!node||typeof node!=='object')return;
+  if(Array.isArray(node)){for(const n of node)eachNodeWithParents(n,visit,parent,grand);return;}
+  if(typeof node.type==='string')visit(node,parent,grand);
+  for(const [key,value]of Object.entries(node))if(!skipKeys.has(key)&&value&&typeof value==='object')eachNodeWithParents(value,visit,typeof node.type==='string'?node:parent,typeof node.type==='string'?parent:grand);
+}
+// A member written to: assigned, updated, deleted, or a target of destructuring or of for-in/of.
+const writtenAt=(node,parent,grand)=>parent&&(parent.type==='AssignmentExpression'&&parent.left===node||parent.type==='UpdateExpression'||parent.type==='UnaryExpression'&&parent.operator==='delete'||
+  parent.type==='ArrayPattern'||parent.type==='AssignmentPattern'&&parent.left===node||(parent.type==='ForOfStatement'||parent.type==='ForInStatement')&&parent.left===node||parent.type==='ObjectProperty'&&parent.value===node&&grand?.type==='ObjectPattern'||parent.type==='RestElement');
+// A call whose result nothing uses: the whole expression of a statement.
+const statementCall=(node,parent,grand)=>(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node&&grand?.type==='ExpressionStatement'&&grand.expression===parent;
 function applicationInterfaces(ast,labelAt){
-  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),calls:new Set(),vars:new Set(),hidden:[]});return per.get(label);};
-  const allowed=new Set();
-  eachNode(ast,node=>{
-    // Declarations and the hand-over to the factories: const appVars = {}; createAppX(appVars, appCalls); function createAppX(appVars, appCalls).
+  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),fills:{},calls:new Set(),vars:new Set(),sets:new Set(),redraws:new Set(),varCalls:[],factories:[],factoryCalls:[],hidden:[]});return per.get(label);};
+  const allowed=new Set(),closure=ast.program.body[0].expression.callee.body;
+  // Factories are closure top-level declarations taking (appVars, appCalls, appRedraw); a body holds only function
+  // declarations and at most one registration statement for each object.
+  for(const s of closure.body)if(s.type==='FunctionDeclaration'&&factoryName.test(s.id?.name||'')){
+    const f=get(labelAt(s.start));f.factories.push(s.id.name);
+    if(JSON.stringify(s.params.map(p=>p.type==='Identifier'?p.name:p.type))!==JSON.stringify(applicationObjects))f.hidden.push(s.id.name+' takes other than (appVars, appCalls, appRedraw)');
+    for(const p of s.params)if(p.type==='Identifier'&&applicationObjects.includes(p.name))allowed.add(p.start);
+    const own=new Set(s.body.body.filter(functionStatement).flatMap(declaredNames)),count={appCalls:0,appRedraw:0};
+    for(const t of s.body.body){
+      if(functionStatement(t))continue;
+      const e=t.type==='ExpressionStatement'?t.expression:null;
+      if(objectAssign(e,'appCalls')){count.appCalls++;allowed.add(e.arguments[0].start);
+        for(const p of e.arguments[1].properties){if(p.type==='ObjectProperty'&&!p.computed&&p.shorthand&&p.value.type==='Identifier'&&own.has(p.value.name))f.provides.add(p.value.name);else f.hidden.push('a registration that is not one of the factory\'s own functions under its own name');}}
+      else if(objectAssign(e,'appRedraw')){count.appRedraw++;allowed.add(e.arguments[0].start);
+        for(const p of e.arguments[1].properties){const key=p.type==='ObjectProperty'&&!p.computed&&p.key.type==='Identifier'?p.key.name:null,value=p.type==='ObjectProperty'&&p.value.type==='Identifier'?p.value.name:null;
+          if(key&&value&&own.has(value)&&redrawSlot(value)===key&&!(key in f.fills))f.fills[key]=value;else f.hidden.push('an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');}}
+      else f.hidden.push(s.id.name+' holds a statement that is neither a function declaration nor a registration');
+    }
+    for(const [object,n]of Object.entries(count))if(n>1)f.hidden.push(s.id.name+' registers '+object+' in '+n+' statements');
+  }
+  eachNodeWithParents(ast,(node,parent,grand)=>{
+    // Declarations and the hand-over to the factories: const appVars = {}; createAppX(appVars, appCalls, appRedraw).
     if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&applicationObjects.includes(node.id.name)&&node.init?.type==='ObjectExpression'&&!node.init.properties.length)allowed.add(node.id.start);
-    if(node.type==='FunctionDeclaration'&&factoryName.test(node.id?.name||''))for(const p of node.params)if(p.type==='Identifier'&&applicationObjects.includes(p.name))allowed.add(p.start);
-    if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&factoryName.test(node.callee.name))for(const a of node.arguments)if(a.type==='Identifier'&&applicationObjects.includes(a.name))allowed.add(a.start);
-    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&memberName(node.callee)==='assign'&&node.arguments[0]?.type==='Identifier'&&node.arguments[0].name==='appCalls'&&node.arguments.length===2&&node.arguments[1].type==='ObjectExpression'){
-      allowed.add(node.arguments[0].start);
-      for(const p of node.arguments[1].properties){const key=p.type==='ObjectProperty'&&!p.computed&&p.key.type==='Identifier'?p.key.name:null;if(key)get(labelAt(node.start)).provides.add(key);else get(labelAt(node.start)).hidden.push('a registration that is not a plain name');}
+    if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&factoryName.test(node.callee.name)){
+      const f=get(labelAt(node.start));f.factoryCalls.push(node.callee.name);
+      if(JSON.stringify(node.arguments.map(a=>a.type==='Identifier'?a.name:a.type))===JSON.stringify(applicationObjects))for(const a of node.arguments)allowed.add(a.start);
+      else f.hidden.push(node.callee.name+' called with other than (appVars, appCalls, appRedraw)');
     }
     if((node.type==='MemberExpression'||node.type==='OptionalMemberExpression')&&node.object.type==='Identifier'&&applicationObjects.includes(node.object.name)){
-      const name=!node.computed&&node.property.type==='Identifier'?node.property.name:null,label=labelAt(node.start);
-      if(name){allowed.add(node.object.start);get(label)[node.object.name==='appCalls'?'calls':'vars'].add(name);}
+      const name=!node.computed&&node.property.type==='Identifier'?node.property.name:null,f=get(labelAt(node.start)),object=node.object.name;
+      if(!name)return;
+      allowed.add(node.object.start);
+      const written=writtenAt(node,parent,grand);
+      if(object==='appVars'){f.vars.add(name);if(written)f.sets.add(name);
+        if((parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node)f.varCalls.push({name,statement:statementCall(node,parent,grand)});}
+      else if(object==='appCalls'){f.calls.add(name);if(written)f.hidden.push('appCalls.'+name+' written outside the registration');}
+      else{f.redraws.add(name);if(!statementCall(node,parent,grand))f.hidden.push('appRedraw.'+name+' used other than as a call whose result nothing uses');}
     }
   });
   eachNode(ast,node=>{if(node.type==='Identifier'&&applicationObjects.includes(node.name)&&!allowed.has(node.start))get(labelAt(node.start)).hidden.push(node.name+' used other than by a plain property name');});
-  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:[...v.provides].sort(),calls:[...v.calls].sort(),vars:[...v.vars].sort(),hidden:v.hidden}]));
+  const sorted=set=>[...set].sort();
+  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:sorted(v.provides),fills:Object.fromEntries(Object.entries(v.fills).sort()),calls:sorted(v.calls),vars:sorted(v.vars),sets:sorted(v.sets),redraws:sorted(v.redraws),varCalls:v.varCalls,factories:v.factories,factoryCalls:v.factoryCalls,hidden:v.hidden}]));
 }
 
 // The source text of each embedded function, as the exported player receives it through toString().
@@ -264,7 +334,7 @@ export function boundaryIssues(analysis,declarations){
   for(const [name,list]of Object.entries(analysis.embedded))if(list.length)issues.push(name+' is embedded through toString() but uses closure names: '+list.join(', '));
   for(const [name,list]of Object.entries(analysis.globalsRead))if(list.length)issues.push(name+' is embedded through toString() but reads what the product puts on the global object: '+list.join(', '));
   // The application's shared state and calls: each file declares what it registers and uses; every name used is
-  // registered by exactly one file; nothing reaches the two objects other than by a plain property name.
+  // registered by exactly one file; nothing reaches the three objects other than by a plain property name.
   const registeredBy=new Map();
   for(const [file,i]of Object.entries(analysis.interfaces))for(const n of i.provides)registeredBy.set(n,[...(registeredBy.get(n)||[]),file]);
   for(const [n,list]of registeredBy)if(list.length>1)issues.push('appCalls.'+n+' is registered by '+list.join(' and '));
@@ -278,7 +348,36 @@ export function boundaryIssues(analysis,declarations){
     if(!same(actual.provides,declared.appCalls?.provides??[]))issues.push(file+' registers appCalls '+JSON.stringify(actual.provides)+' but declares '+JSON.stringify(declared.appCalls?.provides??[]));
     if(!same(actual.calls,declared.appCalls?.uses??[]))issues.push(file+' calls appCalls '+JSON.stringify(actual.calls.filter(n=>!(declared.appCalls?.uses??[]).includes(n)))+' undeclared, '+JSON.stringify((declared.appCalls?.uses??[]).filter(n=>!actual.calls.includes(n)))+' declared but unused');
     if(!same(actual.vars,declared.appVars??[]))issues.push(file+' uses appVars '+JSON.stringify(actual.vars.filter(n=>!(declared.appVars??[]).includes(n)))+' undeclared, '+JSON.stringify((declared.appVars??[]).filter(n=>!actual.vars.includes(n)))+' declared but unused');
+    if(!same(actual.redraws??[],declared.appRedraw?.requests??[]))issues.push(file+' calls appRedraw '+JSON.stringify((actual.redraws??[]).filter(n=>!(declared.appRedraw?.requests??[]).includes(n)))+' undeclared, '+JSON.stringify((declared.appRedraw?.requests??[]).filter(n=>!(actual.redraws??[]).includes(n)))+' declared but unused');
+    if(!same(actual.fills??{},declared.appRedraw?.fills??{}))issues.push(file+' fills appRedraw '+JSON.stringify(actual.fills??{})+' but declares '+JSON.stringify(declared.appRedraw?.fills??{}));
   }
+  // One way (AUDIT.md「ソースの境界」): a file uses only its own group and the groups before it in src/akari.html, through
+  // a top-level name or appCalls; it reaches a group after it only by a redraw request, which that later file fills. A
+  // group is one file, or the files of a module whose parts use each other (sourceGroup); a group's files come together.
+  const group=f=>sourceGroup(f,analysis.files),groups=[...new Set(analysis.files.map(group))],rank=new Map(groups.map((g,i)=>[g,i]));
+  const before=(a,b)=>group(a)!==group(b)&&rank.get(group(a))<rank.get(group(b));
+  for(const g of groups){const at=analysis.files.map((f,i)=>group(f)===g?i:-1).filter(i=>i>=0);if(at.at(-1)-at[0]+1!==at.length)issues.push('the files of '+g+' do not come together in src/akari.html');}
+  for(const file of sources){
+    for(const to of Object.keys(analysis.uses[file]??{}))if(group(to)!==group(file)&&!before(to,file))issues.push(file+' uses '+to+', which comes after it ('+analysis.uses[file][to].slice(0,5).join(', ')+')');
+    for(const n of analysis.interfaces[file]?.calls??[]){const from=registeredBy.get(n)?.[0];if(from&&group(from)!==group(file)&&!before(from,file))issues.push(file+' calls appCalls.'+n+' of '+from+', which comes after it');}
+  }
+  const requestedBy=new Map(),filledBy=new Map();
+  for(const [file,i]of Object.entries(analysis.interfaces)){for(const s of i.redraws??[])requestedBy.set(s,[...(requestedBy.get(s)||[]),file]);for(const s of Object.keys(i.fills??{}))filledBy.set(s,[...(filledBy.get(s)||[]),file]);}
+  for(const [s,files]of requestedBy)if(!filledBy.has(s))issues.push('appRedraw.'+s+' is called by '+files.join(', ')+' but no file fills it');
+  for(const [s,files]of filledBy){
+    if(files.length>1)issues.push('appRedraw.'+s+' is filled by '+files.join(' and '));
+    if(!requestedBy.has(s))issues.push(files[0]+' fills appRedraw.'+s+' but nothing calls it');
+    for(const r of requestedBy.get(s)??[])if(!before(r,files[0]))issues.push(r+' calls appRedraw.'+s+', which '+files[0]+' fills; the filling file must come after it');
+  }
+  // State: every appVars name read is assigned somewhere; a function kept in appVars by a later file is called only for
+  // what it does, never for its result.
+  const setBy=new Map();for(const [file,i]of Object.entries(analysis.interfaces))for(const n of i.sets??[])setBy.set(n,[...(setBy.get(n)||[]),file]);
+  for(const n of new Set(Object.values(analysis.interfaces).flatMap(i=>i.vars??[])))if(!setBy.has(n))issues.push('appVars.'+n+' is read but no file assigns it');
+  for(const [file,i]of Object.entries(analysis.interfaces))for(const c of i.varCalls??[])if(!c.statement)for(const w of setBy.get(c.name)??[])if(before(file,w))issues.push(file+' uses the result of appVars.'+c.name+'(), which '+w+' (a later file) assigns');
+  // Each factory is declared once and called once.
+  const declaredFactories=Object.values(analysis.interfaces).flatMap(i=>i.factories??[]),calledFactories=Object.values(analysis.interfaces).flatMap(i=>i.factoryCalls??[]);
+  for(const n of new Set([...declaredFactories,...calledFactories]))if(declaredFactories.filter(x=>x===n).length!==1||calledFactories.filter(x=>x===n).length!==1)issues.push(n+' is declared '+declaredFactories.filter(x=>x===n).length+' and called '+calledFactories.filter(x=>x===n).length+' times');
+  for(const o of analysis.opaque??[])issues.push(o);
   if(JSON.stringify(analysis.embeddedThroughToString)!==JSON.stringify([...embeddedFunctions].sort()))issues.push('the product embeds '+analysis.embeddedThroughToString.join(', ')+' through toString(); the embedded function list names '+[...embeddedFunctions].sort().join(', '));
   return issues;
 }
@@ -293,7 +392,9 @@ export function readBoundaries(root,read=file=>fs.readFileSync(path.join(root,fi
     const sortedNames=list=>Array.isArray(list)&&list.every(u=>typeof u==='string')&&JSON.stringify(list)===JSON.stringify([...new Set(list)].sort());
     if(record.appCalls!==undefined)assert.ok(sortedNames(record.appCalls.provides??[])&&sortedNames(record.appCalls.uses??[])&&Object.keys(record.appCalls).every(k=>['provides','uses'].includes(k)),name+' lists sorted unique appCalls');
     if(record.appVars!==undefined)assert.ok(sortedNames(record.appVars),name+' lists sorted unique appVars');
-    assert.ok(Object.keys(record).every(k=>['schema','file','uses','appCalls','appVars'].includes(k)),name+' has only known fields');
+    if(record.appRedraw!==undefined){const r=record.appRedraw;assert.ok(r&&typeof r==='object'&&Object.keys(r).every(k=>['requests','fills'].includes(k))&&sortedNames(r.requests??[])&&
+      (r.fills===undefined||sortedNames(Object.keys(r.fills))&&Object.entries(r.fills).every(([slot,fn])=>typeof fn==='string'&&redrawSlot(fn)===slot)),name+' lists sorted appRedraw requests and fills named after their functions');}
+    assert.ok(Object.keys(record).every(k=>['schema','file','uses','appCalls','appVars','appRedraw'].includes(k)),name+' has only known fields');
     declarations[record.file]=record;
   }
   return declarations;
