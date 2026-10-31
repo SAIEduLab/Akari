@@ -297,7 +297,7 @@ function nearestBinding(name,ancestors){
   return null;
 }
 // Every value a const or let binding may hold, each with its ancestors: its first value and, for a let, each value
-// later assigned to it with =.
+// later assigned to it with =, ||=, &&= or ??=. A let given a value by destructuring is not followed.
 const assigned=new WeakMap();
 function bindingValues(b){
   if(!b?.declarator)return [];
@@ -305,7 +305,7 @@ function bindingValues(b){
   if(b.kind!=='let')return values;
   if(!assigned.has(b.declarator)){
     const later=[],name=b.declarator.id.name;
-    eachNodeWithAncestors(b.ancestors.at(-1),(node,ancestors)=>{if(node.type==='AssignmentExpression'&&node.operator==='='&&node.left.type==='Identifier'&&node.left.name===name&&nearestBinding(name,ancestors)?.declarator===b.declarator)later.push({e:node.right,ancestors});},b.ancestors.slice(0,-1));
+    eachNodeWithAncestors(b.ancestors.at(-1),(node,ancestors)=>{if(node.type==='AssignmentExpression'&&['=',...logicalAssignment].includes(node.operator)&&node.left.type==='Identifier'&&node.left.name===name&&nearestBinding(name,ancestors)?.declarator===b.declarator)later.push({e:node.right,ancestors});},b.ancestors.slice(0,-1));
     assigned.set(b.declarator,later);
   }
   return [...values,...assigned.get(b.declarator)];
@@ -357,7 +357,7 @@ function mayBeFunction(e,ancestors,seen=new Set()){
   if(e.type==='ConditionalExpression')return mayBeFunction(e.consequent,ancestors,seen)||mayBeFunction(e.alternate,ancestors,seen);
   if(e.type==='LogicalExpression')return mayBeFunction(e.left,ancestors,seen)||mayBeFunction(e.right,ancestors,seen);
   if(e.type==='SequenceExpression')return mayBeFunction(e.expressions.at(-1),ancestors,seen);
-  if(e.type==='AssignmentExpression')return mayBeFunction(e.right,ancestors,seen);
+  if(e.type==='AssignmentExpression')return ['=',...logicalAssignment].includes(e.operator)&&(mayBeFunction(e.right,ancestors,seen)||logicalAssignment.includes(e.operator)&&mayBeFunction(e.left,ancestors,seen));
   return false;
 }
 // The appVars fields a value may be copied from (appVars.a = appVars.b, through ?: && || , =, or through a const or let
@@ -369,19 +369,21 @@ function copiedVars(e,ancestors,seen=new Set()){
   if(e.type==='ConditionalExpression')return [...copiedVars(e.consequent,ancestors,seen),...copiedVars(e.alternate,ancestors,seen)];
   if(e.type==='LogicalExpression')return [...copiedVars(e.left,ancestors,seen),...copiedVars(e.right,ancestors,seen)];
   if(e.type==='SequenceExpression')return copiedVars(e.expressions.at(-1),ancestors,seen);
-  if(e.type==='AssignmentExpression')return copiedVars(e.right,ancestors,seen);
+  if(e.type==='AssignmentExpression')return e.operator==='='?copiedVars(e.right,ancestors,seen):logicalAssignment.includes(e.operator)?[...copiedVars(e.left,ancestors,seen),...copiedVars(e.right,ancestors,seen)]:[];
   return [];
 }
-// Whether a value, as written, is not a function: a literal, an object or array, a new instance, an arithmetic, logical
-// not, typeof or other operator result, undefined, or a conditional or logical expression giving only such values.
+// Whether a value, as written, is not a function: a literal, an object or array literal, an arithmetic, comparison,
+// logical not, typeof or other operator result, undefined, or a conditional or logical expression giving only such
+// values. A new instance is not among them (new Function(…), or a constructor that returns a function).
+const logicalAssignment=['||=','&&=','??='];
 function notFunction(e){
   if(!e)return false;
-  if(/Literal$/.test(e.type)||['ObjectExpression','ArrayExpression','NewExpression','UnaryExpression','BinaryExpression','UpdateExpression'].includes(e.type))return true;
+  if(/Literal$/.test(e.type)||['ObjectExpression','ArrayExpression','UnaryExpression','BinaryExpression','UpdateExpression'].includes(e.type))return true;
   if(e.type==='Identifier')return e.name==='undefined';
   if(e.type==='ConditionalExpression')return notFunction(e.consequent)&&notFunction(e.alternate);
   if(e.type==='LogicalExpression')return notFunction(e.left)&&notFunction(e.right);
   if(e.type==='SequenceExpression')return notFunction(e.expressions.at(-1));
-  if(e.type==='AssignmentExpression')return e.operator!=='='||notFunction(e.right);
+  if(e.type==='AssignmentExpression')return e.operator==='='?notFunction(e.right):logicalAssignment.includes(e.operator)?notFunction(e.left)&&notFunction(e.right):true;
   return false;
 }
 // A call whose result nothing uses: the whole expression of a statement.
@@ -433,7 +435,7 @@ function applicationInterfaces(ast,labelAt){
       const written=writtenAt(node,parent,grand);
       if(object==='appVars'){f.vars.add(name);if(written){f.sets.add(name);const assignment=parent?.type==='AssignmentExpression'&&parent.left===node,rhs=assignment?parent.right:null;
           // Not a function: a value that is plainly none, an arithmetic or string compound assignment, ++ or --, delete.
-          const notFn=assignment?!['=','||=','&&=','??='].includes(parent.operator)||notFunction(rhs):parent?.type==='UpdateExpression'||parent?.type==='UnaryExpression';
+          const notFn=assignment?!['=',...logicalAssignment].includes(parent.operator)||notFunction(rhs):parent?.type==='UpdateExpression'||parent?.type==='UnaryExpression';
           f.writes.push({name,fn:!!rhs&&mayBeFunction(rhs,ancestors),copies:rhs?copiedVars(rhs,ancestors):[],notFn});}
         const called=(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node;
         // appVars.f.call(…) and .apply(…) call it too; .bind(…) hands it on as a value.
