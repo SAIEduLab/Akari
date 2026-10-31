@@ -108,7 +108,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 - **公開ファイルの一致**（`publication-inventory`）: `audit/public-files.json`は`git ls-files`と両方向で一致します。gitがない環境ではFAILです。
 - **文書の整合**（`publication-documents`）: 追跡する文書は、現行の製品ファイルと現行のリリース表示だけを挙げます。
 - **配布の固定**（`release-distribution`）: `audit/manifests/release-<版>.json`は1つだけで、製品・文書・契約番号のhashと一致します。契約番号は`features.json`のEXECUTABLE_CONTRACTから読みます。
-- **監査ファイルの到達性**（`audit-inventory`）: `audit/`の追跡ファイルは、gate段・受入コマンド・ブラウザー群・workflow・runnerの読込み・本書とREADMEの案内のいずれかから到達できます。到達できないファイルはFAILで、合成した孤立ファイルで拒否能力を示します。
+- **監査ファイルの到達性**（`audit-inventory`）: `audit/`の追跡ファイルは、gate段・受入コマンド・ブラウザー群・workflow・runnerの読込み・本書とREADMEの案内のいずれかから到達できます。到達できないファイルはFAILで、合成した孤立ファイルで拒否能力を示します。workflowはpublicだけに置くので（`PUBLIC_SYNC.json`）、同期境界があってworkflowのない内部repoでは、`publicWorkflowEntries`（publicのworkflowが名指す監査の入口）を入口にします。publicではworkflowが名指す入口がこの一覧とちょうど一致しなければFAILです。
 - **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。分割したジョブのmatrixは計画のshardと一致し、一つの失敗で他のshardを取り消しません。
 - **CIの分割と結合**（`static`・`integrity`）: Actionsは`audit/lib/shard-plan.cjs`の計画どおり、gate段・ブラウザー群の課題・合成受入の段を並列のジョブ（shard）へ分けます。各段・課題は計画上ちょうど一度ずつ実行し、他の段の出力を読む段は、その段と同じshardでその後に実行します。単独で長い検査は、自分のケース集合を宣言した部分へ分け、部分がすべてのケースをちょうど一度ずつ覆うことを確かめます。最終集約（`aggregate`、`child-ux-aggregate`）は、計画どおりのshardがすべてそろい、同じ入力・commit・runで封印され、どの証拠ファイルも生成元が一つであることを確かめてから一つの証拠へ結合し、従来の全件validatorをそのまま実行します。欠落・重複・失敗・timeout・別snapshotのshardは結合せず、FAILにします。
 - **結果の形式**: 終了コードだけで判定していた段も、case IDを持つ結果（`akari-gate-cases-v1`）を書き、validatorが全case PASSの集合を確認します。
@@ -633,6 +633,8 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 - 言葉（F-23）：製品の表示と文字列と6つのマニュアルに、LANGUAGE.mdの用語のほかの言葉（「できごと」「なおす動き」「作業欄」「組み立てる ばしょ」「作る ばしょ」「自動で のこす」「自動保存」「キャラ」「命令一覧」「使うブロック」「名人モード」、やめるボタンの「とちゅうで やめる」）がないことを、selftestの `product-source` の CHILD-GLOSSARY-ONE-WORD で調べる。
 - 言い方（F-18）：確認の窓は、操作をたずねる窓として「〜よ」の言い方で書く。本文がどこへうつるかを説明する名人の確認だけを、名前をつけた例外として「です・ます」で書く。製品の確認の窓をすべて数え、一覧にない窓、例外のほかの窓の「です・ます」、例外の窓の「〜よ」、一つの窓の中で二つの言い方がまざることを不合格にする。
 - 文節の空白（F-19）：子ども向けの文に、ひらがなが6文字以上続くところがあれば不合格にする。コードの例、名前、「 」の中の文字は数えない。一つの文節で6文字以上になることば（「もどせません」など）は、人がたしかめた一覧の文字列だけを外す。文節を自動で区切る仕組みは使わない。selftestの `product-source` の CHILD-SPACING-RUNS で調べ、外す文字列の一覧は `audit/fixtures/child-spacing-allowlist.json` に置く。
+
+マニュアルはpublicだけに置くので（`PUBLIC_SYNC.json`）、内部repoの `product-source` は、マニュアルがpublic専用と定められ、内部repoにないことを確かめたうえで、製品だけを調べる。マニュアルはpublicで調べる。
 
 ## 児童目線UX監査の追加契約
 

@@ -18,6 +18,12 @@ export const documentRoots=['AUDIT.md','audit/README.md'];
 // Inventories list or describe files without using them: their paths never make a file reachable.
 // An observer script still reaches the modules it imports.
 export const inventoryObservers=['audit/public-files.json','audit/lib/audit-inventory-contract.mjs','audit/tests/audit-inventory.mjs'];
+// The audit paths the public workflows name. Workflows are public only (PUBLIC_SYNC.json), so an internal checkout
+// (it has the synchronization boundary and no workflow) reaches these as the workflows would. A public checkout's
+// workflows must name exactly these, so the list cannot drift from them.
+export const synchronizationBoundary='PUBLIC_SYNC.json';
+export const publicWorkflowEntries=Object.freeze(['audit/browser/run-full-browser-audit.mjs','audit/install-codec-browser.py','audit/run-acceptance.mjs','audit/run-local-gate.mjs',
+  'audit/tests/audio-codecs.mjs','audit/tests/block-field-width.mjs','audit/tests/change-guard.mjs','audit/tests/child-ux.mjs','audit/tests/work-authorization.mjs','audit/verify-evidence.mjs']);
 // Loaders that compute a file name from a registry. Each mirrors the runtime code named by `runtime`,
 // and the inventory fails when that runtime code no longer contains `signature`.
 export const computedLoaders=[
@@ -33,6 +39,7 @@ export const computedLoaders=[
 export const inventoryControlIds=[
   'valid-tree','orphan-file','orphan-chain','inventory-listing-only','comment-mention-only','data-names-code',
   'unlinked-document','document-names-script','removed-gate-step','removed-acceptance-command','removed-workflow-command',
+  'internal-public-workflow-entries','internal-without-workflow-entries','public-workflow-entries-differ',
   'removed-browser-task','removed-suite','missing-release-manifest','changed-runtime-loader',
   'unparsable-script','unparsable-leaf','unreadable-leaf','missing-git-checkout',
   ...['schema','status','snapshot','unreachable','issues','empty-reached','duplicate-reached','outside-reached',
@@ -123,20 +130,30 @@ export function fileReferences(file,text,files,dirs=directoriesOf(files)){
   return [];
 }
 
-export function entryPoints({files,steps,acceptance}){
+export function entryPoints({files,steps,acceptance,workflowEntries}){
   const roots=[],add=(kind,file)=>{if(files.has(file))roots.push({kind,file});};
   for(const file of documentRoots)add('document',file);
-  for(const file of [...files].filter(workflow))add('workflow',file);
+  const workflows=[...files].filter(workflow);
+  for(const file of workflows)add('workflow',file);
+  if(workflowEntries&&!workflows.length&&files.has(synchronizationBoundary))for(const file of workflowEntries)add('workflow:public',file);
   for(const [id,...args]of steps)for(const arg of args)if(typeof arg==='string')add('gate:'+id,posix(arg));
   for(const [kind,commands]of Object.entries(acceptance))for(const command of commands)for(const token of command.split(/\s+/))add('acceptance:'+kind,posix(token.replace(/^"|"$/g,'')));
   return roots;
 }
 
 // Breadth-first reachability from the entry points over file references and computed loaders.
-export function auditInventory({files,read,steps,acceptance}){
+export function auditInventory({files,read,steps,acceptance,workflowEntries}){
   const tracked=new Set(files),dirs=directoriesOf(tracked),parent=new Map(),queue=[],issues=[];
   const visit=(file,from)=>{if(!parent.has(file)){parent.set(file,from);queue.push(file);}};
-  for(const root of entryPoints({files:tracked,steps,acceptance}))visit(root.file,root.kind);
+  for(const root of entryPoints({files:tracked,steps,acceptance,workflowEntries}))visit(root.file,root.kind);
+  // A public checkout's workflows name exactly the declared entries (the internal checkout uses them in their place).
+  const workflows=[...tracked].filter(workflow);
+  if(workflowEntries&&workflows.length&&!tracked.has(synchronizationBoundary)){
+    const named=new Set();
+    for(const file of workflows){try{for(const target of fileReferences(file,read(file),tracked,dirs))if(target.startsWith(inventoryScope))named.add(target);}catch{}}
+    const extra=[...named].filter(file=>!workflowEntries.includes(file)).sort(),missing=workflowEntries.filter(file=>!named.has(file));
+    if(extra.length||missing.length)issues.push('the public workflow entries differ from the workflows; workflows name '+(extra.join(', ')||'nothing more')+' and no longer name '+(missing.join(', ')||'nothing'));
+  }
   while(queue.length){
     const file=queue.shift();
     let text;

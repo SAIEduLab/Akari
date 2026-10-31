@@ -6,7 +6,7 @@ import {snapshot,root} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {gateSteps,acceptanceCommands} from '../lib/gate-contract.mjs';
 import {trackedFiles} from '../lib/publication-contract.mjs';
-import {auditInventory,assertAuditInventory,inventoryControlIds,inventorySchema,verifyAuditInventoryReport} from '../lib/audit-inventory-contract.mjs';
+import {auditInventory,assertAuditInventory,inventoryControlIds,inventorySchema,verifyAuditInventoryReport,publicWorkflowEntries} from '../lib/audit-inventory-contract.mjs';
 
 //   node audit/tests/audit-inventory.mjs <result.json>   every tracked audit file is reached from an audit entry point
 const outputArgument=process.argv[2];
@@ -51,9 +51,12 @@ const base=()=>({
 });
 const baseSteps=()=>[['step','audit/tests/step.mjs','EVIDENCE/step.json'],['inventory','audit/tests/audit-inventory.mjs','EVIDENCE/inventory.json']];
 const baseAcceptance=()=>({composition:['node audit/tests/accept.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/accept.json']});
-function run({tree=base(),steps=baseSteps(),acceptance=baseAcceptance(),unreadable=[]}={}){
-  return auditInventory({files:Object.keys(tree),read:file=>{if(unreadable.includes(file)||!(file in tree))throw Error('ENOENT '+file);return tree[file];},steps,acceptance});
+function run({tree=base(),steps=baseSteps(),acceptance=baseAcceptance(),unreadable=[],workflowEntries}={}){
+  return auditInventory({files:Object.keys(tree),read:file=>{if(unreadable.includes(file)||!(file in tree))throw Error('ENOENT '+file);return tree[file];},steps,acceptance,workflowEntries});
 }
+// The synthetic workflow names these; an internal tree has the boundary file and no workflow.
+const baseWorkflowEntries=['audit/install-browser.py','audit/run-local-gate.mjs'];
+const internal=()=>{const tree=base();delete tree['.github/workflows/check.yml'];tree['PUBLIC_SYNC.json']='{}';return tree;};
 const edit=change=>{const tree=base();change(tree);return run({tree});};
 // Each rejection must happen for its own reason: the exact unreachable set, and a named issue or none.
 const rejects=(result,{unreachable=[],issue})=>{
@@ -86,6 +89,14 @@ const controls={
   'removed-gate-step':()=>rejects(run({steps:baseSteps().filter(([id])=>id!=='step')}),{unreachable:['audit/lib/step-helper.mjs','audit/tests/step.mjs']}),
   'removed-acceptance-command':()=>rejects(run({acceptance:{composition:[]}}),{unreachable:['audit/tests/accept.mjs']}),
   'removed-workflow-command':()=>rejects(edit(t=>{t['.github/workflows/check.yml']=t['.github/workflows/check.yml'].replace(/ *- run: python .*\n/,'');}),{unreachable:['audit/fixtures/browser-pin.json','audit/install-browser.py']}),
+  // The internal checkout has no workflow: the declared public workflow entries reach what the workflows would.
+  'internal-public-workflow-entries':()=>{assertAuditInventory(run({tree:internal(),workflowEntries:baseWorkflowEntries}));assertAuditInventory(run({workflowEntries:baseWorkflowEntries}));},
+  'internal-without-workflow-entries':()=>rejects(run({tree:internal()}),{unreachable:['audit/browser/browser-audit-manifest.json','audit/browser/cases/case-a.cjs','audit/browser/cases/case-b.cjs','audit/browser/cases/case-lib.cjs','audit/browser/run-full-browser-audit.mjs','audit/fixtures/browser-pin.json','audit/fixtures/sample-input.json','audit/fixtures/sample.json','audit/install-browser.py','audit/lib/product-path.cjs','audit/lib/product-test-host.mjs','audit/lib/runner.mjs','audit/manifests/product-tests.json','audit/manifests/release-9.9.9.json','audit/public-files.json','audit/run-local-gate.mjs','audit/suites/runSampleTests.js']}),
+  // A public checkout whose workflows name another entry than the declared list fails, so the list follows the workflows.
+  'public-workflow-entries-differ':()=>{
+    rejects(run({workflowEntries:['audit/run-local-gate.mjs']}),{issue:'workflows name audit/install-browser.py and no longer name nothing'});
+    rejects(run({workflowEntries:[...baseWorkflowEntries,'audit/tests/step.mjs']}),{issue:'no longer name audit/tests/step.mjs'});
+  },
   'removed-browser-task':()=>rejects(edit(t=>{t['audit/browser/browser-audit-manifest.json']=JSON.stringify({groups:{session:[],extra:['case-b:wide']}});}),{unreachable:['audit/browser/cases/case-a.cjs','audit/browser/cases/case-lib.cjs']}),
   'removed-suite':()=>rejects(edit(t=>{t['audit/manifests/product-tests.json']=JSON.stringify({suites:[]});}),{unreachable:['audit/suites/runSampleTests.js']}),
   'missing-release-manifest':()=>rejects(edit(t=>{t['audit/public-files.json']=JSON.stringify({productVersion:'9.9.10',files:[]});}),{unreachable:['audit/manifests/release-9.9.9.json'],issue:'loads missing audit/manifests/release-9.9.10.json'}),
@@ -121,7 +132,7 @@ const results=inventoryControlIds.map(id=>{try{controls[id]();return {id,status:
 const report={schema:inventorySchema,status:'FAIL',snapshot:inputs,reached:[],unreachable:[],issues:[],controls:results};
 try{
   // The tracked set comes only from Git; outside a checkout this throws instead of skipping.
-  const inventory=auditInventory({files:trackedFiles(root),read:file=>fs.readFileSync(path.join(root,file),'utf8'),steps:gateSteps('BROWSER','EVIDENCE'),acceptance:acceptanceCommands});
+  const inventory=auditInventory({files:trackedFiles(root),read:file=>fs.readFileSync(path.join(root,file),'utf8'),steps:gateSteps('BROWSER','EVIDENCE'),acceptance:acceptanceCommands,workflowEntries:publicWorkflowEntries});
   Object.assign(report,{reached:inventory.scoped.filter(file=>!inventory.unreachable.includes(file)),unreachable:inventory.unreachable,issues:inventory.issues});
   if(results.every(row=>row.status==='PASS')&&!inventory.unreachable.length&&!inventory.issues.length){
     report.status='PASS';
