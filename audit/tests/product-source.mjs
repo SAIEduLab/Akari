@@ -85,6 +85,12 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
     const listed=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+form)}),boundaries);
     assert.ok(listed.some(i=>i.startsWith('the product embeds ')&&i.includes('keyName')),form+' '+JSON.stringify(listed));
   }
+  // A local of the same name is not the top-level function; a top-level const arrow function is one.
+  const local=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+'${((keyName) => `${keyName}`)(1)}')}),boundaries);
+  assert.ok(!local.some(i=>i.startsWith('the product embeds ')),JSON.stringify(local));
+  const parser='src/js/04-syntax-parsing.js',anchor='  const KEY_WORDS=';assert.ok(read(parser).includes(anchor));
+  const arrow=boundaryIssues(usesWith({[parser]:read(parser).replace(anchor,'  const KEY_ALIASES_ARROW=()=>keyName;\n'+anchor),[exporter]:exportText.replace(call,call+'${KEY_ALIASES_ARROW.toString()}')}),boundaries);
+  assert.ok(arrow.some(i=>i.startsWith('the product embeds ')&&i.includes('KEY_ALIASES_ARROW')),JSON.stringify(arrow));
 });
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The

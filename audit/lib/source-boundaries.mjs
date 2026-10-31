@@ -156,7 +156,8 @@ export function closureReferences(script){
     else if(s.type==='ClassDeclaration'){walk(s.superClass,topScopes,s,'superClass');walk(s.body,topScopes,s,'body');}
     else walk(s,topScopes,closure,'body');
   }
-  const functions=new Set(closure.body.filter(s=>s.type==='FunctionDeclaration'&&s.id).map(s=>s.id.name));
+  // Top-level functions: declarations and const/let bound to a function or class expression.
+  const functions=new Set(closure.body.flatMap(s=>s.type==='FunctionDeclaration'&&s.id?[s.id.name]:s.type==='VariableDeclaration'?s.declarations.filter(d=>d.id.type==='Identifier'&&['FunctionExpression','ArrowFunctionExpression','ClassExpression'].includes(d.init?.type)).map(d=>d.id.name):[]));
   return {top,refs,free,ast,functions};
 }
 
@@ -193,7 +194,9 @@ export function sourceUses(read){
   const globalObject=node=>node?.type==='Identifier'&&globalNames.includes(node.name)&&freeAt.has(node.start);
   const keyName=p=>!p.computed&&p.key?.type==='Identifier'?p.key.name:p.key?.type==='StringLiteral'?p.key.value:null;
   // A top-level function turned into text: X.toString(), Function.prototype.toString.call(X), String(X), `${X}`, X + ''.
-  const fn=node=>node?.type==='Identifier'&&functions.has(node.name)&&!freeAt.has(node.start)?node.name:null;
+  // Only an identifier that resolves to the top-level function (not a local of the same name) counts.
+  const refAt=new Set(refs.map(r=>r.at));
+  const fn=node=>node?.type==='Identifier'&&functions.has(node.name)&&refAt.has(node.start)?node.name:null;
   eachNode(ast,node=>{
     if(node.type==='AssignmentExpression'&&node.left.type==='MemberExpression'&&globalObject(node.left.object)&&memberName(node.left))productGlobals.add(memberName(node.left));
     if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='defineProperty'&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&globalObject(node.arguments[0])&&node.arguments[1]?.type==='StringLiteral')productGlobals.add(node.arguments[1].value);
