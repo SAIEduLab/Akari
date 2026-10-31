@@ -5,7 +5,7 @@ import {buildProduct,repositoryRoot,sourceDirectories} from '../../src/build.mjs
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIssues,CHILD_SPACING_RUN} from '../lib/product-source-contract.mjs';
-import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources} from '../lib/source-boundaries.mjs';
+import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources,productScript} from '../lib/source-boundaries.mjs';
 import vm from 'node:vm';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
@@ -38,31 +38,49 @@ check('REJECT-INCLUDE-OUTSIDE-SOURCE',()=>{for(const target of ['js/../../extens
 check('REJECT-INCLUDE-ALIAS',()=>{for(const alias of ['css/../js/12-public-api.js','js/./12-public-api.js','js//12-public-api.js'])assert.throws(()=>variant(withInclude(alias)),/include alias/,alias);});
 check('REJECT-UNLISTED-PORTABLE',()=>{const other='extensions/other.js',text="const other = 1;\nif (typeof module !== 'undefined') module.exports = {other};\n";assert.throws(()=>variant({[core]:coreText.replace('// @portable extensions/profiles.js','// @portable '+other),[other]:text}),/not an allowed portable extension: extensions\/other\.js/);});
 // Source boundaries (AUDIT.md「ソースの境界」): each src/js file uses only the files its declaration names.
-const boundaries=readBoundaries(repositoryRoot),uses=sourceUses(read);
+// Reading and analysis happen inside the checks, so a broken declaration or source fails its check by ID.
+let loaded;const state=()=>loaded??={boundaries:readBoundaries(repositoryRoot),uses:sourceUses(read)};
 const usesWith=changes=>sourceUses(file=>file in changes?changes[file]:read(file));
 check('SOURCE-BOUNDARIES-RESOLVER',()=>{
-  // Shadowed names are local; member and key names, labels and declarations are not references; defaults are.
-  const text="(() => {\n  const a = 1, b = 2;\n  function f(a, {x = b} = {}) { return a + x; }\n  const g = () => { let a = 3; label: for (const b of [a]) break label; return {a, b: a}.b; };\n  class C { a() { return this.a; } static b = a; }\n  const h = () => a;\n  try { h(); } catch (a) { a; }\n})();\n";
+  // Shadowed names are local; member and key names, labels and declarations are not references; defaults and
+  // computed keys are. A default sees the parameters, not the body; a static block keeps its var.
+  const text=['(() => {','  const a = 1, b = 2;','  function f(a, {x = b} = {}) { return a + x; }',
+    '  const g = () => { let a = 3; label: for (const b of [a]) break label; return {a, b: a}.b; };',
+    '  class C { a() { return this.a; } static b = a; [b]() {} }','  const h = () => a;','  try { h(); } catch (a) { a; }',
+    '  const k = (y = a) => { const a = 0; return y + a; };','  const m = ({[b]: v} = {}) => v?.[a] ?? {[a]: b}[b];',
+    '  class D { static { var a = 0; a; } }','})();',''].join('\n');
   const found=closureReferences({text,pieces:[{label:'x',start:0,end:text.length}]}).refs.map(r=>r.name+'@'+text.slice(0,r.at).split('\n').length).sort();
-  assert.deepEqual(found,['a@5','a@6','b@3','h@7']);
+  assert.deepEqual(found,['a@5','a@6','a@8','a@9','a@9','b@3','b@5','b@9','b@9','b@9','h@7']);
 });
-check('SOURCE-BOUNDARIES-DECLARED',()=>{assert.deepEqual(boundaryIssues(uses,boundaries),[]);assert.ok(uses.refs>0);});
+check('SOURCE-BOUNDARIES-DECLARED',()=>{
+  // The analysed script is the product's script, character for character.
+  const html=built.html,open=html.indexOf('<script>\n')+'<script>\n'.length;
+  assert.equal(productScript(read).text,html.slice(open,html.lastIndexOf('</script>')));
+  const {boundaries,uses}=state();assert.deepEqual(boundaryIssues(uses,boundaries),[]);assert.ok(uses.refs>0);
+});
 // The exported player embeds these functions alone; they must run without the editor's closure.
 check('SOURCE-BOUNDARIES-EMBEDDED-RUN',()=>{
   const sources=embeddedSources(read),context=vm.createContext({});
   vm.runInContext("'use strict';\n"+Object.values(sources).join('\n')+'\nglobalThis.runtime=createAkariRuntime();',context);
   assert.equal(context.runtime.eventText('keyDown',{key:'空白'}),'「スペース」キーを おした とき');
 });
-const without=(file,use)=>({...boundaries,[file]:{...boundaries[file],uses:boundaries[file].uses.filter(u=>u!==use)}});
-check('REJECT-UNDECLARED-SOURCE-USE',()=>{const file='src/js/11-application.js',use=boundaries[file].uses[0];assert.ok(boundaryIssues(uses,without(file,use)).some(i=>i.startsWith(file+' uses '+use+' without declaring')));});
+const without=(file,use)=>{const {boundaries}=state();return {...boundaries,[file]:{...boundaries[file],uses:boundaries[file].uses.filter(u=>u!==use)}};};
+check('REJECT-UNDECLARED-SOURCE-USE',()=>{const {boundaries,uses}=state(),file='src/js/11-application.js',use=boundaries[file].uses[0];assert.ok(boundaryIssues(uses,without(file,use)).some(i=>i.startsWith(file+' uses '+use+' without declaring')));});
 // The cases name files that parse on their own (10, 11); src/js/00 and 12 open and close the product's closure.
-check('REJECT-STALE-SOURCE-USE',()=>{const file='src/js/10-block-view.js',extra='src/js/11-application.js';assert.ok(!boundaries[file].uses.includes(extra));assert.ok(boundaryIssues(uses,{...boundaries,[file]:{...boundaries[file],uses:[...boundaries[file].uses,extra]}}).includes(file+' declares '+extra+' but uses none of its names'));});
-check('REJECT-MISSING-SOURCE-BOUNDARY',()=>{const {['src/js/10-block-view.js']:_,...rest}=boundaries;assert.ok(boundaryIssues(uses,rest).includes('src/js/10-block-view.js: no boundary declaration'));});
+check('REJECT-STALE-SOURCE-USE',()=>{const {boundaries,uses}=state(),file='src/js/10-block-view.js',extra='src/js/11-application.js';assert.ok(!boundaries[file].uses.includes(extra));assert.ok(boundaryIssues(uses,{...boundaries,[file]:{...boundaries[file],uses:[...boundaries[file].uses,extra]}}).includes(file+' declares '+extra+' but uses none of its names'));});
+check('REJECT-MISSING-SOURCE-BOUNDARY',()=>{const {boundaries,uses}=state(),{['src/js/10-block-view.js']:_,...rest}=boundaries;assert.ok(boundaryIssues(uses,rest).includes('src/js/10-block-view.js: no boundary declaration'));});
+// An embedded function using a closure name, reading what the product puts on the global object, or a toString()
+// embedding the list does not name.
 check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
-  const line="KEY_SURFACES[key] : key;";assert.ok(coreText.includes(line));
+  const {boundaries}=state(),line="KEY_SURFACES[key] : key;";assert.ok(coreText.includes(line));
   const issues=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : keyName(key);')}),boundaries);
   assert.ok(issues.includes('createAkariRuntime is embedded through toString() but uses closure names: keyName'),JSON.stringify(issues));
   assert.ok(issues.some(i=>i.startsWith(core+' uses src/js/04-syntax-parsing.js without declaring')));
+  const global=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : globalThis.Akari && key;')}),boundaries);
+  assert.ok(global.includes('createAkariRuntime is embedded through toString() but reads what the product puts on the global object: Akari'),JSON.stringify(global));
+  const exporter='src/js/08-stage-and-export.js',exportText=read(exporter),call='${createAkariStageView.toString()}';assert.ok(exportText.includes(call));
+  const listed=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+'${keyName.toString()}')}),boundaries);
+  assert.ok(listed.some(i=>i.startsWith('the product embeds ')&&i.includes('keyName')),JSON.stringify(listed));
 });
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The

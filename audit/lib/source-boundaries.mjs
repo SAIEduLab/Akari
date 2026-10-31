@@ -84,9 +84,13 @@ export function closureReferences(script){
   for(const n of hoistedVars(closure.body))if(!top.has(n))throw Error('a var below the closure top level is not supported: '+n);
   const statementAt=at=>closure.body.find(s=>s.start<=at&&at<s.end);
   const ownerOf=new Map();for(const s of closure.body){const names=[...top].filter(([,d])=>d.start===s.start).map(([n])=>n);ownerOf.set(s,names);}
-  const refs=[];
+  const refs=[],free=[];
   const resolves=(scopes,name)=>{for(let i=scopes.length-1;i>=0;i--)if(scopes[i].has(name))return i;return -1;};
-  const reference=(node,scopes)=>{if(resolves(scopes,node.name)===0&&top.has(node.name)){const s=statementAt(node.start);refs.push({at:node.start,name:node.name,from:ownerOf.get(s)?.[0]??null});}};
+  const reference=(node,scopes)=>{
+    const level=resolves(scopes,node.name),from=()=>ownerOf.get(statementAt(node.start))?.[0]??null;
+    if(level===0&&top.has(node.name))refs.push({at:node.start,name:node.name,from:from()});
+    else if(level<0)free.push({at:node.start,name:node.name,from:from()});
+  };
   // Walk with a scope stack; scopes[0] is the closure's top level.
   const walk=(node,scopes,parent,key)=>{
     if(!node||typeof node!=='object')return;
@@ -102,17 +106,20 @@ export function closureReferences(script){
       reference(node,scopes);return;
     }
     if(isFunction(node)){
-      const scope=new Set(['arguments']);
-      if(node.type==='FunctionExpression'&&node.id)scope.add(node.id.name);
-      for(const p of node.params)patternNames(p).forEach(n=>scope.add(n));
-      if(node.body.type==='BlockStatement'){hoistedVars(node.body).forEach(n=>scope.add(n));lexicalNames(node.body.body).forEach(n=>scope.add(n));}
-      const inner=[...scopes,scope];
+      // Parameters and their defaults see the parameter scope; only the body sees the body's declarations.
+      const params=new Set(['arguments']);
+      if(node.type==='FunctionExpression'&&node.id)params.add(node.id.name);
+      for(const p of node.params)patternNames(p).forEach(n=>params.add(n));
+      const head=[...scopes,params];
+      const inner=[...head,node.body.type==='BlockStatement'?new Set([...hoistedVars(node.body),...lexicalNames(node.body.body)]):new Set()];
       if(node.computed&&node.key)walk(node.key,scopes,node,'key');
-      for(const p of node.params)walkPattern(p,inner);
+      for(const p of node.params)walkPattern(p,head);
       if(node.body.type==='BlockStatement')for(const s of node.body.body)walk(s,inner,node.body,'body');else walk(node.body,inner,node,'body');
       return;
     }
-    if(node.type==='BlockStatement'||node.type==='StaticBlock'){walkBlock(node.body,scopes,node);return;}
+    if(node.type==='BlockStatement'){walkBlock(node.body,scopes,node);return;}
+    // A static block is a function-like scope: its var declarations stay inside it.
+    if(node.type==='StaticBlock'){const inner=[...scopes,new Set([...lexicalNames(node.body),...hoistedVars(node.body)])];for(const s of node.body)walk(s,inner,node,'body');return;}
     if(node.type==='SwitchStatement'){walk(node.discriminant,scopes,node,'discriminant');const inner=[...scopes,lexicalNames(node.cases.flatMap(c=>c.consequent))];for(const c of node.cases){walk(c.test,inner,c,'test');for(const s of c.consequent)walk(s,inner,c,'consequent');}return;}
     if(['ForStatement','ForInStatement','ForOfStatement'].includes(node.type)){
       const decl=node.type==='ForStatement'?node.init:node.left;
@@ -149,14 +156,23 @@ export function closureReferences(script){
     else if(s.type==='ClassDeclaration'){walk(s.superClass,topScopes,s,'superClass');walk(s.body,topScopes,s,'body');}
     else walk(s,topScopes,closure,'body');
   }
-  return {top,refs,ast};
+  return {top,refs,free,ast};
 }
+
+function eachNode(node,visit){
+  if(!node||typeof node!=='object')return;
+  if(Array.isArray(node)){for(const n of node)eachNode(n,visit);return;}
+  if(typeof node.type==='string')visit(node);
+  for(const [key,value]of Object.entries(node))if(!skipKeys.has(key)&&value&&typeof value==='object')eachNode(value,visit);
+}
+const globalObject=node=>node?.type==='Identifier'&&['globalThis','window','self'].includes(node.name);
+const memberName=node=>!node.computed&&node.property?.type==='Identifier'?node.property.name:node.computed&&node.property?.type==='StringLiteral'?node.property.value:null;
 
 // The file each top-level name belongs to, and the files each file uses with the names it uses from each.
 export function sourceUses(read){
   const script=productScript(read);
   const labelAt=at=>script.pieces.find(p=>p.start<=at&&at<p.end)?.label;
-  const {top,refs}=closureReferences(script);
+  const {top,refs,free,ast}=closureReferences(script);
   const owner=new Map([...top].map(([name,d])=>[name,labelAt(d.start)]));
   const uses={};
   for(const r of refs){
@@ -164,13 +180,22 @@ export function sourceUses(read){
     if(!from||!to||from===to)continue;
     ((uses[from]??={})[to]??=new Set()).add(r.name);
   }
-  const embedded={};
+  const embedded={},globalsRead={};
   for(const name of embeddedFunctions){
     assert.ok(top.has(name),'embedded function '+name+' is declared at the closure top level');
     embedded[name]=[...new Set(refs.filter(r=>r.from===name&&r.name!==name&&!embeddedFunctions.includes(r.name)).map(r=>r.name))].sort();
   }
+  // Names the product writes on the global object; an embedded function must not read them (the player has none).
+  const productGlobals=new Set(),toStrings=new Set(),globalReads=[];
+  eachNode(ast,node=>{
+    if(node.type==='AssignmentExpression'&&node.left.type==='MemberExpression'&&globalObject(node.left.object)&&memberName(node.left))productGlobals.add(memberName(node.left));
+    if(node.type==='CallExpression'&&node.arguments.length===0&&node.callee.type==='MemberExpression'&&memberName(node.callee)==='toString'&&node.callee.object.type==='Identifier'&&top.has(node.callee.object.name))toStrings.add(node.callee.object.name);
+    if((node.type==='MemberExpression'||node.type==='OptionalMemberExpression')&&globalObject(node.object)&&memberName(node))globalReads.push({at:node.start,name:memberName(node)});
+  });
+  const inside=(name,at)=>{const d=top.get(name);return d.start<=at&&at<d.end;};
+  for(const name of embeddedFunctions)globalsRead[name]=[...new Set([...free.filter(r=>r.from===name&&productGlobals.has(r.name)),...globalReads.filter(r=>inside(name,r.at)&&productGlobals.has(r.name))].map(r=>r.name))].sort();
   const files=[...new Set(script.pieces.map(p=>p.label))];
-  return {files,owner,uses:Object.fromEntries(Object.entries(uses).map(([f,t])=>[f,Object.fromEntries(Object.entries(t).map(([k,v])=>[k,[...v].sort()]))])),embedded,refs:refs.length};
+  return {files,owner,embeddedThroughToString:[...toStrings].sort(),globalsRead,productGlobals:[...productGlobals].sort(),uses:Object.fromEntries(Object.entries(uses).map(([f,t])=>[f,Object.fromEntries(Object.entries(t).map(([k,v])=>[k,[...v].sort()]))])),embedded,refs:refs.length};
 }
 
 // The source text of each embedded function, as the exported player receives it through toString().
@@ -192,12 +217,14 @@ export function boundaryIssues(analysis,declarations){
     for(const to of declared)if(!used.includes(to))issues.push(file+' declares '+to+' but uses none of its names');
   }
   for(const [name,list]of Object.entries(analysis.embedded))if(list.length)issues.push(name+' is embedded through toString() but uses closure names: '+list.join(', '));
+  for(const [name,list]of Object.entries(analysis.globalsRead))if(list.length)issues.push(name+' is embedded through toString() but reads what the product puts on the global object: '+list.join(', '));
+  if(JSON.stringify(analysis.embeddedThroughToString)!==JSON.stringify([...embeddedFunctions].sort()))issues.push('the product embeds '+analysis.embeddedThroughToString.join(', ')+' through toString(); the embedded function list names '+[...embeddedFunctions].sort().join(', '));
   return issues;
 }
 
 export function readBoundaries(root,read=file=>fs.readFileSync(path.join(root,file),'utf8')){
   const declarations={};
-  for(const name of fs.readdirSync(path.join(root,boundaryDirectory)).sort()){
+  for(const name of fs.readdirSync(path.join(root,boundaryDirectory)).filter(name=>name.endsWith('.json')).sort()){
     const record=JSON.parse(read(boundaryDirectory+'/'+name));
     assert.equal(record.schema,boundarySchema,name+' schema');
     assert.equal(boundaryFileFor(record.file),boundaryDirectory+'/'+name,name+' names its source file');
