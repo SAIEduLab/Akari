@@ -1,0 +1,11 @@
+{
+  "schema": "akari-source-boundary-v1",
+  "file": "src/js/03-default-assets.js",
+  "uses": [
+    "src/js/00-prelude.js",
+    "src/js/02-language-contracts.js",
+    "src/js/04-meijin-syntax.js",
+    "src/js/04-syntax-parsing.js",
+    "src/js/07-semantic-analysis.js"
+  ]
+}

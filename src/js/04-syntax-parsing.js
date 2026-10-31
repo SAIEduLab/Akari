@@ -1475,9 +1475,6 @@
   // Key names a child writes for the keys Akari names 空白・決定・右 ….
   const KEY_ALIASES=Object.freeze({スペース:'空白',スペースキー:'空白',みぎ:'右',ひだり:'左',うえ:'上',した:'下','→':'右','←':'左','↑':'上','↓':'下',エンター:'決定',リターン:'決定',エスケープ:'取消'});
   const KEY_WORDS=Object.freeze(['上','下','左','右','空白','決定','取消']);
-  // A key is written with the name printed on the keyboard (F-34): 「スペース」キー, 「エンター」キー, 「エスケープ」キー.
-  const KEY_SURFACES=Object.freeze({空白:'スペース',決定:'エンター',取消:'エスケープ'});
-  function keySurface(key){return typeof key==='string'&&Object.hasOwn(KEY_SURFACES,key)?KEY_SURFACES[key]:key;}
   // 「ａ」「Ａ」「A」 are the a key, 「１」 the 1 key (an e.key is half-width; A only comes with Shift).
   function keyName(value){if(typeof value!=='string')return value;if(KEY_ALIASES[value])return KEY_ALIASES[value];
     const half=/^[ａ-ｚＡ-Ｚ０-９]$/.test(value)?String.fromCharCode(value.charCodeAt(0)-0xFEE0):value;return /^[A-Z]$/.test(half)?half.toLowerCase():half;}

@@ -40,6 +40,14 @@
 
 selftestの `product-source` は、`src/` から生成した結果がコミット済みの現行製品とbyte単位で一致し、`src/css/` と `src/js/` の全ファイルを一度ずつ取り込むことを検査します。変更したソース・拡張ソース、未取込みのファイル、重複取込み、不正な指示行をそれぞれ検出できることも同じ検査で確かめます。
 
+### ソースの境界
+
+製品のスクリプトは一つの関数（`src/js/00` が開き、`12` が閉じる）なので、ファイルどうしはその関数の一番外側の名前だけでつながります。`audit/boundaries/<ファイル名>.json` に、各 `src/js` ファイルが名前を使ってよいファイル（`uses`）を宣言します。宣言はファイルごとに一つなので、別々のファイルを変える作業を並行しても宣言どうしは衝突しません。
+
+- selftestの `product-source` は、固定版の構文解析器と自前のスコープ解決（`audit/lib/source-boundaries.mjs`）で、すべての参照の行き先を求めます。宣言にないファイルの名前を使う、宣言したのに名前を一つも使わない、宣言のない `src/js` ファイルがある、のいずれもFAILです。ファイルの依存を増やす・減らすときは、宣言を同じ変更で直します。
+- 書き出したプレイヤーは `createAkariProfiles`・`createAkariExtensionHost`・`createAkariRuntime`・`createAkariStageView`・`mountAkariPlayer` を `toString()` で埋め込むので、これらは互いのほかに一番外側の名前を使えず、製品が広域に置く名前（`globalThis.Akari` など）も読めません。どちらもFAILです。`toString()` で埋め込む関数の一覧は、製品が関数を文字列にする箇所（`名前.toString()`、`String(名前)`、テンプレートへの埋め込み、文字列との `+`）と一致しなければFAILです。広域は、局所の変数ではない `globalThis`・`window`・`self` だけを数え、分割代入による読み取りも数えます。さらに、これらだけを別の実行環境で動かし、キーのきっかけの名前を作れることを確かめます。
+- 解析するスクリプトは、製品の `<script>` の中身と1文字ずつ一致することを確かめます。スコープ解決は、影になった名前・プロパティ名・ラベル・宣言を参照と数えず、既定値や計算されたキーを数えること、引数の既定値が本体の宣言を見ないこと、静的ブロックの `var` がその中にとどまることを、合成した短いスクリプトで確かめます。宣言の欠け・余り・欠けた宣言ファイル・埋め込む関数からの参照を、それぞれ拒否できることも確かめます。
+
 ### 並行した製品PRの版の振り直し
 
 同じbaseから作った製品PRが先にmergeされると、後のPRは同じ版を名乗り、製品HTMLと配布記録が衝突します。後のPRはmainをmergeで取り込み、手書きのファイルの衝突だけを手で解いてから、repoの直下で `node audit/renumber-release.mjs`（既定のbaseは `origin/main`、`--base <ref>` で変更）を実行し、結果をstageしてcommitします。rebaseでは取り込みません。rebaseは途中の停止ごとに振り直した出力と次のcommitが衝突するので、rebaseの途中では止めます。
@@ -605,7 +613,7 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
-| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.2の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.5.3の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
 | EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。
