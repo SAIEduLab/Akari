@@ -135,7 +135,8 @@ check('REJECT-BANNED-CHILD-WORD',()=>{
   assert.deepEqual(words([productInput(productText.replace(hint,'今の 動きを のこして 自動保存'))]),['自動保存']);
   assert.ok(words([{file:currentProductFile(),kind:'product',text:productText}]).includes('できごと'),'the embedded extension files are in the scanned script');
 });
-// F-19 (lead decision 32): no unspaced child text beyond the allowlist, and no allowlist entry that is gone.
+// F-19 (lead decision 32): no unspaced child text beyond the allowlist. An entry no scanned text has any more is a note
+// for the next re-record, not a failure (product-source-contract.mjs).
 const spacing=JSON.parse(read('audit/fixtures/child-spacing-allowlist.json')),spacingInputs=[productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))];
 const allowed=spacing;
 check('CHILD-SPACING-RUNS',()=>{assert.equal(spacing.schema,'akari-child-spacing-allowlist-v2');assert.equal(spacing.run,CHILD_SPACING_RUN);assert.deepEqual(childSpacingIssues(spacingInputs,allowed),[]);});

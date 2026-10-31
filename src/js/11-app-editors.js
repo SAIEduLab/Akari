@@ -798,9 +798,6 @@
       appVars.activeDragCleanup?.();
       return saveCodeBinding(appVars.mainEditor, options);
     }
-    function genericReadingError(d) {
-      return ['P201', 'P205', 'S301'].includes(d?.code) && !d.proposals?.length && GENERIC_READING_ERRORS.some(re => re.test(d.message));
-    }
     function checkedEditorErrors(binding, source, errs, headingAst = null) {
       if (!headingAst && !genericReadingError(errs[0])) return errs;
       const owner = bindingOwner(binding), key = owner + '\n' + (headingAst ? 'heading\n' : '') + source;

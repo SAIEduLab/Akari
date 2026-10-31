@@ -201,7 +201,7 @@
     };
     // The same, as a rewrite of the condition the child wrote (C-touch-R2-04), when who touches is sure: 「ねこ」の「星」 names
     // ねこ, or the work has one character other than the partner. The text keeps the child's words and ending. The code
-    // view and 作品チェック (11-application.js) do not yet draw a check error's proposals; they draw a reading error's.
+    // view and 作品チェック (11-app-project.js) do not yet draw a check error's proposals; they draw a reading error's.
     const meijinTouchProposals = (n, where, ctx) => {
       const range = SOURCE_RANGES.get(n)?.range, text = !ctx.definition ? scriptBySourceKey(project, where)?.source : null;
       if (!['TOUCHING', 'TOUCHING_COLOR'].includes(n.sensor) || !range || typeof text !== 'string') return null;
