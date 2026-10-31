@@ -225,10 +225,13 @@ export function sourceUses(read){
   // or Reflect, a computed key) other than reading or writing a named property, typeof, or the target of the event helper
   // on(target, …); Reflect other than its reading methods; and an on helper that does more with its target than add and
   // remove event listeners.
-  const opaque=[],readingReflect=['ownKeys','has','getPrototypeOf','getOwnPropertyDescriptor'];
-  eachNodeWithParents(ast,(node,parent)=>{
-    const member=(parent?.type==='MemberExpression'||parent?.type==='OptionalMemberExpression')&&parent.object===node;
-    if(globalObject(node)&&!(member&&memberName(parent)||parent?.type==='UnaryExpression'&&parent.operator==='typeof'||parent?.type==='CallExpression'&&parent.callee.type==='Identifier'&&parent.callee.name==='on'&&parent.arguments[0]===node))
+  const opaque=[],readingReflect=['ownKeys','has','getPrototypeOf','getOwnPropertyDescriptor'],globalAliases=['window','self','globalThis','frames','parent','top'];
+  eachNodeWithAncestors(ast,(node,ancestors)=>{
+    const parent=ancestors.at(-1),member=(parent?.type==='MemberExpression'||parent?.type==='OptionalMemberExpression')&&parent.object===node;
+    // window.window and the like are the global object again, so they count as using it as a value.
+    if(globalObject(node)&&member&&globalAliases.includes(memberName(parent)))opaque.push(labelAt(node.start)+': the global object used as a value ('+node.name+'.'+memberName(parent)+')');
+    else if(globalObject(node)&&!(member&&memberName(parent)||parent?.type==='UnaryExpression'&&parent.operator==='typeof'||parent?.type==='BinaryExpression'&&['===','!==','==','!='].includes(parent.operator)
+      ||parent?.type==='CallExpression'&&parent.arguments[0]===node&&parent.callee.type==='Identifier'&&parent.callee.name==='on'&&onHelperBinding(parent.callee,ancestors)))
       opaque.push(labelAt(node.start)+': the global object used as a value ('+node.name+')');
     if(node.type==='Identifier'&&node.name==='Reflect'&&freeAt.has(node.start)&&!(member&&!parent.computed&&readingReflect.includes(parent.property.name)))opaque.push(labelAt(node.start)+': Reflect used other than to read ('+readingReflect.join(', ')+')');
     const helper=node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&node.id.name==='on'&&/Function|Arrow/.test(node.init?.type||'')?node.init:node.type==='FunctionDeclaration'&&node.id?.name==='on'?node:null;
@@ -256,6 +259,31 @@ export const redrawSlot=name=>{const m=/^(?:render|refresh|repaint|paint)([A-Z]\
 const functionStatement=s=>s.type==='FunctionDeclaration'||s.type==='VariableDeclaration'&&s.kind==='const'&&s.declarations.every(d=>d.id.type==='Identifier'&&['FunctionExpression','ArrowFunctionExpression'].includes(d.init?.type));
 const declaredNames=s=>s.type==='FunctionDeclaration'?[s.id.name]:s.declarations.map(d=>d.id.name);
 const objectAssign=(node,target)=>node?.type==='CallExpression'&&node.callee.type==='MemberExpression'&&!node.callee.computed&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&node.callee.property.name==='assign'&&node.arguments.length===2&&node.arguments[0].type==='Identifier'&&node.arguments[0].name===target&&node.arguments[1].type==='ObjectExpression';
+// Walk with every ancestor (nearest last).
+function eachNodeWithAncestors(node,visit,ancestors=[]){
+  if(!node||typeof node!=='object')return;
+  if(Array.isArray(node)){for(const n of node)eachNodeWithAncestors(n,visit,ancestors);return;}
+  const typed=typeof node.type==='string';if(typed)visit(node,ancestors);
+  const next=typed?[...ancestors,node]:ancestors;
+  for(const [key,value]of Object.entries(node))if(!skipKeys.has(key)&&value&&typeof value==='object')eachNodeWithAncestors(value,visit,next);
+}
+// Whether the name `on` at this call resolves to an event helper: the nearest binding of `on` (a parameter, or a
+// declaration directly in an enclosing block, function body or the closure) is `const on = (target, …) => {…}` or
+// `function on(target, …) {…}`. A parameter or a destructured `on` is not a helper.
+const bindsName=(pattern,name)=>!!pattern&&(pattern.type==='Identifier'?pattern.name===name:pattern.type==='ObjectPattern'?pattern.properties.some(p=>bindsName(p.type==='RestElement'?p.argument:p.value,name)):pattern.type==='ArrayPattern'?pattern.elements.some(e=>bindsName(e,name)):pattern.type==='AssignmentPattern'?bindsName(pattern.left,name):pattern.type==='RestElement'?bindsName(pattern.argument,name):false);
+function onHelperBinding(callee,ancestors){
+  for(let i=ancestors.length-1;i>=0;i--){
+    const a=ancestors[i];
+    if(/Function/.test(a.type)&&a.params?.some(p=>bindsName(p,'on')))return false;
+    const statements=a.type==='BlockStatement'||a.type==='Program'?a.body:null;
+    if(!statements)continue;
+    for(const s of statements){
+      if(s.type==='FunctionDeclaration'&&s.id?.name==='on')return true;
+      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,'on'))return d.id.type==='Identifier'&&/Function|Arrow/.test(d.init?.type||'');
+    }
+  }
+  return false;
+}
 function eachNodeWithParents(node,visit,parent=null,grand=null){
   if(!node||typeof node!=='object')return;
   if(Array.isArray(node)){for(const n of node)eachNodeWithParents(n,visit,parent,grand);return;}
@@ -265,10 +293,25 @@ function eachNodeWithParents(node,visit,parent=null,grand=null){
 // A member written to: assigned, updated, deleted, or a target of destructuring or of for-in/of.
 const writtenAt=(node,parent,grand)=>parent&&(parent.type==='AssignmentExpression'&&parent.left===node||parent.type==='UpdateExpression'||parent.type==='UnaryExpression'&&parent.operator==='delete'||
   parent.type==='ArrayPattern'||parent.type==='AssignmentPattern'&&parent.left===node||(parent.type==='ForOfStatement'||parent.type==='ForInStatement')&&parent.left===node||parent.type==='ObjectProperty'&&parent.value===node&&grand?.type==='ObjectPattern'||parent.type==='RestElement');
+// A read used only to decide (a test, a comparison, a negation, or an operand of && || ?? that is itself only used to
+// decide or as a whole statement), never handed on as a value.
+function testRead(node,ancestors){
+  let cur=node;
+  for(let i=ancestors.length-1;i>=0;i--){
+    const p=ancestors[i];
+    if(p.type==='BinaryExpression'&&['===','!==','==','!='].includes(p.operator))return true;
+    if(p.type==='UnaryExpression'&&p.operator==='!')return true;
+    if(['IfStatement','WhileStatement','DoWhileStatement','ForStatement','ConditionalExpression'].includes(p.type)&&p.test===cur)return true;
+    if(p.type==='ExpressionStatement')return true;
+    if(p.type!=='LogicalExpression')return false;
+    cur=p;
+  }
+  return false;
+}
 // A call whose result nothing uses: the whole expression of a statement.
 const statementCall=(node,parent,grand)=>(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node&&grand?.type==='ExpressionStatement'&&grand.expression===parent;
 function applicationInterfaces(ast,labelAt){
-  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),fills:{},calls:new Set(),vars:new Set(),sets:new Set(),redraws:new Set(),varCalls:[],factories:[],factoryCalls:[],hidden:[]});return per.get(label);};
+  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),fills:{},calls:new Set(),vars:new Set(),sets:new Set(),redraws:new Set(),varCalls:[],varReads:[],factories:[],factoryCalls:[],hidden:[]});return per.get(label);};
   const allowed=new Set(),closure=ast.program.body[0].expression.callee.body;
   // Factories are closure top-level declarations taking (appVars, appCalls, appRedraw); a body holds only function
   // declarations and at most one registration statement for each object.
@@ -289,7 +332,12 @@ function applicationInterfaces(ast,labelAt){
     }
     for(const [object,n]of Object.entries(count))if(n>1)f.hidden.push(s.id.name+' registers '+object+' in '+n+' statements');
   }
-  eachNodeWithParents(ast,(node,parent,grand)=>{
+  // An application part (src/js/11-app-*) holds its one factory and nothing else: what sits outside it would escape the
+  // rules for the three objects.
+  const parts=new Map();for(const s of closure.body){const label=labelAt(s.start);if(/^src\/js\/11-app-/.test(label))(parts.get(label)||parts.set(label,[]).get(label)).push(s);}
+  for(const [label,statements]of parts)if(statements.length!==1||!(statements[0].type==='FunctionDeclaration'&&factoryName.test(statements[0].id?.name||'')))get(label).hidden.push('an application part holds something besides its one factory');
+  eachNodeWithAncestors(ast,(node,ancestors)=>{
+    const parent=ancestors.at(-1),grand=ancestors.at(-2),great=ancestors.at(-3);
     // Declarations and the hand-over to the factories: const appVars = {}; createAppX(appVars, appCalls, appRedraw).
     if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&applicationObjects.includes(node.id.name)&&node.init?.type==='ObjectExpression'&&!node.init.properties.length)allowed.add(node.id.start);
     if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&factoryName.test(node.callee.name)){
@@ -303,14 +351,19 @@ function applicationInterfaces(ast,labelAt){
       allowed.add(node.object.start);
       const written=writtenAt(node,parent,grand);
       if(object==='appVars'){f.vars.add(name);if(written)f.sets.add(name);
-        if((parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node)f.varCalls.push({name,statement:statementCall(node,parent,grand)});}
+        const called=(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node;
+        // appVars.f.call(…) and .apply(…) call it too; .bind(…) hands it on as a value.
+        const through=(parent?.type==='MemberExpression'||parent?.type==='OptionalMemberExpression')&&parent.object===node&&!parent.computed&&['call','apply'].includes(parent.property.name)&&(grand?.type==='CallExpression'||grand?.type==='OptionalCallExpression')&&grand.callee===parent;
+        if(called)f.varCalls.push({name,statement:statementCall(node,parent,grand)});
+        else if(through)f.varCalls.push({name,statement:great?.type==='ExpressionStatement'&&great.expression===grand});
+        else if(!written)f.varReads.push({name,test:testRead(node,ancestors)});}
       else if(object==='appCalls'){f.calls.add(name);if(written)f.hidden.push('appCalls.'+name+' written outside the registration');}
       else{f.redraws.add(name);if(!statementCall(node,parent,grand))f.hidden.push('appRedraw.'+name+' used other than as a call whose result nothing uses');}
     }
   });
   eachNode(ast,node=>{if(node.type==='Identifier'&&applicationObjects.includes(node.name)&&!allowed.has(node.start))get(labelAt(node.start)).hidden.push(node.name+' used other than by a plain property name');});
   const sorted=set=>[...set].sort();
-  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:sorted(v.provides),fills:Object.fromEntries(Object.entries(v.fills).sort()),calls:sorted(v.calls),vars:sorted(v.vars),sets:sorted(v.sets),redraws:sorted(v.redraws),varCalls:v.varCalls,factories:v.factories,factoryCalls:v.factoryCalls,hidden:v.hidden}]));
+  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:sorted(v.provides),fills:Object.fromEntries(Object.entries(v.fills).sort()),calls:sorted(v.calls),vars:sorted(v.vars),sets:sorted(v.sets),redraws:sorted(v.redraws),varCalls:v.varCalls,varReads:v.varReads,factories:v.factories,factoryCalls:v.factoryCalls,hidden:v.hidden}]));
 }
 
 // The source text of each embedded function, as the exported player receives it through toString().
@@ -374,6 +427,10 @@ export function boundaryIssues(analysis,declarations){
   const setBy=new Map();for(const [file,i]of Object.entries(analysis.interfaces))for(const n of i.sets??[])setBy.set(n,[...(setBy.get(n)||[]),file]);
   for(const n of new Set(Object.values(analysis.interfaces).flatMap(i=>i.vars??[])))if(!setBy.has(n))issues.push('appVars.'+n+' is read but no file assigns it');
   for(const [file,i]of Object.entries(analysis.interfaces))for(const c of i.varCalls??[])if(!c.statement)for(const w of setBy.get(c.name)??[])if(before(file,w))issues.push(file+' uses the result of appVars.'+c.name+'(), which '+w+' (a later file) assigns');
+  // Nor is such a function handed on as a value (kept in a name, passed, returned, bound), where a call of it could no
+  // longer be seen: a read of it only decides (a test, a comparison). initApp's own first values do not count.
+  const calledVars=new Set(Object.values(analysis.interfaces).flatMap(i=>(i.varCalls??[]).map(c=>c.name)));
+  for(const [file,i]of Object.entries(analysis.interfaces))for(const r of i.varReads??[])if(!r.test&&calledVars.has(r.name))for(const w of setBy.get(r.name)??[])if(w!=='src/js/11-application.js'&&before(file,w))issues.push(file+' hands on appVars.'+r.name+' as a value, a function '+w+' (a later file) assigns');
   // Each factory is declared once and called once.
   const declaredFactories=Object.values(analysis.interfaces).flatMap(i=>i.factories??[]),calledFactories=Object.values(analysis.interfaces).flatMap(i=>i.factoryCalls??[]);
   for(const n of new Set([...declaredFactories,...calledFactories]))if(declaredFactories.filter(x=>x===n).length!==1||calledFactories.filter(x=>x===n).length!==1)issues.push(n+' is declared '+declaredFactories.filter(x=>x===n).length+' and called '+calledFactories.filter(x=>x===n).length+' times');

@@ -122,6 +122,7 @@ check('REJECT-APP-INTERFACE-MISMATCH',()=>{
   const shell='src/js/11-application.js',call0='createAppServices(appVars, appCalls, appRedraw);';assert.ok(read(shell).includes(call0));
   variantIssues({[shell]:read(shell).replace(call0,'createAppServices(appCalls, appVars, appRedraw);')},shell+': createAppServices called with other than (appVars, appCalls, appRedraw)');
   variantIssues({[shell]:read(shell).replace(call0,call0+'\n    '+call0)},'createAppServices is declared 1 and called 2 times');
+  variantIssues({[file]:text+'  function outsideTheFactory() {}\n'},file+': an application part holds something besides its one factory');
 });
 // One way (AUDIT.md「ソースの境界」): an application file reaching a file after it, other than by a redraw request, is
 // refused: an appCalls name a later file registers, a top-level name of a later file, and the result of a function a
@@ -134,6 +135,8 @@ check('REJECT-APP-AGAINST-ORDER',()=>{
   const kept='appVars.activeDragCleanup?.();';assert.ok(read(services).includes(kept));
   assert.ok((boundaries['src/js/11-app-commands.js'].appVars??[]).includes('activeDragCleanup'));
   variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.();')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.call(null);')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[services]:read(services).replace(kept,'const cleanup = appVars.activeDragCleanup; cleanup?.();')},services+' hands on appVars.activeDragCleanup as a value, a function src/js/11-app-commands.js (a later file) assigns');
   // The language processing is one group: its files may use each other, but not a group after it; its files come together.
   const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
   variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');
@@ -165,6 +168,9 @@ check('REJECT-OPAQUE-GLOBAL-USE',()=>{
   for(const [form,expected]of [['const g = globalThis;',stage+': the global object used as a value (globalThis)'],['Object.assign(globalThis, {});',stage+': the global object used as a value (globalThis)'],
     ["Reflect.get(window, 'Akari');",stage+': Reflect used other than to read'],['globalThis[String(1)];',stage+': the global object used as a value (globalThis)'],['((g) => g)(self);',stage+': the global object used as a value (self)']])
     variantIssues({[stage]:text.replace(line,line+' '+form)},expected);
+  for(const form of ['((on) => on(window, {}))(Object.assign);','{ const {assign: on} = Object; on(window, {}); }'])variantIssues({[stage]:text.replace(line,line+' '+form)},stage+': the global object used as a value (window)');
+  variantIssues({[stage]:text.replace(line,line+' Object.assign(window.window, {});')},stage+': the global object used as a value (window.window)');
+  assert.ok(!boundaryIssues(usesWith({[stage]:text.replace(line,line+' if (globalThis === window) {}')}),state().boundaries).some(i=>i.includes('global object')),'a comparison with the global object is allowed');
   variantIssues({[stage]:text.replace(helper,helper+'      target.flag = 1;\n')},stage+': an on helper that does more with its target than add and remove event listeners');
   const call='${createAkariStageView.toString()}';assert.ok(text.includes(call));
   variantIssues({[stage]:text.replace(call,call+'${Function.prototype.toString.apply(keyName)}')},'the product embeds ');
@@ -178,6 +184,8 @@ check('SOURCE-SIZE',()=>{
   assert.deepEqual(sizes.filter(s=>s.due).map(s=>s.file),[],'split them by node audit/split-source.mjs <file>');
   const padded=file=>({...Object.fromEntries([[file,read(file)+'  //\n'.repeat(SOURCE_SPLIT_LINES)]])}),grown='src/js/11-app-drawing.js',over=padded(grown);
   const reader=f=>f in over?over[f]:read(f);assert.ok(sourceSizes(reader,productFiles(reader)).some(s=>s.file===grown&&s.due),'a file over the size is due');
+  // A file the rule should read but cannot is an error, never a quiet exemption.
+  const broken={[grown]:read(grown)+'  function outsideTheFactory() {}\n'};assert.throws(()=>sourceSizes(f=>f in broken?broken[f]:read(f),[grown]),/holds one application factory/);
 });
 // The split rule (AUDIT.md「ソースの境界」): splitting a plain file and an application file keeps every boundary, the
 // product's free names and every unit; the new file comes just before; neither part is larger than the file; and what
@@ -196,10 +204,15 @@ check('SOURCE-SPLIT-RULE',()=>{
     const was=sourceUnits(read,file);assert.equal(now.length,was.length,file+' units');
     for(const u of was){const v=now.find(x=>key(x)===key(u));assert.ok(v&&(v.text===u.text||restore(v.text)===u.text),file+' keeps '+key(u).slice(0,40));}
   }
-  assert.throws(()=>splitSource(read,'src/js/00-prelude.js'),/parses inside the closure/);
+  assert.throws(()=>splitSource(read,'src/js/00-prelude.js'),/opens or closes the closure/);
   assert.throws(()=>splitSource(read,'src/js/01-execution-core.js'),/portable extension/);
   const cyclic='src/js/05-command-presentation.js',loop={[cyclic]:'  function loopA() { return loopB(); }\n  function loopB() { return loopA(); }\n'};
   assert.throws(()=>splitSource(f=>f in loop?loop[f]:read(f),cyclic),/form one cycle/);
+  // A const, even one bound to a function, is ready only when the file reaches it, and another file of the group may read
+  // it while loading (zzV's initializer calls into another file, which may call zzA): the middle cut would move zzV before
+  // zzA, so the split is refused.
+  const ordered={[cyclic]:'  const zzA = () => zzH();\n  const zzV = otherFileFunction();\n  function zzH() {\n'+'    void 0;\n'.repeat(50)+'  }\n'};
+  assert.throws(()=>splitSource(f=>f in ordered?ordered[f]:read(f),cyclic),/zzV would move before zzA/);
 });
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The

@@ -58,29 +58,38 @@ function dependencyOrder(f){
 // The units of a file as {names, text} (for checking a split).
 export const sourceUnits=(read,file)=>{const f=fileUnits(read,file);return f.units.map(u=>({names:u.names,text:f.text.slice(u.start,u.end)}));};
 const unitLines=(f,i)=>lineCount(f.text.slice(f.units[i].start,f.units[i].end));
-// The cut: the prefix of the dependency order (at a block boundary) whose lines are closest to half the units' lines.
-function middleCut(f){
-  const order=dependencyOrder(f),sizes=order.map(b=>b.reduce((s,i)=>s+unitLines(f,i),0)),total=sizes.reduce((s,x)=>s+x,0);
-  let best=null,acc=0;for(let k=1;k<order.length;k++){acc+=sizes[k-1];const d=Math.abs(acc-total/2);if(!best||d<best.d)best={k,d};}
-  return {order,sizes,lower:best?new Set(order.slice(0,best.k).flat()):new Set()};
-}
-// Why the cut cannot be made without changing behaviour, or null. A unit that runs when the file loads (a value or class
-// declaration, or a statement) keeps its order against every other such unit, so a moved one must not have come after
-// one that stays. Function declarations and functions bound to a const run nothing when they load.
+// Why a cut cannot be made without changing behaviour, or null. Only a function declaration is ready before the file
+// runs (it is hoisted); every other unit (a const, even one bound to a function, a let, a class, a statement) is ready
+// only once the file reaches it, and may be read while the file loads, also through another file of the group. Such
+// units keep their order against each other, so a moved one must not have come after one that stays.
 function splitBlocked(f,lower){
   if(!lower.size||lower.size===f.units.length)return 'its units form one cycle';
-  const runs=u=>!functionStatement(u.node);
-  const firstStaying=f.units.findIndex((u,i)=>!lower.has(i)&&runs(u));
-  const late=f.units.find((u,i)=>lower.has(i)&&runs(u)&&firstStaying>=0&&i>firstStaying);
-  return late?(late.names.join(',')||'a statement')+' would move before '+(f.units[firstStaying].names.join(',')||'a statement')+', which ran before it':null;
+  const ordered=u=>u.node.type!=='FunctionDeclaration';
+  const firstStaying=f.units.findIndex((u,i)=>!lower.has(i)&&ordered(u));
+  const late=f.units.find((u,i)=>lower.has(i)&&ordered(u)&&firstStaying>=0&&i>firstStaying);
+  return late?(late.names.join(',')||'a statement')+' would move before '+(f.units[firstStaying].names.join(',')||'a statement')+', which was ready before it':null;
 }
+// The cut: among the prefixes of the dependency order (at block boundaries) that change no behaviour, the one whose
+// lines are closest to half the units' lines.
+function middleCut(f){
+  const order=dependencyOrder(f),sizes=order.map(b=>b.reduce((s,i)=>s+unitLines(f,i),0)),total=sizes.reduce((s,x)=>s+x,0),cuts=[];
+  let acc=0;for(let k=1;k<order.length;k++){acc+=sizes[k-1];cuts.push({k,d:Math.abs(acc-total/2)});}
+  cuts.sort((a,b)=>a.d-b.d||a.k-b.k);
+  let blocked=cuts.length?null:'its units form one cycle';
+  for(const c of cuts){const lower=new Set(order.slice(0,c.k).flat()),why=splitBlocked(f,lower);if(!why)return {order,sizes,lower,blocked:null};blocked??=why;}
+  return {order,sizes,lower:new Set(),blocked};
+}
+// Files the rule does not split: 00 and 12 open and close the closure, and a file that embeds a portable extension.
+const exempt=(read,file)=>/^src\/js\/(00|12)-/.test(file)?'it opens or closes the closure':/^\/\/ @portable /m.test(read(file))?'it embeds a portable extension':null;
 // Per src/js file: its lines, its units, its largest unit or cycle of units, and whether it is due to be split: over the
-// size, every unit and cycle fits in it (so splitting can bring each part under it), and the cut changes no behaviour.
+// size, every unit and cycle fits in it (so splitting can bring each part under it), and a cut changes no behaviour.
+// A file the rule should split but cannot read is an error, never a quiet exemption.
 export function sourceSizes(read,files){
   return files.filter(f=>f.startsWith('src/js/')).map(file=>{
-    const lines=lineCount(read(file));let units=null,largest=null,blocked='not split by the rule (it opens or closes the closure, or embeds a portable extension)';
-    try{const f=fileUnits(read,file),cut=middleCut(f);units=f.units.length;largest=Math.max(0,...cut.sizes);blocked=splitBlocked(f,cut.lower);}catch{/* 00, 12 and files with a portable extension */}
-    return {file,lines,units,largest,blocked,due:lines>SOURCE_SPLIT_LINES&&largest!==null&&largest<=SOURCE_SPLIT_LINES&&!blocked};
+    const lines=lineCount(read(file)),why=exempt(read,file);
+    if(why)return {file,lines,units:null,largest:null,blocked:'not split by the rule: '+why,due:false};
+    const f=fileUnits(read,file),cut=middleCut(f),largest=Math.max(0,...cut.sizes);
+    return {file,lines,units:f.units.length,largest,blocked:cut.blocked,due:lines>SOURCE_SPLIT_LINES&&largest<=SOURCE_SPLIT_LINES&&!cut.blocked};
   });
 }
 
@@ -100,7 +109,8 @@ export function boundaryRecords(analysis){
 // The split of one file by the rule: {created, moved, kept, changes: {path: text}} (src files, the template, and every
 // boundary record). Nothing is written here.
 export function splitSource(read,file,existing=()=>false){
-  const f=fileUnits(read,file),{lower:lowerSet}=middleCut(f),blocked=splitBlocked(f,lowerSet);
+  const why=exempt(read,file);assert.ok(!why,file+' is not split by the rule: '+why);
+  const f=fileUnits(read,file),{lower:lowerSet,blocked}=middleCut(f);
   assert.ok(!blocked,file+' cannot be split by the rule: '+blocked);
   const lower=f.units.filter((_,i)=>lowerSet.has(i)),upper=f.units.filter((_,i)=>!lowerSet.has(i));
   let created=file.replace(/\.js$/,'-core.js');for(let n=2;existing(created);n++)created=file.replace(/\.js$/,'-core'+n+'.js');
