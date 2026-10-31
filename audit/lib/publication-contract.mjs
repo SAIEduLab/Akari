@@ -51,10 +51,10 @@ export function assertInventoryMatches(listed, tracked) {
 }
 
 // A versioned product file name, and a three-part version that is not part of a longer dotted number.
-const productName = /Akari_?\d+_\d+_\d+\.html/g;
-const versionNumber = /(?<![\d.])\d+\.\d+\.\d+(?!\d|\.\d)/g;
+export const productName = /Akari_?\d+_\d+_\d+\.html/g;
+export const versionNumber = /(?<![\d.])\d+\.\d+\.\d+(?!\d|\.\d)/g;
 // Pinned external tools are written as package@x.y.z or after the tool's name; those are not Akari releases.
-const toolPrefix = /(?:@|\b(?:Playwright|jsdom|Chrome for Testing|Chrome|Chromium|Node\.js|Python)\s+)$/i;
+export const toolPrefix =/(?:@|\b(?:Playwright|jsdom|Chrome for Testing|Chrome|Chromium|Node\.js|Python)\s+)$/i;
 
 export function releaseNameViolations(file, text, {productFile, productVersion}) {
   const violations = [];
