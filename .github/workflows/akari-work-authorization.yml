@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.22.2'
       - run: node audit/tests/work-authorization.mjs --github audit-evidence/work-authorization/report.json
         env:
           GITHUB_TOKEN: ${{ github.token }}

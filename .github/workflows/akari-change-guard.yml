@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.22.2'
       - name: Require the owner label for removed audit checks and changed pins
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
