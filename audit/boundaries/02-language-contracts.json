@@ -4,9 +4,12 @@
   "uses": [
     "src/js/01-execution-core.js",
     "src/js/03-default-assets.js",
-    "src/js/04-syntax-parsing.js",
+    "src/js/04-syntax-expressions.js",
+    "src/js/04-syntax-scripts.js",
+    "src/js/04-syntax-sentences.js",
     "src/js/05-command-presentation.js",
     "src/js/06-source-formatting.js",
+    "src/js/09-editor-search.js",
     "src/js/09-editor-sessions.js"
   ]
 }
