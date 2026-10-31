@@ -8,7 +8,7 @@
         "pointer": "/uiContracts/componentControls"
       },
       "specification": {
-        "path": "LANGUAGE_1_5_4.md",
+        "path": "LANGUAGE_1_5_5.md",
         "text": "「キャラクター・部品」の中を別にスクロールさせず、列が画面に入りきらないときは、右の列全体をスクロールします"
       },
       "auditContract": {

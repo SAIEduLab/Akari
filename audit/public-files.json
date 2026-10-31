@@ -1,6 +1,6 @@
 {
   "schema": "akari-public-files-v1",
-  "productVersion": "1.5.4",
+  "productVersion": "1.5.5",
   "files": [
     ".gitattributes",
     ".github/CODEOWNERS",
@@ -11,9 +11,9 @@
     ".gitignore",
     "AGENTS.md",
     "AUDIT.md",
-    "Akari_1_5_4.html",
+    "Akari_1_5_5.html",
     "EXTENSIONS.md",
-    "LANGUAGE_1_5_4.md",
+    "LANGUAGE_1_5_5.md",
     "LICENSE",
     "MANUAL.html",
     "Manual/.gitkeep",
@@ -45,6 +45,11 @@
     "audit/boundaries/09-editor-search.json",
     "audit/boundaries/09-editor-sessions.json",
     "audit/boundaries/10-block-view.json",
+    "audit/boundaries/11-app-design.json",
+    "audit/boundaries/11-app-editors.json",
+    "audit/boundaries/11-app-project.json",
+    "audit/boundaries/11-app-runtime-view.json",
+    "audit/boundaries/11-app-screens.json",
     "audit/boundaries/11-application.json",
     "audit/boundaries/12-public-api.json",
     "audit/browser/browser-audit-manifest.json",
@@ -230,7 +235,7 @@
     "audit/manifests/features.json",
     "audit/manifests/language-form-coverage.json",
     "audit/manifests/product-tests.json",
-    "audit/manifests/release-1.5.4.json",
+    "audit/manifests/release-1.5.5.json",
     "audit/manifests/samples.json",
     "audit/public-files.json",
     "audit/renumber-release.mjs",
@@ -412,8 +417,13 @@
     "src/js/09-editor-search.js",
     "src/js/09-editor-sessions.js",
     "src/js/10-block-view.js",
+    "src/js/11-app-design.js",
+    "src/js/11-app-editors.js",
+    "src/js/11-app-project.js",
+    "src/js/11-app-runtime-view.js",
+    "src/js/11-app-screens.js",
     "src/js/11-application.js",
     "src/js/12-public-api.js"
   ],
-  "productFile": "Akari_1_5_4.html"
+  "productFile": "Akari_1_5_5.html"
 }

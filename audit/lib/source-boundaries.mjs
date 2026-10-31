@@ -213,7 +213,34 @@ export function sourceUses(read){
   const inside=(name,at)=>{const d=top.get(name);return d.start<=at&&at<d.end;};
   for(const name of embeddedFunctions)globalsRead[name]=[...new Set([...free.filter(r=>r.from===name&&productGlobals.has(r.name)),...globalReads.filter(r=>inside(name,r.at)&&productGlobals.has(r.name))].map(r=>r.name))].sort();
   const files=[...new Set(script.pieces.map(p=>p.label))];
-  return {files,owner,embeddedThroughToString:[...toStrings].sort(),globalsRead,productGlobals:[...productGlobals].sort(),uses:Object.fromEntries(Object.entries(uses).map(([f,t])=>[f,Object.fromEntries(Object.entries(t).map(([k,v])=>[k,[...v].sort()]))])),embedded,refs:refs.length};
+  const interfaces=applicationInterfaces(ast,labelAt);
+  return {files,owner,interfaces,embeddedThroughToString:[...toStrings].sort(),globalsRead,productGlobals:[...productGlobals].sort(),uses:Object.fromEntries(Object.entries(uses).map(([f,t])=>[f,Object.fromEntries(Object.entries(t).map(([k,v])=>[k,[...v].sort()]))])),embedded,refs:refs.length};
+}
+
+// The application's parts (src/js/11-*) share state through appVars and call each other through appCalls. Per file:
+// the appCalls names it registers (Object.assign(appCalls, {…})), the appCalls names and appVars names it uses, and
+// every other use of the two objects (a computed key, an alias, passing them on), which would hide what is used.
+export const applicationObjects=Object.freeze(['appVars','appCalls']);
+const factoryName=/^createApp[A-Z]\w*$/;
+function applicationInterfaces(ast,labelAt){
+  const per=new Map(),get=label=>{if(!per.has(label))per.set(label,{provides:new Set(),calls:new Set(),vars:new Set(),hidden:[]});return per.get(label);};
+  const allowed=new Set();
+  eachNode(ast,node=>{
+    // Declarations and the hand-over to the factories: const appVars = {}; createAppX(appVars, appCalls); function createAppX(appVars, appCalls).
+    if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&applicationObjects.includes(node.id.name)&&node.init?.type==='ObjectExpression'&&!node.init.properties.length)allowed.add(node.id.start);
+    if(node.type==='FunctionDeclaration'&&factoryName.test(node.id?.name||''))for(const p of node.params)if(p.type==='Identifier'&&applicationObjects.includes(p.name))allowed.add(p.start);
+    if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&factoryName.test(node.callee.name))for(const a of node.arguments)if(a.type==='Identifier'&&applicationObjects.includes(a.name))allowed.add(a.start);
+    if(node.type==='CallExpression'&&node.callee.type==='MemberExpression'&&node.callee.object.type==='Identifier'&&node.callee.object.name==='Object'&&memberName(node.callee)==='assign'&&node.arguments[0]?.type==='Identifier'&&node.arguments[0].name==='appCalls'&&node.arguments.length===2&&node.arguments[1].type==='ObjectExpression'){
+      allowed.add(node.arguments[0].start);
+      for(const p of node.arguments[1].properties){const key=p.type==='ObjectProperty'&&!p.computed&&p.key.type==='Identifier'?p.key.name:null;if(key)get(labelAt(node.start)).provides.add(key);else get(labelAt(node.start)).hidden.push('a registration that is not a plain name');}
+    }
+    if((node.type==='MemberExpression'||node.type==='OptionalMemberExpression')&&node.object.type==='Identifier'&&applicationObjects.includes(node.object.name)){
+      const name=!node.computed&&node.property.type==='Identifier'?node.property.name:null,label=labelAt(node.start);
+      if(name){allowed.add(node.object.start);get(label)[node.object.name==='appCalls'?'calls':'vars'].add(name);}
+    }
+  });
+  eachNode(ast,node=>{if(node.type==='Identifier'&&applicationObjects.includes(node.name)&&!allowed.has(node.start))get(labelAt(node.start)).hidden.push(node.name+' used other than by a plain property name');});
+  return Object.fromEntries([...per].map(([label,v])=>[label,{provides:[...v.provides].sort(),calls:[...v.calls].sort(),vars:[...v.vars].sort(),hidden:v.hidden}]));
 }
 
 // The source text of each embedded function, as the exported player receives it through toString().
@@ -236,6 +263,22 @@ export function boundaryIssues(analysis,declarations){
   }
   for(const [name,list]of Object.entries(analysis.embedded))if(list.length)issues.push(name+' is embedded through toString() but uses closure names: '+list.join(', '));
   for(const [name,list]of Object.entries(analysis.globalsRead))if(list.length)issues.push(name+' is embedded through toString() but reads what the product puts on the global object: '+list.join(', '));
+  // The application's shared state and calls: each file declares what it registers and uses; every name used is
+  // registered by exactly one file; nothing reaches the two objects other than by a plain property name.
+  const registeredBy=new Map();
+  for(const [file,i]of Object.entries(analysis.interfaces))for(const n of i.provides)registeredBy.set(n,[...(registeredBy.get(n)||[]),file]);
+  for(const [n,list]of registeredBy)if(list.length>1)issues.push('appCalls.'+n+' is registered by '+list.join(' and '));
+  const calledAnywhere=new Set(Object.entries(analysis.interfaces).flatMap(([,i])=>i.calls));
+  for(const [n,list]of registeredBy)if(!calledAnywhere.has(n))issues.push(list[0]+' registers appCalls.'+n+' but nothing calls it');
+  for(const file of sources){
+    const actual=analysis.interfaces[file]??{provides:[],calls:[],vars:[],hidden:[]},declared=declarations[file]??{};
+    for(const h of actual.hidden)issues.push(file+': '+h);
+    for(const n of actual.calls)if(!registeredBy.has(n))issues.push(file+' calls appCalls.'+n+' that no file registers');
+    const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+    if(!same(actual.provides,declared.appCalls?.provides??[]))issues.push(file+' registers appCalls '+JSON.stringify(actual.provides)+' but declares '+JSON.stringify(declared.appCalls?.provides??[]));
+    if(!same(actual.calls,declared.appCalls?.uses??[]))issues.push(file+' calls appCalls '+JSON.stringify(actual.calls.filter(n=>!(declared.appCalls?.uses??[]).includes(n)))+' undeclared, '+JSON.stringify((declared.appCalls?.uses??[]).filter(n=>!actual.calls.includes(n)))+' declared but unused');
+    if(!same(actual.vars,declared.appVars??[]))issues.push(file+' uses appVars '+JSON.stringify(actual.vars.filter(n=>!(declared.appVars??[]).includes(n)))+' undeclared, '+JSON.stringify((declared.appVars??[]).filter(n=>!actual.vars.includes(n)))+' declared but unused');
+  }
   if(JSON.stringify(analysis.embeddedThroughToString)!==JSON.stringify([...embeddedFunctions].sort()))issues.push('the product embeds '+analysis.embeddedThroughToString.join(', ')+' through toString(); the embedded function list names '+[...embeddedFunctions].sort().join(', '));
   return issues;
 }
@@ -247,6 +290,10 @@ export function readBoundaries(root,read=file=>fs.readFileSync(path.join(root,fi
     assert.equal(record.schema,boundarySchema,name+' schema');
     assert.equal(boundaryFileFor(record.file),boundaryDirectory+'/'+name,name+' names its source file');
     assert.ok(Array.isArray(record.uses)&&record.uses.every(u=>typeof u==='string')&&JSON.stringify(record.uses)===JSON.stringify([...new Set(record.uses)].sort()),name+' lists sorted unique uses');
+    const sortedNames=list=>Array.isArray(list)&&list.every(u=>typeof u==='string')&&JSON.stringify(list)===JSON.stringify([...new Set(list)].sort());
+    if(record.appCalls!==undefined)assert.ok(sortedNames(record.appCalls.provides??[])&&sortedNames(record.appCalls.uses??[])&&Object.keys(record.appCalls).every(k=>['provides','uses'].includes(k)),name+' lists sorted unique appCalls');
+    if(record.appVars!==undefined)assert.ok(sortedNames(record.appVars),name+' lists sorted unique appVars');
+    assert.ok(Object.keys(record).every(k=>['schema','file','uses','appCalls','appVars'].includes(k)),name+' has only known fields');
     declarations[record.file]=record;
   }
   return declarations;

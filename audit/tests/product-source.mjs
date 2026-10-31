@@ -93,6 +93,24 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
   const arrow=boundaryIssues(usesWith({[parser]:read(parser).replace(anchor,'  const KEY_ALIASES_ARROW=()=>keyName;\n'+anchor),[exporter]:exportText.replace(call,call+'${KEY_ALIASES_ARROW.toString()}')}),boundaries);
   assert.ok(arrow.some(i=>i.startsWith('the product embeds ')&&i.includes('KEY_ALIASES_ARROW')),JSON.stringify(arrow));
 });
+// The application's shared state and calls (AUDIT.md「ソースの境界」): an undeclared call or state, a name registered
+// twice, a call nothing registers, and a computed key are each refused.
+check('REJECT-APP-INTERFACE-MISMATCH',()=>{
+  const {boundaries,uses}=state(),withCalls=Object.keys(boundaries).filter(f=>boundaries[f].appCalls?.uses?.length&&boundaries[f].appVars?.length);assert.ok(withCalls.length);
+  const file=withCalls[0],call=boundaries[file].appCalls.uses[0],shared=boundaries[file].appVars[0];
+  const drop=(field,name)=>({...boundaries,[file]:{...boundaries[file],...(field==='appVars'?{appVars:boundaries[file].appVars.filter(n=>n!==name)}:{appCalls:{...boundaries[file].appCalls,uses:boundaries[file].appCalls.uses.filter(n=>n!==name)}})}});
+  assert.ok(boundaryIssues(uses,drop('appCalls',call)).some(i=>i.startsWith(file+' calls appCalls ["'+call+'"] undeclared')));
+  assert.ok(boundaryIssues(uses,drop('appVars',shared)).some(i=>i.startsWith(file+' uses appVars ["'+shared+'"] undeclared')));
+  const part=Object.keys(boundaries).find(f=>read(f).includes('  function createAppEditors(appVars, appCalls) {')),head='  function createAppEditors(appVars, appCalls) {\n';assert.ok(part);
+  const other=Object.keys(boundaries).find(f=>f!==part&&boundaries[f].appCalls?.provides?.length),twice=boundaries[other].appCalls.provides[0];
+  const register='Object.assign(appCalls, {';assert.ok(read(part).includes(register));
+  const variants=[
+    [read(part).replace(register,register+twice+', '),'appCalls.'+twice+' is registered by '],
+    [read(part).replace(head,head+'    appCalls.noSuchApplicationCall;\n'),part+' calls appCalls.noSuchApplicationCall that no file registers'],
+    [read(part).replace(head,head+"    appCalls['dynamic'];\n"),part+': appCalls used other than by a plain property name'],
+  ];
+  for(const [text,expected]of variants){const issues=boundaryIssues(usesWith({[part]:text}),boundaries);assert.ok(issues.some(i=>i.startsWith(expected)),expected+' '+JSON.stringify(issues.slice(0,4)));}
+});
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
 // portable extension files built into the product are the fork developers' interface and are left out.
