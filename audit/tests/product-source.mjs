@@ -150,6 +150,12 @@ check('REJECT-APP-AGAINST-ORDER',()=>{
   // A function put in through ?:, &&, .bind, appCalls or another field is still one.
   for(const value of ['flag ? () => 1 : null','flag && (() => 1)','(() => 1).bind(null)','appCalls.setStatus','appVars.activeDragCleanup'])
     variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { appVars.extraKept = '+value+'; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  // So is one kept first in a local const, and a field whose local copy is called, however the function was put in;
+  // a file that also assigns the field gets no exception.
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { const h = flag ? () => 1 : null; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
+  for(const put of ['appVars.extraKept = obj.handler;','({ handler: appVars.extraKept } = obj);','appVars.extraKept = obj.make();'])
+    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(obj) { '+put+' }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; const kept = extra.call(null);')},services+' uses the result of appVars.extraKept(), which src/js/11-app-commands.js (a later file) assigns');
+  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'appVars.extraKept = null; const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
   // The language processing is one group: its files may use each other, but not a group after it; its files come together.
   const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
   variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');

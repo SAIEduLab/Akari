@@ -272,27 +272,35 @@ function eachNodeWithAncestors(node,visit,ancestors=[]){
 // `function on(target, …) {…}`. A parameter or a destructured `on` is not a helper.
 const bindsName=(pattern,name)=>!!pattern&&(pattern.type==='Identifier'?pattern.name===name:pattern.type==='ObjectPattern'?pattern.properties.some(p=>bindsName(p.type==='RestElement'?p.argument:p.value,name)):pattern.type==='ArrayPattern'?pattern.elements.some(e=>bindsName(e,name)):pattern.type==='AssignmentPattern'?bindsName(pattern.left,name):pattern.type==='RestElement'?bindsName(pattern.argument,name):false);
 function onHelperBinding(callee,ancestors){return localFunctionBinding('on',ancestors)==='helper';}
-// The nearest binding of a name seen from a node (its ancestors, nearest last): 'helper' when it is a function declared
-// as `function name(…)` or `const name = (…) => …`, 'other' for any other binding (a parameter of a function or method,
-// a catch parameter, a for declaration, a var anywhere in the function, a destructured or non-function const, a class, a
-// named function expression), or null when nothing in the closure binds it.
-function localFunctionBinding(name,ancestors){
+// The nearest binding of a name seen from a node (its ancestors, nearest last): {kind:'function'} for `function name(…)`,
+// {kind:'const'|'let', init, ancestors} for `const name = …` or `let name = …` (the ancestors of the declaration), {kind:
+// 'other'} for any other binding (a parameter of a function or method, a catch parameter, a for declaration, a var
+// anywhere in the function, a destructured name, a class, a named function expression), or null when nothing in the
+// closure binds it.
+const hoisted=new WeakMap(),hoistedOf=body=>{if(!hoisted.has(body))hoisted.set(body,hoistedVars(body.body));return hoisted.get(body);};
+function nearestBinding(name,ancestors){
   for(let i=ancestors.length-1;i>=0;i--){
     const a=ancestors[i];
-    if(a.params?.some(p=>bindsName(p,name)))return 'other';
-    if(a.type==='FunctionExpression'&&a.id?.name===name)return 'other';
-    if(a.type==='CatchClause'&&bindsName(a.param,name))return 'other';
-    if(['ForStatement','ForInStatement','ForOfStatement'].includes(a.type)){const d=a.type==='ForStatement'?a.init:a.left;if(d?.type==='VariableDeclaration'&&d.declarations.some(x=>bindsName(x.id,name)))return 'other';}
-    if(isFunction(a)&&a.body?.type==='BlockStatement'&&hoistedVars(a.body.body).has(name))return 'other';
+    if(a.params?.some(p=>bindsName(p,name)))return {kind:'other'};
+    if(a.type==='FunctionExpression'&&a.id?.name===name)return {kind:'other'};
+    if(a.type==='CatchClause'&&bindsName(a.param,name))return {kind:'other'};
+    if(['ForStatement','ForInStatement','ForOfStatement'].includes(a.type)){const d=a.type==='ForStatement'?a.init:a.left;if(d?.type==='VariableDeclaration'&&d.declarations.some(x=>bindsName(x.id,name)))return {kind:'other'};}
+    if(isFunction(a)&&a.body?.type==='BlockStatement'&&hoistedOf(a.body).has(name))return {kind:'other'};
     const statements=a.type==='BlockStatement'||a.type==='Program'?a.body:null;
     if(!statements)continue;
     for(const s of statements){
-      if(s.type==='FunctionDeclaration'&&s.id?.name===name)return 'helper';
-      if(s.type==='ClassDeclaration'&&s.id?.name===name)return 'other';
-      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,name))return d.id.type==='Identifier'&&s.kind==='const'&&/Function|Arrow/.test(d.init?.type||'')?'helper':'other';
+      if(s.type==='FunctionDeclaration'&&s.id?.name===name)return {kind:'function'};
+      if(s.type==='ClassDeclaration'&&s.id?.name===name)return {kind:'other'};
+      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,name))return d.id.type==='Identifier'&&['const','let'].includes(s.kind)?{kind:s.kind,init:d.init,ancestors:ancestors.slice(0,i+1)}:{kind:'other'};
     }
   }
   return null;
+}
+// 'helper' when the nearest binding is a function declared as `function name(…)` or `const name = (…) => …`, 'other'
+// for any other binding, or null when nothing in the closure binds it.
+function localFunctionBinding(name,ancestors){
+  const b=nearestBinding(name,ancestors);
+  return !b?null:b.kind==='function'||b.kind==='const'&&/Function|Arrow/.test(b.init?.type||'')?'helper':'other';
 }
 function eachNodeWithParents(node,visit,parent=null,grand=null){
   if(!node||typeof node!=='object')return;
@@ -318,20 +326,22 @@ function testRead(node,ancestors){
   }
   return false;
 }
-// Whether a value, as written, may be a function: a function or arrow, a name bound to a local function, a member of
-// appCalls, a .bind(…) result, or a conditional, logical, sequence or assignment expression that may give one. A value
-// another appVars field gives is followed separately (copiedVars). Anything else (a call's result, …) cannot be told
-// from the text; AUDIT.md asks that a function be put into appVars only as a function or the name of one.
-function mayBeFunction(e,ancestors){
+// Whether a value, as written, may be a function: a function or arrow, a name bound to a local function or to a const or
+// let whose first value may be one, a member of appCalls, a .bind(…) result, or a conditional, logical, sequence or
+// assignment expression that may give one. A value another appVars field gives is followed separately (copiedVars), and
+// so is a local copy of a field that is then called (see applicationInterfaces). Anything else (a call's result, a
+// member of another object, …) cannot be told from the text; AUDIT.md asks that a function be put into appVars only as a
+// function or the name of one.
+function mayBeFunction(e,ancestors,seen=new Set()){
   if(!e)return false;
   if(/Function|Arrow/.test(e.type))return true;
-  if(e.type==='Identifier')return localFunctionBinding(e.name,ancestors)==='helper';
+  if(e.type==='Identifier'){const b=nearestBinding(e.name,ancestors);if(b?.kind==='function')return true;if(!b?.init||seen.has(b.init))return false;seen.add(b.init);return mayBeFunction(b.init,b.ancestors,seen);}
   if((e.type==='MemberExpression'||e.type==='OptionalMemberExpression')&&e.object.type==='Identifier'&&e.object.name==='appCalls')return true;
   if((e.type==='CallExpression'||e.type==='OptionalCallExpression')&&(e.callee.type==='MemberExpression'||e.callee.type==='OptionalMemberExpression')&&!e.callee.computed&&e.callee.property.name==='bind')return true;
-  if(e.type==='ConditionalExpression')return mayBeFunction(e.consequent,ancestors)||mayBeFunction(e.alternate,ancestors);
-  if(e.type==='LogicalExpression')return mayBeFunction(e.left,ancestors)||mayBeFunction(e.right,ancestors);
-  if(e.type==='SequenceExpression')return mayBeFunction(e.expressions.at(-1),ancestors);
-  if(e.type==='AssignmentExpression')return mayBeFunction(e.right,ancestors);
+  if(e.type==='ConditionalExpression')return mayBeFunction(e.consequent,ancestors,seen)||mayBeFunction(e.alternate,ancestors,seen);
+  if(e.type==='LogicalExpression')return mayBeFunction(e.left,ancestors,seen)||mayBeFunction(e.right,ancestors,seen);
+  if(e.type==='SequenceExpression')return mayBeFunction(e.expressions.at(-1),ancestors,seen);
+  if(e.type==='AssignmentExpression')return mayBeFunction(e.right,ancestors,seen);
   return false;
 }
 // The appVars fields a value may be copied from (appVars.a = appVars.b, or through ?: && || , =).
@@ -376,6 +386,12 @@ function applicationInterfaces(ast,labelAt){
     const parent=ancestors.at(-1),grand=ancestors.at(-2),great=ancestors.at(-3);
     // Declarations and the hand-over to the factories: const appVars = {}; createAppX(appVars, appCalls, appRedraw).
     if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&applicationObjects.includes(node.id.name)&&node.init?.type==='ObjectExpression'&&!node.init.properties.length)allowed.add(node.id.start);
+    // A local copy of a field that is called (const g = appVars.f; g(), or g.call(…)) calls the field too.
+    if(node.type==='CallExpression'||node.type==='OptionalCallExpression'){
+      const c=node.callee,local=c.type==='Identifier'?c.name:(c.type==='MemberExpression'||c.type==='OptionalMemberExpression')&&!c.computed&&c.object.type==='Identifier'&&['call','apply'].includes(c.property.name)?c.object.name:null;
+      const b=local&&!applicationObjects.includes(local)?nearestBinding(local,ancestors):null;
+      for(const name of copiedVars(b?.init))get(labelAt(node.start)).varCalls.push({name,statement:parent?.type==='ExpressionStatement'&&parent.expression===node});
+    }
     if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&factoryName.test(node.callee.name)){
       const f=get(labelAt(node.start));f.factoryCalls.push(node.callee.name);
       if(JSON.stringify(node.arguments.map(a=>a.type==='Identifier'?a.name:a.type))===JSON.stringify(applicationObjects))for(const a of node.arguments)allowed.add(a.start);
@@ -475,8 +491,9 @@ export function boundaryIssues(analysis,declarations){
   const suppliedBy=new Map();for(const w of writes)if(!w.first||w.fn||w.copies.length)suppliedBy.set(w.name,[...new Set([...(suppliedBy.get(w.name)||[]),w.file])]);
   for(const [file,i]of Object.entries(analysis.interfaces))for(const c of i.varCalls??[])if(!c.statement)for(const w of suppliedBy.get(c.name)??[])if(before(file,w))issues.push(file+' uses the result of appVars.'+c.name+'(), which '+w+' (a later file) assigns');
   // Nor is such a function handed on as a value (kept in a name, passed, returned, bound), where a call of it could no
-  // longer be seen, unless the file itself puts it in: a read of it otherwise only decides (a test, a comparison).
-  for(const [file,i]of Object.entries(analysis.interfaces))for(const r of i.varReads??[])if(!r.test&&fnVars.has(r.name)&&!(suppliedBy.get(r.name)??[]).includes(file))for(const w of suppliedBy.get(r.name)??[])if(before(file,w))issues.push(file+' hands on appVars.'+r.name+' as a value, a function '+w+' (a later file) assigns');
+  // longer be seen: a read of it only decides (a test, a comparison). A file that puts in a function of its own and
+  // hands it on keeps it in a local name and hands on that name.
+  for(const [file,i]of Object.entries(analysis.interfaces))for(const r of i.varReads??[])if(!r.test&&fnVars.has(r.name))for(const w of suppliedBy.get(r.name)??[])if(before(file,w))issues.push(file+' hands on appVars.'+r.name+' as a value, a function '+w+' (a later file) assigns');
   // Each factory is declared once and called once.
   const declaredFactories=Object.values(analysis.interfaces).flatMap(i=>i.factories??[]),calledFactories=Object.values(analysis.interfaces).flatMap(i=>i.factoryCalls??[]);
   for(const n of new Set([...declaredFactories,...calledFactories]))if(declaredFactories.filter(x=>x===n).length!==1||calledFactories.filter(x=>x===n).length!==1)issues.push(n+' is declared '+declaredFactories.filter(x=>x===n).length+' and called '+calledFactories.filter(x=>x===n).length+' times');

@@ -294,7 +294,7 @@
       appCalls.$('#sampleBtn').after(historyToolbarAnchor);
       const historyHomes=[appCalls.$('#undoBtn'),appCalls.$('#redoBtn')].map(button=>{const marker=document.createElement('span');button.before(marker);return {button,marker};}),
         callableTitle = appCalls.$('#procModal > .dialog > .win-title');
-      appVars.placeHistoryButtons=()=>{
+      const placeHistoryButtons=()=>{
         for(const {button,marker}of historyHomes){
           if(appCalls.$('#procModal').classList.contains('show')){if(button.parentElement!==callableTitle)callableTitle.append(button);}
           else if(document.body.dataset.editorMode==='blocks'){
@@ -303,8 +303,9 @@
           }else if(marker.nextSibling!==button)marker.after(button);
         }
       };
-      new MutationObserver(appVars.placeHistoryButtons).observe(appCalls.$('#procModal'), { attributes: true, attributeFilter: ['class'] });
-      appVars.placeHistoryButtons();
+      appVars.placeHistoryButtons=placeHistoryButtons;
+      new MutationObserver(placeHistoryButtons).observe(appCalls.$('#procModal'), { attributes: true, attributeFilter: ['class'] });
+      placeHistoryButtons();
       const tools = document.createElement('div');
       tools.className = 'project-tools';
       const title = document.createElement('div');
