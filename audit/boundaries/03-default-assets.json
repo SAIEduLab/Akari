@@ -5,7 +5,8 @@
     "src/js/00-prelude.js",
     "src/js/02-language-contracts.js",
     "src/js/04-meijin-syntax.js",
-    "src/js/04-syntax-parsing.js",
+    "src/js/04-syntax-expressions.js",
+    "src/js/04-syntax-scripts.js",
     "src/js/07-semantic-analysis.js"
   ]
 }

@@ -75,7 +75,8 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
   const {boundaries}=state(),line="KEY_SURFACES[key] : key;";assert.ok(coreText.includes(line));
   const issues=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : keyName(key);')}),boundaries);
   assert.ok(issues.includes('createAkariRuntime is embedded through toString() but uses closure names: keyName'),JSON.stringify(issues));
-  assert.ok(issues.some(i=>i.startsWith(core+' uses src/js/04-syntax-parsing.js without declaring')));
+  const keyNameFile=Object.keys(boundaries).find(file=>read(file).includes('  function keyName('));assert.ok(keyNameFile);
+  assert.ok(issues.some(i=>i.startsWith(core+' uses '+keyNameFile+' without declaring')),JSON.stringify(issues));
   const global=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : globalThis.Akari && key;')}),boundaries);
   assert.ok(global.includes('createAkariRuntime is embedded through toString() but reads what the product puts on the global object: Akari'),JSON.stringify(global));
   const destructured=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : (({Akari: q} = globalThis), key);')}),boundaries);
@@ -88,7 +89,7 @@ check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
   // A local of the same name is not the top-level function; a top-level const arrow function is one.
   const local=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+'${((keyName) => `${keyName}`)(1)}')}),boundaries);
   assert.ok(!local.some(i=>i.startsWith('the product embeds ')),JSON.stringify(local));
-  const parser='src/js/04-syntax-parsing.js',anchor='  const KEY_WORDS=';assert.ok(read(parser).includes(anchor));
+  const anchor='  const KEY_WORDS=',parser=Object.keys(boundaries).find(file=>read(file).includes(anchor));assert.ok(parser);
   const arrow=boundaryIssues(usesWith({[parser]:read(parser).replace(anchor,'  const KEY_ALIASES_ARROW=()=>keyName;\n'+anchor),[exporter]:exportText.replace(call,call+'${KEY_ALIASES_ARROW.toString()}')}),boundaries);
   assert.ok(arrow.some(i=>i.startsWith('the product embeds ')&&i.includes('KEY_ALIASES_ARROW')),JSON.stringify(arrow));
 });
