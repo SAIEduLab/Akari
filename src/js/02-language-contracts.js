@@ -48,6 +48,7 @@
     EDGE_TARGETS,
     isEdgeTarget,
     eventText,
+    keySurface,
     BUILTIN_META,
     AkariError,
     ScriptSignal,

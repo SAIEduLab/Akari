@@ -5,6 +5,8 @@ import {buildProduct,repositoryRoot,sourceDirectories} from '../../src/build.mjs
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIssues,CHILD_SPACING_RUN} from '../lib/product-source-contract.mjs';
+import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources} from '../lib/source-boundaries.mjs';
+import vm from 'node:vm';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
 assert.ok(!fs.existsSync(output),'fresh result required: '+output);
@@ -35,6 +37,33 @@ check('REJECT-INCLUDE-OUTSIDE-SOURCE',()=>{for(const target of ['js/../../extens
 // The only spelling of a file through another source directory is still refused.
 check('REJECT-INCLUDE-ALIAS',()=>{for(const alias of ['css/../js/12-public-api.js','js/./12-public-api.js','js//12-public-api.js'])assert.throws(()=>variant(withInclude(alias)),/include alias/,alias);});
 check('REJECT-UNLISTED-PORTABLE',()=>{const other='extensions/other.js',text="const other = 1;\nif (typeof module !== 'undefined') module.exports = {other};\n";assert.throws(()=>variant({[core]:coreText.replace('// @portable extensions/profiles.js','// @portable '+other),[other]:text}),/not an allowed portable extension: extensions\/other\.js/);});
+// Source boundaries (AUDIT.md「ソースの境界」): each src/js file uses only the files its declaration names.
+const boundaries=readBoundaries(repositoryRoot),uses=sourceUses(read);
+const usesWith=changes=>sourceUses(file=>file in changes?changes[file]:read(file));
+check('SOURCE-BOUNDARIES-RESOLVER',()=>{
+  // Shadowed names are local; member and key names, labels and declarations are not references; defaults are.
+  const text="(() => {\n  const a = 1, b = 2;\n  function f(a, {x = b} = {}) { return a + x; }\n  const g = () => { let a = 3; label: for (const b of [a]) break label; return {a, b: a}.b; };\n  class C { a() { return this.a; } static b = a; }\n  const h = () => a;\n  try { h(); } catch (a) { a; }\n})();\n";
+  const found=closureReferences({text,pieces:[{label:'x',start:0,end:text.length}]}).refs.map(r=>r.name+'@'+text.slice(0,r.at).split('\n').length).sort();
+  assert.deepEqual(found,['a@5','a@6','b@3','h@7']);
+});
+check('SOURCE-BOUNDARIES-DECLARED',()=>{assert.deepEqual(boundaryIssues(uses,boundaries),[]);assert.ok(uses.refs>0);});
+// The exported player embeds these functions alone; they must run without the editor's closure.
+check('SOURCE-BOUNDARIES-EMBEDDED-RUN',()=>{
+  const sources=embeddedSources(read),context=vm.createContext({});
+  vm.runInContext("'use strict';\n"+Object.values(sources).join('\n')+'\nglobalThis.runtime=createAkariRuntime();',context);
+  assert.equal(context.runtime.eventText('keyDown',{key:'空白'}),'「スペース」キーを おした とき');
+});
+const without=(file,use)=>({...boundaries,[file]:{...boundaries[file],uses:boundaries[file].uses.filter(u=>u!==use)}});
+check('REJECT-UNDECLARED-SOURCE-USE',()=>{const file='src/js/11-application.js',use=boundaries[file].uses[0];assert.ok(boundaryIssues(uses,without(file,use)).some(i=>i.startsWith(file+' uses '+use+' without declaring')));});
+// The cases name files that parse on their own (10, 11); src/js/00 and 12 open and close the product's closure.
+check('REJECT-STALE-SOURCE-USE',()=>{const file='src/js/10-block-view.js',extra='src/js/11-application.js';assert.ok(!boundaries[file].uses.includes(extra));assert.ok(boundaryIssues(uses,{...boundaries,[file]:{...boundaries[file],uses:[...boundaries[file].uses,extra]}}).includes(file+' declares '+extra+' but uses none of its names'));});
+check('REJECT-MISSING-SOURCE-BOUNDARY',()=>{const {['src/js/10-block-view.js']:_,...rest}=boundaries;assert.ok(boundaryIssues(uses,rest).includes('src/js/10-block-view.js: no boundary declaration'));});
+check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
+  const line="KEY_SURFACES[key] : key;";assert.ok(coreText.includes(line));
+  const issues=boundaryIssues(usesWith({[core]:coreText.replace(line,'KEY_SURFACES[key] : keyName(key);')}),boundaries);
+  assert.ok(issues.includes('createAkariRuntime is embedded through toString() but uses closure names: keyName'),JSON.stringify(issues));
+  assert.ok(issues.some(i=>i.startsWith(core+' uses src/js/04-syntax-parsing.js without declaring')));
+});
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
 // portable extension files built into the product are the fork developers' interface and are left out.

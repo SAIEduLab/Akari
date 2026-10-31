@@ -31,6 +31,8 @@ export const computedLoaders=[
     targets:text=>Object.values(JSON.parse(text).groups).flat().map(task=>'audit/browser/cases/'+task.split(':')[0]+'.cjs')},
   {source:'audit/manifests/product-tests.json',runtime:'audit/lib/product-test-host.mjs',signature:"path.join(root,'audit/suites',name+'.js')",
     targets:text=>JSON.parse(text).suites.map(suite=>'audit/suites/'+suite.name+'.js')},
+  {source:'audit/public-files.json',runtime:'audit/lib/source-boundaries.mjs',signature:"boundaryDirectory+'/'+path.posix.basename(file,'.js')+'.json'",
+    targets:text=>JSON.parse(text).files.filter(file=>/^src\/js\/[^/]+\.js$/.test(file)).map(file=>'audit/boundaries/'+path.posix.basename(file,'.js')+'.json')},
   {source:'audit/lib/product-path.cjs',runtime:'audit/lib/product-path.cjs',signature:"'audit/manifests/release-' + currentProductVersion() + '.json'",
     targets:(text,read)=>['audit/manifests/release-'+JSON.parse(read('audit/public-files.json')).productVersion+'.json']},
 ];

@@ -1,0 +1,5 @@
+{
+  "schema": "akari-source-boundary-v1",
+  "file": "src/js/00-prelude.js",
+  "uses": []
+}

@@ -1,0 +1,12 @@
+{
+  "schema": "akari-source-boundary-v1",
+  "file": "src/js/02-language-contracts.js",
+  "uses": [
+    "src/js/01-execution-core.js",
+    "src/js/03-default-assets.js",
+    "src/js/04-syntax-parsing.js",
+    "src/js/05-command-presentation.js",
+    "src/js/06-source-formatting.js",
+    "src/js/09-editor-sessions.js"
+  ]
+}

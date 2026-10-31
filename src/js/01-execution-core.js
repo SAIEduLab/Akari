@@ -182,6 +182,10 @@
     const EDGE_TARGETS = Object.freeze({ 端: '画面のはし', '端:上': '画面の上のはし', '端:下': '画面の下のはし', '端:右': '画面の右のはし', '端:左': '画面の左のはし' });
     const isEdgeTarget = (target) => typeof target === 'string' && Object.hasOwn(EDGE_TARGETS, target);
     const EDGE_SIDES = Object.freeze(['端:上', '端:下', '端:右', '端:左']);
+    // A key is written with the name printed on the keyboard (F-34): 「スペース」キー, 「エンター」キー, 「エスケープ」キー.
+    // It lives here because eventText names key bodies in the exported player too.
+    const KEY_SURFACES = Object.freeze({ 空白: 'スペース', 決定: 'エンター', 取消: 'エスケープ' });
+    const keySurface = (key) => typeof key === 'string' && Object.hasOwn(KEY_SURFACES, key) ? KEY_SURFACES[key] : key;
     // A body is named by its event; a touch body also by what it touches (「星」に ふれたとき, 画面のはしに ふれたとき).
     const eventText = (event, filter) => event === 'touchStart' && typeof filter?.target === 'string' && filter.target
       ? (isEdgeTarget(filter.target) ? EDGE_TARGETS[filter.target] : '「' + filter.target + '」') + 'に ふれた とき'
@@ -5137,6 +5141,7 @@
       EDGE_TARGETS,
       isEdgeTarget,
       eventText,
+      keySurface,
       BUILTIN_META,
       AkariError,
       ScriptSignal,

@@ -1,0 +1,8 @@
+{
+  "schema": "akari-source-boundary-v1",
+  "file": "src/js/01-execution-core.js",
+  "uses": [
+    "extensions/foundation.js",
+    "extensions/profiles.js"
+  ]
+}
