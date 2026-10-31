@@ -291,10 +291,24 @@ function nearestBinding(name,ancestors){
     for(const s of statements){
       if(s.type==='FunctionDeclaration'&&s.id?.name===name)return {kind:'function'};
       if(s.type==='ClassDeclaration'&&s.id?.name===name)return {kind:'other'};
-      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,name))return d.id.type==='Identifier'&&['const','let'].includes(s.kind)?{kind:s.kind,init:d.init,ancestors:ancestors.slice(0,i+1)}:{kind:'other'};
+      if(s.type==='VariableDeclaration')for(const d of s.declarations)if(bindsName(d.id,name))return d.id.type==='Identifier'&&['const','let'].includes(s.kind)?{kind:s.kind,init:d.init,ancestors:ancestors.slice(0,i+1),declarator:d}:{kind:'other'};
     }
   }
   return null;
+}
+// Every value a const or let binding may hold, each with its ancestors: its first value and, for a let, each value
+// later assigned to it with =.
+const assigned=new WeakMap();
+function bindingValues(b){
+  if(!b?.declarator)return [];
+  const values=b.init?[{e:b.init,ancestors:b.ancestors}]:[];
+  if(b.kind!=='let')return values;
+  if(!assigned.has(b.declarator)){
+    const later=[],name=b.declarator.id.name;
+    eachNodeWithAncestors(b.ancestors.at(-1),(node,ancestors)=>{if(node.type==='AssignmentExpression'&&node.operator==='='&&node.left.type==='Identifier'&&node.left.name===name&&nearestBinding(name,ancestors)?.declarator===b.declarator)later.push({e:node.right,ancestors});},b.ancestors.slice(0,-1));
+    assigned.set(b.declarator,later);
+  }
+  return [...values,...assigned.get(b.declarator)];
 }
 // 'helper' when the nearest binding is a function declared as `function name(…)` or `const name = (…) => …`, 'other'
 // for any other binding, or null when nothing in the closure binds it.
@@ -327,15 +341,17 @@ function testRead(node,ancestors){
   return false;
 }
 // Whether a value, as written, may be a function: a function or arrow, a name bound to a local function or to a const or
-// let whose first value may be one, a member of appCalls, a .bind(…) result, or a conditional, logical, sequence or
-// assignment expression that may give one. A value another appVars field gives is followed separately (copiedVars), and
-// so is a local copy of a field that is then called (see applicationInterfaces). Anything else (a call's result, a
-// member of another object, …) cannot be told from the text; AUDIT.md asks that a function be put into appVars only as a
-// function or the name of one.
+// let that may hold one (its first value, or for a let any value assigned to it), a member of appCalls, a .bind(…)
+// result, or a conditional, logical, sequence or assignment expression that may give one. A value another appVars field
+// gives is followed separately (copiedVars), and so is a local copy of a field that is then called (see
+// applicationInterfaces). Anything else (a call's result, a member of another object, …) cannot be told from the text;
+// AUDIT.md asks that a function be put into appVars only as a function or the name of one.
 function mayBeFunction(e,ancestors,seen=new Set()){
   if(!e)return false;
-  if(/Function|Arrow/.test(e.type))return true;
-  if(e.type==='Identifier'){const b=nearestBinding(e.name,ancestors);if(b?.kind==='function')return true;if(!b?.init||seen.has(b.init))return false;seen.add(b.init);return mayBeFunction(b.init,b.ancestors,seen);}
+  if(/Function|Arrow|Class/.test(e.type))return true;
+  if(e.type==='Identifier'){const b=nearestBinding(e.name,ancestors);if(b?.kind==='function')return true;
+    for(const v of bindingValues(b))if(!seen.has(v.e)){seen.add(v.e);if(mayBeFunction(v.e,v.ancestors,seen))return true;}
+    return false;}
   if((e.type==='MemberExpression'||e.type==='OptionalMemberExpression')&&e.object.type==='Identifier'&&e.object.name==='appCalls')return true;
   if((e.type==='CallExpression'||e.type==='OptionalCallExpression')&&(e.callee.type==='MemberExpression'||e.callee.type==='OptionalMemberExpression')&&!e.callee.computed&&e.callee.property.name==='bind')return true;
   if(e.type==='ConditionalExpression')return mayBeFunction(e.consequent,ancestors,seen)||mayBeFunction(e.alternate,ancestors,seen);
@@ -344,15 +360,29 @@ function mayBeFunction(e,ancestors,seen=new Set()){
   if(e.type==='AssignmentExpression')return mayBeFunction(e.right,ancestors,seen);
   return false;
 }
-// The appVars fields a value may be copied from (appVars.a = appVars.b, or through ?: && || , =).
-function copiedVars(e){
+// The appVars fields a value may be copied from (appVars.a = appVars.b, through ?: && || , =, or through a const or let
+// that may hold the field).
+function copiedVars(e,ancestors,seen=new Set()){
   if(!e)return [];
   if((e.type==='MemberExpression'||e.type==='OptionalMemberExpression')&&e.object.type==='Identifier'&&e.object.name==='appVars'&&!e.computed)return [e.property.name];
-  if(e.type==='ConditionalExpression')return [...copiedVars(e.consequent),...copiedVars(e.alternate)];
-  if(e.type==='LogicalExpression')return [...copiedVars(e.left),...copiedVars(e.right)];
-  if(e.type==='SequenceExpression')return copiedVars(e.expressions.at(-1));
-  if(e.type==='AssignmentExpression')return copiedVars(e.right);
+  if(e.type==='Identifier'){const out=[];for(const v of bindingValues(nearestBinding(e.name,ancestors)))if(!seen.has(v.e)){seen.add(v.e);out.push(...copiedVars(v.e,v.ancestors,seen));}return out;}
+  if(e.type==='ConditionalExpression')return [...copiedVars(e.consequent,ancestors,seen),...copiedVars(e.alternate,ancestors,seen)];
+  if(e.type==='LogicalExpression')return [...copiedVars(e.left,ancestors,seen),...copiedVars(e.right,ancestors,seen)];
+  if(e.type==='SequenceExpression')return copiedVars(e.expressions.at(-1),ancestors,seen);
+  if(e.type==='AssignmentExpression')return copiedVars(e.right,ancestors,seen);
   return [];
+}
+// Whether a value, as written, is not a function: a literal, an object or array, a new instance, an arithmetic, logical
+// not, typeof or other operator result, undefined, or a conditional or logical expression giving only such values.
+function notFunction(e){
+  if(!e)return false;
+  if(/Literal$/.test(e.type)||['ObjectExpression','ArrayExpression','NewExpression','UnaryExpression','BinaryExpression','UpdateExpression'].includes(e.type))return true;
+  if(e.type==='Identifier')return e.name==='undefined';
+  if(e.type==='ConditionalExpression')return notFunction(e.consequent)&&notFunction(e.alternate);
+  if(e.type==='LogicalExpression')return notFunction(e.left)&&notFunction(e.right);
+  if(e.type==='SequenceExpression')return notFunction(e.expressions.at(-1));
+  if(e.type==='AssignmentExpression')return e.operator!=='='||notFunction(e.right);
+  return false;
 }
 // A call whose result nothing uses: the whole expression of a statement.
 const statementCall=(node,parent,grand)=>(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node&&grand?.type==='ExpressionStatement'&&grand.expression===parent;
@@ -388,9 +418,8 @@ function applicationInterfaces(ast,labelAt){
     if(node.type==='VariableDeclarator'&&node.id.type==='Identifier'&&applicationObjects.includes(node.id.name)&&node.init?.type==='ObjectExpression'&&!node.init.properties.length)allowed.add(node.id.start);
     // A local copy of a field that is called (const g = appVars.f; g(), or g.call(…)) calls the field too.
     if(node.type==='CallExpression'||node.type==='OptionalCallExpression'){
-      const c=node.callee,local=c.type==='Identifier'?c.name:(c.type==='MemberExpression'||c.type==='OptionalMemberExpression')&&!c.computed&&c.object.type==='Identifier'&&['call','apply'].includes(c.property.name)?c.object.name:null;
-      const b=local&&!applicationObjects.includes(local)?nearestBinding(local,ancestors):null;
-      for(const name of copiedVars(b?.init))get(labelAt(node.start)).varCalls.push({name,statement:parent?.type==='ExpressionStatement'&&parent.expression===node});
+      const c=node.callee,local=c.type==='Identifier'?c:(c.type==='MemberExpression'||c.type==='OptionalMemberExpression')&&!c.computed&&c.object.type==='Identifier'&&['call','apply'].includes(c.property.name)?c.object:null;
+      if(local&&!applicationObjects.includes(local.name))for(const name of copiedVars(local,ancestors))get(labelAt(node.start)).varCalls.push({name,statement:parent?.type==='ExpressionStatement'&&parent.expression===node});
     }
     if(node.type==='CallExpression'&&node.callee.type==='Identifier'&&factoryName.test(node.callee.name)){
       const f=get(labelAt(node.start));f.factoryCalls.push(node.callee.name);
@@ -402,10 +431,10 @@ function applicationInterfaces(ast,labelAt){
       if(!name)return;
       allowed.add(node.object.start);
       const written=writtenAt(node,parent,grand);
-      if(object==='appVars'){f.vars.add(name);if(written){f.sets.add(name);const rhs=parent?.type==='AssignmentExpression'&&parent.left===node?parent.right:null;
-          // A first value is an assignment initApp itself makes at the top of its body (where the state was declared).
-          const fn=!!rhs&&mayBeFunction(rhs,ancestors),copies=rhs?copiedVars(rhs):[],nearest=[...ancestors].reverse().find(isFunction);
-          f.writes.push({name,fn,copies,first:nearest?.type==='FunctionDeclaration'&&nearest.id?.name==='initApp'});}
+      if(object==='appVars'){f.vars.add(name);if(written){f.sets.add(name);const assignment=parent?.type==='AssignmentExpression'&&parent.left===node,rhs=assignment?parent.right:null;
+          // Not a function: a value that is plainly none, an arithmetic or string compound assignment, ++ or --, delete.
+          const notFn=assignment?!['=','||=','&&=','??='].includes(parent.operator)||notFunction(rhs):parent?.type==='UpdateExpression'||parent?.type==='UnaryExpression';
+          f.writes.push({name,fn:!!rhs&&mayBeFunction(rhs,ancestors),copies:rhs?copiedVars(rhs,ancestors):[],notFn});}
         const called=(parent?.type==='CallExpression'||parent?.type==='OptionalCallExpression')&&parent.callee===node;
         // appVars.f.call(…) and .apply(…) call it too; .bind(…) hands it on as a value.
         const through=(parent?.type==='MemberExpression'||parent?.type==='OptionalMemberExpression')&&parent.object===node&&!parent.computed&&['call','apply'].includes(parent.property.name)&&(grand?.type==='CallExpression'||grand?.type==='OptionalCallExpression')&&grand.callee===parent;
@@ -481,14 +510,14 @@ export function boundaryIssues(analysis,declarations){
   // what it does, never for its result.
   const setBy=new Map();for(const [file,i]of Object.entries(analysis.interfaces))for(const n of i.sets??[])setBy.set(n,[...(setBy.get(n)||[]),file]);
   for(const n of new Set(Object.values(analysis.interfaces).flatMap(i=>i.vars??[])))if(!setBy.has(n))issues.push('appVars.'+n+' is read but no file assigns it');
-  // A function kept in appVars: a name some file calls, or assigns a function (or a name bound to one). Who supplies it:
-  // the files that assign it, apart from initApp's first values.
+  // A function kept in appVars: a name some file calls (or calls through a local copy), or assigns a function (or a name
+  // that may hold one, or a field that is one).
   const writes=Object.entries(analysis.interfaces).flatMap(([file,i])=>(i.writes??[]).map(w=>({...w,file})));
   const fnVars=new Set([...Object.values(analysis.interfaces).flatMap(i=>(i.varCalls??[]).map(c=>c.name)),...writes.filter(w=>w.fn).map(w=>w.name)]);
   for(let grew=true;grew;){grew=false;for(const w of writes)if(!fnVars.has(w.name)&&w.copies.some(c=>fnVars.has(c))){fnVars.add(w.name);grew=true;}}
-  // Who supplies it: every file that assigns it. initApp's first values (assignments in initApp's own body) count only
-  // when they put in a function.
-  const suppliedBy=new Map();for(const w of writes)if(!w.first||w.fn||w.copies.length)suppliedBy.set(w.name,[...new Set([...(suppliedBy.get(w.name)||[]),w.file])]);
+  // Who supplies it: every file that assigns it a value that is not plainly something other than a function. Clearing a
+  // field (null, false, …) or keeping a number in it supplies nothing.
+  const suppliedBy=new Map();for(const w of writes)if(!w.notFn)suppliedBy.set(w.name,[...new Set([...(suppliedBy.get(w.name)||[]),w.file])]);
   for(const [file,i]of Object.entries(analysis.interfaces))for(const c of i.varCalls??[])if(!c.statement)for(const w of suppliedBy.get(c.name)??[])if(before(file,w))issues.push(file+' uses the result of appVars.'+c.name+'(), which '+w+' (a later file) assigns');
   // Nor is such a function handed on as a value (kept in a name, passed, returned, bound), where a call of it could no
   // longer be seen: a read of it only decides (a test, a comparison). A file that puts in a function of its own and
