@@ -35,7 +35,7 @@ const any=/./;
 reject('workflow-set/unknown-file','workflow-set',/undeclared/,f=>({...f,'akari-extra.yml':f[guard]}));
 reject('workflow-set/missing-file','workflow-set',/missing/,f=>{const {[guard]:_,...rest}=f;return rest;});
 reject('yaml/anchor','yaml',/unsupported YAML construct/,f=>edit(f,audit,'permissions:\n  contents: read','permissions: &perm\n  contents: read'));
-reject('yaml/alias','yaml',/unsupported YAML construct/,f=>edit(f,guard,"node-version: '24'",'node-version: *version'));
+reject('yaml/alias','yaml',/unsupported YAML construct/,f=>edit(f,guard,"node-version: '24.22.2'",'node-version: *version'));
 reject('yaml/tab-indentation','yaml',/tab character/,f=>edit(f,guard,'    runs-on: windows-latest','\truns-on: windows-latest'));
 reject('yaml/flow-mapping','yaml',/unsupported YAML construct/,f=>edit(f,audit,'permissions:\n  contents: read','permissions: {contents: read}'));
 reject('yaml/folded-scalar','yaml',/literal block scalars/,f=>edit(f,audit,'      - run: |\n','      - run: >\n'));
@@ -75,7 +75,7 @@ reject('commands/reordered-entries','commands',/out of order/,f=>edit(f,audit,ga
 reject('commands/duplicate-entry','commands',/repeated/,f=>edit(f,audit,gateStep,gateStep+gateStep));
 reject('step-condition/disabled-entry','step-condition',any,f=>edit(f,audit,gateStep,gateStep+'        if: ${{ false }}\n'));
 reject('step-env/entry-env-changed','step-env',/entry environment/,f=>edit(f,audit,'AKARI_NEEDS: ${{ toJSON(needs) }}',"AKARI_NEEDS: '{}'"));
-reject('step-env/undeclared','step-env',/undeclared/,f=>edit(f,guard,"        with:\n          node-version: '24'\n","        with:\n          node-version: '24'\n        env:\n          NODE_OPTIONS: --require ./preload.cjs\n"));
+reject('step-env/undeclared','step-env',/undeclared/,f=>edit(f,guard,"        with:\n          node-version: '24.22.2'\n","        with:\n          node-version: '24.22.2'\n        env:\n          NODE_OPTIONS: --require ./preload.cjs\n"));
 reject('step-keys/shell-override','step-keys',/not allowed/,f=>edit(f,audit,gateStep,gateStep+'        shell: python\n'));
 reject('actions/unknown-action','actions',/not allowed/,f=>edit(f,guard,'      - uses: actions/setup-node@v4\n','      - uses: someone/setup-node@main\n'));
 reject('bundles/matrix-group-dropped','bundles',/full-browser-b07/,f=>edit(f,audit,'shard: [b01, b02, b03, b04, b05, b06, b07]','shard: [b01, b02, b03, b04, b05, b06]'));
