@@ -39,7 +39,7 @@ for(const {viewport,mode} of contexts){
   const dangoId=source.match(/const DANGO_MASCOT_ASSET_ID\s*=\s*('[^']*'|"[^"]*")/);
   assert(dangoId,'the Dango registry dependency is defined by the product');
   sandbox.DANGO_MASCOT_ASSET_ID=vm.runInNewContext(dangoId[1]);
-  const match=source.match(/const STANDARD_SPRITES\s*=\s*Object.freeze\(\s*(\{[\s\S]*?\})\s*\);/);
+  const match=source.match(/(?:const |appVars\.)STANDARD_SPRITES\s*=\s*Object.freeze\(\s*(\{[\s\S]*?\})\s*\);/);
   assert(match);const registry=vm.runInNewContext('('+match[1]+')',sandbox);
   // The toolbox has one choice per registered preset; はじめて's ＋ buttons (#entryAddRow) add registered presets too.
   const buttons=p.locator('.tool.sprite-preset[data-sprite-preset]'),ids=await buttons.evaluateAll(ns=>ns.map(n=>n.dataset.spritePreset));

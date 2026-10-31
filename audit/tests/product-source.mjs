@@ -8,6 +8,7 @@ import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIss
 import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources,productScript} from '../lib/source-boundaries.mjs';
 import {sourceSizes,splitSource,sourceUnits,SOURCE_SPLIT_LINES} from '../lib/source-split.mjs';
 import vm from 'node:vm';
+import {spawnSync} from 'node:child_process';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
 assert.ok(!fs.existsSync(output),'fresh result required: '+output);
@@ -142,6 +143,13 @@ check('REJECT-APP-AGAINST-ORDER',()=>{
   variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
   const shellText=read('src/js/11-application.js'),setup='    createAppDrawing(appVars, appCalls, appRedraw);\n';assert.ok(shellText.includes(setup));
   variantIssues({'src/js/11-application.js':shellText.replace(setup,setup+'    const setLater = () => { appVars.laterFn = () => 42; };\n'),[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
+  // initApp's first values count when they put in a function.
+  const direct=shellText.replace(setup,setup+'    appVars.laterFn = () => 42;\n');
+  variantIssues({'src/js/11-application.js':direct,[services]:read(services).replace(kept,'const answer = appVars.laterFn();')},services+' uses the result of appVars.laterFn(), which src/js/11-application.js (a later file) assigns');
+  variantIssues({'src/js/11-application.js':direct,[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
+  // A function put in through ?:, &&, .bind, appCalls or another field is still one.
+  for(const value of ['flag ? () => 1 : null','flag && (() => 1)','(() => 1).bind(null)','appCalls.setStatus','appVars.activeDragCleanup'])
+    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { appVars.extraKept = '+value+'; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
   // The language processing is one group: its files may use each other, but not a group after it; its files come together.
   const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
   variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');
@@ -210,7 +218,10 @@ check('SOURCE-SPLIT-RULE',()=>{
     const was=sourceUnits(read,file);assert.equal(now.length,was.length,file+' units');
     for(const u of was){const v=now.find(x=>key(x)===key(u));assert.ok(v&&(v.text===u.text||restore(v.text)===u.text),file+' keeps '+key(u).slice(0,40));}
   }
-  assert.throws(()=>splitSource(read,'src/js/00-prelude.js'),/opens or closes the closure/);
+  const opening=productFiles(read).find(f=>f.endsWith('-prelude.js'));assert.ok(opening);assert.throws(()=>splitSource(read,opening),/opens or closes the closure/);
+  // The command refuses a call without one src/js file and changes nothing.
+  const cli=spawnSync(process.execPath,[path.join(repositoryRoot,'audit/split-source.mjs')],{cwd:repositoryRoot,encoding:'utf8'});
+  assert.notEqual(cli.status,0);assert.match(cli.stderr,/usage: node audit\/split-source\.mjs/);
   assert.throws(()=>splitSource(read,'src/js/01-execution-core.js'),/portable extension/);
   const cyclic='src/js/05-command-presentation.js',loop={[cyclic]:'  function loopA() { return loopB(); }\n  function loopB() { return loopA(); }\n'};
   assert.throws(()=>splitSource(f=>f in loop?loop[f]:read(f),cyclic),/form one cycle/);
