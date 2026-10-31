@@ -1,5 +1,6 @@
 import {runWorkAuthorizationChecks} from './work-authorization.mjs';
 import {runLanguageReleaseChecks} from './language-release.mjs';
+import {runReleaseRenumberChecks} from './release-renumber.mjs';
 import { currentProductFile, currentProductVersion, currentReleaseFile, currentLanguageFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -106,6 +107,9 @@ let frozen;
 function freezeRun(record,{changed=false,contract=fixtureContract,releases=[currentRelease]}={}){
  vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readdirSync(p){assert.equal(p,'audit/manifests');return ['features.json',...releases,'samples.json'];},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),currentLanguageFile()]});if(p==='audit/manifests/features.json')return JSON.stringify({EXECUTABLE_CONTRACT:contract});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,currentLanguageFile,assertLanguageInventory(){},prepareLanguageRelease(){},verifyLanguageRelease(){},process:{argv:record?['--record']:[],cwd:()=>'.'},console:{log(){}}});}
 check('freeze-record-and-verify',()=>{freezeRun(true);freezeRun(false);runLanguageReleaseChecks();runWorkAuthorizationChecks();});
+// Two product branches from one base: the later one renumbers with one command and passes the change guard.
+const renumberChecks=await runReleaseRenumberChecks();
+check('release-renumber',()=>assert.ok(renumberChecks>0));
 check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,{changed:true}),/Current distribution differs/));
 check('freeze-contract-from-features',()=>{frozen=undefined;freezeRun(true);const r=JSON.parse(frozen);assert.deepEqual([r.languageContractId,r.runtimeContractId,r.programFormat,r.projectFormat],[5,6,7,8]);freezeRun(false);});
 check('freeze-changed-contract-refused',()=>{freezeRun(true);for(const key of Object.keys(fixtureContract))assert.throws(()=>freezeRun(false,{contract:{...fixtureContract,[key]:9}}),/Current distribution differs/,key);});

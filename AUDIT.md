@@ -40,6 +40,18 @@
 
 selftestの `product-source` は、`src/` から生成した結果がコミット済みの現行製品とbyte単位で一致し、`src/css/` と `src/js/` の全ファイルを一度ずつ取り込むことを検査します。変更したソース・拡張ソース、未取込みのファイル、重複取込み、不正な指示行をそれぞれ検出できることも同じ検査で確かめます。
 
+### 並行した製品PRの版の振り直し
+
+同じbaseから作った製品PRが先にmergeされると、後のPRは同じ版を名乗り、製品HTMLと配布記録が衝突します。後のPRはmainを取り込み（merge・rebaseのどちらでもよい）、手書きのファイルの衝突だけを手で解いてから `node audit/renumber-release.mjs`（既定のbaseは `origin/main`、`--base <ref>` で変更）を実行し、結果をstageしてcommitします。
+
+- 版は変更ガードと同じ規則で決めます。baseの版に対して `src/` か製品が変わっていればpatchを1つ上げた版、変わっていなければbaseの版です。それ以外の上げ方は作りません。
+- `src/` の `PRODUCT_RELEASE`、`audit/public-files.json` の `productVersion`・`productFile`、`productVersion` を写す登録簿（`features.json`・`language-form-coverage.json`・`browser-audit-manifest.json`）を書き換えます。文書と `src/` は現行版だけを名乗るので（`publication-documents`）、旧版の版番号と製品ファイル名を新しい版へ書き換えます。外部ツールの版は書き換えません。製品HTMLは `src/` から作り直して旧製品を削除し、仕様書名・リンク・配布一覧・配布記録は仕様書の配布準備で更新します。
+- 生成物（製品HTML、配布記録）は衝突の状態にかかわらず作り直します。それ以外のファイルに未解決の衝突や衝突マーカーが残っていれば、何も変えずに止めます。baseを取り込んでいないbranch、内部repo（`PUBLIC_SYNC.json` がある）でも止めます。
+- 文書・`src/`・登録簿以外で、このbranchが追加した行が以前の版番号を含む場合は、データか版の参照かを機械で区別できないので、一覧を示して止めます。手で直してから実行し直します。
+- 途中で失敗した場合は、実行前の内容に戻します。gitの取り込み・stage・commitは行いません。
+
+integrityの `release-renumber` は、合成した一時リポジトリで2本の製品branchを同じbaseから作り、先の1本をmergeした後に、後の1本がmainを取り込んで衝突するのは生成物だけであること、このコマンドで1つ上の版になって変更ガードがPASSすること、再実行で何も変わらないこと、製品を変えないbranchはbaseの版のままであることを確かめます。手書きの衝突・残った衝突マーカー・以前の版を含む追加行・未取込みのbase・内部repo・仕様書名の衝突・不明なbaseでは、何も変えずに拒否することも確かめます。
+
 ## コードの所属と到達性
 
 1. 全イベント本文に実在する画面・部品の `targetId` が必要です。共通動作・計算・定義下書きには画面を示す `ownerId: "stage"` が必要です。
