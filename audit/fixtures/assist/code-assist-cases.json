@@ -1989,7 +1989,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE_BY",
-          "text": "いまのばしょから、右へ10歩動く。"
+          "text": "犬は、いまのばしょから、右へ10歩動く。"
         },
         "absent": [],
         "maxAssist": 4,
@@ -2003,7 +2003,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "別の部品を主語にした文には、主語を外した近い書き方と「犬が する ことは、犬の 本文に 書きます」の注を示します。"
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -2047,13 +2051,13 @@
           "schemaId": "MotionCommand:GOTO",
           "text": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
           {
             "schemaId": "MotionCommand:GOTO_PART",
             "text": "「犬」のところへ行く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -2066,6 +2070,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味をすべて保つ文があるときは、その一部を落とした文を示しません。落とした文とは、時間や数や向きを書かない文、書いたことと別のことをする文（名前が同じなだけの文）です。"
         }
       ]
     },
@@ -5906,7 +5914,7 @@
         "code": "P201",
         "first": {
           "schemaId": "LooksCommand:SET_SCALE",
-          "text": "大きさを150％にする。"
+          "text": "犬は大きさを150％にする。"
         },
         "absent": [],
         "maxAssist": 4,
@@ -5921,6 +5929,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -7367,7 +7383,7 @@
         "code": "P205",
         "first": {
           "schemaId": "LooksCommand:SET_COLOR",
-          "text": "色を「赤」にする。"
+          "text": "犬は色を「赤」にする。"
         },
         "absent": [],
         "maxAssist": 4,
@@ -7382,6 +7398,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },
@@ -12102,7 +12126,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -17447,7 +17471,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -17489,7 +17513,7 @@
         "code": "S317",
         "first": {
           "schemaId": "PenCommand:DOWN",
-          "text": "ペンを下ろす。"
+          "text": "犬はペンを下ろす。"
         },
         "absent": [],
         "maxAssist": 4,
@@ -17503,7 +17527,15 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },
@@ -18104,7 +18136,7 @@
         "code": "S317",
         "first": {
           "schemaId": "PenCommand:UP",
-          "text": "ペンを上げる。"
+          "text": "犬はペンを上げる。"
         },
         "absent": [],
         "maxAssist": 4,
@@ -18118,7 +18150,15 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },
@@ -22650,7 +22690,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -22706,7 +22746,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -45674,14 +45714,10 @@
           "schemaId": "CloneCommand:CREATE_TARGET",
           "text": "「星」のコピーを作る。"
         },
-        "contains": [
-          {
-            "schemaId": "CloneCommand:CREATE_SELF",
-            "text": "自分のコピーを作る。"
-          }
-        ],
+        "contains": [],
         "absent": [
-          "CloneCommand:DELETE_SELF"
+          "CloneCommand:DELETE_SELF",
+          "CloneCommand:CREATE_SELF"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -45696,6 +45732,10 @@
           "file": "LANGUAGE.md",
           "section": "読めない文の近い書き方（コピー・てじゅん・定義の本文）",
           "quote": "部品の名前を書いたときは、その部品のコピーを作る文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
         }
       ]
     },
@@ -48056,14 +48096,10 @@
           "schemaId": "CloneCommand:CREATE_TARGET",
           "text": "「星」のコピーを作る。"
         },
-        "contains": [
-          {
-            "schemaId": "CloneCommand:CREATE_SELF",
-            "text": "自分のコピーを作る。"
-          }
-        ],
+        "contains": [],
         "absent": [
-          "CloneCommand:DELETE_SELF"
+          "CloneCommand:DELETE_SELF",
+          "CloneCommand:CREATE_SELF"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -48078,6 +48114,10 @@
           "file": "LANGUAGE.md",
           "section": "読めない文の近い書き方（コピー・てじゅん・定義の本文）",
           "quote": "「を」を書かずに「〜のコピー作る」と書いた文には、「〜のコピーを作る」を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
         }
       ]
     },
@@ -51432,7 +51472,7 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:SET_DIRECTION",
-          "text": "画面の上を向く。"
+          "text": "犬は画面の上を向く。"
         },
         "absent": [
           "Meijin:LookOf"
@@ -51449,6 +51489,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },
@@ -51490,7 +51538,7 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:SET_DIRECTION",
-          "text": "画面の上を向く。"
+          "text": "ねこは画面の上を向く。"
         },
         "absent": [
           "Meijin:LookOf"
@@ -51507,6 +51555,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },
@@ -52978,7 +53034,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "absent": [
           "Meijin:Subject"
@@ -52995,6 +53051,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -53036,7 +53100,7 @@
         "code": "P201",
         "first": {
           "schemaId": "Say",
-          "text": "「やあ」と言う。"
+          "text": "犬は「やあ」と言う。"
         },
         "absent": [
           "Meijin:Subject"
@@ -53053,6 +53117,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -55023,7 +55095,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -55086,7 +55158,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -55146,7 +55218,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
         }
       ]
     },
@@ -56471,7 +56543,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "contains": [],
         "absent": [
@@ -56488,7 +56560,15 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -56533,7 +56613,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "犬は前へ10歩進む。"
         },
         "contains": [],
         "absent": [],
@@ -56551,7 +56631,15 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -56842,7 +56930,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "contains": [],
         "absent": [
@@ -56860,7 +56948,15 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方：別の部品を主語にした文は、その主語を書いた文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -56905,7 +57001,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "contains": [],
         "absent": [],
@@ -56921,6 +57017,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -56965,7 +57069,7 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "contains": [],
         "absent": [],
@@ -56981,6 +57085,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -70247,7 +70359,7 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "absent": [],
         "maxAssist": 4,
@@ -70262,6 +70374,14 @@
         {
           "file": "LANGUAGE.md",
           "quote": "動作をさせる書き方も、元の動詞に戻して近い書き方を探します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
         }
       ]
     },
@@ -71451,6 +71571,598 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読み・類義語・活用形は、「書ける ことば」と近い書き方で同じ正本を使います。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1597",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこを2秒で右へ40歩移動させる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [
+          "CloneCommand:CREATE_TARGET",
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ40歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "ねこは2秒かけて、いまのばしょから、右へ40歩動く。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「2秒かけて」「2秒で」は動くのにかける時間、「2秒後に」「2秒たってから」「2秒待ってから」は始める前に待つ時間です。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味をすべて保つ文があるときは、その一部を落とした文を示しません。落とした文とは、時間や数や向きを書かない文、書いたことと別のことをする文（名前が同じなだけの文）です。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1598",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこを2秒で右へ40歩移動させる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-2",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [
+          "CloneCommand:CREATE_TARGET",
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "2秒かけて、いまのばしょから、右へ40歩動く。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ40歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "ねこは2秒かけて、いまのばしょから、右へ40歩動く。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「ねこを2秒で右へ40歩移動させる。」には、犬の本文でも「ねこは2秒かけて、いまのばしょから、右へ40歩動く。」を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1599",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "「2秒で右へ40歩」と言わせる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [
+          "MotionCommand:MOVE_BY",
+          "MotionCommand:MOVE",
+          "MotionCommand:GOTO"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "Say",
+          "text": "「2秒で右へ40歩」と言う。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「「2秒で右へ40歩」と言わせる。」には「「2秒で右へ40歩」と言う。」を示し、動く文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1600",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこのコピーを作らせる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "CloneCommand:CREATE_TARGET",
+          "text": "「ねこ」のコピーを作る。"
+        },
+        "contains": [
+          {
+            "schemaId": "CloneCommand:CREATE_SELF",
+            "text": "自分のコピーを作る。"
+          }
+        ]
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1601",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこのコピーを作らせる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-2",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [
+          "CloneCommand:CREATE_SELF"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "CloneCommand:CREATE_TARGET",
+          "text": "「ねこ」のコピーを作る。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた文から、だれがするか（主語。「ねこは」「ねこが」「ねこを…させる」、「ねこの向きを…」の持ち主）、何をするか、何に（相手）、どの向きへ、どれだけ（歩・度・秒などの数と単位）、その時間が何の時間かを読み、近い書き方の文と比べます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1602",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこを2秒後に右へ40歩移動させる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "ねこは2秒かけて、いまのばしょから、右へ40歩動く。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "2秒かけて、いまのばしょから、右へ40歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P205",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "ねこは2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「2秒かけて」「2秒で」は動くのにかける時間、「2秒後に」「2秒たってから」「2秒待ってから」は始める前に待つ時間です。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "数が同じでも、役割のちがう数は同じ意味とみなしません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1603",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこを2秒待ってから右へ40歩移動させる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "ねこは2秒かけて、いまのばしょから、右へ40歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "WaitTime",
+          "text": "2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「2秒かけて」「2秒で」は動くのにかける時間、「2秒後に」「2秒たってから」「2秒待ってから」は始める前に待つ時間です。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "数が同じでも、役割のちがう数は同じ意味とみなしません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた主語を書いた文は、主語を書かない文より先に示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1604",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこを右へ40歩移動させて、犬を3秒で左へ10歩移動させる。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "ねこは、いまのばしょから、右へ40歩動く。\n犬は3秒かけて、いまのばしょから、左へ10歩動く。"
+        }
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜して、」でつないだ文は、文ごとに主語・数・時間を比べます。そのため、ほかの文の意味は変えません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「2秒かけて」「2秒で」は動くのにかける時間、「2秒後に」「2秒たってから」「2秒待ってから」は始める前に待つ時間です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1605",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ねこを2秒右へ40歩動かす。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "absent": [],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "code": "P201",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "ねこは2秒かけて、いまのばしょから、右へ40歩動く。"
+        },
+        "contains": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "ねこは2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。"
+          }
+        ]
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "時間がどちらの時間か書いていないとき（「ねこを2秒右へ動かす」）は、どちらかに決めず、意味ごとに示します。"
         }
       ]
     }

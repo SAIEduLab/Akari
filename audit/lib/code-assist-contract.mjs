@@ -1238,7 +1238,16 @@ export const codeAssistIds=[
  "ASSIST-1593",
  "ASSIST-1594",
  "ASSIST-1595",
- "ASSIST-1596"
+ "ASSIST-1596",
+ "ASSIST-1597",
+ "ASSIST-1598",
+ "ASSIST-1599",
+ "ASSIST-1600",
+ "ASSIST-1601",
+ "ASSIST-1602",
+ "ASSIST-1603",
+ "ASSIST-1604",
+ "ASSIST-1605"
 ];
 
 export const codeAssistBrowserIds=['ui/keyboard','ui/mouse','ui/close','ui/escape','ui/callable-escape','ui/ime','ui/cached-error','ui/two-sentences','ui/multiline','ui/history-queued','ui/history-after-undo','ui/original-proposals','ui/short-call-proposals','ui/stale-source','ui/revision-same-message','ui/runtime','ui/1180','ui/1024','ui/390','signals/send','signals/receive','signals/switch','signals/refresh'];
