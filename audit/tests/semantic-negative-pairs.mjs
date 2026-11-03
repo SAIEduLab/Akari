@@ -48,11 +48,11 @@ await check('N26/part-wait-and-flow-wait',()=>{
  const flow=trace('0.5秒待つ。\nあかりはいまのばしょから、右へ20歩動く。\nだんごはいまのばしょから、右へ20歩動く。',[499,500]);
  const self=trace('自分は0.5秒待つ。\nだんごはいまのばしょから、右へ20歩動く。\n自分はいまのばしょから、右へ20歩動く。',[499,500]);
  const everyone=trace('みんなは0.5秒待つ。\nあかりはいまのばしょから、右へ20歩動く。',[499,500]);
- assert.deepEqual(part,[[120,300],[120,300],[120,320]]);assert.deepEqual(flow,[[100,300],[100,300],[120,320]]);
- assert.deepEqual(self,[[100,320],[100,320],[120,320]]);assert.deepEqual(everyone,[[100,300],[100,300],[120,300]]);
- // Two subjects in one sentence are not read; the fix is one sentence for each, and both parts then wait together.
+ assert.deepEqual(part,[[100,300],[100,300],[120,320]]);assert.deepEqual(flow,[[100,300],[100,300],[120,320]]);
+ assert.deepEqual(self,[[100,300],[100,300],[120,320]]);assert.deepEqual(everyone,[[100,300],[100,300],[120,300]]);
+ // Two subjects in one sentence are not read; the fix is one sentence for each, and those waits are sequential.
  const both=A.parseSyntax('あかりもだんごも0.5秒待つ。',{symbols:A.buildSymbols(two(''))}),fix=both.syntaxDiagnostics?.[0]?.proposals?.[0]?.source;
  assert.ok(!both.ast&&/主語ごとに/.test(both.syntaxDiagnostics[0].message));assert.equal(fix,'あかりは0.5秒待つ。\nだんごは0.5秒待つ');
- const together=trace(fix+'。\nあかりはいまのばしょから、右へ20歩動く。\nだんごはいまのばしょから、右へ20歩動く。',[499,500]);assert.deepEqual(together,[[100,300],[100,300],[120,320]]);
+ const together=trace(fix+'。\nあかりはいまのばしょから、右へ20歩動く。\nだんごはいまのばしょから、右へ20歩動く。',[499,500,999,1000]);assert.deepEqual(together,[[100,300],[100,300],[100,300],[100,300],[120,320]]);
  return {part,flow,self,everyone,twoSubjects:{fix,together}};});
 const report={schema:'akari-semantic-negative-pairs-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),uxAcceptance:false,environment:'node / actual product; logical clock',results,externalObligations:['N13 same-scope ambiguity: existing scope contract','N22 concurrent notification groups and callable actor scope: existing semantic contract','N23 all38 boundary families: full limits and selftest gates','N24 invalid file with unsaved work: format-malformed-state-protection browser gate','N21 UI draft save/readback and N25 semantic draft file UI: fixed composition acceptance']};const output=path.resolve(process.argv[2]||'audit-evidence/semantic-negative-pairs.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.id+': '+r.error.split('\n').slice(0,4).join(' '));console.log('Semantic minimum pairs: '+results.filter(r=>r.status==='PASS').length+'/'+results.length);if(report.status!=='PASS')process.exitCode=1;

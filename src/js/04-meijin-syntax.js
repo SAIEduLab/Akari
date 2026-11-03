@@ -84,7 +84,7 @@
     [/(?:となり|隣)(?:へ|に|まで)/, '「となり」では、どこへ 行くかが 決まりません。「〜のところへ行く」か、歩の 数を 書きます'],
     [/^(それ|あれ|これ)(?:は|が)/, m => `「${m[1]}」では、どの 部品かが 決まりません。部品の 名前を 書きます`],
     [/話しかける$/, '「話しかける」では、何を するかが 決まりません。「ねこは「やあ」と言う」のように 書きます'],
-    [/言い終わ/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
+    [/言い終わ(?!るまで待)/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
     [/(?:と同じように|(?<!次)のように)/, '「〜のように」では、まねる はんいが 決まりません。する ことを 一つずつ 文に 書きます'],
     [/(?:はし|端)まで(?:進む|動く|行く)$/, '速さが 決まりません。「1秒に20歩の速さで、画面のはしにふれるまで前へ動き続ける」のように 書きます'],
     // ねこは前へ10歩進んでください: the example is the child's sentence as a plain action.
@@ -735,9 +735,6 @@
       return done([node('CloneCommand', { op: 'DELETE_ALL', args: [], actorRef: { kind: 'named', name: p[0].text } })]);
     if (/^(?:できた|作った)コピーを(?:消す|けす)$/.test(mask))
       return done([node('ParallelEach', { list: exprNode('CreatedCopies', {}), binder: MEIJIN_BINDER, body: read('このコピーだけを消す', meijinValueActor(meijinBinderRead()), each) })]);
-    // ねこが話し終わるまで待つ / ねこの音が鳴り終わるまで待つ
-    if ((p = surfaceCapture(/^(.+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで待つ$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope))
-      return done([node('WaitUntil', { condition: exprNode('PartState', { state: p[1].text !== 'の音が鳴り終わる' ? 'speechDone' : 'soundDone', actorRef: { kind: 'named', name: p[0].text } }), actorRef: { kind: 'all' } })]);
     // ねこは、持ち物を一つずつ順に2秒話す: each item in order, said one after another.
     // The one who speaks is the subject written (a part, or a variable holding one), or the subject carried on; it is
     // carried to the next sentence (one subject, 決まり4). The list may be written in 【 】.
@@ -756,13 +753,6 @@
         [{ label: '一つ消す', source: `${p[0].text}から${p[1].text}を一つ消す` }, { label: '全部消す', source: `${p[0].text}から${p[1].text}を全部消す` }], { kind: 'ListRemoveValue', missing: ['count'] });
       return done([node('ListRemoveValue', { target: { name: meijinBare(p[0].text), qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
-    // ねこは、犬が言い終わるまで待つ / ねこが言い終わるまで待ってから、… / 主役が言い終わるまで待つ: the one form that is read.
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
-      throw sentenceDiagnostic(`だれが 待つかは 書きません（本文 ぜんたいが 待ちます）。れい：${p[1].text}が言い終わるまで待つ`, line, [], { kind: 'WaitUntil' });
-    if ((p = surfaceCapture(/^(.+?)が((?:言い|話し)終わる)まで待って(?:から)?、(.+)$/d, code, mask)))
-      throw sentenceDiagnostic(`待つ 文を 分けて 書きます。れい：${p[0].text}が${p[1].text}まで待つ。${p[2].text}`, line, [], { kind: 'WaitUntil' });
-    if ((p = surfaceCapture(/^(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && !isMeijinPart(p[0].text, symbols, scope))
-      throw sentenceDiagnostic('「〜が言い終わるまで待つ」の 〜には、部品の 名前を 書きます', line, [], { kind: 'WaitUntil' });
     // 【長さ】を5として、…、ねこは【かく】という手順を行う: the subject is written first.
     if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という(?:手順|てじゅん)を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
       throw sentenceDiagnostic(`主語は 文の はじめに 書きます。れい：${p[1].text}は、${p[0].text}、${p[2].text}`, line, [], { kind: 'UserActionCall' });

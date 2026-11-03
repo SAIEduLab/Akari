@@ -26,7 +26,7 @@ const compare=(op,left,right)=>({kind:'CompareExpression',op,left,right});
 const logical=(op,left,right)=>({kind:'LogicalExpression',op,left,right});
 const builtin=(name,args)=>({kind:'BuiltinCall',name,args});
 const contains=(list,value)=>builtin('CONTAINS',[list,value]);
-// A wait written without a subject is the whole flow's (みんな); with one, only that part waits (LANGUAGE.md 役割と語順).
+// Wait actor forms preserve expression context; every form blocks its sequential flow (LANGUAGE.md 役割と語順).
 const everyone={kind:'all'},waits=['WaitTime','WaitUntil','BroadcastAndWait'];
 const statement=(kind,props={},actorRef=waits.includes(kind)?everyone:self)=>({kind,...props,actorRef});
 const command=(kind,op,args=[],props={},actorRef=self)=>({kind,args,op,...props,actorRef});
@@ -401,7 +401,7 @@ export const sentenceFormCases=[
     expected:script([hide(named('ねこ')),wait(1),show(named('ねこ'))]),
     claims:{'te:かくして':'ねこは姿をかくして','te:待って':'1秒待って'},
   },
-  // ── 待つ and its subject: with a subject only that part waits; without one (or みんなは／全体が) the whole flow ──
+  // ── 待つ and its actor expression context: all forms wait for the same sequential flow ──
   {
     id:'SF-wait-subject',
     source:'1秒待つ\nねこは1秒待つ\n自分は1秒待つ\nみんなは1秒待つ\n全体が1秒待つ\nみんなで1秒待つ\nねこだけ1秒待つ\nねこは点数が1と同じになるまで待つ\n点数が1と同じになるまで待つ',

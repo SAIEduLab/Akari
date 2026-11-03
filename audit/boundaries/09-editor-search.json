@@ -12,6 +12,7 @@
     "src/js/06-source-formatting.js",
     "src/js/07-semantic-analysis-core.js",
     "src/js/07-semantic-analysis.js",
+    "src/js/09-assist-meaning.js",
     "src/js/09-editor-sessions.js"
   ]
 }

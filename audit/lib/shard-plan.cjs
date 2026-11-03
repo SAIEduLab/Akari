@@ -56,7 +56,7 @@ const selftestShards={
   s05:[unit('change-guard-negative','1/2'),'toolbar-stage','toolbar-stage-verify','review-first-use','extension-foundation','extension-foundation-negative'],
   s06:['static','audit-inventory','product-source','publication-inventory','publication-documents','release-distribution','workflow-contract'],
   s07:['japanese-intent-browser','review-readable','export-open','ui-buttons'],
-  s08:['product','editor-browser-core','editor-gui','editor-assets','manual','language-boundaries','harness-negative','surface-negative','review-units',
+  s08:['flow-context','meaning-preservation','flow-order','part-state-wait','product','editor-browser-core','editor-gui','editor-assets','manual','language-boundaries','harness-negative','surface-negative','review-units',
     'release-policy-negative','browser-environment','ci-regression','dom-regression','node-product','language-node','language-browser','editor-node','normal',
     'ownership','block-fields','format-compatibility','language-negative','japanese-contract-static','language-expectations-static','sentence-form-coverage',
     'runtime-boundary','japanese-gate-negative','review-actor','review-language','review-harness-negative','license-static','license-browser','license-verify'],

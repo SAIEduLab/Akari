@@ -42,7 +42,7 @@
     {
       "id": "CI-004",
       "section": "日本語の作文と文法 > 役割と語順",
-      "summary": "条件を先に書いても、待つのは書いた部品だけで、ほかの部品の文は先に進む（主語のない待つとは違う）",
+      "summary": "条件を先に書いた待機も、その流れを止め、条件成立後に後続を記述順で処理する",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -169,7 +169,7 @@
     {
       "id": "CI-018",
       "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
-      "summary": "回数条件の待つも、主語を書けばその部品だけが待ち、主語を書かなければ動き全体が待つ",
+      "summary": "回数条件の待機も、主語の有無にかかわらず流れを待たせる",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -225,7 +225,7 @@
     {
       "id": "CI-024",
       "section": "日本語の作文と文法 > 役割と語順",
-      "summary": "「ねこが1秒待つ」は「ねこは1秒待つ」と同じく、部品だけが待つ",
+      "summary": "が・はによる主語付き待機はどちらもその流れを待たせる",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -369,8 +369,8 @@
     {
       "id": "CI-040",
       "section": "日本語の作文と文法 > 役割と語順",
-      "summary": "部品だけが待つ文のあとに、同じ流れの中で別の部品の文が続くと、止めない知らせを出す。出ない場合（主語のない待つ・同じ部品の文・最後の文・待つ前の文・別の流れ）は出さない",
-      "polarity": "both",
+      "summary": "主語付き待機の後続は記述順に進み、旧並行規則の知らせを出さない",
+      "polarity": "positive",
       "coverage": "cases",
       "cases": [
         "CC-041",
@@ -441,7 +441,7 @@
     {
       "id": "CI-046",
       "section": "日本語の作文と文法 > 役割と語順",
-      "summary": "部品だけが待つ文の意味：ほかの部品の文はすぐ動き、同じ部品の次の文は待ち終わるまで止まる。主語のない待つは動き全体が待つ",
+      "summary": "主語の有無と後続の主体にかかわらず、その逐次処理の流れを待たせる",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -735,7 +735,7 @@
     {
       "id": "CI-076",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "作品形式5・言語契約4の作品は開ける",
+      "summary": "作品形式6・言語契約5の作品は開ける",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -745,7 +745,7 @@
     {
       "id": "CI-077",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "より新しい作品形式（6）の作品も、番号が大きいことを理由に受け入れず、断る",
+      "summary": "より新しい作品形式7の作品は拒否する",
       "polarity": "negative",
       "coverage": "cases",
       "cases": [
@@ -777,7 +777,7 @@
     {
       "id": "CI-080",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "自動保存は akari-workspace-f5・akari.autosave.f5 を使い、ほかの番号の保存先（前のあかりが自動保存した akari-workspace-f4 など）は読まず、消しもしない",
+      "summary": "自動保存は akari-workspace-f6・akari.autosave.f6 を使い、ほかの番号の保存先（前のあかりが自動保存した akari-workspace-f4 など）は読まず、消しもしない",
       "polarity": "positive",
       "coverage": "unexpressible",
       "reason": "ブラウザーの保存領域（IndexedDB・localStorage）の中の名前と、ほかの番号の自動保存が復元の対象にならず消えないことの観察が要る。画面の操作だけでは保存領域の中身を確かめられず、この形式の check・run・file・ui でも表せない",
@@ -816,7 +816,7 @@
     {
       "id": "CI-085",
       "section": "日本語の作文と文法 > 役割と語順",
-      "summary": "部品だけが待つ文のあとに別の部品の待つ文が続くとき、知らせは「すぐ 待ちはじめます」で、すぐに動く文の行を示す",
+      "summary": "連続する主語付き待機は順に待ち、旧並行規則の知らせを出さない",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [

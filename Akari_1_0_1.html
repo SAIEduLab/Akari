@@ -7030,7 +7030,7 @@ body[data-meijin-level="on"] #sampleBtn { display:none !important; }
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.0.0';
+  const PRODUCT_RELEASE = '1.0.1';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -7146,7 +7146,7 @@ function createAkariExtensionHost(options) {
   'use strict';
   options = options || {};
   const API_CONTRACT = 1;
-  const standard = Object.freeze({ languageContractId: 4, runtimeContractId: 4, ...(options.standard || {}) });
+  const standard = Object.freeze({ languageContractId: 5, runtimeContractId: 5, ...(options.standard || {}) });
   const records = new Map(), names = new Set(), labels = new Set(), connections = new Set();
   let session = null, sequence = 0, savedState = {}, sealed = false;
   const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
@@ -7727,10 +7727,10 @@ function createAkariExtensionHost(options) {
     };
     // The one place that writes the contract numbers; the extension Standard and the saved data read them.
     const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 4,
-      runtimeContractId: 4,
+      languageContractId: 5,
+      runtimeContractId: 5,
       programFormatVersion: 4,
-      projectFormatVersion: 5,
+      projectFormatVersion: 6,
     });
     const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
       executableBytes: 64 * 1024 * 1024, logChars: 100000,
@@ -8032,8 +8032,7 @@ function createAkariExtensionHost(options) {
         channel.port2.postMessage(0);
       };
     })();
-    // A wait with a subject (だんごは0.2秒待つ) holds only that part: the flow goes on, and the next statement of
-    // that part waits until the hold ends. A wait without one (みんな, {kind:'all'}) stops the whole flow.
+    // These wait forms allow a subjectless actor marker. Every wait blocks its sequential flow.
     function everyoneWaitKind(kind) {
       return ['WaitTime', 'WaitUntil', 'BroadcastAndWait', 'WaitBroadcastGroup'].includes(kind);
     }
@@ -8041,9 +8040,6 @@ function createAkariExtensionHost(options) {
       if (!node || typeof node !== 'object') return false;
       if (node.kind === 'EventCount') return true;
       return Object.values(node).some(v => v && typeof v === 'object' && hasEventCount(v));
-    }
-    function everyoneStatement(node) {
-      return node?.actorRef ? node.actorRef.kind === 'all' : everyoneWaitKind(node?.kind);
     }
     function cloneDesignProject(p) {
       return typeof structuredClone === 'function'
@@ -11341,10 +11337,6 @@ function createAkariExtensionHost(options) {
             return true;
           }
           this.selectSubject(task, step.node);
-          if (this.awaitHold(task, step)) {
-            this.recheckBlocked(force);
-            return true;
-          }
           task.currentNode = step.node;
           const frame = task.callFrames.at(-1);
           if (frame) frame.currentLine = step.node.sourceSpan?.startLine || 1;
@@ -11540,7 +11532,6 @@ function createAkariExtensionHost(options) {
             if (sec < 0) throw valueError('R412', '待つ 時間は 0より 小さく できません', n.seconds);
             if (sec === 0) return;
             const deadline = ensureFinite(this.runtime.now() + sec * 1000);
-            if (!everyoneStatement(n)) { this.hold(task, { kind: 'time', deadline }); return; }
             this.block(task, { kind: 'time', deadline });
             return { requeue: false };
           }
@@ -11548,7 +11539,6 @@ function createAkariExtensionHost(options) {
             // Counts (〜が10回【ジャンプ】するまで) are compared with those when the wait began.
             const condition = hasEventCount(originalNode.condition) ? this.runtime.bindEventCounts(originalNode.condition, ctx) : originalNode.condition;
             if (bool(evalExpression(condition === originalNode.condition ? n.condition : condition, ctx))) return;
-            if (!everyoneStatement(n)) { this.hold(task, { kind: 'condition', condition }); return; }
             this.block(task, { kind: 'condition', condition });
             return { requeue: false };
           }
@@ -11610,7 +11600,6 @@ function createAkariExtensionHost(options) {
             this.waitGroups.set(wg.id, wg);
             const ts = this.spawnDistributed('message', { message: msg }, wg.id, only);
             if (ts.length) {
-              if (!everyoneStatement(n)) { this.hold(task, { kind: 'waitGroup', waitGroupId: wg.id }); return; }
               this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
               return { requeue: false };
             }
@@ -11774,49 +11763,6 @@ function createAkariExtensionHost(options) {
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
       }
-      // A part's wait: the flow goes on; the part's next statement in this flow waits (awaitHold).
-      hold(task, reason) {
-        const runtimeId = task.subject?.runtimeId || task.runtimeId;
-        (task.holds ||= new Map()).set(runtimeId, { runtimeId, ...reason });
-        if (reason.kind === 'condition') this.conditionHolds = true;
-      }
-      holdOver(task, hold) {
-        if (hold.kind === 'time') return this.runtime.now() >= hold.deadline;
-        if (hold.kind === 'waitGroup') return !this.waitGroups.get(hold.waitGroupId)?.pending.size;
-        // A condition with the user's own calculations is stepped while blocked, like any wait.
-        if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(hold.condition)) return false;
-        return bool(evalExpression(hold.condition, this.context(task, { runtimeId: hold.runtimeId })));
-      }
-      // Before a statement of a held part runs, the flow waits for the rest of that part's wait.
-      // 名人: a sentence of the part carried on (laneRef) that acts on another part waits for the carried part's wait.
-      awaitHold(task, step) {
-        const lane = step.node?.laneRef && (step.node.laneRef.kind === 'value' ? this.runtime.partRuntimeId(evalExpression(step.node.laneRef.value, this.context(task))) : this.runtime.resolveActorRef(step.node.laneRef, task.callFrames.at(-1)?.runtimeId || task.runtimeId));
-        const runtimeId = lane && task.holds?.get(lane) ? lane : task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
-        if (!hold || step.kind === 'idle' || everyoneStatement(step.node)) return false;
-        task.holds.delete(runtimeId);
-        if (this.holdOver(task, hold)) return false;
-        if (step.kind === 'node') task.execStack[task.execStack.length - 1].index--;
-        task.currentNode = step.node;
-        const reason = { ...hold };
-        delete reason.runtimeId;
-        this.block(task, reason);
-        return true;
-      }
-      // A condition that comes true ends its hold then, even if it is false again when the part's statement comes.
-      // A part's wait for a condition ends when it holds; with no such wait (conditionHolds), nothing is looked at.
-      pollHolds() {
-        if (!this.conditionHolds) return;
-        let left = false;
-        for (const task of this.tasks.values()) {
-          if (!task.holds?.size || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) continue;
-          for (const [runtimeId, hold] of task.holds) {
-            if (hold.kind !== 'condition') continue;
-            try { if (this.holdOver(task, hold)) task.holds.delete(runtimeId); else left = true; }
-            catch (err) { this.taskError(task, err); left = true; break; }
-          }
-        }
-        this.conditionHolds = left;
-      }
       unblock(task) {
         if (!this.blocked.has(task) || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) return;
         this.blocked.delete(task);
@@ -11878,7 +11824,6 @@ function createAkariExtensionHost(options) {
         this.advanceContinuous();
         this.drainExternalUnblocks();
         this.pollWatches();
-        this.pollHolds();
         const now = this.runtime.now();
         // While every blocked flow waits for a time not yet reached (paced loops between こま), nothing is due; the
         // earliest such time is kept (dueAt) until a flow blocks again (block).
@@ -11970,13 +11915,6 @@ function createAkariExtensionHost(options) {
         if (['DONE', 'CANCELLED', 'ERROR'].includes(task.state) && task.state !== state) return;
         // 名人: copies made in a lane are the copies the flow made (できたコピー after the lanes).
         if (state === 'DONE' && task.laneParent && task.createdCopies?.length) task.laneParent.createdCopies = [...(task.laneParent.createdCopies || []), ...task.createdCopies];
-        // 名人: ねこと犬は1秒待つ — each lane's part waits; that wait goes on in the flow that started the lanes, so the
-        // part's next sentence there waits for it (as after ねこは1秒待つ in one flow).
-        if (state === 'DONE' && task.laneParent && task.holds?.size)
-          for (const [runtimeId, hold] of task.holds) {
-            const parent = (task.laneParent.holds ||= new Map()), held = parent.get(runtimeId);
-            if (!(held?.kind === 'time' && hold.kind === 'time' && held.deadline >= hold.deadline)) parent.set(runtimeId, hold);
-          }
         task.state = state;
         this.blocked.delete(task);
         for (const [key, control] of this.continuous) if (control.temporary && control.task === task) this.continuous.delete(key);
@@ -18510,6 +18448,16 @@ function createAkariExtensionHost(options) {
     const fail = message => { throw new AkariError('P205',message,ctx.lineNo||0,1); };
     // もし答えが「7」になったら: the two readings are named with the words written (final call 12), as for the one with no もし.
     if (mask.includes('になったら')) fail(becomesIfMessage(mask.endsWith('になったら') ? source.slice(0, -'になったら'.length) : null, symbols, ctx));
+    // Completion is an until condition, so subject extraction and connective
+    // sentences use the same wait rule as other conditions.
+    if (ctx.meijin && form === 'until') {
+      const completed=surfaceCapture(/^([^、]+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで$/d,source,mask);
+      if(completed){
+        const name=completed[0].text;
+        if(!isMeijinPart(name,symbols,ctx))fail('「〜が話し終わるまで」の 〜には、部品の 名前を 書きます');
+        return exprNode('PartState',{state:completed[1].text==='の音が鳴り終わる'?'soundDone':'speechDone',actorRef:{kind:'named',name:meijinBare(name)}});
+      }
+    }
     // Explicit Boolean expression: its parentheses determine scope and operator precedence.
     if (source.startsWith('条件（')) {
       const endings = form === 'if' ? ['が成り立つなら','が成り立つならば','が成り立つのであれば','が成り立たないなら','が成り立たないならば','が成り立たないのであれば'] : form === 'while' ? ['が成り立つあいだ','が成り立つ間','が成り立たないあいだ','が成り立たない間'] : form === 'until' ? ['が成り立つまで','が成り立たないまで'] : ['が成り立つ','が成り立たない'];
@@ -19056,8 +19004,8 @@ function createAkariExtensionHost(options) {
   // 「これを6回くり返す」 repeats the one sentence before it (the check says so when more come before it).
   const REPEAT_PREVIOUS = new WeakSet();
   const STATEMENT_LINE = new WeakMap();
-  // 待つ with a subject (だんごは0.2秒待つ) holds only that part; without one (0.2秒待つ, みんなは…) the whole flow
-  // waits ({kind:'all'}). A wait does not take the subject of the line before it, only of its own sentence.
+  // A wait always blocks its sequential flow; its subject selects the evaluation context.
+  // A wait does not take the subject of the line before it, only of its own sentence.
   const EVERYONE_WAITS = new Set(['WaitTime','WaitUntil','BroadcastAndWait','WaitBroadcastGroup']);
   const EVERYONE_WORDS = ['みんな','全体'];
   const EVERYONE_START = new RegExp('^(?:'+EVERYONE_WORDS.join('|')+')(?:(?:は|が|で|も)、?|、|(?=[0-9０-９（「]))');
@@ -19197,7 +19145,7 @@ function createAkariExtensionHost(options) {
     return !sets && nodes.length === 1 && nodes[0].kind === 'Parallel' && inner.every(same) ? inner[0] : { kind: 'self', topicEnded: true };
   }
   // 名人 (決まり2): a sentence of the part carried on that names what it acts on (ねこの動きを止める, 鳥に知らせる,
-  // 星のコピーを全部消す) waits for that part's wait, as the part's next sentence does.
+  // 星のコピーを全部消す) retains the lane's topic for geometry invalidation.
   function meijinLaneRefs(nodes, topic) {
     let current = topic;
     for (const n of nodes || []) {
@@ -20105,18 +20053,7 @@ function createAkariExtensionHost(options) {
     if(start>=code.length)throw new AkariError('P202','「〜して、」の あとに、つづきの 文を 書いて ください。れい：前へ10歩進んで、「やあ」と言う',line.lineNo,1);
     const rest=surfaceLineSlice(line,start,code.length);rest.comment=line.comment;
     nodes.push(...parseSentenceSequence(rest,symbols,scope));
-    partWaitBeforeOtherSubject(nodes,line,symbols);
     return nodes;
-  }
-  // ねこは1秒待ってから、だんごは10歩進む: only ねこ would wait and だんご would move at once, so the child chooses.
-  function partWaitBeforeOtherSubject(nodes,line,symbols) {
-    const same=(a,b)=>a?.kind===b?.kind&&(a?.kind!=='named'||a.name===b.name);
-    const at=nodes.findIndex((n,i)=>EVERYONE_WAITS.has(n.kind)&&n.actorRef?.kind!=='all'&&nodes.slice(i+1).some(m=>STATEMENT_EXPLICIT_ACTORS.has(m)&&!same(m.actorRef,n.actorRef)));
-    if(at<0)return;
-    const write=body=>{try{return formatScript({kind:'Script',body}).trim().replace(/。$/,'');}catch{return null;}};
-    const together=write(nodes.map((n,i)=>i===at?{...n,actorRef:{kind:'all'}}:n)),only=write(nodes),who=sentenceActorSource(nodes[at].actorRef);
-    throw sentenceDiagnostic(`「待って」のあとに ほかの 主語の 文を つづける ときは、文を 分けて 書きます。みんなで 待つのか、${who}だけが 待つのかを えらんで ください（みんなで 待つときは「1秒待つ。」、${who}だけが 待つときは「${who}は1秒待つ。」と 書いて、次の 文を 書きます）`,line,
-      [...(together?[{label:'みんなで 待ってから つづける',source:together}]:[]),...(only?[{label:`${who}だけが 待つ（ほかは すぐ 動く）`,source:only}]:[])],{kind:'Sequence'});
   }
   // 点数が10になったら (no もし): three meanings, each in the child's words (LANGUAGE.md 読めない書き方): now, once by
   // waiting, or each time (名人's 〜になったとき).
@@ -20215,11 +20152,11 @@ function createAkariExtensionHost(options) {
     // 書20: guidance that names the fix (proposals are written as the code writes them).
     const fixed=(message,source,label,kind)=>sentenceDiagnostic(message,line,[{label,source:canonicalStatementSource(source,symbols)}],{kind});
     // ねこもだんごも1秒待つ / ねことだんごは…: a sentence has one subject, so each part gets its own sentence
-    // (two waits of parts hold at the same time).
+    // Splitting makes timed actions and waits sequential.
     {const both=actorNamePatterns(symbols).both.exec(code);
       if(both&&both[1]!==both[2]){const one=name=>canonicalStatementSource(name+'は'+both[3],symbols),split=one(both[1])+'。\n'+one(both[2]);
         // A timed action split into sentences runs one subject after the other; say so before the child splits it.
-        const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:話す|はなす|言う|いう|鳴らす|ならす)|を(?:最後まで)?(?:鳴らす|ならす))/.test(surfaceMask(both[3]));
+        const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:待つ|まつ|話す|はなす|言う|いう|鳴らす|ならす)|を(?:最後まで)?(?:鳴らす|ならす))/.test(surfaceMask(both[3]));
         throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?'。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かす ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます':''),line,parseSyntax(split+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split}]:[],{kind:'Sequence'});}}
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).
@@ -21950,7 +21887,7 @@ function createAkariExtensionHost(options) {
     [/(?:となり|隣)(?:へ|に|まで)/, '「となり」では、どこへ 行くかが 決まりません。「〜のところへ行く」か、歩の 数を 書きます'],
     [/^(それ|あれ|これ)(?:は|が)/, m => `「${m[1]}」では、どの 部品かが 決まりません。部品の 名前を 書きます`],
     [/話しかける$/, '「話しかける」では、何を するかが 決まりません。「ねこは「やあ」と言う」のように 書きます'],
-    [/言い終わ/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
+    [/言い終わ(?!るまで待)/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
     [/(?:と同じように|(?<!次)のように)/, '「〜のように」では、まねる はんいが 決まりません。する ことを 一つずつ 文に 書きます'],
     [/(?:はし|端)まで(?:進む|動く|行く)$/, '速さが 決まりません。「1秒に20歩の速さで、画面のはしにふれるまで前へ動き続ける」のように 書きます'],
     // ねこは前へ10歩進んでください: the example is the child's sentence as a plain action.
@@ -22601,9 +22538,6 @@ function createAkariExtensionHost(options) {
       return done([node('CloneCommand', { op: 'DELETE_ALL', args: [], actorRef: { kind: 'named', name: p[0].text } })]);
     if (/^(?:できた|作った)コピーを(?:消す|けす)$/.test(mask))
       return done([node('ParallelEach', { list: exprNode('CreatedCopies', {}), binder: MEIJIN_BINDER, body: read('このコピーだけを消す', meijinValueActor(meijinBinderRead()), each) })]);
-    // ねこが話し終わるまで待つ / ねこの音が鳴り終わるまで待つ
-    if ((p = surfaceCapture(/^(.+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで待つ$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope))
-      return done([node('WaitUntil', { condition: exprNode('PartState', { state: p[1].text !== 'の音が鳴り終わる' ? 'speechDone' : 'soundDone', actorRef: { kind: 'named', name: p[0].text } }), actorRef: { kind: 'all' } })]);
     // ねこは、持ち物を一つずつ順に2秒話す: each item in order, said one after another.
     // The one who speaks is the subject written (a part, or a variable holding one), or the subject carried on; it is
     // carried to the next sentence (one subject, 決まり4). The list may be written in 【 】.
@@ -22622,13 +22556,6 @@ function createAkariExtensionHost(options) {
         [{ label: '一つ消す', source: `${p[0].text}から${p[1].text}を一つ消す` }, { label: '全部消す', source: `${p[0].text}から${p[1].text}を全部消す` }], { kind: 'ListRemoveValue', missing: ['count'] });
       return done([node('ListRemoveValue', { target: { name: meijinBare(p[0].text), qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
-    // ねこは、犬が言い終わるまで待つ / ねこが言い終わるまで待ってから、… / 主役が言い終わるまで待つ: the one form that is read.
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
-      throw sentenceDiagnostic(`だれが 待つかは 書きません（本文 ぜんたいが 待ちます）。れい：${p[1].text}が言い終わるまで待つ`, line, [], { kind: 'WaitUntil' });
-    if ((p = surfaceCapture(/^(.+?)が((?:言い|話し)終わる)まで待って(?:から)?、(.+)$/d, code, mask)))
-      throw sentenceDiagnostic(`待つ 文を 分けて 書きます。れい：${p[0].text}が${p[1].text}まで待つ。${p[2].text}`, line, [], { kind: 'WaitUntil' });
-    if ((p = surfaceCapture(/^(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && !isMeijinPart(p[0].text, symbols, scope))
-      throw sentenceDiagnostic('「〜が言い終わるまで待つ」の 〜には、部品の 名前を 書きます', line, [], { kind: 'WaitUntil' });
     // 【長さ】を5として、…、ねこは【かく】という手順を行う: the subject is written first.
     if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という(?:手順|てじゅん)を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
       throw sentenceDiagnostic(`主語は 文の はじめに 書きます。れい：${p[1].text}は、${p[0].text}、${p[2].text}`, line, [], { kind: 'UserActionCall' });
@@ -24194,9 +24121,9 @@ function createAkariExtensionHost(options) {
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
     // A nested suite inherits its surrounding topic, but its topic changes stay local.
-    // A wait of one part always names it (自分は1秒待つ); the wait of the whole flow has no subject.
+    // Keep an explicitly named wait actor to preserve its expression context. All waits block their flow.
     // Under a heading that names a part (たくどんは、3回くり返す。) that part's sentences are written without it, until
-    // another subject comes; a wait still names it, because without a subject it is the wait of the whole flow.
+    // another subject comes; a wait still names it so its expression context round-trips.
     const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const wait=EVERYONE_WAITS.has(n.kind),actorRef=n.actorRef||(wait?{kind:'all'}:{kind:'self'}),everyone=actorRef.kind==='all',sameTopic=actorRef.kind==='named'&&!wait&&inheritedActor.kind==='named'&&actorRef.name===inheritedActor.name&&previousActor.kind==='named'&&previousActor.name===inheritedActor.name,actor=!everyone&&!sameTopic&&!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(wait||actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+(actorRef.particle||'は'):'',comment=n.inlineComment||'';let text;
       const controlActor=actorRef.kind!==previousActor.kind||(actorRef.kind==='named'&&actorRef.name!==previousActor.name)
         ? sentenceActorSource(actorRef)+'は、' : '';
@@ -25610,10 +25537,7 @@ function createAkariExtensionHost(options) {
     }
     return errors;
   }
-  // Notices never stop a run, a save or an export. ねこは1秒待つ。だんごは言う。: only ねこ waits, so だんご's
-  // sentence runs at once; say so where the next sentence of the same flow has another subject.
-  // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
-  const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
+  // Notices never stop a run, a save or an export.
   // B-17: 画面の左下のはしから、右へ320歩のばしょへ行く goes to たて0 (the bottom edge). The notice says so and gives the two
   // fixes: keep the place (上へ（たてのばしょ）歩) or write the 0 (上へ0歩). 画面の左下のはしへ行く means 0 on purpose.
   // The fixes are offered wherever the sentence's own text is known: on its own line, after another sentence of the line,
@@ -25974,35 +25898,9 @@ function createAkariExtensionHost(options) {
   }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
-    const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
     for (const item of compiled.items || []) {
       const ast = compiled.astByKey?.get(item.key);
       if (!ast) continue;
-      const self = item.targetId === 'stage' ? project.stage.name : project.components.find(c => c.id === item.targetId)?.name || '自分';
-      const who = ref => ref?.kind === 'named' ? ref.name : ref?.kind === 'self' ? self : null;
-      const walk = nodes => {
-        if (!Array.isArray(nodes)) return;
-        nodes.forEach((n, i) => {
-          for (const key of ['body', 'thenBody', 'elseBody']) walk(n?.[key]);
-          // ねこと犬は1秒待つ。 (名人): each part written waits, as one subject does (決まり2).
-          const lanes = n?.kind === 'Parallel' && n.lanes?.length > 1 && n.lanes.every(l => l.length === 1 && l[0].kind === 'WaitTime' && l[0].actorRef?.kind === 'named') ? n.lanes.map(l => l[0].actorRef.name) : null;
-          if (!lanes && (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all')) return;
-          const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
-          for (const m of nodes.slice(i + 1)) {
-            if (m.kind === 'CommentLine') continue;
-            if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all' || m.laneRef) break;
-            const other = who(m.actorRef);
-            if (!other || waiters.includes(other)) break;
-            const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
-              message: `${item.meijin && !NOTICE_VERBS[m.kind] && !['MotionCommand', 'LooksCommand', 'PenCommand'].includes(m.kind) ? 'この 文は すぐ 行います' : other + 'は すぐ ' + (NOTICE_VERBS[m.kind] || '動きます')}（待つのは ${waiter}だけです）。${item.meijin ? 'この 本文 ぜんたいで' : 'みんなで'} 待つ ときは、「待つ」の 文に 主語を 書きません` };
-            const key = note.where + '|' + note.line + '|' + note.column;
-            if (!seen.has(key)) { seen.add(key); notes.push(note); }
-            break;
-          }
-        });
-      };
-      walk(ast.body);
-      for (const unit of ast.units || []) walk(unit.body);
       for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast), ...flowNotes(project, compiled, item, ast)]) {
         const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
         if (!seen.has(key)) { seen.add(key); notes.push(note); }
@@ -30848,6 +30746,184 @@ function createAkariExtensionHost(options) {
     }
     return null;
   }
+  // A complete reading keeps roles attached to their own action. Quoted values are
+  // carried through unchanged; they never supply verbs, directions or quantities.
+  function assistMeaningReference(source, ctx) {
+    const quoted=[],protect=source=>source.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"/g,s=>'「§'+(quoted.push(s)-1)+'§」');
+    let text=protect(assistNumberText(source));
+    const names=['自分','体',...(ctx.symbols?.project?.components||[]).map(c=>c.name)].sort((a,b)=>b.length-a.length);
+    const escape=value=>value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    for(const name of names){
+      if((['自分','体'].includes(name)||name===ctx.symbols?.project?.components.find(c=>c.id===ctx.targetId)?.name)&&new RegExp('^'+escape(name)+'の動きを(?:全部)?止める[。]?$').test(text))text=name+'は自分のほかの動きを止める。\n'+name+'はこの動きを止める。';
+      const aliases=[escape(name),...quoted.flatMap((q,i)=>q.slice(1,-1)===name?['「§'+i+'§」']:[])].join('|');
+      if(!/(?:まで|たら|なら|れば|とき|あいだ)/.test(text))text=text.replace(new RegExp('(^|[、。\\n])('+aliases+')が','g'),(_,boundary)=>boundary+sentenceActorSource({kind:['自分','体'].includes(name)?'self':'named',name})+'は');
+      text=text.replace(new RegExp('(^|[、。\\n])('+aliases+')(?:を(?=[^。\\n]*?(?:移動させ|動か|走らせ|進ま|待た|休ま|言わ|話さ))|は)','g'),(_,boundary)=>boundary+sentenceActorSource({kind:name==='自分'||name==='体'?'self':'named',name})+'は');
+      text=text.replace(new RegExp('('+aliases+')を(?:(\\d+(?:\\.\\d+)?)(?:匹|体|つ|個))?(?:コピー|複製)(する|して|させる)','g'),(_,target,count,ending)=>{
+        const literal=['自分','体'].includes(target)?'自分':target.startsWith('「')?target:'「'+target+'」';
+        return literal+'のコピーを'+(count?count+'つ':'')+(ending==='して'?'作って':'作る');
+      });
+    }
+    text=text.replace(/(^|[は、。\n])(?:大きさを)?(\d+(?:\.\d+)?)(?:倍|ばい)にする(?=$|[。])/g, '$1大きさを（大きさ×$2）％にする');
+    text=text.replace(/(\d+)度(?=くり返|繰り返|繰返)/g,'$1回');
+    text=text.replace(/(「§\d+§」)を空にする/g,'$1に「」を入れる');
+    text=text.replace(/(^|[は、。\n])(\d+(?:\.\d+)?)歩進ませる/g,'$1前へ$2歩進む');
+    text=text.replace(/(\d+(?:\.\d+)?)びょう/g,'$1秒').replace(/秒おきに/g,'秒ごとに');
+    text=text.replace(/(\d+(?:\.\d+)?)秒(?:止まる|じっとする|ねる|ねむる|ウエイト|あける|まちなさい|まちたい)/g,'$1秒待つ');
+    text=text.replace(/^(?:毎秒)、?/,'1秒ごとに、');
+    text=text.replace(/(\d+(?:\.\d+)?)歩(?:進む|進み|進んだあと)(?=\d)/g,'前へ$1歩進んで、');
+    text=text.replace(/(\d+(?:\.\d+)?)秒(?:のあいだ|たつまで)待つ/g,'$1秒待つ');
+    text=text.replace(/まで、?ずっと待つ/g,'まで待つ').replace(/まで待ってる/g,'まで待つ');
+    text=text.replace(/と(?:言わせて|いわせて|話させて)/g,'と言って');
+    text=text.replace(/と(?:言わせる|いわせる|話させる|しゃべる)/g,'と言う').replace(/(\d+(?:\.\d+)?)秒間/g,'$1秒');
+    text=text.replace(/(\d+(?:\.\d+)?)(?:秒で|秒かけて)(?=、?(?:いまのばしょから、?|今の場所から、?)?(?:右|左|上|下)(?:へ|に)\d+(?:\.\d+)?歩(?:移動|動))/g,'$1秒かけて、');
+    text=text.replace(/(\d+(?:\.\d+)?)歩(?:走って|移動して)/g,'$1歩進んで');
+    text=text.replace(/(?:いまのばしょから、?|今の場所から、?)?(右|左|上|下)(?:へ|に)(\d+(?:\.\d+)?)歩(?:移動させる|移動する|動かす|走らせる|走る|移動させて|移動して|動かして|走らせて|走って|進んで|進む|移動し(?=、)|走り(?=、))/g,(whole,direction,amount)=>'いまのばしょから、'+direction+'へ'+amount+'歩'+(/(?:て|で|し|り)$/.test(whole)?'動いて':'動く'));
+    text=text.replace(/(\d+(?:\.\d+)?)秒で(?=、?いまのばしょから)/g,'$1秒かけて、').replace(/、その後/g,'、');
+    text=text.replace(/(\d+(?:\.\d+)?)秒後に、?/g,'$1秒待ってから、');
+    text=text.replace(/(\d+(?:\.\d+)?)秒(?:たったら|経ったら)、?/g,'$1秒待ってから、');
+    text=text.replace(/(\d+(?:\.\d+)?)秒(?:休む|やすむ|休んで|やすんで)/g,(whole,n)=>n+'秒'+(whole.endsWith('で')?'待って':'待つ'));
+    text=text.replace(/(^|[、。\n])(?:きえる|消える)(?=$|[、。\n])/g,'$1すがたを かくす');
+    const group=/^(.+?)(?:は|も、)(.+)$/s.exec(text),members=group?.[1].split(/と|も/).filter(Boolean);
+    if(members?.length>=3&&members.every(name=>names.includes(name))&&!/秒|待|ながら|あいだ/.test(group[2]))text=members.map(name=>name+'は'+group[2]).join('。\n');
+    const periodic=/^(\d+(?:\.\d+)?)秒ごとに、?(.*)$/s.exec(text);
+    const periodicTopic=/^(.+?)は、?$/.exec(periodic?.[2]?.trim()||'');
+    if(periodicTopic&&names.includes(periodicTopic[1]))periodic[2]='';
+    if(periodic)text='ずっとくり返す。\n  '+periodic[1]+'秒待つ。'+(periodic[2].trim()?'\n  '+periodic[2].trim().replace(/\n/g,'\n  '):'');
+    text=text.replace(/「§(\d+)§」/g,(_,i)=>quoted[i]);
+    if(text===source)return null;
+    try{const parsed=parseSyntax(text,ctx);return parsed.ast?{ast:parsed.ast,text:formatScript(parsed.ast).trim()}:null;}catch{return null;}
+  }
+  function assistSubjectText(text, data, ctx) {
+    if(!data.subject||data.headerEvent)return text;
+    try{
+      const parsed=parseSyntax(text,ctx),first=parsed.ast?.body?.[0];
+      if(!first||first.actorRef?.kind==='named')return text;
+      return sentenceActorSource({kind:data.subject==='自分'||data.subject==='体'?'self':'named',name:data.subject})+'は、'+text;
+    }catch{return text;}
+  }
+  function assistMeaningCompatible(candidate, reference, data, ctx) {
+    const body=[...(candidate.body||[]),...(candidate.rules||[])],first=body[0];
+    // Unresolved negation, modality and bounds cannot be reduced to an action.
+    if(/(?:のをやめ|するな(?:[。！!]|$)|しないで|したくない|ふりを|ことを禁止|(?:歩|度|秒|回)(?:未満|より少な|を超え|以内|以上|以下)(?!なら|になる|であ|のとき))/.test(data.outside)&&!(first?.kind==='NoOperation'&&/^何もしない/.test(data.outside))&&!(first?.kind==='PenCommand'&&first.op==='UP'&&/^(?:かく|書く|描く|線を引く)のをやめる$/.test(data.outside)))return false;
+    if(/を\d+(?:\.\d+)?回(?:ふや|増や|へら|減ら)/.test(data.outside))return false;
+    if(reference)return astEquivalent(candidate,reference.ast);
+    if(/^\/\//.test(data.text))return first?.kind==='CommentLine'&&body.length===1;
+    const subject=/^([^、。「」]+?)は(?=、|\d|「|右|左|上|下|待|動|進|走|話|言|しゃべ|コピー)/.exec(data.text.replace(/「([^「」]+)」(?=[はが])/g,'$1'))?.[1]||/^([^、。「」]+?)が(?=、|\d|「|右|左|上へ|下へ|待|動|進|話|言|しゃべ)/.exec(data.text)?.[1];
+    const known=name=>['自分','体','みんな','全体','全員','全部'].includes(name)||data.names.some(n=>n.name===name)||ctx.symbols?.project?.components.some(c=>c.name===name);
+    if(!data.subject&&subject&&!known(subject)&&!['はいけい','背景','大きさ','向き','音量','色','タイマー'].includes(subject)&&!/(?:まで|なら|れば|とき|時|あいだ)/.test(data.outside)&&!data.headerEvent&&!/(?:の|で$|この回|もし|いつ|まで|なら|れば|あいだ|うち|場合)/.test(subject))return false;
+    const moved=/^([^、。「」\d]+?)を(?=(?:\d+(?:\.\d+)?(?:秒|歩|度|回)|右|左|前|後ろ|上|下|移動|進|走|動))/.exec(data.text)?.[1];
+    const copied=/^([^、。「」]+?)を(?:\d+(?:回|匹|体|つ|個))?(?:コピー|複製|クローン)/.exec(data.text)?.[1];
+    if(copied&&!(['自分','体'].includes(copied)||ctx.symbols?.project?.components.some(c=>c.name===copied)))return false;
+    if(data.numbers.some(n=>n.unsupportedUnit))return false;
+    if(moved&&!known(moved)&&!['前','後ろ','右','左','上','下','作品'].includes(moved)&&/(?:移動|進|走|動)/.test(data.outside))return false;
+    // Do not guess an unknown actor or turn an unresolved time or compound
+    // request into a shorter, syntactically valid command. A full reading is
+    // required to associate each of these roles with its action.
+    if(/(?:秒(?:間)?(?:後|あと|で|かけて)|\d+(?:\.\d+)?(?:分|時間|センチ|cm|メートル|ミリ|マス)|移動させ|走らせ|進ませ|進める|動かして|作らせ)/.test(data.outside))return false;
+    const actions=data.clauses.filter(c=>/[うくぐすつぬぶむるてで]$/.test(c.text.trim())&&!/かけて$/.test(c.text.trim()));
+    if(actions.length>1&&!/(?:として|という(?:手順|てじゅん)|わたして)/.test(data.outside)&&!candidate.heading&&!candidate.rules?.length&&!/(?:たら|れば|なら|とき|あいだ|まで|うちは)$/.test(data.clauses[0]?.text||'')&&!['Continue','ReturnStatement'].includes(first?.kind)&&!(first?.kind==='Ask'&&/^(?:答え|こたえ|返事)を(?:待つ|まつ|もらう)$/.test(data.clauses.at(-1)?.text||''))&&!(first?.kind==='BroadcastAndWait'&&/^(?:(?:(?:この|その)合図で)?始まったことが(?:全部)?)?(?:終わるまで)?待つ$/.test(data.clauses.at(-1)?.text||''))){
+      if(body.length!==data.clauses.length)return false;
+      for(let i=0;i<body.length;i++){
+        const source=sentenceInfinitive(data.clauses[i].text)+'。',part=assistSeeds(source,ctx.symbols,ctx);
+        let parsed=null;try{parsed=parseSyntax(source,ctx).ast;}catch{}
+        const sub={...candidate,body:[body[i]]};
+        if(parsed?!astEquivalent(sub,parsed):!assistMeaningCompatible(sub,assistMeaningReference(source,ctx),part,ctx))return false;
+      }
+      return true;
+    }
+    if(data.subject&&!data.headerEvent&&first){
+      const expected=['自分','体'].includes(data.subject)?'self':'named';
+      if(first.actorRef?.kind!==expected||expected==='named'&&first.actorRef.name!==data.subject)return false;
+    }
+    // A complete quoted utterance describes speech, regardless of its contents.
+    if(data.strings.length&&/^と(?:言わせる|いわせる|言う|いう|話す|話させる)$/.test(data.outside.trim())){
+      if(body.length!==1||first.kind!=='Say'||first.value?.kind!=='StringLiteral'||!data.strings.includes(first.value.value))return false;
+    }
+    if(/(?:コピー|こぴー|クローン|くろーん|複製|ふくせい|分身|ぶんしん)/.test(data.outside)&&/(?:作|つく|する|させ|増|ふや)/.test(data.outside)&&!['CloneCommand','RepeatCount'].includes(first?.kind)&&!data.headerEvent)return false;
+    if(/(?:コピー|こぴー|クローン|くろーん|複製|ふくせい|分身|ぶんしん)/.test(data.outside)&&!data.headerEvent&&!['IfStatement','WaitUntil','RepeatUntil','RepeatWhile'].includes(first?.kind)){
+      let command=first;while(command?.kind==='RepeatCount'&&command.body?.length===1)command=command.body[0];
+      if(command?.kind!=='CloneCommand')return false;
+    }
+    const action=data.outside.trim();
+    if(first?.kind==='WaitUntil'&&/(?:とき|時|なら|れば)/.test(action)&&!/(?:待|まつ)/.test(action))return false;
+    if(/今のすがたをのこす/.test(action)&&!(first?.kind==='PenCommand'&&first.op==='STAMP'))return false;
+    if(/(?:ながら|のと同時に)/.test(action))return false;
+    if(/(?:秒(?:間)?(?:のあいだ|くり返す|たつまで)|秒に\d+歩|毎秒)/.test(action)&&!['ContinuousRule','WaitTime','Forever'].includes(first?.kind))return false;
+    if(first?.kind==='ContinuousRule'){
+      if(!/キー/.test(action)||!/(?:秒に|毎秒)/.test(action))return false;
+      const distance=data.numbers.find(n=>n.unit==='歩'),seconds=data.numbers.find(n=>n.unit==='秒');
+      if(distance&&first.distance?.value?.value!==distance.value||seconds&&first.seconds?.value?.value!==seconds.value)return false;
+    }
+    if(/動き.*(?:止|とめ)/.test(action)&&first?.kind!=='StopCommand')return false;
+    if(/(?:音|おと).*(?:止|とめ|ストップ)/.test(action)&&first?.kind!=='SoundCommand')return false;
+    if(/(?:止|とめ|ストップ)/.test(action)&&first?.kind==='SoundCommand'&&!first.op.startsWith('STOP'))return false;
+    if(/(?:すがた|姿|色)/.test(action)&&!/(?:ペン|線|スタンプ|のこす)/.test(action)&&!['LooksCommand','IfStatement'].includes(first?.kind))return false;
+    if(/(?:すがた|姿).*色|色.*(?:する|かえ)/.test(action)&&first?.kind==='PenCommand'&&!/(?:ペン|線)/.test(action))return false;
+    if(/自分(?:だけ)?を(?:消|ふや)/.test(action)&&first?.kind!=='CloneCommand')return false;
+
+    if(/(?:鳴ら|ならす|再生|聞かせ)/.test(action)&&!/(?:たら|なら|れば|とき|まで|あいだ)/.test(action)&&!['SoundCommand','RepeatCount','Forever'].includes(first?.kind))return false;
+    if(/ペン/.test(action)&&!/(?:たら|なら|れば|とき|まで|あいだ)/.test(action)&&first?.kind!=='PenCommand')return false;
+    if(/(?:と(?:言|話|しゃべ)|を(?:言|話))/.test(action)&&!/(?:たら|なら|れば|とき|まで|あいだ)/.test(action)&&!['Say','Ask','ForEach','RepeatCount'].includes(first?.kind))return false;
+    if(data.subject&&first?.kind==='StopCommand'&&first.op!=='PART'&&!(first.op==='OWN_OTHERS'&&body.length===2&&body[1].op==='THIS'&&ctx.symbols?.project?.components.find(c=>c.id===ctx.targetId)?.name===data.subject))return false;
+    if(data.subject&&/音.*(?:止|とめ)/.test(action)&&!(first?.kind==='SoundCommand'&&first.op==='STOP_PART'))return false;
+    if(first?.kind==='CloneCommand'&&!/(?:コピー|こぴー|クローン|くろーん|複製|ふくせい|分身|ぶんしん)/.test(data.outside)&&!/^自分(?:だけ)?(?:を)?(?:消す|消える|ふやす)$/.test(action))return false;
+    const holds=(node,kind,value)=>node&&typeof node==='object'&&(((!kind||node.kind===kind)&&(node.name===value||node.value===value))||Object.entries(node).some(([key,v])=>key!=='sourceSpan'&&v&&typeof v==='object'&&(Array.isArray(v)?v.some(n=>holds(n,kind,value)):holds(v,kind,value))));
+    if(data.stringValues.filter(s=>/^[「『｢\"‘’]/.test(data.text.slice(s.at))).some(({value})=>!holds(candidate,null,value)&&!holds(candidate,null,keyWord(value))&&!JSON.stringify(candidate.heading||{}).includes(value)&&!JSON.stringify(candidate.heading||{}).includes(keyWord(value))))return false;
+    for(const part of data.names.filter(n=>n.kind==='part'&&n.name!==data.subject)){
+      const quoted=data.stringValues.some(s=>s.value===part.name&&/^[をにへの]/.test(data.text.slice(s.end)));
+      const escaped=part.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      if(!quoted&&!new RegExp(escaped+'[をにへの]').test(data.outside))continue;
+      if(!holds(candidate,'PartRef',part.name)&&!holds(candidate,'StringLiteral',part.name)&&!JSON.stringify(candidate.heading||{}).includes(part.name))return false;
+    }
+    if(/(?:右|左|前|後ろ|上|下)から/.test(data.outside))return false;
+    if(/色の効果/.test(data.outside)&&data.numbers.length)return false;
+    const distance=data.numbers.filter(n=>n.unit==='歩');
+    if(distance.length&&!candidate.heading){
+      if(body.length!==1)return false;
+      if(first?.kind!=='MotionCommand'){if(!['ContinuousRule','RepeatCount','RepeatWhile','RepeatUntil','IfStatement'].includes(first?.kind))return false;}
+      else if(distance.length>1){if(!first.x||!first.y||distance.length!==2||first.x.value?.value!==distance[0].value||first.y.value?.value!==distance[1].value)return false;}
+      else {
+      const direction=/(右|左|上|下|前|後ろ)(?:へ|に)/.exec(data.outside)?.[1],axis=direction&&({右:'x',左:'x',上:'y',下:'y'})[direction];
+      const value=axis?first[axis]:first.args?.[0];
+      if(value?.unit!=='歩'||value.value?.value!==distance[0].value)return false;
+      if(axis&&first[axis+'Dir']!==({右:'right',左:'left',上:'up',下:'down'})[direction])return false;
+      }
+    }
+    if(data.subjects)return false;
+    if(/(?:一つずつ|ひとつずつ|ずつ順に|順に.*ずつ)/.test(data.outside)&&first?.kind!=='ForEach')return false;
+    if(/鳴らし続ける/.test(action)&&first?.kind!=='Forever')return false;
+    if(/キー/.test(action)&&['Say','Ask','Broadcast','BroadcastAndWait'].includes(first?.kind))return false;
+    const cloneCount=data.numbers.filter(n=>['count','つ'].includes(n.unit));
+    if(first?.kind==='CloneCommand'&&cloneCount.length&&(cloneCount.length!==1||first.count?.value!==cloneCount[0].value))return false;
+    const values=(node,unit)=>{
+      if(!node||typeof node!=='object')return [];
+      if(node.kind==='QuantityLiteral'&&node.unit===unit)return [node.value?.value];
+      if(node.kind==='TimerReset'&&unit==='秒')return [0];
+      if(node.kind==='EventCount'&&unit==='回')return [node.count?.value];
+      return Object.entries(node).filter(([key])=>key!=='sourceSpan').flatMap(([,v])=>Array.isArray(v)?v.flatMap(n=>values(n,unit)):values(v,unit));
+    };
+    for(const unit of ['歩','秒','度','％','Hz']){const available=values(candidate,unit);for(const number of data.numbers.filter(n=>n.unit===unit)){const index=available.indexOf(number.value);if(index<0)return false;available.splice(index,1);}}
+    if(first?.kind==='MotionCommand'&&/移動|進む|走る|動く|動かす/.test(action)&&data.numbers.some(n=>['度','％','Hz'].includes(n.unit)))return false;
+    if(/\d+(?:\.\d+)?\s*(?:％|%|パーセント|ぱーせんと)(?:大きく|小さく)/.test(action))return false;
+    const count=data.numbers.filter(n=>n.unit==='回');
+    if(count.length){
+      if(/(?:おされる|する)まで/.test(action)){if(!values(candidate,'回').includes(count[0].value))return false;}
+      else if(count.length!==1||first?.kind!=='RepeatCount'||(first.count?.value?.value??first.count?.value)!==count[0].value)return false;
+    }
+    const time=data.numbers.filter(n=>n.unit==='秒');
+    if(time.length){
+      const waiting=first?.kind==='WaitTime'&&/(?:待|まつ|休|やす)/.test(data.outside);
+      const sound=first?.kind==='SoundCommand'&&/(?:鳴|なら|音)/.test(data.outside);
+      const talking=first?.kind==='Say'&&/(?:話す|はなす|しゃべ|言う|いう)/.test(data.outside);
+      if(time.length!==1||body.length!==1)return false;
+      if(waiting||talking){if(first.seconds?.value?.value!==time[0].value)return false;}
+      else if(sound){if(first.args?.[1]?.value?.value!==time[0].value&&first.args?.[1]?.value!==time[0].value)return false;}
+      else if(first?.kind==='ForEach'){const say=first.body?.find(n=>n.kind==='Say');if(!say||say.seconds?.value?.value!==time[0].value)return false;}
+      else if(first?.kind==='TimerReset'){if(time[0].value!==0)return false;}
+      else if(first?.kind!=='ContinuousRule')return false;
+    }
+    return true;
+  }
   // ────────────────────────────────────────────────────────────────────────
   // 09 — Editor search hints and input assistance
   // ────────────────────────────────────────────────────────────────────────
@@ -32148,8 +32224,8 @@ function createAkariExtensionHost(options) {
     addNames((ctx.args||[]).map(name=>({name})),'argument');addNames([...(ctx.localNames||[])].map(name=>({name})),'local');
     let text=assistNumberText(String(code).trim().replace(/[。、，．…〜♪]+$/u,'')), subject=null;
     for(const name of ['自分','体',...components.map(c=>c.name)].sort((a,b)=>b.length-a.length)){
-      const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン))').exec(text);
-      if(m){subject=name;text=text.slice(m[0].length);break;}
+      const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン|動き))').exec(text);
+      if(m){if(/が、?$/.test(m[0])&&/(?:まで|なら|れば|あいだ)/.test(surfaceMask(text.slice(m[0].length))))break;subject=name;text=text.slice(m[0].length);break;}
     }
     const stringValues=[...text.matchAll(/「([^「」]*)」|『([^『』]*)』|｢([^｢｣]*)｣|["‘’]([^"‘’]*)["‘’]|（([^（）]*)）|\(([^()]*)\)|〈([^〈〉]*)〉|《([^《》]*)》|［([^［］]*)］|\[([^\[\]]*)\]/g)].map(m=>({value:m.slice(1).find(x=>x!==undefined),at:m.index,end:m.index+m[0].length})),strings=stringValues.map(s=>s.value);
     const nameText=text.replace(/^もし、?/,'');
@@ -32163,10 +32239,10 @@ function createAkariExtensionHost(options) {
       if(new RegExp('(?:^|の)'+escaped+'(?:矢印キー|やじるしキー|キー|(?=[をが]))').test(outside)){const key=keyWord(word);if(key&&!keys.includes(key))keys.push(key);}
     }
     const numbers=[],unitNames={歩:'歩',ほ:'歩',ぽ:'歩',ホ:'歩',ドット:'歩',step:'歩',ステップ:'歩',秒:'秒',びょう:'秒',s:'秒',sec:'秒',度:'度',ど:'度','°':'度','%':'％','％':'％',パーセント:'％',ぱーせんと:'％',パー:'％',Hz:'Hz',hz:'Hz',HZ:'Hz',ヘルツ:'Hz',回:'回',かい:'回',番目:'番目',番め:'番目',ばんめ:'番目',つ目:'番目',つめ:'番目',こめ:'番目',個目:'番目',番:'番目',段:'段階',段階:'段階',つ:'つ',こ:'つ',個:'つ',層:'つ',体:'count',匹:'count',人:'count',px:null,ピクセル:null};
-    for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)([A-Za-z%％°ァ-ヶぁ-ゖ一-龯]*)(?:半|はん)?/g)){
+    for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)[ \t]*([A-Za-z%％°ァ-ヶぁ-ゖ一-龯ー]*)(?:半|はん)?/g)){
       let unit=Object.keys(unitNames).sort((a,b)=>b.length-a.length).find(u=>m[2].startsWith(u));
-      if(m[2]&&!unit&&!/^(?:[をにへとでがは]|から|まで|より|なら)/.test(m[2])&&!searchQueryVariants(m[2]).some(form=>Object.values(BLOCK_SEARCH_SYNONYMS).flat().some(word=>form.startsWith(word))))continue;const suffix=outside.slice(m.index+m[1].length+(unit?.length||0));
-      numbers.push({value:Number(m[1])+(/^(?:半|はん)/.test(suffix)&&(!unit||unitNames[unit]==='秒')?0.5:0),unit:unit?unitNames[unit]:null,at:m.index,end:m.index+m[1].length});
+      const unsupported=!unit&&/^(?:[A-Za-z]+|センチ|メートル|ミリ|キロ|ヤード|インチ|フィート|マス|分|時間)/.test(m[2]);const suffix=outside.slice(m.index+m[1].length+(m[0].slice(m[1].length).match(/^[ \t]*/)?.[0].length||0)+(unit?.length||0));
+      numbers.push({...(unsupported?{unsupportedUnit:m[2]}:{}),value:Number(m[1])+(/^(?:半|はん)/.test(suffix)&&(!unit||unitNames[unit]==='秒')?0.5:0),unit:unit==='度'&&/^(?:くり返|繰り返|繰返)/.test(suffix)?'回':unit?unitNames[unit]:null,at:m.index,end:m.index+m[1].length});
     }
     let clauseText='',stack=[];
     const pairs={'「':'」','【':'】','『':'』','｢':'｣'},teWords=[...SENTENCE_TE_FORMS].map(([te])=>te).sort((a,b)=>b.length-a.length);
@@ -32195,7 +32271,7 @@ function createAkariExtensionHost(options) {
     const headerEvent=(!/^もし/.test(text)||/(?:おされた|おした)とき$/.test(text))&&/(?:とき(?:に)?|時|たびに|ごとに|たら)(?:、.*)?$/.test(text)?/合図/.test(text)?'message':/(?:はいけい|背景).*(?:かわ|変わ|かえ|切り)/.test(text)?'backdropChanged':/コピー|クローン/.test(text)?'cloneStart':/中身.*かわ|中身.*変わ|文字が入った/.test(text)?'valueChanged':/キー|矢印/.test(text)||keys.length?'keyDown':/タップ|クリック|タッチされ|おされた|おした/.test(text)?'click':/ふれ|触れ|タッチした/.test(text)?'touchStart':/スタート|始ま|はじま|開始|実行|はじめ|作品を動かした/.test(text)?'start':null:null;
     const grouped=/^(.+?)(?:は|も、)(.+)$/.exec(text),subjectNames=grouped?.[1].split(/と|も/).filter(Boolean).map(name=>name.replace(/[「」]/g,''));
     const subjects=subjectNames?.length>=3&&subjectNames.every(name=>components.some(c=>c.name===name))?{names:subjectNames,body:grouped[2]}:null;
-    return {text,subject,strings,stringValues,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
+    return {text,outside,subject,strings,stringValues,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
   }
   function assistVerificationContext(ctx) {const {key,ownerKey,...rest}=ctx;return rest;}
   function assistCanonical(text, ctx, previous='') {
@@ -32239,7 +32315,7 @@ function createAkariExtensionHost(options) {
     return ({音:'sound',すがた:'costume',はいけい:'backdrop',部品:'part',入力らん:'part',行く相手:'part',向く相手:'part',コピーの元:'part',リスト:'list',調べるリスト:'list',かえるもの:'variable'})[slot.label];
   }
   function assistFillHint(hint, data, project, ctx, intent=null) {
-    const parsed=assistCanonical(hint.text,ctx);if(!parsed)return null;
+    const parsed=assistCanonical(assistSubjectText(hint.text,data,ctx),ctx);if(!parsed)return null;
     const ast=parsed.ast, node=ast.body?.[0]||ast.rules?.[0];if(!node||hint.id.startsWith('Heading:'))return {...hint,text:parsed.text,filled:0};
     if(node.kind==='Say'&&data.numbers.some(n=>n.unit==='秒'))node.seconds=sentenceQuantity({kind:'NumberLiteral',value:data.numbers.find(n=>n.unit==='秒').value},'秒');
     const filled=new Set(),boundKinds=new Set(),slots=sentenceRoleSlots(node.kind,node.op,node.seconds?'timedSpeech':null),get=(o,p)=>p.split('.').reduce((v,k)=>v?.[k],o),put=(o,p,v)=>{const keys=p.split('.');for(const k of keys.slice(0,-1)){if(!o[k])return false;o=o[k];}o[keys.at(-1)]=v;return true;};
@@ -32299,7 +32375,7 @@ function createAkariExtensionHost(options) {
       if(data.names.some(n=>n.kind==='part'&&project.components.some(c=>c.name===n.name&&['label','button','box'].includes(c.type)))&&data.names.some(n=>['variable','list'].includes(n.kind))&&/^「[^「」]+」を.+にする$/.test(data.text))return {schemaId:'LooksCommand:SET_TARGET_TEXT'};
       if(data.names.some(n=>['action','function'].includes(n.kind))&&/行う|行って|呼び|させる|わた|として|てじゅん|手順/.test(data.text))return null;
       if(data.names.some(n=>['action','function'].includes(n.kind)&&new RegExp('^'+searchReading(n.name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:する|して|したい|させる)?$').test(searchReading(seed).replace(/[【】]/g,''))))return null;
-      let intent=searchIntent(seed,ctx);
+      let intent=searchIntent(seed.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"/g,'「§」'),ctx);
       if(/(?:にする|になる|かえる)$/.test(seed)){const image=data.names.find(n=>['costume','backdrop'].includes(n.kind));if(image)intent={schemaId:image.kind==='costume'?'LooksCommand:SET_COSTUME':'LooksCommand:SET_BACKDROP'};}
       if(data.strings.length&&/と(?:伝える|つたえる)$/.test(seed))intent={schemaId:'Broadcast'};
       if(data.strings.length&&/(?:と|って)(?:きく|聞く)$/.test(seed))intent={schemaId:'Ask'};
@@ -32431,7 +32507,7 @@ function createAkariExtensionHost(options) {
     if((m=/^(\d+(?:\.\d+)?)秒のあいだ待つ$/.exec(text)))add(m[1]+'秒待つ。');
     if((m=/^(.+?)(\d+(?:\.\d+)?秒(?:待つ|まつ))$/.exec(text))&&/[うくぐすつぬぶむるみ]$|(?:たあと|だあと)$/.test(m[1])){const before=read(m[1].replace(/あと$/,'')),after=read(m[2]);if(before&&after)add(before+'\n'+after);}
     if(/とばして(?:次|つぎ)へ$/.test(text)){const hint=hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).find(h=>h.id==='Continue'&&h.enabled);if(hint)add(hint.text);}
-    if(data.subjects){const body=read(data.subjects.body),owner=project.components.find(c=>c.id===ctx.targetId)?.name;if(body){const names=[...data.subjects.names.filter(name=>name!==owner),...data.subjects.names.filter(name=>name===owner)];add(names.map(name=>body.split('\n').map(line=>name+'は'+line).join('\n')).join('\n'));}}
+    if(data.subjects){const body=read(data.subjects.body);if(body){const names=data.subjects.names;add(names.map(name=>body.split('\n').map(line=>name+'は'+line).join('\n')).join('\n'));}}
     const own=project.components.find(c=>c.id===ctx.targetId)?.name;
     if(own&&new RegExp('^(?:自分|'+own.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?:の動きを|を)?(?:全部|だけ)?(?:止まる|止める|とまる|とめる)$').test(text)){add('自分のほかの動きを止める。\nこの動きを止める。');add('この動きを止める。');}
     if((m=/^(\d+(?:\.\d+)?)秒に(\d+(?:\.\d+)?)歩の速さで、?(.+)$/.exec(text))&&!/続ける|つづける/.test(m[3])){const motion=searchIntent(m[3],ctx),direction=({right:'右',left:'左',up:'上',down:'下'})[motion?.direction];if(direction)add(m[1]+'秒かけて、いまのばしょから、'+direction+'へ'+m[2]+'歩動く。');else if(motion?.direction==='forward')add('前へ'+m[2]+'歩進む。\n'+m[1]+'秒待つ。');}
@@ -32663,7 +32739,9 @@ function createAkariExtensionHost(options) {
     if(/^「([^「」]+)」が\d+回/.test(data.text)&&!project.components.some(c=>c.name===/^「([^「」]+)」/.exec(data.text)[1]))return [];
     if(/^もし/.test(data.text)&&/以上と|以下と/.test(data.text))return [];
     if(!ctx.signalNames){try{ctx.signalNames=collectSignalNames(compileProject(project));}catch{ctx.signalNames={sent:[],received:[]};}}
+    const meaning=assistMeaningReference(range.text,ctx);
     const previous=basis.slice(0,range.start).trimEnd().split('\n').at(-1)||'',pool=[],add=(text,origin,layer,extra={})=>{
+      text=assistSubjectText(text,data,ctx);
       if(data.clauses.length>1&&/(?:たら|れば|なら|とき|あいだ|まで)$/.test(data.clauses[0].text)&&/、$/.test(String(text).trim())&&!data.clauses.slice(1).every(c=>[project.components.find(c=>c.id===ctx.targetId)?.name+'は','自分は'].includes(c.text)))return;
       const canonical=assistCanonical(text,ctx,previous);if(!canonical)return;
       const node=canonical.ast.body?.[0]||canonical.ast.rules?.[0],schemaId=extra.schemaId||(canonical.ast.heading?'Heading:'+canonical.ast.heading.event:node?syntaxSchema(node)?.id||node.kind:null);if(!schemaId)return;
@@ -32678,7 +32756,7 @@ function createAkariExtensionHost(options) {
       pool.push({text:canonical.text,schemaId,label:BLOCK_SCHEMA_BY_ID.get(schemaId)?.label||canonical.text,origin,layer,rank:0,filled:0,order:pool.length,start:range.start,end:range.end,ast:canonical.ast,...extra});
     };
     const composed=assistCompose(project,basis,range,ctx,data);
-    for(const entry of [...assistStructuredTransforms(data.text,data,project,ctx,basis,range),...assistTransforms(data.text,data,project,ctx),...composed.sources]){
+    for(const entry of [...(meaning?[meaning.text]:[]),...assistStructuredTransforms(data.text,data,project,ctx,basis,range),...assistTransforms(data.text,data,project,ctx),...composed.sources]){
       const variant=typeof entry==='string'?entry:entry.text;
       const replacement=typeof entry==='object'&&entry.whole?variant:variant.replace(/\n/g,() => ('\n'+' '.repeat(range.indent)));
       const written=replacement.endsWith('。')&&basis[range.end]==='。'?replacement.slice(0,-1):replacement,changedEnd=range.start+written.length,delta=written.length-(range.end-range.start);
@@ -32703,7 +32781,7 @@ function createAkariExtensionHost(options) {
     const contextHints=hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}),knownSchemas=new Set(contextHints.filter(h=>h.mode==='statement').map(h=>hintSchemaId(h.id).replace(/:timed$/,'')));
     const hasHigher=pool.some(p=>p.layer<6),seen=new Set(existing.map(p=>p.source.replace(/[\s。]/g,''))),out=[],started=now();
     for(const p of pool){if(p.layer===6&&hasHigher)continue;const key=p.text.replace(/[\s。]/g,'');if(key===range.text.replace(/[\s。]/g,'')||seen.has(key))continue;
-      const canonical=assistCanonical(p.text,ctx,previous);if(!canonical)continue;
+      const canonical=assistCanonical(p.text,ctx,previous);if(!canonical||!assistMeaningCompatible(canonical.ast,meaning,data,ctx))continue;
       const allowed=p.allowedSchemas||new Set(hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).filter(h=>h.mode==='statement'&&h.enabled).map(h=>hintSchemaId(h.id)));
       const localNames=new Set([...(ctx.args||[]),...(ctx.localNames||[])]),knownFor=actor=>new Set([...(project.projectData?.variables||[]),...(project.projectData?.lists||[]),...(project.components.find(c=>c.id===actor)?.localData?.variables||[]),...(project.components.find(c=>c.id===actor)?.localData?.lists||[])].map(n=>n.name));
       const gather=node=>{if(!node||typeof node!=='object')return;if(['LocalVariableDeclaration','LocalListDeclaration'].includes(node.kind))localNames.add(node.name);if(node.kind==='ForEach')localNames.add(node.binder);for(const [k,v]of Object.entries(node))if(k!=='sourceSpan'&&v&&typeof v==='object')Array.isArray(v)?v.forEach(gather):gather(v);};gather(canonical.ast);
@@ -40298,11 +40376,11 @@ function createAkariExtensionHost(options) {
       if(appVars.mainEditor.session?.pendingEdit){const field=appVars.mainEditor.session.pendingEdit;const control=appCalls.$$('[data-blockui-field]').find(n=>n.dataset.blockId===field.id&&n.dataset.blockuiField===field.field);control?.focus({preventScroll:true});}
       else appCalls.$('#tutorialStart').focus({preventScroll:true});
     }
-    function commitSource(binding, source, { atomic = false, flushQueued = false } = {}) {
+    function commitSource(binding, source, { atomic = false, flushQueued = false, preserveInput = false } = {}) {
       if (appCalls.modelLocked()) return false;
       const ownerKey = appCalls.bindingOwner(binding),
         before = appCalls.readSource(binding, ownerKey);
-      if (source === before) return false;
+      if (source === before && (!preserveInput || binding.textarea.value === source)) return false;
       const next = appCalls.sourceCandidate(binding, ownerKey, source);
       if (atomic) {
         if (flushQueued && appVars.queuedHistory) appCalls.pushHistoryNow(appVars.queuedHistory);
@@ -40311,7 +40389,10 @@ function createAkariExtensionHost(options) {
         const importing = binding === appVars.mainEditor && pending?.kind === 'source-import' &&
           session.ownerKey === ownerKey && pending.ownerKey === ownerKey &&
           pending.value === source && !session.blockDraft;
-        if (importing) {
+        if (preserveInput && pending?.kind === 'code' && pending.ownerKey === ownerKey) {
+          // Selecting a correction keeps the exact draft as the preceding undo state.
+          appCalls.pushHistoryNow();
+        } else if (importing) {
           // The confirmed input is not the valid body before this atomic change.
           session.pendingEdit = null;
           try { if (!appCalls.hasPendingEditor()) appCalls.pushHistoryNow(); }
@@ -40377,7 +40458,7 @@ function createAkariExtensionHost(options) {
           if(!current())return;
           const source=basis.slice(0,proposal.start)+proposal.source+basis.slice(proposal.end),written=basis.slice(proposal.start,proposal.end);
           try{
-            commitSource(binding,source,{atomic:true,flushQueued:true});binding.textarea.value=source;n.hidden=true;
+            commitSource(binding,source,{atomic:true,flushQueued:true,preserveInput:true});binding.textarea.value=source;n.hidden=true;
             let status=`✓ 「${written}」を 書きかえたよ`;
             const signal=/「([^「」]+)」/.exec(proposal.text)?.[1];
             if(signal&&proposal.origin==='S4')status+=proposal.schemaId==='Heading:message'?`。送る ほうにも「「${signal}」の合図を送る。」と 書いてね`:proposal.schemaId==='Broadcast'&&proposal.description?`。受ける ほうには「「${signal}」という合図を受けたとき、」と 書いてね`:'';
@@ -40387,8 +40468,6 @@ function createAkariExtensionHost(options) {
         choices.append(button);
         if(proposal.description){const small=document.createElement('small');small.textContent=proposal.description;choices.append(small);}
       }
-      const other=data.headerEvent==='valueChanged'?null:appVars.project.components.find(c=>c.id!==ctx.targetId&&(c.name===data.subject||/止まる|止める|とまる|とめる/.test(data.text)&&data.names.some(n=>n.kind==='part'&&n.name===c.name)));
-      if(other){const note=document.createElement('small');note.className='assist-note';note.textContent=`${other.name}が する ことは、${other.name}の 本文に 書きます`;choices.append(note);}
       const cancel=n.querySelector('[data-intent-cancel]')||document.createElement('button');cancel.type='button';cancel.dataset.intentCancel='';cancel.textContent='この あんないを とじる';cancel.onclick=()=>appCalls.closeAssist(binding);choices.append(cancel);n.append(choices);
       if(!n.assistKeyHandler){n.addEventListener('keydown',event=>{if(event.key==='Escape'&&event.target.closest('.intent-choices,.assist-choices')){event.preventDefault();event.stopPropagation();appCalls.closeAssist(binding);}});n.assistKeyHandler=true;}
     }

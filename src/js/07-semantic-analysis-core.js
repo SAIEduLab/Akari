@@ -1382,10 +1382,7 @@
     }
     return errors;
   }
-  // Notices never stop a run, a save or an export. ねこは1秒待つ。だんごは言う。: only ねこ waits, so だんご's
-  // sentence runs at once; say so where the next sentence of the same flow has another subject.
-  // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
-  const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
+  // Notices never stop a run, a save or an export.
   // B-17: 画面の左下のはしから、右へ320歩のばしょへ行く goes to たて0 (the bottom edge). The notice says so and gives the two
   // fixes: keep the place (上へ（たてのばしょ）歩) or write the 0 (上へ0歩). 画面の左下のはしへ行く means 0 on purpose.
   // The fixes are offered wherever the sentence's own text is known: on its own line, after another sentence of the line,
@@ -1746,35 +1743,9 @@
   }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
-    const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
     for (const item of compiled.items || []) {
       const ast = compiled.astByKey?.get(item.key);
       if (!ast) continue;
-      const self = item.targetId === 'stage' ? project.stage.name : project.components.find(c => c.id === item.targetId)?.name || '自分';
-      const who = ref => ref?.kind === 'named' ? ref.name : ref?.kind === 'self' ? self : null;
-      const walk = nodes => {
-        if (!Array.isArray(nodes)) return;
-        nodes.forEach((n, i) => {
-          for (const key of ['body', 'thenBody', 'elseBody']) walk(n?.[key]);
-          // ねこと犬は1秒待つ。 (名人): each part written waits, as one subject does (決まり2).
-          const lanes = n?.kind === 'Parallel' && n.lanes?.length > 1 && n.lanes.every(l => l.length === 1 && l[0].kind === 'WaitTime' && l[0].actorRef?.kind === 'named') ? n.lanes.map(l => l[0].actorRef.name) : null;
-          if (!lanes && (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all')) return;
-          const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
-          for (const m of nodes.slice(i + 1)) {
-            if (m.kind === 'CommentLine') continue;
-            if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all' || m.laneRef) break;
-            const other = who(m.actorRef);
-            if (!other || waiters.includes(other)) break;
-            const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
-              message: `${item.meijin && !NOTICE_VERBS[m.kind] && !['MotionCommand', 'LooksCommand', 'PenCommand'].includes(m.kind) ? 'この 文は すぐ 行います' : other + 'は すぐ ' + (NOTICE_VERBS[m.kind] || '動きます')}（待つのは ${waiter}だけです）。${item.meijin ? 'この 本文 ぜんたいで' : 'みんなで'} 待つ ときは、「待つ」の 文に 主語を 書きません` };
-            const key = note.where + '|' + note.line + '|' + note.column;
-            if (!seen.has(key)) { seen.add(key); notes.push(note); }
-            break;
-          }
-        });
-      };
-      walk(ast.body);
-      for (const unit of ast.units || []) walk(unit.body);
       for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast), ...flowNotes(project, compiled, item, ast)]) {
         const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
         if (!seen.has(key)) { seen.add(key); notes.push(note); }

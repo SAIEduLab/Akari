@@ -22,7 +22,10 @@ export async function buildDerivedProduct({product,output,extensions=[],profiles
   for(const definition of profiles) policies.register(vm.runInContext('('+json(definition)+')',scope));
   if(profile) policies.select(profile.id,profile.version);
   // Cross-realm JSON manifests become realm-local records through canonical JSON.
-  const host = scope.createAkariExtensionHost({allowedCapabilities});
+  const contract=html.match(/const EXECUTABLE_CONTRACT = Object\.freeze\((\{[\s\S]*?\})\);/);
+  if(!contract)throw Error('Product execution contract is missing');
+  const {languageContractId,runtimeContractId}=vm.runInContext('('+contract[1]+')',scope);
+  const host = scope.createAkariExtensionHost({allowedCapabilities,standard:{languageContractId,runtimeContractId}});
   const definitions=[];
   for (const {manifest,factory} of extensions) {
     const realmManifest = vm.runInContext('('+json(manifest)+')',scope);

@@ -1,0 +1,30 @@
+{
+  "schema": "akari-distribution-v1",
+  "productVersion": "1.0.1",
+  "languageContractId": 5,
+  "runtimeContractId": 5,
+  "projectFormat": 6,
+  "programFormat": 4,
+  "files": {
+    "Akari_1_0_1.html": "63fd08d524af469634e51e595337ac4a3fcb82d09405e0342c25e3461e9e3066",
+    "EXTENSIONS.md": "d98d63fb1ac88a031e6f1428b038cf00372612993b4fa4c8a7d0eac5019fea2c",
+    "LANGUAGE_1_0_1.md": "3f2a75044a6d222998e7dd4a162ea165f22ba97ebea85a0e3e08c90911f78f94",
+    "LICENSE": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf",
+    "MANUAL.html": "85904730970a0e6f92e1677ee7876e0d0c8c0c3092efb1827c33f15abcd69f64",
+    "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Manual/block-mode.html": "bf7c96fa5fa135edc4aa710fc08cd47fa749827661fddb506e9b1c50d814bf3f",
+    "Manual/code-mode-advanced.html": "14143b9228b7d6ed2dcae243ff79cf296b47feb9f591d3f58fc36ec400f2610a",
+    "Manual/code-mode-beginner.html": "eff2509cf1cfe6d4f48c135d102e54db97a9381575445956ca7f3141159420a6",
+    "Manual/code-mode-intermediate.html": "a2898cd824851be5adece0d469dc9c26a0e6f3e72682dd1d56fcaa65d562c3e2",
+    "Manual/meijin-mode.html": "f61bed998d22fc2b464ec81ade0d748a9ded90eb159d4c0cc7971b030fe8d6b3",
+    "extensions/build.mjs": "2e8aa5df6d4d7301a11456111107cd7f656735825dca90dc9ea5e1647209e06d",
+    "extensions/examples/connector.html": "fd6598052062da14e7d4e020a065de2563d17e5386b644f6cc7b79e625663895",
+    "extensions/examples/meijin.js": "fa650fb85331cf759a5682250ffb9a92cb4eb6bb32045394282c76817026440b",
+    "extensions/examples/offline.js": "9563855ae7e2a5ad52d6d04b8bfb9e25d1736dc542df7f35160435342c44da45",
+    "extensions/examples/profile.js": "9ab175fe8e83d0fd2497148d03d63649bba3464830c15b41fa50ac3a94c7d4a1",
+    "extensions/foundation.js": "62acc490f1d7c49f15f25f8c4c63ce102a8680eb7c403f21029c0c3d03fe2636",
+    "extensions/limits.md": "94b99e0a5b736b77beb75cd3a5c19c979d7dd881d31ee11ae8bde3d0a8556961",
+    "extensions/profiles.js": "3f6fae012780518785ac7cedb0326a7975283536ab37afd7249bbf46a042b3e5",
+    "extensions/types.d.ts": "c0c735d7b5125da001f3d8f4d2d4268c555e696c478ffea661a2f3dee86503d0"
+  }
+}

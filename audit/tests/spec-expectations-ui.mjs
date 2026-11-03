@@ -137,7 +137,7 @@ const S=page=>({
 const bare=t=>t.replace(/\s+/g,'');
 const runs=[];
 // Each route returns { expect: {…}, info: {…} }: every expect entry is true when that result of the case was seen.
-const notice='だんごはすぐ話します（待つのはねこだけです）';
+const notice='時間を書かない「言う」は、すぐ次の文へ進みます';
 // The touch rule of picture parts (LANGUAGE.md): the 1-second speech of a loop is sampled for a while; every text seen is kept.
 const listen=async(s,id,ms=2600)=>{const seen=new Set();for(let t=0;t<ms;t+=200){const text=await s.bubble(id);if(text)seen.add(text);await s.page.waitForTimeout(200);}return [...seen];};
 const touchLoop=other=>'ずっとくり返す。\n  もし「'+other+'」にふれていれば、\n    「ふれた」と1秒話す。\n  そうでなければ、\n    「はなれている」と1秒話す。';
@@ -195,12 +195,12 @@ const checks={
     return {expect:{allSurfacesSpaced:observations.every(r=>!r.edit.length&&!r.run.length)},info:{observations,negativeControlRuns:negative.map(x=>x.run)}};},
 
   // ── common ──
-  'CC-055':async s=>{await s.select('w-neko');await s.code();await s.write('ねこは「こんにちは」と言う。\nねこは1秒待つ。\nだんごは「やあ」と言う。');
+  'CC-055':async s=>{await s.select('w-neko');await s.code();await s.write('ねこは「こんにちは」と言う。\nねこは「次」と言う。\nだんごは「やあ」と言う。');
     const r=await s.check();await projectAction(s.page, 'exportBtn');await s.page.locator('#exportChoiceModal').waitFor({state:'visible'});
     const title=await s.page.locator('#exportChoiceTitle').textContent();await s.page.click('#exportChoiceCancel');
     return {expect:{notice:r.notes.some(n=>bare(n).includes(notice)),exportOpens:bare(title)==='作品のはじめ方をえらぼう'},info:r};},
-  'CC-056':async s=>{await s.select('w-neko');await s.code();await s.write('ねこは「こんにちは」と言う。\nねこは1秒待つ。\nだんごは「やあ」と言う。');
-    const first=await s.check();await s.run();await s.page.waitForTimeout(500);const runs=await s.page.evaluate(()=>document.querySelector('#formSurface').innerText.includes('こんにちは'));
+  'CC-056':async s=>{await s.select('w-neko');await s.code();await s.write('ねこは「こんにちは」と言う。\nねこは「次」と言う。\nだんごは「やあ」と言う。');
+    const first=await s.check();await s.run();await s.page.waitForTimeout(500);const runs=await s.page.evaluate(()=>document.querySelector('#formSurface').innerText.includes('次'));
     await s.stop();
     await s.write('ねこは「こんにちは」と言う。\nねこは\nだんごは「やあ」と言う。');const second=await s.check();
     return {expect:{firstNotice:first.notes.some(n=>bare(n).includes(notice)),firstNoIssue:first.issues.length===0,runs,secondIssue:second.issues.some(t=>/2行目|2行/.test(t))},info:{first,second}};},

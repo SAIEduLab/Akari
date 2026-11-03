@@ -6,6 +6,10 @@ import {selftestShards,browserShards,acceptanceShards} from './shard-plan.cjs';
 export const auditBundleKinds=[...Object.keys(selftestShards).map(s=>'selftest-'+s),'audio-codecs-win32',...Object.keys(browserShards).map(s=>'full-browser-'+s)];
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
+  ['meaning-preservation','audit/tests/meaning-preservation.mjs',file('meaning-preservation')],
+  ['flow-context','audit/tests/flow-context.mjs',file('flow-context')],
+  ['flow-order','audit/tests/flow-order.mjs',file('flow-order')],
+  ['part-state-wait','audit/tests/part-state-wait.mjs',file('part-state-wait')],
   ['static','audit/tests/static-contract.mjs',file('static')],
   ['audit-inventory','audit/tests/audit-inventory.mjs',file('audit-inventory')],
   ['product-source','audit/tests/product-source.mjs',file('product-source')],

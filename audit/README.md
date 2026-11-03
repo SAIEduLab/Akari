@@ -1,6 +1,6 @@
 # あかりの現行監査
 
-保証と受入条件は [AUDIT.md](../AUDIT.md)、製品意味は [LANGUAGE_1_0_0.md](../LANGUAGE_1_0_0.md) を参照する。現行製品pathは public-files.json から取得する。
+保証と受入条件は [AUDIT.md](../AUDIT.md)、製品意味は [LANGUAGE_1_0_1.md](../LANGUAGE_1_0_1.md) を参照する。現行製品pathは public-files.json から取得する。
 
 作業開始と変更受入は [明示指示と変更受入](WORK_AUTHORIZATION.md) に従う。
 

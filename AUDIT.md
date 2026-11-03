@@ -1,6 +1,14 @@
 # あかり — 監査契約
 本書は現在必要な機能保証の契約です。機能別説明の試験IDは現在の保証への参照です。必要な意味・独立期待値・実操作を保ち、過去の件数・工程・資料の復元は求めません。
 
+アシストの意味と待機順序は `meaning-preservation`、`flow-order`、`flow-context`、`part-state-wait` で検査します。候補の主体・対象・方向・数量・単位・時間の役割と、適用した作品の実座標・発話・時刻を比較します。時間待ち・条件待ち・反復・手続き・独立イベント・明示並行と合流を、同じ論理時計で検査します。保存形式と実行契約の拒否、および作成元の版表示だけが異なる同契約の受入も含みます。
+アシストの期待値は、主体の脱落、引用の実行化、別の動作・時間役割への置換を禁止する方向で更新しています。「2倍」は現在の大きさの2倍とし、200％への固定や2％への置換は拒否します。色の効果の数量を色名へ捨てる候補、コピー削除を非表示へ変える候補、条件・イベントを待機へ変える候補も拒否対象です。
+
+知らせで実行・保存・書き出しを止めない検査は、廃止した主語待機の知らせに代えて、時間を省いた連続発話の知らせを使います。待機順序の検査も保持します。
+
+アシストの既存入力は保持し、主体を省く期待は明示主体を保つ期待へ、指定のない方向・宛先・時間や別動作を追加する期待はその候補を拒否する期待へ合わせます。並行から逐次、距離から速度、秒から回数への置換も拒否します。候補の適用は未確定原文を含む履歴境界を持ち、1回のUndoで選択前の原文へ戻ることを実ブラウザーで確認します。
+
+
 ## 入門とチュートリアルの追加契約
 
 [入門契約と要件対応表](audit/ENTRY_WORKSHOP.md)に、入門集合・通常基本・共通手順と9分岐の許可操作と判定、退出・保存確認、通常編集の追加と座標初期値を定義します。`entry-workshop-core`、`entry-workshop-browser`、`entry-workshop-verify`を必要な実行・集約へ接続します。同じ入力・環境での二重起動は要求せず、有効な結果を共有します。全手順で操作前の待機、許可操作、禁止操作、退出を検査し、未実施・SKIP・証拠欠落・別SHAを合格にしません。
@@ -698,7 +706,7 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
-| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.0.0の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.0.1の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
 | EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。

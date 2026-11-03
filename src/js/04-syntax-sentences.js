@@ -24,8 +24,8 @@
   // 「これを6回くり返す」 repeats the one sentence before it (the check says so when more come before it).
   const REPEAT_PREVIOUS = new WeakSet();
   const STATEMENT_LINE = new WeakMap();
-  // 待つ with a subject (だんごは0.2秒待つ) holds only that part; without one (0.2秒待つ, みんなは…) the whole flow
-  // waits ({kind:'all'}). A wait does not take the subject of the line before it, only of its own sentence.
+  // A wait always blocks its sequential flow; its subject selects the evaluation context.
+  // A wait does not take the subject of the line before it, only of its own sentence.
   const EVERYONE_WAITS = new Set(['WaitTime','WaitUntil','BroadcastAndWait','WaitBroadcastGroup']);
   const EVERYONE_WORDS = ['みんな','全体'];
   const EVERYONE_START = new RegExp('^(?:'+EVERYONE_WORDS.join('|')+')(?:(?:は|が|で|も)、?|、|(?=[0-9０-９（「]))');
@@ -165,7 +165,7 @@
     return !sets && nodes.length === 1 && nodes[0].kind === 'Parallel' && inner.every(same) ? inner[0] : { kind: 'self', topicEnded: true };
   }
   // 名人 (決まり2): a sentence of the part carried on that names what it acts on (ねこの動きを止める, 鳥に知らせる,
-  // 星のコピーを全部消す) waits for that part's wait, as the part's next sentence does.
+  // 星のコピーを全部消す) retains the lane's topic for geometry invalidation.
   function meijinLaneRefs(nodes, topic) {
     let current = topic;
     for (const n of nodes || []) {
@@ -1073,18 +1073,7 @@
     if(start>=code.length)throw new AkariError('P202','「〜して、」の あとに、つづきの 文を 書いて ください。れい：前へ10歩進んで、「やあ」と言う',line.lineNo,1);
     const rest=surfaceLineSlice(line,start,code.length);rest.comment=line.comment;
     nodes.push(...parseSentenceSequence(rest,symbols,scope));
-    partWaitBeforeOtherSubject(nodes,line,symbols);
     return nodes;
-  }
-  // ねこは1秒待ってから、だんごは10歩進む: only ねこ would wait and だんご would move at once, so the child chooses.
-  function partWaitBeforeOtherSubject(nodes,line,symbols) {
-    const same=(a,b)=>a?.kind===b?.kind&&(a?.kind!=='named'||a.name===b.name);
-    const at=nodes.findIndex((n,i)=>EVERYONE_WAITS.has(n.kind)&&n.actorRef?.kind!=='all'&&nodes.slice(i+1).some(m=>STATEMENT_EXPLICIT_ACTORS.has(m)&&!same(m.actorRef,n.actorRef)));
-    if(at<0)return;
-    const write=body=>{try{return formatScript({kind:'Script',body}).trim().replace(/。$/,'');}catch{return null;}};
-    const together=write(nodes.map((n,i)=>i===at?{...n,actorRef:{kind:'all'}}:n)),only=write(nodes),who=sentenceActorSource(nodes[at].actorRef);
-    throw sentenceDiagnostic(`「待って」のあとに ほかの 主語の 文を つづける ときは、文を 分けて 書きます。みんなで 待つのか、${who}だけが 待つのかを えらんで ください（みんなで 待つときは「1秒待つ。」、${who}だけが 待つときは「${who}は1秒待つ。」と 書いて、次の 文を 書きます）`,line,
-      [...(together?[{label:'みんなで 待ってから つづける',source:together}]:[]),...(only?[{label:`${who}だけが 待つ（ほかは すぐ 動く）`,source:only}]:[])],{kind:'Sequence'});
   }
   // 点数が10になったら (no もし): three meanings, each in the child's words (LANGUAGE.md 読めない書き方): now, once by
   // waiting, or each time (名人's 〜になったとき).
@@ -1183,11 +1172,11 @@
     // 書20: guidance that names the fix (proposals are written as the code writes them).
     const fixed=(message,source,label,kind)=>sentenceDiagnostic(message,line,[{label,source:canonicalStatementSource(source,symbols)}],{kind});
     // ねこもだんごも1秒待つ / ねことだんごは…: a sentence has one subject, so each part gets its own sentence
-    // (two waits of parts hold at the same time).
+    // Splitting makes timed actions and waits sequential.
     {const both=actorNamePatterns(symbols).both.exec(code);
       if(both&&both[1]!==both[2]){const one=name=>canonicalStatementSource(name+'は'+both[3],symbols),split=one(both[1])+'。\n'+one(both[2]);
         // A timed action split into sentences runs one subject after the other; say so before the child splits it.
-        const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:話す|はなす|言う|いう|鳴らす|ならす)|を(?:最後まで)?(?:鳴らす|ならす))/.test(surfaceMask(both[3]));
+        const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:待つ|まつ|話す|はなす|言う|いう|鳴らす|ならす)|を(?:最後まで)?(?:鳴らす|ならす))/.test(surfaceMask(both[3]));
         throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?'。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かす ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます':''),line,parseSyntax(split+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split}]:[],{kind:'Sequence'});}}
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).

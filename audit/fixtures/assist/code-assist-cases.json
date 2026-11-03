@@ -158,13 +158,12 @@
           "schemaId": "MotionCommand:MOVE",
           "text": "前へ10歩進む。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:MOVE_BY",
             "text": "いまのばしょから、右へ10歩動く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -177,6 +176,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -619,13 +622,12 @@
           "schemaId": "MotionCommand:MOVE",
           "text": "後ろへ10歩動く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:GOTO",
             "text": "画面の左下のはしから、右へ10歩、上へ50歩のばしょへ行く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -638,6 +640,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -1668,7 +1674,7 @@
     {
       "id": "ASSIST-130",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -1701,19 +1707,18 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE_BY",
-          "text": "いまのばしょから、右へ10歩動く。"
-        },
-        "absent": [],
-        "maxAssist": 4,
-        "differsFromOriginal": true,
-        "contains": [
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ10歩動く。"
+          },
           {
             "schemaId": "MotionCommand:MOVE_BY",
             "text": "いまのばしょから、左へ10歩動く。"
           }
-        ]
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -1724,6 +1729,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -1786,7 +1795,7 @@
     {
       "id": "ASSIST-132",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -1819,14 +1828,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE_BY",
-          "text": "いまのばしょから、右へ10歩動く。"
-        },
         "absent": [
-          "MotionCommand:MOVE"
+          "MotionCommand:MOVE",
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ10歩動く。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -1838,6 +1847,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -1989,9 +2002,14 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE_BY",
-          "text": "いまのばしょから、右へ10歩動く。"
+          "text": "犬は、いまのばしょから、右へ10歩動く。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ10歩動く。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -2003,7 +2021,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "別の部品を主語にした文には、主語を外した近い書き方と「犬が する ことは、犬の 本文に 書きます」の注を示します。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -2047,13 +2065,12 @@
           "schemaId": "MotionCommand:GOTO",
           "text": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:GOTO_PART",
             "text": "「犬」のところへ行く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -2066,6 +2083,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -2554,12 +2575,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "MotionCommand:GOTO_PART",
-          "text": "「星」のところへ行く。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "MotionCommand:GOTO_PART",
+            "text": "「星」のところへ行く。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -2571,6 +2593,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -2614,13 +2640,12 @@
           "schemaId": "MotionCommand:GOTO_PART",
           "text": "「犬」のところへ行く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:GOTO",
             "text": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -2633,6 +2658,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -4210,13 +4239,12 @@
           "schemaId": "MotionCommand:POINT_TO",
           "text": "「犬」の方を向く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:TURN_RIGHT",
             "text": "右に15度回る。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -4229,6 +4257,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -4875,7 +4907,7 @@
     {
       "id": "ASSIST-186",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -4908,12 +4940,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "ContinuousRule",
-          "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "ContinuousRule",
+            "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -4925,13 +4958,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-187",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -4964,12 +5001,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "ContinuousRule",
-          "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "ContinuousRule",
+            "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -4981,6 +5019,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -5098,7 +5140,7 @@
     {
       "id": "ASSIST-190",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -5131,12 +5173,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "ContinuousRule",
-          "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "ContinuousRule",
+            "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -5148,6 +5191,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -5322,7 +5369,7 @@
     {
       "id": "ASSIST-194",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -5355,12 +5402,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "ContinuousRule",
-          "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "ContinuousRule",
+            "text": "「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -5372,6 +5420,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -5906,9 +5958,14 @@
         "code": "P201",
         "first": {
           "schemaId": "LooksCommand:SET_SCALE",
-          "text": "大きさを150％にする。"
+          "text": "犬は大きさを150％にする。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "LooksCommand:SET_SCALE",
+            "text": "大きさを150％にする。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -5921,6 +5978,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -6284,9 +6345,12 @@
         "code": "P205",
         "first": {
           "schemaId": "LooksCommand:SET_SCALE",
-          "text": "大きさを200％にする。"
+          "text": "大きさを（大きさ×2）％にする。"
         },
-        "absent": [],
+        "absent": [
+          "大きさを200％にする。",
+          "大きさを2％にする。"
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -7280,7 +7344,7 @@
     {
       "id": "ASSIST-231",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -7311,12 +7375,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "LooksCommand:SET_COLOR",
-          "text": "色を「赤」にする。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "LooksCommand:SET_COLOR",
+            "text": "色を「赤」にする。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -7367,9 +7432,14 @@
         "code": "P205",
         "first": {
           "schemaId": "LooksCommand:SET_COLOR",
-          "text": "色を「赤」にする。"
+          "text": "犬は色を「赤」にする。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "LooksCommand:SET_COLOR",
+            "text": "色を「赤」にする。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -7382,6 +7452,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -12032,9 +12106,14 @@
         "code": "P201",
         "first": {
           "schemaId": "WaitTime",
-          "text": "1秒待つ。"
+          "text": "ねこは1秒待つ。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "WaitTime",
+            "text": "1秒待つ。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -12047,6 +12126,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -12088,9 +12171,14 @@
         "code": "P201",
         "first": {
           "schemaId": "WaitTime",
-          "text": "1秒待つ。"
+          "text": "犬は1秒待つ。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "WaitTime",
+            "text": "1秒待つ。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -12102,7 +12190,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -12333,7 +12421,7 @@
     {
       "id": "ASSIST-323",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -12366,12 +12454,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と2秒話す。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と2秒話す。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -12382,7 +12471,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "秒を書いた文には、時間つきの書き方を示します。"
+          "quote": "時間は役割ごとに扱います。「2秒かけて」は動作の所要時間、「2秒後に」は開始までの遅延、「2秒待ってから」は待機のあとに続く動作です。同じ数値を残しただけでは意味の保持とみなしません。引用した発話はそのまま保持し、引用内の動詞や数量から別の動作を作りません。名前や引数として使う引用は、その役割を保持します。移動の依頼に、名前だけが一致するコピー作成を混ぜません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -12898,7 +12991,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "秒を書いた文には、時間つきの書き方を示します。"
+          "quote": "時間は役割ごとに扱います。「2秒かけて」は動作の所要時間、「2秒後に」は開始までの遅延、「2秒待ってから」は待機のあとに続く動作です。同じ数値を残しただけでは意味の保持とみなしません。引用した発話はそのまま保持し、引用内の動詞や数量から別の動作を作りません。名前や引数として使う引用は、その役割を保持します。移動の依頼に、名前だけが一致するコピー作成を混ぜません。"
         }
       ]
     },
@@ -13075,7 +13168,7 @@
     {
       "id": "ASSIST-336",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -13108,19 +13201,18 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「やあ」の合図を送る。"
-        },
-        "absent": [],
-        "maxAssist": 4,
-        "differsFromOriginal": true,
-        "contains": [
+        "absent": [
+          {
+            "schemaId": "Broadcast",
+            "text": "「やあ」の合図を送る。"
+          },
           {
             "schemaId": "Say",
             "text": "「やあ」と言う。"
           }
-        ]
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -13131,6 +13223,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -14075,19 +14171,18 @@
       },
       "expect": {
         "code": "P201",
-        "contains": [
-          {
-            "schemaId": "Forever",
-            "text": "ずっとくり返す。\n  「ベル」を鳴らす。"
-          },
+        "absent": [
           {
             "schemaId": "SoundCommand:SAMPLE",
             "text": "「ベル」を鳴らし始める。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
-        "differsFromOriginal": true
+        "differsFromOriginal": true,
+        "first": {
+          "schemaId": "Forever",
+          "text": "ずっとくり返す。\n  「ベル」を鳴らす。"
+        }
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -14098,6 +14193,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "一つの文がいくつかの意味にとれるときは、意味ごとに近い書き方を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -15988,13 +16087,12 @@
           "schemaId": "SoundCommand:STOP_ALL",
           "text": "すべての音を止める。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "StopCommand:THIS",
             "text": "この動きを止める。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -16007,6 +16105,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -16067,7 +16169,7 @@
     {
       "id": "ASSIST-389",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -16100,12 +16202,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "SoundCommand:STOP_ALL",
-          "text": "すべての音を止める。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "SoundCommand:STOP_ALL",
+            "text": "すべての音を止める。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -16117,13 +16220,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-390",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -16156,12 +16263,13 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "SoundCommand:STOP_ALL",
-          "text": "すべての音を止める。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "SoundCommand:STOP_ALL",
+            "text": "すべての音を止める。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -16173,6 +16281,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -16509,7 +16621,7 @@
     {
       "id": "ASSIST-397",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -16540,15 +16652,15 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "SoundCommand:STOP_ALL",
-          "text": "すべての音を止める。"
-        },
         "absent": [
           "SoundCommand:SAMPLE",
-          "SoundCommand:SAMPLE_WAIT"
+          "SoundCommand:SAMPLE_WAIT",
+          {
+            "schemaId": "SoundCommand:STOP_ALL",
+            "text": "すべての音を止める。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -16560,6 +16672,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -17433,9 +17549,14 @@
         "code": "S317",
         "first": {
           "schemaId": "PenCommand:DOWN",
-          "text": "ペンを下ろす。"
+          "text": "ねこはペンを下ろす。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "PenCommand:DOWN",
+            "text": "ペンを下ろす。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -17447,7 +17568,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -17489,9 +17610,14 @@
         "code": "S317",
         "first": {
           "schemaId": "PenCommand:DOWN",
-          "text": "ペンを下ろす。"
+          "text": "犬はペンを下ろす。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "PenCommand:DOWN",
+            "text": "ペンを下ろす。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -17503,7 +17629,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -18104,9 +18230,14 @@
         "code": "S317",
         "first": {
           "schemaId": "PenCommand:UP",
-          "text": "ペンを上げる。"
+          "text": "犬はペンを上げる。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "PenCommand:UP",
+            "text": "ペンを上げる。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -18118,7 +18249,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -20629,15 +20760,14 @@
           "schemaId": "PenCommand:UP",
           "text": "ペンを上げる。"
         },
-        "absent": [],
-        "maxAssist": 4,
-        "differsFromOriginal": true,
-        "contains": [
+        "absent": [
           {
             "schemaId": "StopCommand:THIS",
             "text": "この動きを止める。"
           }
-        ]
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -20648,6 +20778,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -22601,7 +22735,7 @@
     {
       "id": "ASSIST-512",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -22634,12 +22768,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "StopCommand:THIS",
-          "text": "この動きを止める。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "StopCommand:THIS",
+            "text": "この動きを止める。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -22650,14 +22785,14 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-513",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -22690,12 +22825,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "StopCommand:THIS",
-          "text": "この動きを止める。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "StopCommand:THIS",
+            "text": "この動きを止める。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -22706,14 +22842,14 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-514",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ロボ",
@@ -22746,12 +22882,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "StopCommand:THIS",
-          "text": "この動きを止める。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "StopCommand:THIS",
+            "text": "この動きを止める。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -22763,13 +22900,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-515",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -22802,19 +22943,18 @@
       },
       "expect": {
         "code": "P201",
-        "contains": [
+        "absent": [
+          {
+            "schemaId": "StopCommand:OTHERS",
+            "text": "ほかの動きを全部止める。"
+          },
           {
             "schemaId": "StopCommand:ALL",
             "text": "作品を全部止める。"
           }
         ],
-        "absent": [],
-        "maxAssist": 4,
-        "differsFromOriginal": true,
-        "first": {
-          "schemaId": "StopCommand:OTHERS",
-          "text": "ほかの動きを全部止める。"
-        }
+        "maxAssist": 0,
+        "differsFromOriginal": true
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -22825,6 +22965,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "一つの文がいくつかの意味にとれるときは、意味ごとに近い書き方を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -23678,13 +23822,12 @@
       },
       "expect": {
         "code": "P201",
-        "contains": [
+        "absent": [
           {
             "schemaId": "StopCommand:THIS",
             "text": "この動きを止める。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true,
         "first": {
@@ -34581,7 +34724,9 @@
           {
             "schemaId": "IfStatement",
             "text": "もし点数が10なら、"
-          },
+          }
+        ],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n前へ10歩進む。"
@@ -36702,13 +36847,14 @@
           {
             "schemaId": "IfStatement",
             "text": "もし点数が10なら、"
-          },
+          }
+        ],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n前へ10歩進む。"
           }
-        ],
-        "absent": []
+        ]
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -37469,13 +37615,14 @@
           {
             "schemaId": "IfStatement",
             "text": "もし点数が10なら、"
-          },
+          }
+        ],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n前へ10歩進む。"
           }
-        ],
-        "absent": []
+        ]
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -40149,7 +40296,7 @@
     {
       "id": "ASSIST-825",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -40190,14 +40337,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Say"
+          "Say",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -40209,13 +40356,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「「出発」の合図を送る。」を出します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-826",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -40256,14 +40407,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Say"
+          "Say",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -40275,13 +40426,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "かんたん でも同じ"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-827",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -40322,14 +40477,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Say"
+          "Say",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -40341,13 +40496,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「「出発」の合図を送る。」を出します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-828",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -40388,14 +40547,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Say"
+          "Say",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -40407,13 +40566,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「「出発」の合図を送る。」を出します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-829",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -40454,14 +40617,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Say"
+          "Say",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -40473,6 +40636,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「「出発」の合図を送る。」を出します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -43183,13 +43350,13 @@
           "schemaId": "IfStatement",
           "text": "もしはいけいの名前が「夜」なら、"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "はいけいの名前が「夜」になるまで待つ。\n前へ10歩進む。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -44407,13 +44574,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10なら、"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n前へ10歩進む。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -44540,13 +44707,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10点なら、"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "点数が10点になるまで待つ。\n前へ10歩進む。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -45674,14 +45841,12 @@
           "schemaId": "CloneCommand:CREATE_TARGET",
           "text": "「星」のコピーを作る。"
         },
-        "contains": [
+        "absent": [
+          "CloneCommand:DELETE_SELF",
           {
             "schemaId": "CloneCommand:CREATE_SELF",
             "text": "自分のコピーを作る。"
           }
-        ],
-        "absent": [
-          "CloneCommand:DELETE_SELF"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -45696,6 +45861,10 @@
           "file": "LANGUAGE.md",
           "section": "読めない文の近い書き方（コピー・てじゅん・定義の本文）",
           "quote": "部品の名前を書いたときは、その部品のコピーを作る文を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -46146,13 +46315,13 @@
           "schemaId": "CloneCommand:DELETE_SELF",
           "text": "このコピーだけを消す。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
           {
             "schemaId": "LooksCommand:HIDE",
             "text": "すがたをかくす。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -48056,14 +48225,12 @@
           "schemaId": "CloneCommand:CREATE_TARGET",
           "text": "「星」のコピーを作る。"
         },
-        "contains": [
+        "absent": [
+          "CloneCommand:DELETE_SELF",
           {
             "schemaId": "CloneCommand:CREATE_SELF",
             "text": "自分のコピーを作る。"
           }
-        ],
-        "absent": [
-          "CloneCommand:DELETE_SELF"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -48078,6 +48245,10 @@
           "file": "LANGUAGE.md",
           "section": "読めない文の近い書き方（コピー・てじゅん・定義の本文）",
           "quote": "「を」を書かずに「〜のコピー作る」と書いた文には、「〜のコピーを作る」を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -48370,7 +48541,7 @@
     {
       "id": "ASSIST-1001",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48403,14 +48574,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n2秒かけて、いまのばしょから、右へ40歩動く。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n2秒かけて、いまのばしょから、右へ40歩動く。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48422,13 +48593,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1002",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48461,14 +48636,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48480,13 +48655,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1003",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48519,14 +48698,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "SoundCommand:SAMPLE",
-          "text": "「ベル」を鳴らし始める。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "SoundCommand:SAMPLE",
+            "text": "「ベル」を鳴らし始める。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48538,13 +48717,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1004",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48577,14 +48760,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48596,13 +48779,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1005",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48635,14 +48822,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48654,6 +48841,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -48715,7 +48906,7 @@
     {
       "id": "ASSIST-1007",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48748,14 +48939,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48767,13 +48958,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1008",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48806,14 +49001,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48825,13 +49020,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1009",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48864,14 +49063,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48883,13 +49082,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1010",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48922,14 +49125,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "「星」にふれるまで、くり返す。\n  前へ20歩進む。\n  1秒待つ。"
-        },
         "absent": [
-          "MoveUntil"
+          "MoveUntil",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "「星」にふれるまで、くり返す。\n  前へ20歩進む。\n  1秒待つ。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48941,13 +49144,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1011",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -48980,14 +49187,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "画面のはしにふれるまで、くり返す。\n  1秒かけて、いまのばしょから、右へ20歩動く。"
-        },
         "absent": [
-          "MoveUntil"
+          "MoveUntil",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "画面のはしにふれるまで、くり返す。\n  1秒かけて、いまのばしょから、右へ20歩動く。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -48999,13 +49206,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1012",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49038,14 +49249,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "RepeatCount",
-          "text": "10回くり返す。\n  前へ20歩進む。\n  1秒待つ。"
-        },
         "absent": [
-          "MoveUntil"
+          "MoveUntil",
+          {
+            "schemaId": "RepeatCount",
+            "text": "10回くり返す。\n  前へ20歩進む。\n  1秒待つ。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49057,13 +49268,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1013",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49096,14 +49311,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "「星」にふれるまで、くり返す。\n  前へ20歩進む。\n  1秒待つ。"
-        },
         "absent": [
-          "MoveUntil"
+          "MoveUntil",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "「星」にふれるまで、くり返す。\n  前へ20歩進む。\n  1秒待つ。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49115,6 +49330,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -49466,7 +49685,7 @@
     {
       "id": "ASSIST-1020",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49499,14 +49718,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "Forever",
-          "text": "ずっとくり返す。\n  前へ20歩進む。\n  1秒待つ。"
-        },
         "absent": [
-          "MoveUntil"
+          "MoveUntil",
+          {
+            "schemaId": "Forever",
+            "text": "ずっとくり返す。\n  前へ20歩進む。\n  1秒待つ。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49518,6 +49737,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -49637,7 +49860,7 @@
     {
       "id": "ASSIST-1023",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49670,14 +49893,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49689,13 +49912,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1024",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49728,14 +49955,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが5以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが5以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49747,13 +49974,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1025",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49786,14 +50017,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49805,13 +50036,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1026",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49844,14 +50079,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49863,13 +50098,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1027",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49902,14 +50141,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。\n  前へ10歩進む。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。\n  前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49921,13 +50160,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1028",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -49960,14 +50203,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -49979,13 +50222,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1029",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -50018,14 +50265,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -50037,6 +50284,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -50080,14 +50331,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10なら、\n  「やった」と言う。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
+          "Meijin:Heading:conditionTrue",
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n「やった」と言う。"
           }
-        ],
-        "absent": [
-          "Meijin:Heading:conditionTrue"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -50144,14 +50394,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10点以上なら、\n  ねこは「やった！」と言う。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
+          "Meijin:Heading:conditionTrue",
           {
             "schemaId": "WaitUntil",
             "text": "点数が10点以上になるまで待つ。\nねこは「やった！」と言う。"
           }
-        ],
-        "absent": [
-          "Meijin:Heading:conditionTrue"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -50208,14 +50457,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10なら、\n  「やった」と言う。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
+          "Meijin:Heading:conditionTrue",
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n「やった」と言う。"
           }
-        ],
-        "absent": [
-          "Meijin:Heading:conditionTrue"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -50272,14 +50520,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10なら、\n  「やった」と言う。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
+          "Meijin:Heading:conditionTrue",
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n「やった」と言う。"
           }
-        ],
-        "absent": [
-          "Meijin:Heading:conditionTrue"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -50336,14 +50583,13 @@
           "schemaId": "IfStatement",
           "text": "もし点数が10なら、\n  「やった」と言う。"
         },
-        "contains": [
+        "contains": [],
+        "absent": [
+          "Meijin:Heading:conditionTrue",
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n「やった」と言う。"
           }
-        ],
-        "absent": [
-          "Meijin:Heading:conditionTrue"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51316,10 +51562,14 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:SET_DIRECTION",
-          "text": "画面の上を向く。"
+          "text": "ねこは画面の上を向く。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "MotionCommand:SET_DIRECTION",
+            "text": "画面の上を向く。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51333,6 +51583,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51374,10 +51628,14 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:SET_DIRECTION",
-          "text": "向きを45度にする。"
+          "text": "ねこは向きを45度にする。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "MotionCommand:SET_DIRECTION",
+            "text": "向きを45度にする。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51391,6 +51649,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51432,10 +51694,14 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:SET_DIRECTION",
-          "text": "画面の上を向く。"
+          "text": "犬は画面の上を向く。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "MotionCommand:SET_DIRECTION",
+            "text": "画面の上を向く。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51449,6 +51715,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51490,10 +51760,14 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:SET_DIRECTION",
-          "text": "画面の上を向く。"
+          "text": "ねこは画面の上を向く。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "MotionCommand:SET_DIRECTION",
+            "text": "画面の上を向く。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51507,6 +51781,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51602,10 +51880,14 @@
         "code": "P205",
         "first": {
           "schemaId": "SoundCommand:SET_VOLUME",
-          "text": "音の大きさを50％にする。"
+          "text": "ねこは音の大きさを50％にする。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "SoundCommand:SET_VOLUME",
+            "text": "音の大きさを50％にする。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51619,6 +51901,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51660,10 +51946,14 @@
         "code": "S317",
         "first": {
           "schemaId": "SoundCommand:PITCH_UP",
-          "text": "音の高さを1段階上げる。"
+          "text": "ねこは音の高さを1段階上げる。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "SoundCommand:PITCH_UP",
+            "text": "音の高さを1段階上げる。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51677,6 +51967,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51718,10 +52012,14 @@
         "code": "P205",
         "first": {
           "schemaId": "LooksCommand:SET_COSTUME",
-          "text": "すがたを「丸」にかえる。"
+          "text": "ねこはすがたを「丸」にかえる。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "LooksCommand:SET_COSTUME",
+            "text": "すがたを「丸」にかえる。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51735,6 +52033,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51776,10 +52078,14 @@
         "code": "S317",
         "first": {
           "schemaId": "LooksCommand:SHOW",
-          "text": "すがたを見せる。"
+          "text": "ねこはすがたを見せる。"
         },
         "absent": [
-          "Meijin:LookOf"
+          "Meijin:LookOf",
+          {
+            "schemaId": "LooksCommand:SHOW",
+            "text": "すがたを見せる。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51793,6 +52099,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51853,7 +52163,7 @@
     {
       "id": "ASSIST-1061",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -51886,14 +52196,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "BroadcastAndWait",
-          "text": "「出発」の合図を送って、その合図で始まったことが全部終わるまで待つ。"
-        },
         "absent": [
-          "Meijin:Notify"
+          "Meijin:Notify",
+          {
+            "schemaId": "BroadcastAndWait",
+            "text": "「出発」の合図を送って、その合図で始まったことが全部終わるまで待つ。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -51905,6 +52215,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -51944,13 +52258,14 @@
       },
       "expect": {
         "code": "P205",
-        "absent": [],
-        "maxAssist": 4,
-        "differsFromOriginal": true,
-        "first": {
-          "schemaId": "BroadcastAndWait",
-          "text": "「出発」の合図を送って、その合図で始まったことが全部終わるまで待つ。"
-        }
+        "absent": [
+          {
+            "schemaId": "BroadcastAndWait",
+            "text": "「出発」の合図を送って、その合図で始まったことが全部終わるまで待つ。"
+          }
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
       },
       "invariants": {
         "sourceUnchanged": true,
@@ -51961,6 +52276,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "文脈で使えない文型の近い書き方は示しません（答えを もとめる の本文の 止める、くり返しの外の このくり返しを終える など）。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -52002,16 +52321,14 @@
         "code": "S317",
         "first": {
           "schemaId": "StopCommand:OWN_OTHERS",
-          "text": "自分のほかの動きを止める。\nこの動きを止める。"
+          "text": "ねこは自分のほかの動きを止める。\nねこはこの動きを止める。"
         },
-        "contains": [
+        "absent": [
+          "StopCommand:PART",
           {
             "schemaId": "StopCommand:THIS",
             "text": "この動きを止める。"
           }
-        ],
-        "absent": [
-          "StopCommand:PART"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -52066,16 +52383,14 @@
         "code": "P201",
         "first": {
           "schemaId": "StopCommand:OWN_OTHERS",
-          "text": "自分のほかの動きを止める。\nこの動きを止める。"
+          "text": "ねこは自分のほかの動きを止める。\nねこはこの動きを止める。"
         },
-        "contains": [
+        "absent": [
+          "StopCommand:PART",
           {
             "schemaId": "StopCommand:THIS",
             "text": "この動きを止める。"
           }
-        ],
-        "absent": [
-          "StopCommand:PART"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -52978,10 +53293,14 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
         "absent": [
-          "Meijin:Subject"
+          "Meijin:Subject",
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -52995,6 +53314,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -53036,10 +53359,14 @@
         "code": "P201",
         "first": {
           "schemaId": "Say",
-          "text": "「やあ」と言う。"
+          "text": "犬は「やあ」と言う。"
         },
         "absent": [
-          "Meijin:Subject"
+          "Meijin:Subject",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -53053,6 +53380,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -53094,7 +53425,7 @@
         "code": "S317",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "犬は前へ10歩進む。\n星は前へ10歩進む。\nねこは前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。\n犬は前へ10歩進む。\n星は前へ10歩進む。"
         },
         "absent": [
           "Parallel"
@@ -53111,6 +53442,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -53152,7 +53487,7 @@
         "code": "P205",
         "first": {
           "schemaId": "Say",
-          "text": "犬は「やった！」と言う。\n星は「やった！」と言う。\nねこは「やった！」と言う。"
+          "text": "ねこは「やった！」と言う。\n犬は「やった！」と言う。\n星は「やった！」と言う。"
         },
         "absent": [
           "Parallel"
@@ -53169,6 +53504,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -53320,7 +53659,7 @@
         "code": "S317",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "犬は前へ10歩進む。\n星は前へ10歩進む。\n鳥は前へ10歩進む。\nねこは前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。\n犬は前へ10歩進む。\n星は前へ10歩進む。\n鳥は前へ10歩進む。"
         },
         "absent": [
           "Parallel"
@@ -53337,6 +53676,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -53402,7 +53745,7 @@
     {
       "id": "ASSIST-1088",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -53435,14 +53778,14 @@
       },
       "expect": {
         "code": "S317",
-        "first": {
-          "schemaId": "Say",
-          "text": "「やあ」と言う。\n前へ10歩進む。"
-        },
         "absent": [
-          "Parallel"
+          "Parallel",
+          {
+            "schemaId": "Say",
+            "text": "「やあ」と言う。\n前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -53454,6 +53797,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -53746,7 +54093,7 @@
     {
       "id": "ASSIST-1094",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -53779,14 +54126,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Meijin:Notify"
+          "Meijin:Notify",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -53798,13 +54145,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1095",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -53837,14 +54188,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
         "absent": [
-          "Meijin:Notify"
+          "Meijin:Notify",
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -53856,13 +54207,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1096",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -53895,14 +54250,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE_BY",
-          "text": "1秒かけて、いまのばしょから、右へ20歩動く。"
-        },
         "absent": [
-          "Forever"
+          "Forever",
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "1秒かけて、いまのばしょから、右へ20歩動く。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -53914,13 +54269,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1097",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -53953,14 +54312,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE",
-          "text": "前へ20歩進む。\n1秒待つ。"
-        },
         "absent": [
-          "Forever"
+          "Forever",
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ20歩進む。\n1秒待つ。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -53972,6 +54331,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -54968,7 +55331,7 @@
     {
       "id": "ASSIST-1115",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -55004,15 +55367,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
-        },
-        "contains": [],
         "absent": [
-          "CloneCommand:CREATE_TARGET"
+          "CloneCommand:CREATE_TARGET",
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -55023,7 +55385,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -55066,13 +55428,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true,
         "absentTexts": [
           "犬は前へ10歩進む。"
@@ -55086,14 +55448,14 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1117",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -55129,13 +55491,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -55146,7 +55508,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56253,7 +56615,7 @@
     {
       "id": "ASSIST-1136",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -56289,13 +56651,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -56307,13 +56669,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1137",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -56349,13 +56715,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "RepeatCount",
-          "text": "4回くり返す。\n  前へ10歩進む。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "RepeatCount",
+            "text": "4回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -56367,13 +56733,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1138",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -56409,13 +56779,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "RepeatCount",
-          "text": "4回くり返す。\n  前へ10歩進む。\n  右に90度回る。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "RepeatCount",
+            "text": "4回くり返す。\n  前へ10歩進む。\n  右に90度回る。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -56427,6 +56797,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56471,11 +56845,14 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
-        "contains": [],
         "absent": [
-          "CloneCommand:CREATE_TARGET"
+          "CloneCommand:CREATE_TARGET",
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -56488,7 +56865,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56533,10 +56910,14 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "犬は前へ10歩進む。"
         },
-        "contains": [],
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true,
         "absentTexts": [
@@ -56551,7 +56932,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56596,10 +56977,14 @@
         "code": "P205",
         "first": {
           "schemaId": "NumericUpdate:ADD",
-          "text": "点数を1ふやす。"
+          "text": "ねこは点数を1ふやす。"
         },
-        "contains": [],
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "NumericUpdate:ADD",
+            "text": "点数を1ふやす。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -56612,6 +56997,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56842,12 +57231,15 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
-        "contains": [],
         "absent": [
           "MotionCommand:GOTO_PART",
-          "CloneCommand:CREATE_TARGET"
+          "CloneCommand:CREATE_TARGET",
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -56860,7 +57252,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない文の近い書き方：別の部品を主語にした文は、主語を外した文を示し、「犬が する ことは、犬の 本文に 書きます」と添えます。"
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56905,10 +57297,14 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
-        "contains": [],
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -56921,6 +57317,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -56965,10 +57365,14 @@
         "code": "P205",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
-        "contains": [],
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -56981,6 +57385,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -57289,7 +57697,7 @@
     {
       "id": "ASSIST-1153",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -57325,13 +57733,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -57343,6 +57751,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：候補は、その作品にそのまま書けば読める文だけを、最大4つまで示します。押したときだけ本文を書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -58618,7 +59030,7 @@
       "expect": {
         "code": "S317",
         "first": {
-          "schemaId": "LooksCommand:HIDE",
+          "schemaId": "WaitTime",
           "text": "1秒待つ。\nすがたをかくす。"
         },
         "contains": [],
@@ -58637,6 +59049,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「〜して」でつないだ文は、文ごとに行を分けた形を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -58681,7 +59097,7 @@
       "expect": {
         "code": "P201",
         "first": {
-          "schemaId": "LooksCommand:HIDE",
+          "schemaId": "WaitTime",
           "text": "1秒待つ。\nすがたをかくす。"
         },
         "contains": [],
@@ -58698,6 +59114,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「〜して」でつないだ文は、文ごとに行を分けた形を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -58768,7 +59188,7 @@
     {
       "id": "ASSIST-1177",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -58804,13 +59224,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "StopCommand:THIS",
-          "text": "この動きを止める。\n1秒待つ。"
-        },
-        "contains": [],
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "StopCommand:THIS",
+            "text": "この動きを止める。\n1秒待つ。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -58826,6 +59246,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「待ちます」「進みなさい」「進んだ」のような言い方も、同じ語として探します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -64924,13 +65348,14 @@
           {
             "schemaId": "RepeatUntil",
             "text": "点数が10になるまで、くり返す。\n  前へ10歩進む。"
-          },
+          }
+        ],
+        "absent": [
           {
             "schemaId": "WaitUntil",
             "text": "点数が10になるまで待つ。\n前へ10歩進む。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -68074,7 +68499,7 @@
     {
       "id": "ASSIST-1481",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -68115,12 +68540,13 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -68132,6 +68558,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：最後の節の種が当たる候補が先"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -68332,7 +68762,7 @@
     {
       "id": "ASSIST-1485",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -68373,18 +68803,17 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
-        "contains": [
+        "absent": [
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          },
           {
             "schemaId": "Broadcast",
             "text": "「ゴール」の合図を送る。"
           }
         ],
-        "absent": [],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -68396,13 +68825,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：「 」の文字を合図の名前に（2つのときは書いた順：予測）"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1486",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -68443,12 +68876,13 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "Ask",
-          "text": "「名前は？」とたずねて、答えを待つ。"
-        },
-        "absent": [],
-        "maxAssist": 4,
+        "absent": [
+          {
+            "schemaId": "Ask",
+            "text": "「名前は？」とたずねて、答えを待つ。"
+          }
+        ],
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -68460,6 +68894,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない文の近い書き方：たずね は Ask の語"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -69798,7 +70236,7 @@
     {
       "id": "ASSIST-1568",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -69831,14 +70269,14 @@
       },
       "expect": {
         "code": "P201",
-        "first": {
-          "schemaId": "RepeatUntil",
-          "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
-        },
         "absent": [
-          "TimedRepeat"
+          "TimedRepeat",
+          {
+            "schemaId": "RepeatUntil",
+            "text": "タイマーを0にする。\nタイマーが10以上になるまで、くり返す。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -69850,13 +70288,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1569",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -69889,14 +70331,14 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "RepeatCount",
-          "text": "2回くり返す。\n  前へ10歩進む。"
-        },
         "absent": [
-          "MoveUntil"
+          "MoveUntil",
+          {
+            "schemaId": "RepeatCount",
+            "text": "2回くり返す。\n  前へ10歩進む。"
+          }
         ],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -69908,6 +70350,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
@@ -70015,14 +70461,12 @@
           "schemaId": "StopCommand:OWN_OTHERS",
           "text": "自分のほかの動きを止める。\nこの動きを止める。"
         },
-        "contains": [
+        "absent": [
+          "StopCommand:PART",
           {
             "schemaId": "StopCommand:THIS",
             "text": "この動きを止める。"
           }
-        ],
-        "absent": [
-          "StopCommand:PART"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -70247,9 +70691,14 @@
         "code": "P201",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。"
         },
-        "absent": [],
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -70262,13 +70711,17 @@
         {
           "file": "LANGUAGE.md",
           "quote": "動作をさせる書き方も、元の動詞に戻して近い書き方を探します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },
     {
       "id": "ASSIST-1576",
       "kind": "candidates",
-      "polarity": "positive",
+      "polarity": "negative",
       "world": {
         "parts": [
           "ねこ",
@@ -70308,18 +70761,17 @@
       },
       "expect": {
         "code": "P205",
-        "first": {
-          "schemaId": "Broadcast",
-          "text": "「出発」の合図を送る。"
-        },
-        "contains": [
+        "absent": [
+          {
+            "schemaId": "Broadcast",
+            "text": "「出発」の合図を送る。"
+          },
           {
             "schemaId": "Say",
             "text": "「出発」と言う。"
           }
         ],
-        "absent": [],
-        "maxAssist": 4,
+        "maxAssist": 0,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -70331,6 +70783,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "部品に「X」と言う文には、「X」の合図を送る形を先に、「X」と言う形を後に示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "読めない文の近い書き方は、明示された主体、対象、動作、方向、数量、単位と時間の役割を保持します。情報が欠けた候補より、意味を確かめられる候補を優先し、矛盾する候補は示しません。複数の動作では、それぞれの対象や数値と順序を保持します。意味を確定できなければ、根拠のない補完をせず、候補を示しません。"
         }
       ]
     },

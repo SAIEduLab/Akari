@@ -360,7 +360,7 @@
     {
       "id": "MI-156",
       "section": "名人 > 名人の本文の決まり",
-      "summary": "主語を書いた「待つ」はその部品だけが待ち、その部品の次の文が待つ。主語を並べた「待つ」も同じ",
+      "summary": "主語付き待機は流れを待たせ、並べた主語の待機は全部の終了を待つ",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -531,7 +531,7 @@
     {
       "id": "MI-031",
       "section": "日本語の作文と文法 > 役割と語順",
-      "summary": "部品を主語にした「待つ」は、その部品だけが待つ（共通の文法を名人の本文で使う）",
+      "summary": "主語付き待機もその逐次処理の流れを待たせる",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -2101,7 +2101,7 @@
     {
       "id": "MI-178",
       "section": "名人 > 一つの流れで同時に行う",
-      "summary": "主語を並べた「待つ」でも、ほかの部品の次の文はすぐ行い、そのことを知らせる（R9）",
+      "summary": "主語を並べた待機は全部の終了を待って後続へ進む",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -2445,7 +2445,7 @@
     {
       "id": "MI-209",
       "section": "名人 > 名人の本文の決まり",
-      "summary": "主語を並べて待つ文のあとの、相手を書く命令（「ねこの動きを止める」）はすぐ行い、止めない知らせでそのことを示す",
+      "summary": "並行待機の後の対象命令も、待機の終了後に進む",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -2648,8 +2648,8 @@
     {
       "id": "MI-228",
       "section": "名人 > 名人の命令",
-      "summary": "「言い終わるまで待つ」に主語を書いた近い書き方は止める",
-      "polarity": "negative",
+      "summary": "話し終わり待機は主語付きと待ってからの接続も同じ規則で読む",
+      "polarity": "positive",
       "coverage": "cases",
       "cases": [
         "MC-573",

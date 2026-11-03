@@ -1301,7 +1301,7 @@ function verifyAssistRegressions(o){
   assert.ok(rows['heading-target'].every(c=>c.schemaId!=='Heading:cloneStart'));
   assert.ok(rows['first-diagnostic-range'].every(c=>c.start<13&&c.end<=13),'only the first diagnosed line is replaced');
   for(const id of ['function-forever','function-until'])assert.ok(rows[id].every(c=>!['Forever','RepeatUntil'].includes(c.schemaId)));
-  assert.ok(rows['argument-unit'].some(c=>c.schemaId==='UserActionCall'));assert.ok(rows['argument-unit'].filter(c=>c.schemaId==='UserActionCall').every(c=>!c.text.includes('5')));
+  assert.deepEqual(rows['argument-unit'],[],'an unresolved duration must not become default procedure arguments');
   for(const [id,prefix]of [['argument-quoted-order','高さを3、時間を「やあ」として、'],['argument-halfquote-order','高さを3、時間を「やあ」として、'],['argument-string-first','高さを「やあ」、時間を3として、'],['argument-named-first','高さを1、時間を5として、'],['argument-named-after','高さを1、時間を5として、']])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   for(const [id,prefix]of [['argument-parentheses','高さを「7」、時間を3として、'],['argument-angle','高さを「7」、時間を3として、'],['argument-square','高さを「7」、時間を3として、'],['argument-repeated-name','高さを点数、時間を点数として、'],['argument-suffix-name','数を1、回数を5として、']])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
   for(const [id,prefix]of [['argument-label-data','高さを3、時間を1として、'],['argument-wrapped-first','高さを1、時間を点数として、'],['argument-wrapped-after','高さを1、時間を点数として、'],...Array.from({length:12},(_,i)=>['argument-quoted-width-'+i,'高さを3、時間を「７」として、'])])assert.equal(rows[id].find(c=>c.schemaId==='UserActionCall')?.text,prefix+'【ジャンプ】というてじゅんを行う。',id);
@@ -1445,7 +1445,7 @@ export function verifyCodeAssistBrowserObservation(id,o){
   if(id==='ui/original-proposals'){unchanged(o.before,o.after);assert.equal(o.originalChoices,2);assert.equal(o.assistChoices,0);assert.equal(o.cancels,1);return;}
   if(id==='ui/short-call-proposals'){unchanged(o.before,o.after);assert.equal(o.originalChoices,1);assert.ok(o.assistChoices>0&&o.assistChoices<=4);assert.equal(o.originalBeforeAssist,true);return;}
   if(id==='ui/stale-source'){unchanged(o.pending,o.after);assert.equal(o.after.value,'左に行く。');assert.equal(o.after.pending.value,'左に行く。');return;}
-  if(id==='ui/revision-same-message'){unchanged(o.before,o.pending);assert.equal(o.replaced,true);assert.equal(o.pending.value,'右に行く。 ');assert.equal(o.after.source,'いまのばしょから、右へ10歩動く。 ');assert.equal(o.after.pending,null);assert.equal(o.after.history,o.pending.history+1);return;}
+  if(id==='ui/revision-same-message'){unchanged(o.before,o.pending);assert.equal(o.replaced,true);assert.equal(o.pending.value,'右に行く。 ');assert.equal(o.after.source,'いまのばしょから、右へ10歩動く。 ');assert.equal(o.after.pending,null);assert.equal(o.after.history,o.pending.history+2);return;}
   if(id==='ui/runtime'){assert.equal(o.runtime,true);assert.equal(o.choices,0);assert.equal(o.readOnly,true);return;}
   if(id==='ui/callable-escape'){verifyChoiceView(o.view);assert.equal(o.modalOpen,true);assert.equal(o.choices,0);assert.equal(o.focus,'callableCode');return;}
   if(id.startsWith('signals/')){
@@ -1464,9 +1464,9 @@ export function verifyCodeAssistBrowserObservation(id,o){
     if(id==='ui/390'){assert.equal(o.scroll.overflow,'auto');assert.ok(o.scroll.client<=240);}return;
   }
   const expected=id==='ui/two-sentences'?'10歩進む。いまのばしょから、右へ10歩動く。':id==='ui/multiline'?'前へ10歩進む。\nすがたをかくす。':'いまのばしょから、右へ10歩動く。';
-  assert.equal(o.after.source,expected);assert.equal(o.after.value,expected);assert.equal(o.after.pending,null);assert.equal(o.after.history,o.pending.history+1);assert.equal(o.after.focus,'codeEditor');
+  assert.equal(o.after.source,expected);assert.equal(o.after.value,expected);assert.equal(o.after.pending,null);assert.equal(o.after.history,o.pending.history+2);assert.equal(o.after.focus,'codeEditor');
   assert.deepEqual(o.after.selection,[id==='ui/two-sentences'?6:0,expected.length-1]);assert.match(o.after.status,/^✓ 「.+」を 書きかえたよ$/s);
-  assert.equal(o.undo.source,o.before.source);assert.equal(o.undo.pending,null);assert.equal(o.redo.source,expected);assert.equal(o.redo.pending,null);
+  assert.equal(o.undo.source,o.before.source);assert.equal(o.undo.value,o.pending.value);assert.deepEqual(o.undo.pending,o.pending.pending);assert.equal(o.redo.source,expected);assert.equal(o.redo.pending,null);
   const project=structuredClone(o.before.project);project.scripts[0].source=expected;assert.deepEqual(o.after.project,project);assert.deepEqual(o.undo.project,o.before.project);assert.deepEqual(o.redo.project,project);
   if(id==='ui/keyboard'){assert.equal(o.summary,true);assert.equal(o.focused,true);}
 }

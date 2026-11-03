@@ -66,11 +66,11 @@
       if(appVars.mainEditor.session?.pendingEdit){const field=appVars.mainEditor.session.pendingEdit;const control=appCalls.$$('[data-blockui-field]').find(n=>n.dataset.blockId===field.id&&n.dataset.blockuiField===field.field);control?.focus({preventScroll:true});}
       else appCalls.$('#tutorialStart').focus({preventScroll:true});
     }
-    function commitSource(binding, source, { atomic = false, flushQueued = false } = {}) {
+    function commitSource(binding, source, { atomic = false, flushQueued = false, preserveInput = false } = {}) {
       if (appCalls.modelLocked()) return false;
       const ownerKey = appCalls.bindingOwner(binding),
         before = appCalls.readSource(binding, ownerKey);
-      if (source === before) return false;
+      if (source === before && (!preserveInput || binding.textarea.value === source)) return false;
       const next = appCalls.sourceCandidate(binding, ownerKey, source);
       if (atomic) {
         if (flushQueued && appVars.queuedHistory) appCalls.pushHistoryNow(appVars.queuedHistory);
@@ -79,7 +79,10 @@
         const importing = binding === appVars.mainEditor && pending?.kind === 'source-import' &&
           session.ownerKey === ownerKey && pending.ownerKey === ownerKey &&
           pending.value === source && !session.blockDraft;
-        if (importing) {
+        if (preserveInput && pending?.kind === 'code' && pending.ownerKey === ownerKey) {
+          // Selecting a correction keeps the exact draft as the preceding undo state.
+          appCalls.pushHistoryNow();
+        } else if (importing) {
           // The confirmed input is not the valid body before this atomic change.
           session.pendingEdit = null;
           try { if (!appCalls.hasPendingEditor()) appCalls.pushHistoryNow(); }
@@ -145,7 +148,7 @@
           if(!current())return;
           const source=basis.slice(0,proposal.start)+proposal.source+basis.slice(proposal.end),written=basis.slice(proposal.start,proposal.end);
           try{
-            commitSource(binding,source,{atomic:true,flushQueued:true});binding.textarea.value=source;n.hidden=true;
+            commitSource(binding,source,{atomic:true,flushQueued:true,preserveInput:true});binding.textarea.value=source;n.hidden=true;
             let status=`✓ 「${written}」を 書きかえたよ`;
             const signal=/「([^「」]+)」/.exec(proposal.text)?.[1];
             if(signal&&proposal.origin==='S4')status+=proposal.schemaId==='Heading:message'?`。送る ほうにも「「${signal}」の合図を送る。」と 書いてね`:proposal.schemaId==='Broadcast'&&proposal.description?`。受ける ほうには「「${signal}」という合図を受けたとき、」と 書いてね`:'';
@@ -155,8 +158,6 @@
         choices.append(button);
         if(proposal.description){const small=document.createElement('small');small.textContent=proposal.description;choices.append(small);}
       }
-      const other=data.headerEvent==='valueChanged'?null:appVars.project.components.find(c=>c.id!==ctx.targetId&&(c.name===data.subject||/止まる|止める|とまる|とめる/.test(data.text)&&data.names.some(n=>n.kind==='part'&&n.name===c.name)));
-      if(other){const note=document.createElement('small');note.className='assist-note';note.textContent=`${other.name}が する ことは、${other.name}の 本文に 書きます`;choices.append(note);}
       const cancel=n.querySelector('[data-intent-cancel]')||document.createElement('button');cancel.type='button';cancel.dataset.intentCancel='';cancel.textContent='この あんないを とじる';cancel.onclick=()=>appCalls.closeAssist(binding);choices.append(cancel);n.append(choices);
       if(!n.assistKeyHandler){n.addEventListener('keydown',event=>{if(event.key==='Escape'&&event.target.closest('.intent-choices,.assist-choices')){event.preventDefault();event.stopPropagation();appCalls.closeAssist(binding);}});n.assistKeyHandler=true;}
     }

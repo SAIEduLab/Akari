@@ -1298,8 +1298,8 @@
     addNames((ctx.args||[]).map(name=>({name})),'argument');addNames([...(ctx.localNames||[])].map(name=>({name})),'local');
     let text=assistNumberText(String(code).trim().replace(/[。、，．…〜♪]+$/u,'')), subject=null;
     for(const name of ['自分','体',...components.map(c=>c.name)].sort((a,b)=>b.length-a.length)){
-      const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン))').exec(text);
-      if(m){subject=name;text=text.slice(m[0].length);break;}
+      const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン|動き))').exec(text);
+      if(m){if(/が、?$/.test(m[0])&&/(?:まで|なら|れば|あいだ)/.test(surfaceMask(text.slice(m[0].length))))break;subject=name;text=text.slice(m[0].length);break;}
     }
     const stringValues=[...text.matchAll(/「([^「」]*)」|『([^『』]*)』|｢([^｢｣]*)｣|["‘’]([^"‘’]*)["‘’]|（([^（）]*)）|\(([^()]*)\)|〈([^〈〉]*)〉|《([^《》]*)》|［([^［］]*)］|\[([^\[\]]*)\]/g)].map(m=>({value:m.slice(1).find(x=>x!==undefined),at:m.index,end:m.index+m[0].length})),strings=stringValues.map(s=>s.value);
     const nameText=text.replace(/^もし、?/,'');
@@ -1313,10 +1313,10 @@
       if(new RegExp('(?:^|の)'+escaped+'(?:矢印キー|やじるしキー|キー|(?=[をが]))').test(outside)){const key=keyWord(word);if(key&&!keys.includes(key))keys.push(key);}
     }
     const numbers=[],unitNames={歩:'歩',ほ:'歩',ぽ:'歩',ホ:'歩',ドット:'歩',step:'歩',ステップ:'歩',秒:'秒',びょう:'秒',s:'秒',sec:'秒',度:'度',ど:'度','°':'度','%':'％','％':'％',パーセント:'％',ぱーせんと:'％',パー:'％',Hz:'Hz',hz:'Hz',HZ:'Hz',ヘルツ:'Hz',回:'回',かい:'回',番目:'番目',番め:'番目',ばんめ:'番目',つ目:'番目',つめ:'番目',こめ:'番目',個目:'番目',番:'番目',段:'段階',段階:'段階',つ:'つ',こ:'つ',個:'つ',層:'つ',体:'count',匹:'count',人:'count',px:null,ピクセル:null};
-    for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)([A-Za-z%％°ァ-ヶぁ-ゖ一-龯]*)(?:半|はん)?/g)){
+    for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)[ \t]*([A-Za-z%％°ァ-ヶぁ-ゖ一-龯ー]*)(?:半|はん)?/g)){
       let unit=Object.keys(unitNames).sort((a,b)=>b.length-a.length).find(u=>m[2].startsWith(u));
-      if(m[2]&&!unit&&!/^(?:[をにへとでがは]|から|まで|より|なら)/.test(m[2])&&!searchQueryVariants(m[2]).some(form=>Object.values(BLOCK_SEARCH_SYNONYMS).flat().some(word=>form.startsWith(word))))continue;const suffix=outside.slice(m.index+m[1].length+(unit?.length||0));
-      numbers.push({value:Number(m[1])+(/^(?:半|はん)/.test(suffix)&&(!unit||unitNames[unit]==='秒')?0.5:0),unit:unit?unitNames[unit]:null,at:m.index,end:m.index+m[1].length});
+      const unsupported=!unit&&/^(?:[A-Za-z]+|センチ|メートル|ミリ|キロ|ヤード|インチ|フィート|マス|分|時間)/.test(m[2]);const suffix=outside.slice(m.index+m[1].length+(m[0].slice(m[1].length).match(/^[ \t]*/)?.[0].length||0)+(unit?.length||0));
+      numbers.push({...(unsupported?{unsupportedUnit:m[2]}:{}),value:Number(m[1])+(/^(?:半|はん)/.test(suffix)&&(!unit||unitNames[unit]==='秒')?0.5:0),unit:unit==='度'&&/^(?:くり返|繰り返|繰返)/.test(suffix)?'回':unit?unitNames[unit]:null,at:m.index,end:m.index+m[1].length});
     }
     let clauseText='',stack=[];
     const pairs={'「':'」','【':'】','『':'』','｢':'｣'},teWords=[...SENTENCE_TE_FORMS].map(([te])=>te).sort((a,b)=>b.length-a.length);
@@ -1345,7 +1345,7 @@
     const headerEvent=(!/^もし/.test(text)||/(?:おされた|おした)とき$/.test(text))&&/(?:とき(?:に)?|時|たびに|ごとに|たら)(?:、.*)?$/.test(text)?/合図/.test(text)?'message':/(?:はいけい|背景).*(?:かわ|変わ|かえ|切り)/.test(text)?'backdropChanged':/コピー|クローン/.test(text)?'cloneStart':/中身.*かわ|中身.*変わ|文字が入った/.test(text)?'valueChanged':/キー|矢印/.test(text)||keys.length?'keyDown':/タップ|クリック|タッチされ|おされた|おした/.test(text)?'click':/ふれ|触れ|タッチした/.test(text)?'touchStart':/スタート|始ま|はじま|開始|実行|はじめ|作品を動かした/.test(text)?'start':null:null;
     const grouped=/^(.+?)(?:は|も、)(.+)$/.exec(text),subjectNames=grouped?.[1].split(/と|も/).filter(Boolean).map(name=>name.replace(/[「」]/g,''));
     const subjects=subjectNames?.length>=3&&subjectNames.every(name=>components.some(c=>c.name===name))?{names:subjectNames,body:grouped[2]}:null;
-    return {text,subject,strings,stringValues,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
+    return {text,outside,subject,strings,stringValues,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
   }
   function assistVerificationContext(ctx) {const {key,ownerKey,...rest}=ctx;return rest;}
   function assistCanonical(text, ctx, previous='') {
@@ -1389,7 +1389,7 @@
     return ({音:'sound',すがた:'costume',はいけい:'backdrop',部品:'part',入力らん:'part',行く相手:'part',向く相手:'part',コピーの元:'part',リスト:'list',調べるリスト:'list',かえるもの:'variable'})[slot.label];
   }
   function assistFillHint(hint, data, project, ctx, intent=null) {
-    const parsed=assistCanonical(hint.text,ctx);if(!parsed)return null;
+    const parsed=assistCanonical(assistSubjectText(hint.text,data,ctx),ctx);if(!parsed)return null;
     const ast=parsed.ast, node=ast.body?.[0]||ast.rules?.[0];if(!node||hint.id.startsWith('Heading:'))return {...hint,text:parsed.text,filled:0};
     if(node.kind==='Say'&&data.numbers.some(n=>n.unit==='秒'))node.seconds=sentenceQuantity({kind:'NumberLiteral',value:data.numbers.find(n=>n.unit==='秒').value},'秒');
     const filled=new Set(),boundKinds=new Set(),slots=sentenceRoleSlots(node.kind,node.op,node.seconds?'timedSpeech':null),get=(o,p)=>p.split('.').reduce((v,k)=>v?.[k],o),put=(o,p,v)=>{const keys=p.split('.');for(const k of keys.slice(0,-1)){if(!o[k])return false;o=o[k];}o[keys.at(-1)]=v;return true;};
@@ -1449,7 +1449,7 @@
       if(data.names.some(n=>n.kind==='part'&&project.components.some(c=>c.name===n.name&&['label','button','box'].includes(c.type)))&&data.names.some(n=>['variable','list'].includes(n.kind))&&/^「[^「」]+」を.+にする$/.test(data.text))return {schemaId:'LooksCommand:SET_TARGET_TEXT'};
       if(data.names.some(n=>['action','function'].includes(n.kind))&&/行う|行って|呼び|させる|わた|として|てじゅん|手順/.test(data.text))return null;
       if(data.names.some(n=>['action','function'].includes(n.kind)&&new RegExp('^'+searchReading(n.name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:する|して|したい|させる)?$').test(searchReading(seed).replace(/[【】]/g,''))))return null;
-      let intent=searchIntent(seed,ctx);
+      let intent=searchIntent(seed.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"/g,'「§」'),ctx);
       if(/(?:にする|になる|かえる)$/.test(seed)){const image=data.names.find(n=>['costume','backdrop'].includes(n.kind));if(image)intent={schemaId:image.kind==='costume'?'LooksCommand:SET_COSTUME':'LooksCommand:SET_BACKDROP'};}
       if(data.strings.length&&/と(?:伝える|つたえる)$/.test(seed))intent={schemaId:'Broadcast'};
       if(data.strings.length&&/(?:と|って)(?:きく|聞く)$/.test(seed))intent={schemaId:'Ask'};
@@ -1581,7 +1581,7 @@
     if((m=/^(\d+(?:\.\d+)?)秒のあいだ待つ$/.exec(text)))add(m[1]+'秒待つ。');
     if((m=/^(.+?)(\d+(?:\.\d+)?秒(?:待つ|まつ))$/.exec(text))&&/[うくぐすつぬぶむるみ]$|(?:たあと|だあと)$/.test(m[1])){const before=read(m[1].replace(/あと$/,'')),after=read(m[2]);if(before&&after)add(before+'\n'+after);}
     if(/とばして(?:次|つぎ)へ$/.test(text)){const hint=hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).find(h=>h.id==='Continue'&&h.enabled);if(hint)add(hint.text);}
-    if(data.subjects){const body=read(data.subjects.body),owner=project.components.find(c=>c.id===ctx.targetId)?.name;if(body){const names=[...data.subjects.names.filter(name=>name!==owner),...data.subjects.names.filter(name=>name===owner)];add(names.map(name=>body.split('\n').map(line=>name+'は'+line).join('\n')).join('\n'));}}
+    if(data.subjects){const body=read(data.subjects.body);if(body){const names=data.subjects.names;add(names.map(name=>body.split('\n').map(line=>name+'は'+line).join('\n')).join('\n'));}}
     const own=project.components.find(c=>c.id===ctx.targetId)?.name;
     if(own&&new RegExp('^(?:自分|'+own.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?:の動きを|を)?(?:全部|だけ)?(?:止まる|止める|とまる|とめる)$').test(text)){add('自分のほかの動きを止める。\nこの動きを止める。');add('この動きを止める。');}
     if((m=/^(\d+(?:\.\d+)?)秒に(\d+(?:\.\d+)?)歩の速さで、?(.+)$/.exec(text))&&!/続ける|つづける/.test(m[3])){const motion=searchIntent(m[3],ctx),direction=({right:'右',left:'左',up:'上',down:'下'})[motion?.direction];if(direction)add(m[1]+'秒かけて、いまのばしょから、'+direction+'へ'+m[2]+'歩動く。');else if(motion?.direction==='forward')add('前へ'+m[2]+'歩進む。\n'+m[1]+'秒待つ。');}
@@ -1813,7 +1813,9 @@
     if(/^「([^「」]+)」が\d+回/.test(data.text)&&!project.components.some(c=>c.name===/^「([^「」]+)」/.exec(data.text)[1]))return [];
     if(/^もし/.test(data.text)&&/以上と|以下と/.test(data.text))return [];
     if(!ctx.signalNames){try{ctx.signalNames=collectSignalNames(compileProject(project));}catch{ctx.signalNames={sent:[],received:[]};}}
+    const meaning=assistMeaningReference(range.text,ctx);
     const previous=basis.slice(0,range.start).trimEnd().split('\n').at(-1)||'',pool=[],add=(text,origin,layer,extra={})=>{
+      text=assistSubjectText(text,data,ctx);
       if(data.clauses.length>1&&/(?:たら|れば|なら|とき|あいだ|まで)$/.test(data.clauses[0].text)&&/、$/.test(String(text).trim())&&!data.clauses.slice(1).every(c=>[project.components.find(c=>c.id===ctx.targetId)?.name+'は','自分は'].includes(c.text)))return;
       const canonical=assistCanonical(text,ctx,previous);if(!canonical)return;
       const node=canonical.ast.body?.[0]||canonical.ast.rules?.[0],schemaId=extra.schemaId||(canonical.ast.heading?'Heading:'+canonical.ast.heading.event:node?syntaxSchema(node)?.id||node.kind:null);if(!schemaId)return;
@@ -1828,7 +1830,7 @@
       pool.push({text:canonical.text,schemaId,label:BLOCK_SCHEMA_BY_ID.get(schemaId)?.label||canonical.text,origin,layer,rank:0,filled:0,order:pool.length,start:range.start,end:range.end,ast:canonical.ast,...extra});
     };
     const composed=assistCompose(project,basis,range,ctx,data);
-    for(const entry of [...assistStructuredTransforms(data.text,data,project,ctx,basis,range),...assistTransforms(data.text,data,project,ctx),...composed.sources]){
+    for(const entry of [...(meaning?[meaning.text]:[]),...assistStructuredTransforms(data.text,data,project,ctx,basis,range),...assistTransforms(data.text,data,project,ctx),...composed.sources]){
       const variant=typeof entry==='string'?entry:entry.text;
       const replacement=typeof entry==='object'&&entry.whole?variant:variant.replace(/\n/g,() => ('\n'+' '.repeat(range.indent)));
       const written=replacement.endsWith('。')&&basis[range.end]==='。'?replacement.slice(0,-1):replacement,changedEnd=range.start+written.length,delta=written.length-(range.end-range.start);
@@ -1853,7 +1855,7 @@
     const contextHints=hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}),knownSchemas=new Set(contextHints.filter(h=>h.mode==='statement').map(h=>hintSchemaId(h.id).replace(/:timed$/,'')));
     const hasHigher=pool.some(p=>p.layer<6),seen=new Set(existing.map(p=>p.source.replace(/[\s。]/g,''))),out=[],started=now();
     for(const p of pool){if(p.layer===6&&hasHigher)continue;const key=p.text.replace(/[\s。]/g,'');if(key===range.text.replace(/[\s。]/g,'')||seen.has(key))continue;
-      const canonical=assistCanonical(p.text,ctx,previous);if(!canonical)continue;
+      const canonical=assistCanonical(p.text,ctx,previous);if(!canonical||!assistMeaningCompatible(canonical.ast,meaning,data,ctx))continue;
       const allowed=p.allowedSchemas||new Set(hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).filter(h=>h.mode==='statement'&&h.enabled).map(h=>hintSchemaId(h.id)));
       const localNames=new Set([...(ctx.args||[]),...(ctx.localNames||[])]),knownFor=actor=>new Set([...(project.projectData?.variables||[]),...(project.projectData?.lists||[]),...(project.components.find(c=>c.id===actor)?.localData?.variables||[]),...(project.components.find(c=>c.id===actor)?.localData?.lists||[])].map(n=>n.name));
       const gather=node=>{if(!node||typeof node!=='object')return;if(['LocalVariableDeclaration','LocalListDeclaration'].includes(node.kind))localNames.add(node.name);if(node.kind==='ForEach')localNames.add(node.binder);for(const [k,v]of Object.entries(node))if(k!=='sourceSpan'&&v&&typeof v==='object')Array.isArray(v)?v.forEach(gather):gather(v);};gather(canonical.ast);
