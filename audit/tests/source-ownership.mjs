@@ -1,0 +1,258 @@
+import {projectAction} from '../lib/project-actions.cjs';
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
+import { currentProductFile } from "./../lib/product-path.cjs";
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {loadApi} from '../browser/cases/audit-lib.cjs';
+import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
+import {chooseView,shownView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
+// The one view toggle (final call 22): a press is made only when the other view is on the screen, and the view asked
+// for must then show.
+const showMode=async(p,mode)=>{await chooseView(p,mode);assert.equal(await shownView(p),mode,'the '+mode+' view shows');};
+// Lets the registered product-confirm answer run before state is read directly.
+const productConfirmAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
+// The value field of the first number block of the open body. A number in a hole is typed into in place, so the
+// field belongs to the NumberLiteral block by its data-block-id rather than sitting inside an element of that schema.
+const numberField=async page=>{const id=await page.evaluate(()=>{const walk=x=>{if(!x||typeof x!=='object')return null;if(x.schemaId==='NumberLiteral')return x.id;
+    for(const v of Object.values(x.inputs||{}))for(const y of [].concat(v)){const r=walk(y);if(r)return r;}for(const b of Object.values(x.bodies||{}))for(const y of b){const r=walk(y);if(r)return r;}return null;};
+  return walk(Akari.app.editorState.main.blockView);});if(!id)throw Error('the open body has no number block');return page.locator('#blockEditor [data-blockui-field="value"][data-block-id="'+id+'"]');};
+
+const [browserPath,output='audit-evidence/source-ownership.json']=process.argv.slice(2);
+const inputs=snapshot(currentProductFile()), api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
+const plain=value=>JSON.parse(JSON.stringify(value));
+async function openStageSources(page) {
+  if(await page.locator('#objectSelect').inputValue() !== 'stage') await page.locator('#sourceStageBtn').click();
+  else if(!await page.locator('#sourceOverview').isVisible()) await page.locator('#sourceOverviewBtn').click();
+  assert.equal(await page.locator('#objectSelect').inputValue(), 'stage');
+  assert.equal(await page.locator('#sourceOverview').isVisible(), true);
+}
+const fixture=()=>{
+  const p=makeRegressionProject(api);p.name='コードの所属を読む';
+  p.components.push({...p.components.find(c=>c.id==='button-1'),id:'button-empty',name:'空のボタン',y:300});
+  const sprite=p.components.find(c=>c.id==='sprite-1');
+  sprite.costumes=[{id:'costume-test',name:'顔',kind:'text',value:'🙂'}];sprite.costumeId='costume-test';
+  p.scripts=[
+    {targetId:'stage',event:'message',source:'「画面の知らせ」と言う'},
+    {targetId:'button-1',event:'click',source:'（（3をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。'},
+    {targetId:'sprite-1',event:'start',source:'「はじめ」と言う'},
+    {targetId:'sprite-1',event:'message',source:'「受け取った」と言う'},
+  ];
+  p.actions=[{id:'action-show',ownerId:'stage',name:'表示',args:['数'],source:'数の値を言う'}];
+  p.functions=[{id:'function-double',ownerId:'stage',name:'倍',args:['数'],source:'数 * 2を答えとして返す'},
+    {id:'function-unused',ownerId:'stage',name:'未使用',args:[],source:'7を答えとして返す'}];
+  return p;
+};
+const results=[];
+async function test(id,fn){try{await fn();results.push({id,pass:true,detail:'PASS'});}catch(e){results.push({id,pass:false,detail:e.stack});console.error(id,e.message);}}
+await test('OWNER-COMPLETE-REGISTRY',()=>{
+  const p=fixture(),rows=plain(api.sourceRegistry(p));
+  assert.equal(rows.length,p.scripts.length+p.actions.length+p.functions.length);
+  assert.equal(new Set(rows.map(r=>r.key)).size,rows.length);
+  assert.ok(rows.every(r=>r.ownerId==='stage'||p.components.some(c=>c.id===r.ownerId)));
+  assert.deepEqual(plain(api.compileProject(p).errors),[]);
+  assert.deepEqual(plain(api.compileProject(p).items.map(i=>[i.key,i.ownerId])),rows.map(r=>[r.key,r.ownerId]));
+});
+await test('OWNER-REJECT-UNOWNED-AT-BOUNDARIES',async()=>{
+  for(const kind of ['actions','functions'])for(const owner of [undefined,null,'missing','sprite-1']){
+    const p=fixture();if(owner===undefined)delete p[kind][0].ownerId;else p[kind][0].ownerId=owner;
+    assert.throws(()=>api.validateProject(p));assert.throws(()=>api.serializeProject(p));
+    assert.ok(api.compileProject(p).errors.length);assert.throws(()=>api.packExecutable(p));
+  }
+  const p=fixture();p.scripts[0].targetId='missing';assert.throws(()=>api.sourceRegistry(p));
+});
+await test('OWNER-SAVE-ROUNDTRIP',async()=>{
+  const p=fixture(),saved=api.serializeProject(p),loaded=await api.parseProjectFile(saved);
+  assert.deepEqual(plain(loaded.project),plain(p));
+  const data=api.packExecutable(p),restored=api.restoreExecutable(data);
+  assert.deepEqual(plain(restored.compiled.items.map(r=>[r.key,r.ownerId])),plain(api.sourceRegistry(p).map(r=>[r.key,r.ownerId])));
+  for(const change of [d=>delete d.program[0].ownerId,d=>d.program[0].ownerId='missing',d=>d.program[0].key='script:stage:missing',d=>d.program[0].key='script:stage:start:extra',d=>d.project.actions[0].ownerId='sprite-1',d=>d.program=d.program.filter(r=>r.key!=='action:action-show')]){
+    const copy=plain(data);change(copy);assert.throws(()=>api.restoreExecutable(copy));
+  }
+});
+await test('OWNER-FORMAT-REJECTION',async()=>{
+  for(const [key,value]of [['appVersion',null],['formatVersion',1],['languageContractId',1]]){
+    const p=fixture();p[key]=value;assert.throws(()=>api.serializeProject(p));assert.ok(api.compileProject(p).errors.length);
+  }
+});
+await test('OWNER-CALLER-RECEIVER-AND-FUNCTION',()=>{
+  const p=fixture(),compiled=api.compileProject(p),out=[];
+  const runtime=new api.RuntimeModel(p,{}),q=new api.EventScheduler(p,compiled,runtime,{say:(id,value)=>out.push([id,value])});
+  runtime.reset(42);q.running=true;q.paused=true;q.spawnForRuntime('button-1','click');
+  for(let i=0;i<100&&q.ready.length;i++)q.runTurn(true);
+  assert.deepEqual(out,[['button-1','6']]);
+});
+await test('OWNER-REFERENCES-INCLUDING-EXPRESSION',()=>{
+  const p=fixture(),row=api.sourceRegistry(p).find(r=>r.ownerId==='button-1');
+  assert.deepEqual(plain(api.sourceReferences(row,p)).sort(),['action:action-show','function:function-double']);
+});
+await test('OWNER-INCOMPLETE-AND-UNUSED',()=>{
+  const p=fixture();p.scripts.push({targetId:'button-1',event:'message',source:'もし'});p.functions[1].source='';
+  const rows=api.sourceRegistry(p);assert.equal(rows.length,8);assert.ok(rows.some(r=>r.source==='もし'));assert.ok(rows.some(r=>r.key==='function:function-unused'));
+});
+const dir=path.dirname(output);fs.mkdirSync(dir,{recursive:true});
+const md=path.join(dir,'ownership.akari.md');fs.writeFileSync(md,api.serializeProject(fixture()));
+let browserVersion;
+await withBrowser(browserPath,async browser=>{
+  browserVersion=browser.version();
+  await pageFor(browser,currentProductFile(),async p=>{
+    p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);await p.setViewportSize({width:1440,height:1000});
+    const startup={overview:await p.locator('#sourceOverview').isVisible(),editable:await p.locator('#codeEditor').isEditable()};
+    await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
+    await test('OWNER-GUI-DIRECT-BUTTON',async()=>{
+      assert.deepEqual(startup,{overview:false,editable:true});
+      const original='（（3をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。',changed='（（4をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。';
+      for(const mode of ['code','blocks']){
+        await showMode(p,mode);
+        await p.locator('#sourceOverviewBtn').click();await projectAction(p, 'newBtn');await productConfirmAnswered(p);
+        assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
+        // A new work starts in はじめて (blocks); the check goes on in くわしく with the view it was in.
+        assert.equal(await p.locator('#uiLevel').inputValue(),'entry','a new work starts in はじめて');
+        await p.locator('#uiLevel').selectOption('advanced');if(mode==='code')await showMode(p,'code');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start');
+        assert.equal(await p.evaluate(()=>Akari.app.project.scripts.every(s=>s.source==='')),true,'new work has empty source');
+        await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();await p.locator('#samplePicker [data-sample-id="dance"]').click();
+        const editor=mode==='code'?p.locator('#codeEditor'):p.locator('#blockEditor');
+        assert.ok(await editor.isVisible());
+        if(mode==='code')assert.ok(await editor.isEditable());
+        else assert.equal(await (await numberField(p)).isEditable(),true);
+        await p.locator('#sourceOverviewBtn').click();
+        await p.locator('#fileInput').setInputFiles(md);await productConfirmAnswered(p);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
+        assert.equal(await p.locator('#sourceOverview').isVisible(),false,'import closes a previous overview');
+        await p.locator('#formSurface .component[data-id="button-1"]').click();
+        assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'click','nonempty click body opens instead of empty start');
+        assert.equal(await p.locator('#sourceOverview').isVisible(),false);
+        await p.screenshot({path:path.join(dir,`ownership-direct-${mode}.png`)});
+        if(mode==='code')await p.locator('#codeEditor').fill(changed);
+        else{
+          const value=await numberField(p);
+          assert.ok(await value.isEditable());await value.fill('4');await value.press('Enter');
+        }
+        const source=()=>p.evaluate(()=>Akari.app.editorState.main.sourceText);
+        // The code made from blocks writes てじゅん in kana (LANGUAGE.md 同じ意味の書き方); typed code keeps what was typed.
+        const edited=mode==='blocks'?changed.replace('という手順を行う','というてじゅんを行う'):changed;
+        assert.equal(await source(),edited);
+        await p.locator('#undoBtn').click();assert.equal(await source(),original);
+        await p.locator('#redoBtn').click();assert.equal(await source(),edited);
+        await p.locator('#objectSelect').selectOption('sprite-1');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start','first nonempty compatible event opens');
+        await p.locator('#eventSelect').selectOption('message');
+        await p.locator('#objectSelect').selectOption('stage');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'message','current event with source is preserved');
+        await p.locator('#objectSelect').selectOption('button-1');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'click');assert.equal(await source(),edited,'selection preserves edited source');
+        await p.locator('#eventSelect').selectOption('start');
+        await p.locator('#formSurface .component[data-id="button-1"]').click();
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start','reselection preserves an explicitly selected empty event');
+        await p.locator('#objectSelect').selectOption('button-empty');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start','all-empty target preserves current valid event');
+      }
+      await showMode(p,'blocks');
+      await p.locator('#formSurface .component[data-id="button-1"]').click();
+      assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
+      await p.locator('#sourceOverviewBtn').click();
+      assert.equal(await p.locator('#eventSelect').inputValue(),'all');
+      const card=p.locator('[data-source-key="script:button-1:click"]');
+      await card.locator('.blockui-script').waitFor({state:'visible'});
+      assert.equal(await card.locator('[data-blockui-schema]').count(),0,'read-only preview does not prepare editing candidates');
+      assert.deepEqual(await card.locator('[data-blockui-field="name"]').evaluateAll(es=>es.filter(e=>e.closest('[data-schema-id]')?.dataset.schemaId==='UserActionCall').map(e=>e.textContent)),['表示']);
+      assert.deepEqual(await card.locator('[data-blockui-field="name"]').evaluateAll(es=>es.filter(e=>e.closest('[data-schema-id]')?.dataset.schemaId==='UserFunctionCall').map(e=>e.textContent)),['倍']);
+      assert.equal(await card.locator('.blockui-node input,.blockui-node textarea,.blockui-node select').count(),0,'read-only values are complete text, without clipped disabled inputs');
+      assert.equal(await p.locator('[data-source-key="action:action-show"]').count(),1);
+      assert.equal(await p.locator('[data-source-key="function:function-double"]').count(),1);
+      await p.screenshot({path:path.join(dir,'ownership-button.png')});
+    });
+    await test('OWNER-GUI-ALL-EVENTS',async()=>{
+      await p.locator('#objectSelect').selectOption('sprite-1');
+      await p.locator('#sourceOverviewBtn').click();
+      for(const event of ['start','message']){const card=p.locator(`[data-source-key="script:sprite-1:${event}"]`);await card.scrollIntoViewIfNeeded();await card.locator('.blockui-script').waitFor({state:'visible'});assert.equal(await card.locator('.blockui-script').count(),1);}
+    });
+    await test('OWNER-GUI-UNUSED-STAGE-DEFINITIONS',async()=>{
+      await openStageSources(p);
+      const all=await p.locator('#sourceOverview [data-source-key]').evaluateAll(ns=>ns.map(n=>n.dataset.sourceKey));
+      for(const key of ['script:stage:message','action:action-show','function:function-double','function:function-unused'])assert.ok(all.includes(key),key);
+      await p.locator('[data-source-edit="function:function-unused"]').click();
+      assert.equal(await p.locator('#callableName').inputValue(),'未使用');
+      assert.equal(await p.locator('#callableCode').inputValue(),'7を答えとして返す');
+      await p.locator('#procClose').click();
+    });
+    await test('OWNER-GUI-SYNTAX-ERROR-RAW-BODY',async()=>{
+      await p.locator('#objectSelect').selectOption('button-1');await p.locator('#eventSelect').selectOption('message');
+      await showMode(p,'code');
+      const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,source:Akari.app.editorState.main.sourceText}));
+      await p.locator('#codeEditor').fill('もし');
+      await p.locator('#sourceOverviewBtn').click();
+      // Unfinished syntax cannot enter blocks: a press of the toggle keeps the code and says why under it (final call 22).
+      await p.waitForFunction(()=>document.querySelector('#editorModeblocks').dataset.refused==='error',null,{timeout:3000});
+      await refusedViewPress(p,'error');
+      assert.equal(await p.locator('#codeEditor').inputValue(),'もし','unfinished original remains visible');
+      assert.equal(await p.locator('#sourceOverview').isVisible(),false,'unfinished input guards navigation');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.ownerKey),'script:button-1:message');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN');
+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
+      await p.locator('#editorCancel').click();
+      assert.equal(await p.locator('#codeEditor').inputValue(),before.source);
+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
+      await p.locator('#sourceOverviewBtn').click();await showMode(p,'blocks');
+      assert.equal(await p.locator('[data-source-key="script:button-1:click"] .blockui-script').count(),1);
+    });
+    await test('OWNER-GUI-DRAFT-OWNERSHIP',async()=>{
+      await openStageSources(p);await p.locator('[data-source-edit="function:function-unused"]').click();
+      const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history}));
+      await p.locator('#callableCode').fill('下書きのまま');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.callableDraft.ownerId),'stage');
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を答えとして返す');
+      await p.locator('#callableSave').click();
+      assert.equal(await p.locator('#callableCode').inputValue(),'下書きのまま','unfinished callable original retained');
+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project,'unfinished callable is not registered');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
+      await p.locator('#callableCancel').click();
+      const revised='※ 下書きのまま\n7を答えとして返す';
+      await p.locator('#callableCode').fill(revised);
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を答えとして返す');
+      await p.locator('#callableSave').click();
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),revised);
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').ownerId),'stage');
+      await p.locator('#procClose').click();await openStageSources(p);await showMode(p,'code');
+      assert.equal(await p.locator('[data-source-key="function:function-unused"] pre').textContent(),revised);
+    });
+    await test('OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT',async()=>{
+      const data=fixture();data.name='再帰の参照';data.components.find(c=>c.id==='sprite-1').visible=false;
+      data.scripts.find(s=>s.targetId==='button-1').source='（（（1）を渡して、【巡る】で求めた答え））を渡して、【甲】という手順を行う';
+      data.actions=[{id:'a',ownerId:'stage',name:'甲',args:['値'],source:'（値）を渡して、【乙】という手順を行う'},{id:'b',ownerId:'stage',name:'乙',args:['値'],source:'（値）を渡して、【甲】という手順を行う'}];
+      data.functions=[{id:'f',ownerId:'stage',name:'巡る',args:['値'],source:'（（値）を渡して、【巡る】で求めた答え）を答えとして返す'}];
+      await p.locator('#fileInput').setInputFiles({name:'references.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(data))});
+      await productConfirmAnswered(p);await p.waitForFunction(()=>Akari.app.project.name==='再帰の参照');
+      await p.locator('#objectSelect').selectOption('button-1');
+      await p.locator('#sourceOverviewBtn').click();
+      const keys=await p.locator('#sourceOverview [data-source-key]').evaluateAll(ns=>ns.map(n=>n.dataset.sourceKey));
+      assert.deepEqual(keys.sort(),['script:button-1:click','action:a','action:b','function:f'].sort());
+      assert.equal(await p.locator('[data-source-key="action:b"] .source-references a').count(),1);
+      await p.locator('#objectSelect').selectOption('sprite-1');
+      await p.locator('#sourceOverviewBtn').click();
+      assert.equal(await p.locator('#sourceOverview [data-source-key]').count(),2);
+    });
+    await test('OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY',async()=>{
+      for(const width of [1440,768,390]){
+        await p.setViewportSize({width,height:900});await showMode(p,'code');
+        await p.locator('#objectSelect').selectOption('button-1');
+        await p.locator('#sourceOverviewBtn').click();
+        const body=p.locator('[data-source-key="script:button-1:click"] pre');
+        assert.ok(await body.isVisible());
+        const r=await body.boundingBox(),panel=await p.locator('#sourceOverview').boundingBox();
+        assert.ok(r.y+r.height>panel.y&&r.y<panel.y+panel.height,'primary body is visible without scrolling');
+        assert.ok(await p.locator('#undoBtn').isVisible());
+      }
+      await p.screenshot({path:path.join(dir,'ownership-narrow.png'),fullPage:true});
+    });
+  });
+});
+assert.deepEqual(snapshot(currentProductFile()),inputs);
+const report={schema:'akari-source-ownership-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',environment:'chromium',browser:browserVersion,snapshot:inputs,results};
+fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
+console.log(`Source ownership: ${results.filter(r=>r.pass).length}/${results.length}`);
+if(results.some(r=>!r.pass))process.exitCode=1;

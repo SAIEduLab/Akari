@@ -1,0 +1,140 @@
+// Explicit regression preconditions, entered through the real file-open and editor UI.
+// The production factory and every product API remain untouched.
+const {makeRegressionProject} = require('../../fixtures/regression-project.cjs');
+const {chooseView} = require('./view-toggle.cjs');
+const factorySource = `globalThis.makeAkariRegressionProject = (${makeRegressionProject.toString()});`;
+async function installRegressionFactory(page) {
+  await page.addInitScript({content: factorySource});
+  await page.addScriptTag({content: factorySource});
+}
+async function openPaletteTools(root) {
+  const toggle = root.locator('[data-blockui-action="palette-tools-toggle"]');
+  if (await toggle.getAttribute('aria-expanded') === 'false') await toggle.click();
+  const assert = require('node:assert/strict');
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(await root.locator('.blockui-palette-controls').isVisible(), true);
+}
+async function revealRegressionControl(locator) {
+
+  for (const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all()) {
+    const toggle = panel.locator('.blockui-side-toggle');
+    if (await toggle.count() && await toggle.isVisible()) await toggle.click();
+  }
+  const controls = locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-palette-controls ")]');
+  if (await controls.count()) await openPaletteTools(controls.locator('..'));
+  for (const detail of await locator.locator('xpath=ancestor::details[not(@open)]').all()) await detail.locator(':scope > summary').click();
+  return locator;
+}
+async function openRegressionEditor(page, {target = 'stage', mode = 'code'} = {}) {
+  await (await revealRegressionControl(page.locator('#uiLevel'))).selectOption('advanced');
+  if (target) await (await revealRegressionControl(page.locator('#objectSelect'))).selectOption(target);
+  if (target) await (await revealRegressionControl(page.locator('#eventSelect'))).selectOption('start');
+  if (await page.locator('#sourceOverview').isVisible()) await (await revealRegressionControl(page.locator('#sourceEditBtn'))).click();
+  if (mode) await chooseView(page, mode, {reveal: revealRegressionControl});
+}
+async function setupRegressionPage(page, options) {
+  await page.waitForFunction(() => !!globalThis.Akari?.app);
+  if (await page.locator('#recoveryModal').isVisible()) await page.locator('#recoveryDiscard').click();
+  await installRegressionFactory(page);
+  const text = await page.evaluate(() => Akari.serializeProject(makeAkariRegressionProject(Akari)));
+  await page.locator('#fileInput').setInputFiles({name: 'はじめてのあかり.akari.md', mimeType: 'text/markdown', buffer: Buffer.from(text, 'utf8')});
+  await page.waitForFunction(() => Akari.app.project.components.some(c => c.id === 'button-1') && Akari.app.project.projectData.variables.some(v => v.name === '点数'));
+  await openRegressionEditor(page, options);
+}
+async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
+module.exports = {makeRegressionProject, installRegressionFactory, setupRegressionPage, openRegressionEditor, revealRegressionControl, openPaletteTools, openBodyForTest};
+
+// The old audit assumed palette-created operands and bodies were already filled.
+// Reproduce those same explicit preconditions through v2's hole controls.
+const regressionBlockDefaults = require('../../fixtures/block-defaults.json');
+async function completeRegressionHoles(page, rootSelector = '#blockEditor', topId = null) {
+  const root = page.locator(rootSelector);
+  const tree = () => page.evaluate(selector => (selector === '#callableBlocks' ? Akari.app.editorState.draft : Akari.app.editorState.main).blockView, rootSelector);
+  const find = (node, id) => {
+    if (node.id === id) return node;
+    for (const child of [...Object.values(node.inputs || {}).flat(), ...Object.values(node.bodies || {}).flat()]) {
+      const match = child && find(child, id); if (match) return match;
+    }
+    return null;
+  };
+  const nextHole = (node, expected = regressionBlockDefaults[node.schemaId], parent = null, key = null, index = null, body = false) => {
+    if (node.schemaId.startsWith('Hole:')) return {node, expected, parent, key, index, body};
+    for (const [k, children] of Object.entries(node.inputs || {})) {
+      const list = Array.isArray(children) ? children : [children];
+      for (let i = 0; i < list.length; i++) {
+        const role = node.schemaId === 'QuantityLiteral' && k === 'value' && expected?.schemaId !== 'QuantityLiteral'
+          ? expected : Array.isArray(expected?.inputs?.[k]) ? expected.inputs[k][i] : expected?.inputs?.[k];
+        const result = nextHole(list[i], role || regressionBlockDefaults[list[i].schemaId], node, k, Array.isArray(children) ? i : null, false);
+        if (result) return result;
+      }
+    }
+    for (const [k, children] of Object.entries(node.bodies || {})) for (let i = 0; i < children.length; i++) {
+      const result = nextHole(children[i], expected?.bodies?.[k]?.[i] || regressionBlockDefaults[children[i].schemaId] || regressionBlockDefaults.NoOperation, node, k, i, true);
+      if (result) return result;
+    }
+    return null;
+  };
+  for (let count = 0; count < 80; count++) {
+    const current = await tree(), top = topId ? find(current, topId) : current;
+    if (!top) throw Error('Regression setup lost the inserted node: ' + topId);
+    const hole = nextHole(top);
+    if (!hole) return;
+    const expected = hole.expected;
+    if (!expected) throw Error('No independent regression default for hole ' + hole.node.id + ' in ' + hole.parent?.schemaId + '.' + hole.key);
+    const node = root.locator('.blockui-node[data-block-id="' + hole.node.id + '"]');
+    if (hole.node.schemaId === 'Hole:target') {
+      const picker = node.locator('[data-blockui-hole-target]');
+      const options = await picker.locator('option').evaluateAll(xs => xs.map(x => x.value).filter(Boolean));
+      const value = options.includes(expected.fields.name) ? expected.fields.name : options[0];
+      if (!value) throw Error('No declared target for the regression fixture');
+      await picker.selectOption(value);
+    } else {
+      const direct = root.locator('[data-expression-hole="true"][data-block-id="' + hole.node.id + '"]');
+      const compact = hole.node.schemaId === 'Hole:expression' && await direct.count() === 1;
+      const literal = expected.schemaId === 'NumberLiteral' ? expected
+        : expected.schemaId === 'QuantityLiteral' && expected.inputs?.value?.schemaId === 'NumberLiteral' ? expected.inputs.value : null;
+      if (compact && literal) {
+        // A compact numeric hole is a number field (E-02): the number is typed into it. Its
+        // 「計算で決める」／「計算を入れる」 take calculations, not a plain number.
+        await (await revealRegressionControl(direct)).fill(String(literal.fields.value));
+        await direct.press('Enter');
+      } else {
+        if (compact) {
+          // A calculation goes into a compact numeric hole through the owning command's 「計算で決める」
+          // (回・秒 of くり返す, 話す, 待つ) or, in a value slot, through the slot's own tools: choosing the
+          // number field shows them, and 「計算を入れる」 opens the expression palette.
+          const owner = direct.locator('xpath=ancestor::article[1]');
+          const quantity = owner.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="quantity-expression"]');
+          if (await quantity.count()) await (await revealRegressionControl(quantity.first())).click();
+          else {
+            const slot = direct.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-input-slot ")][1]');
+            await (await revealRegressionControl(direct)).click();
+            await (await revealRegressionControl(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'))).click();
+          }
+        } else {
+          await (await revealRegressionControl(node.locator('[data-blockui-action="hole-select-' + (hole.body ? 'statement' : 'expression') + '"]'))).click();
+        }
+        await (await revealRegressionControl(root.locator('[data-blockui-search]'))).fill(expected.schemaId);
+        await (await revealRegressionControl(root.locator('[data-blockui-schema="' + expected.schemaId + '"]'))).click();
+      }
+    }
+    const parent = find(await tree(), hole.parent.id);
+    let inserted = hole.body ? parent.bodies[hole.key][hole.index] : hole.index === null ? parent.inputs[hole.key] : parent.inputs[hole.key][hole.index];
+    if (inserted?.schemaId === 'QuantityLiteral' && expected.schemaId !== 'QuantityLiteral') inserted = inserted.inputs.value;
+    for (const [key, value] of Object.entries(expected.fields || {})) {
+      // The target picker above already chose an existing target of the work; its name field (a typed name
+      // with suggestions) must not be overwritten with the fixture's name when that target is absent.
+      if (hole.node.schemaId === 'Hole:target' && key === 'name') continue;
+      const control = root.locator('[data-block-id="' + inserted.id + '"][data-blockui-field="' + key + '"]');
+      if (!await control.count()) continue;
+      const tag = await control.evaluate(el => el.tagName);
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) continue;
+      const wanted = value === null ? (key === 'qualifier' ? 'none' : '') : String(value);
+      if (await control.inputValue() === wanted) continue;
+      if (tag === 'SELECT') await (await revealRegressionControl(control)).selectOption(wanted);
+      else { await (await revealRegressionControl(control)).fill(wanted); await control.press('Enter'); }
+    }
+  }
+  throw Error('Regression hole setup did not finish within 80 explicit inputs');
+}
+module.exports.completeRegressionHoles = completeRegressionHoles;

@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {loadApi} from '../browser/cases/audit-lib.cjs';
+import {currentProductFile} from '../lib/product-path.cjs';
+import {snapshot} from '../lib/product-test-host.mjs';
+const A=loadApi(fs.readFileSync(currentProductFile(),'utf8')),plain=v=>JSON.parse(JSON.stringify(v)),results=[];
+const check=(id,fn)=>{try{results.push({id,status:'PASS',observed:fn()});}catch(e){results.push({id,status:'FAIL',error:e.stack});}};
+for(const input of ['0','０','0点','3','－2'])check('data/declared-point/'+input,()=>{const expected={magnitude:input==='3'?3:input==='－2'?-2:0,unit:'点'},actual=plain(A.parseDataFormInitial(input,'variable',{expectedUnit:'点'}));assert.deepEqual(actual,expected);return{input,actual};});
+for(const input of ['0秒','「0」','条件の答え（あてはまる）'])check('data/reject-declared-point/'+input,()=>{assert.throws(()=>A.parseDataFormInitial(input,'variable',{expectedUnit:'点'}));return{input,rejected:true};});
+for(const [input,expected]of [['本\nかさ\nぼうし',['本','かさ','ぼうし']],['  空白  \r\n「引用」🐈\r\n\r\n最後',['  空白  ','「引用」🐈','','最後']],['',[]]])check('data/list-lines/'+input,()=>{const actual=plain(A.parseDataFormInitial(input,'list',{mode:'lines'}));assert.deepEqual(actual,expected);return{input,actual};});
+check('data/list-literals-and-invalid-input',()=>{assert.deepEqual(plain(A.parseDataFormInitial('［「本」、3、2点］','list')) ,['本',3,{magnitude:2,unit:'点'}]);assert.throws(()=>A.parseDataFormInitial('本、かさ','list'));assert.throws(()=>A.parseDataFormInitial('x\n'.repeat(100000),'list',{mode:'lines'}));return{literalTypesPreserved:true,invalidRejected:true};});
+const report={schema:'akari-data-form-values-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),uxAcceptance:false,results},out=path.resolve(process.argv[2]);fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.error);console.log(`Data form values: ${results.filter(r=>r.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;

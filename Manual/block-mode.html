@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あかり 1.0.0 ブロックモード マニュアル</title>
+<style>
+:root{color-scheme:light;--bg:#edf2f8;--surface:#fff;--surface2:#f7f9fc;--line:#cbd7e6;--ink:#223044;--muted:#607084;--accent:#2f6fd6;--accent-soft:#eaf2ff;--good:#19733e;--warn:#8a5a00;--danger:#a93636;--shadow:0 8px 28px rgba(36,54,82,.10)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,var(--bg) 420px);line-height:1.75}
+a{color:var(--accent)}header{background:linear-gradient(135deg,#315a96,#527fc4);color:#fff;padding:48px 20px 42px}.header-inner,.layout{max-width:1180px;margin:auto}.kicker{font-size:.9rem;font-weight:700;letter-spacing:.08em;opacity:.9}h1{margin:.25rem 0 .5rem;font-size:clamp(2rem,4vw,3.2rem);line-height:1.25}.lead{max-width:780px;margin:0;color:#f4f7ff;font-size:1.08rem}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:26px;padding:26px 20px 64px}nav{position:sticky;top:18px;align-self:start;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}nav strong{display:block;margin:2px 6px 8px}nav a{display:block;text-decoration:none;color:#34465d;padding:7px 9px;border-radius:8px;font-size:.94rem}nav a:hover{background:var(--accent-soft);color:#1d4f9f}
+main{min-width:0}section{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(20px,3vw,34px);margin-bottom:22px;box-shadow:var(--shadow)}h2{margin:0 0 16px;font-size:1.65rem;line-height:1.35}h3{margin:28px 0 10px;font-size:1.2rem}p{margin:.7rem 0}ul,ol{padding-left:1.5rem}li+li{margin-top:.42rem}
+kbd{background:#f2f5f9;border:1px solid #bac7d7;border-bottom-width:2px;border-radius:5px;padding:.05rem .35rem;font:inherit;font-size:.9em}code{font-family:"BIZ UDGothic","Yu Gothic UI",monospace;background:#f3f6fa;border-radius:5px;padding:.08rem .3rem}
+.callout{border-left:5px solid var(--accent);background:var(--accent-soft);padding:13px 16px;border-radius:9px;margin:16px 0}.callout.good{border-color:var(--good);background:#edf8f1}.callout.warn{border-color:#d18b00;background:#fff7df}.callout.danger{border-color:var(--danger);background:#fff0f0}
+.steps{counter-reset:step;list-style:none;padding:0}.steps>li{position:relative;padding:0 0 22px 54px;min-height:44px}.steps>li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:#fff;font-weight:800}.steps>li:not(:last-child)::after{content:"";position:absolute;left:17px;top:39px;bottom:3px;width:2px;background:#d7e2ef}
+.ui-map,.cards,.category-grid{display:grid;gap:12px}.ui-map,.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.card,.ui-item,.category{border:1px solid #d8e1ec;border-radius:12px;padding:14px;background:var(--surface2)}.card strong,.ui-item strong,.category strong{display:block;margin-bottom:4px}
+.mock{border:1px solid #b8c8da;border-radius:13px;overflow:hidden;margin:18px 0;background:#fff}.mock-top{padding:9px 12px;background:#e9eff7;border-bottom:1px solid #cbd7e6;font-weight:700}.mock-grid{display:grid;grid-template-columns:minmax(180px,28%) 1fr;min-height:270px}.mock-palette{padding:12px;border-right:1px solid #d5dfeb;background:#f8fbff}.mock-workspace{padding:18px;background:#f1f5fa}.mock-search{border:1px solid #afbed0;border-radius:7px;padding:7px 9px;margin-bottom:9px;color:#66778a;background:#fff}.mock-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}.mock-tabs span{font-size:.78rem;border:1px solid #c4d0df;border-radius:999px;padding:3px 7px;background:#fff}
+.block{display:block;width:max-content;max-width:100%;margin:8px 0;padding:8px 12px;border:1px solid #aac0da;border-radius:9px;background:#dcecff;font-weight:700}.block.control{background:#fff0cf}.block.data{background:#e5f4e8}.block.look{background:#eee4ff}.block .slot{display:inline-block;min-width:48px;padding:1px 7px;margin:0 2px;background:#fff;border:1px solid #9fb0c5;border-radius:999px;font-weight:500}.block-body{margin:5px 0 5px 28px;padding-left:13px;border-left:4px solid rgba(120,98,30,.25)}
+.toolbar-demo{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.toolbar-demo span{border:1px solid #b8c6d7;background:#fff;border-radius:7px;padding:5px 9px;font-weight:700;font-size:.9rem}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem}th,td{border:1px solid #d5deea;padding:9px 10px;text-align:left;vertical-align:top}th{background:#eef3f9}.small{font-size:.9rem;color:var(--muted)}.checklist{list-style:"✓  ";padding-left:1.45rem}.checklist li::marker{color:var(--good);font-weight:800}
+footer{max-width:1180px;margin:0 auto 40px;padding:0 20px;color:var(--muted);font-size:.9rem}
+@media(max-width:860px){.layout{grid-template-columns:1fr}nav{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}nav strong{grid-column:1/-1}.ui-map,.cards,.category-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.mock-grid{grid-template-columns:1fr}.mock-palette{border-right:0;border-bottom:1px solid #d5dfeb}nav{grid-template-columns:1fr}header{padding-top:34px}}
+@media print{body{background:#fff}header{background:#fff;color:#000;padding:20px 0}.lead{color:#333}.layout{display:block;padding:0}nav{display:none}section{box-shadow:none;break-inside:avoid}}
+
+/* Shared reading conventions; no external fonts, images or scripts. */
+html{scroll-padding-top:24px}
+a:focus-visible,summary:focus-visible{outline:3px solid #a65300;outline-offset:4px}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:10;padding:12px 18px;background:#fff;color:#173f72}
+.skip-link:focus{top:12px}
+.book-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.book-links a{color:#fff;background:#244b7b;border:1px solid #b5ccea;border-radius:99px;padding:8px 14px;text-decoration:none;font-weight:700}
+.chapter-links{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.chapter-links a{padding:10px 14px;background:#eaf2ff;border:1px solid #aac0de;border-radius:10px;text-decoration:none;font-weight:700}
+.reading-note{padding:14px 18px;border-left:5px solid #33704c;background:#eff8f1;border-radius:8px;margin:18px 0}
+.table-scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #cbd7e6}
+th{background:#edf3fa;color:#233d5e}
+pre{max-width:100%;overflow-x:auto;tab-size:2}
+p,li,td,a{overflow-wrap:anywhere}
+/* Children's text breaks only at spaces and punctuation (LANGUAGE.md 子ども向けの文); a run longer than the line still wraps. Code keeps its own breaking. */
+p,li,td,th,dd,summary,h1,h2,h3,.lead,.card,.callout,.note,.reading-note,.ui-item,.category,.rule,.choice>div,.step,.ref,.scope>div{word-break:keep-all;overflow-wrap:anywhere}
+pre,code,kbd{word-break:normal}
+details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
+summary{font-weight:800;cursor:pointer;color:#234f93}
+.mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
+.task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
+.code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
+.quick-nav{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.quick-nav a{padding:8px 12px;border:1px solid #b3c9e0;border-radius:99px;background:#f3f8ff;text-decoration:none}
+@media(min-width:901px){nav[aria-label="目次"]{max-height:calc(100vh - 36px);overflow-y:auto}}
+@media(max-width:520px){th,td{padding:9px;font-size:.94rem}.task-list>li{padding-right:12px}.hero h1{font-size:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.book-links,.chapter-links,.skip-link,.quick-nav{display:none}details{break-inside:avoid}a{color:#163a64}}
+
+
+/* The pale reading panel has its own foreground, including inside the dark hero. */
+#code-ownership, #code-ownership h2, #code-ownership p { color:#22354b; }
+#code-ownership::selection, #code-ownership *::selection { background:#244b7b; color:#ffffff; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">本文へ進む</a>
+<header>
+  <div class="header-inner">
+    <div class="kicker">あかり 1.0.0 · ブロックモード</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari_1_0_0.html">あかりを使う</a><a href="../MANUAL.html#save">ほぞん・開く</a></div>
+<h1>ブロックモード マニュアル</h1>
+
+    <p class="lead">日本語の ブロックを、つないだり、かこんだり、あいている ところに はめたり して、作品を 作るための ガイドだよ。コードモードと 同じ 本文を なおすので、どちらで 作っても 動きは 同じだよ。</p>
+  </div>
+</header>
+
+<div class="layout">
+<nav aria-label="目次">
+  <strong>目次</strong>
+  <a href="#first">1. まず 1つ 動かす</a>
+  <a href="#screen">2. 画面の 見方</a>
+  <a href="#basics">3. ブロックの きほん</a>
+  <a href="#edit">4. 入れる・運ぶ・なおす</a>
+  <a href="#move">5. 動きの ブロック</a>
+  <a href="#control">6. もし・くり返し・ふれたとき</a>
+  <a href="#data">7. へんすうと リスト</a>
+  <a href="#recipes">8. 作品づくりの れい</a>
+  <a href="#run">9. 動かす・たしかめる・ほぞん</a>
+  <a href="#undo">10. もとに もどす・入れかけ</a>
+  <a href="#code">11. コードとの かんけい</a>
+  <a href="#trouble">12. こまった とき</a>
+  <a href="#keyboard">13. キーボードと 指で そうさ</a>
+</nav>
+
+<main id="main-content">
+<section id="first">
+  <p>上の ボタンは「作品」「保存」「▶ 動かす」の 順だよ。「作品」を おすと「新しく作る」「開く」「うごく作品を ファイルにする」が 出るよ。「はじめて」には「いっしょに作る」、「かんたん」「くわしく」には「お手本を開く」が あるよ。名人には、この 二つは 出ないよ。</p>
+<p>「もとに もどす」と「やり直す」は、どの レベルでも 上の バーに あるよ。</p>
+<h2>1. まず 1つ 動かして みよう</h2>
+  <p>はじめは、キャラクターを おすと、その キャラクターが 右へ 10歩 動く 作品を 作るよ。ブロックでも、だれが・どちらへ・どれだけ を 1つの 文として 組み立てるよ。</p>
+  <ol class="steps">
+    <li><strong>キャラクターを おく。</strong><br>右がわの「キャラクター・部品」で「＋ たくどん」「＋ だんご」「＋ 星」などを おすと、作品画面に キャラクターが ふえるよ（「かんたん」「くわしく」では「＋ キャラクター・部品を ふやす」から えらぶよ）。ふやした キャラクターは、ほかの 部品と かさならない ところに 入り、画面の 下に「「〔名前〕」を おいたよ。いま 動かすものは「〔名前〕」だよ」と 出るよ。名前には「星1」「たくどん1」のように 番号が つくよ（だんごは、ほかに だんごが いなければ「だんご」だよ）。名前は「せってい」で かえられるよ。はじめの 作品は 本文が からっぽだよ。「かんたん」か「くわしく」に かえてから、「お手本を開く」を おすと、絵と 短い せつめいが ある 6まいの カードからも えらべるよ。</li>
+    <li><strong>動かすものを えらぶ。</strong><br>作品画面か「キャラクター・部品」の 一らんで、入れた キャラクターを えらぼう。</li>
+    <li><strong>きっかけを えらぶ。</strong><br>「はじめて」では、上の「「〔名前〕」が おされたとき」を おそう。「かんたん」「くわしく」では、「きっかけ」で「おされたとき」を えらぶよ。ブロックの いちばん上には「たくどん・おされたとき」のように、だれが・いつ が 出るよ。</li>
+    <li><strong>1つの 文を 組み立てる。</strong><br>左の ブロックの 一らんで「いまのばしょから、右へ 10 歩 動く」を おそう（「かんたん」「くわしく」では、なかまの「動き」の 中に あるよ）。本文に 同じ ブロックが 入るよ。コードで 見ると「いまのばしょから、右へ10歩動く。」と 同じ 文だよ。</li>
+    <li><strong>「▶ 動かす」で 動かす。</strong><br>動かす 画面に なったら、作品画面で キャラクターを おして、ブロックで 決めた どちらへ・どれだけ と、じっさいの 動きを くらべよう。「■ 止める」で 作る 画面に もどるよ。</li>
+  </ol>
+  <div class="callout good"><strong>おぼえる ことは 3つだけ。</strong> つなぐブロックは 上から 下へ つなぐ。数や 計算や きまりは、ブロックの あいている ところに はめる。「もし」や「くり返し」の 中には、つなぐブロックを 入れる。この 3つが、ブロックモードの きほんだよ。</div>
+</section>
+
+<section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
+  <h2>画面の ものから、プログラムを 読む</h2>
+  <p>作品画面で 部品を えらぶと、その 部品の 本文が 出て、すぐに なおせるよ。いまの きっかけの 本文が からっぽで、ほかの きっかけに 本文が あるときは、その 本文が 開くよ。</p>
+  <p>本文は、コードモードと ブロックモードの 2つの 見せ方で 見られるよ。ほかの きっかけの 本文を 開くときは「きっかけ」で えらぼう。同じ きっかけの 本文を ふやす ときは「同じ きっかけの 本文を ふやす」を おすよ。いま 開いている 本文の きっかけを かえる ときは「いつ動く？」を 使うよ（「かんたん」「くわしく」）。「すべての本文」を おすと、「「動かす」を おしたとき」「おされたとき」「合図を 受けたとき」などの 本文を ぜんぶ ならべて 見られるよ。ならべた 中の「この 本文を なおす」で、なおす ところへ 進めるよ。ならべた 画面を とじる ときは、その ときだけ 出る「本文を なおす ところへ もどる」を おしてね。</p>
+  <p>みんなで 使う「自分で作ったブロック」は、画面（「画面1」など）の 本文に 入っているよ。それを 使っている 部品の 本文を ならべた ときにも 出るよ。部品を えらんで いる ときに 出る「画面の本文」から、まだ 使っていない 自分で作ったブロックも 開けるよ。画面を えらんで いる ときは「すべての本文」を 使おう。書き方に まちがいが ある 本文は、書いた コードの まま 出るよ。</p>
+</section>
+
+<section id="screen">
+  <h2>2. 画面の 見方</h2>
+<p>下の 図は、ばしょと やくわりを せつめいする 図だよ。じっさいの 画面は、レベルや 画面の はばで、ならび方が かわるよ。</p>
+  <div class="ui-map">
+    <div class="ui-item"><strong>作品画面</strong>文字・ボタン・入力らん・四角・キャラクターなどを おく ばしょだよ。部品を えらぶと、「せってい」で 名前、ばしょ、大きさ、色などを かえられるよ。</div>
+    <div class="ui-item"><strong>本文・動かすもの・きっかけ</strong>見出し「本文」の 行で、「何を」「いつ」動かすかを えらぶよ。きっかけには「「動かす」を おしたとき」「おされたとき」「キーを おしたとき」「合図を 受けたとき」「はいけいが かわった とき」「中身が かわったとき」「コピーが できたとき」「ふれたとき」「画面のはしに ふれたとき」が あるよ。</div>
+    <div class="ui-item"><strong>ブロックの 一らん</strong>使える ブロックを さがすよ。なかまの ボタンは いつも ぜんぶ 見えていて、一らんは 上下に スクロールして 見るよ。</div>
+    <div class="ui-item"><strong>作業台</strong>いま えらんで いる 動かすものと きっかけの 本文を 組み立てるよ。長い 本文は、上下左右に スクロールして 見られるよ。</div>
+  </div>
+
+  <div class="mock" aria-label="ブロックモードの 画面の 図">
+    <div class="mock-top">本文　動かすもの：たくどん　きっかけ：「おされたとき」</div>
+    <div class="mock-grid">
+      <div class="mock-palette">
+        <div class="mock-search">ブロックを さがす</div>
+        <div class="mock-tabs"><span>よく使う</span><span>動き</span><span>見た目</span><span>もし・くり返し</span><span>へんすう・リスト</span><span>計算</span></div>
+        <span class="block">いまのばしょから、右へ 10 歩 動く</span>
+        <span class="block look">「こんにちは」と 言う</span>
+      </div>
+      <div class="mock-workspace">
+        <span class="block">いまのばしょから、右へ 10 歩 動く</span>
+        <div class="block control">もし <span class="slot">きまり</span> なら
+          <div class="block-body"><span class="block look">「できた！」と 言う</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>上の ツールバー</h3>
+  <p>ツールバーは、ページを スクロールしても 画面の 上に のこるよ。右はしには、左から 見せ方を 切りかえる ボタン、レベルを えらぶ ところ、作品名が ならぶよ。ボタンには いまの 見せ方が 出ていて、ブロックの ときは「ブロックモード ⇄」だよ。ブロックモードで えらべる レベルは「はじめて」「かんたん」「くわしく」だよ。「はじめて」の あいだは、ボタンを おしても コードモードには ならないで、「コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね」と 出るよ。コードを 使うときは、「かんたん」か「くわしく」を えらんでから「ブロックモード ⇄」を おそう。</p>
+  <h3>作品画面の 大きさ</h3>
+<p>作品画面の 上に ある「−」「100%」「＋」「全体」で、見る 大きさを かえられるよ。まん中の ボタンには、いまの 大きさ（%）が 出るよ。「−」「＋」は 10ずつ、10%から 200%まで かわるよ。まん中の ボタンを おすと 100%、「全体」を おすと まどに 入る 大きさに もどるよ。見出しの「大きく見る」を おすと、作品画面を 100%で 大きく 見られて、「もどる」か Escキーで もどるよ。これは 見る 大きさだけの せっていで、作品の 大きさ・ばしょ・本文は かわらないよ。</p>
+<h3>作業台の ボタン</h3>
+  <div class="toolbar-demo" aria-label="作業台の おもな ボタン">
+    <span>さいしょへ</span><span>見わたす</span><span>−</span><span>100%</span><span>＋</span><span>作業台を広く</span><span>ブロックを しまう</span>
+  </div>
+  <ul>
+    <li><strong>さいしょへ</strong>：作業台の いちばん はじめに もどるよ。</li>
+    <li><strong>見わたす</strong>：本文 ぜんたいが 見えるように 小さく するよ（75%より 小さくは しないよ）。</li>
+    <li><strong>−／＋／100%</strong>：作業台を 50%・75%・100%・125%・150%・200% の じゅんに 小さく・大きく するよ。大きさの 数を おすと 100%に もどるよ。</li>
+    <li><strong>作業台を広く</strong>：作品画面を 小さく 右下に のこして、作る ところを 広げるよ。小さく なった 作品画面を おすと、もとの ならびに もどるよ。</li>
+    <li><strong>ブロックを しまう</strong>：ブロックの 一らんを とじて、本文の ところを 広げるよ。とじている あいだは「ブロックを 出す」に かわるよ。「はじめて」では 出ないよ。</li>
+  </ul>
+  <p>これらの ボタンは、作業台の 下に 一れつに ならんで いて、ブロックの 上には かさならないよ。</p>
+</section>
+
+<section id="basics">
+  <h2>3. ブロックの きほん</h2>
+  <h3>ブロックの 一らんで さがす</h3>
+  <p>なかまの ボタンから さがすか、「ブロックを さがす」に ことばを 入れよう（「ブロックを さがす」は「かんたん」「くわしく」で、「さがす・作るを ひらく」を おすと 出るよ）。ひらがな・カタカナ・漢字の どれで 書いても さがせるよ（れい：「くりかえす」「おと」「ふれる」）。「おちる」「でてくる」「しつもん」のような、作りたい ことの ことばからも さがせるよ。さがす ときは、なかまを えらんで いても、ぜんぶの なかまから さがすよ。なかまは 次の とおりだよ（「すべて」を おすと ぜんぶ 見られるよ）。</p>
+  <div class="category-grid">
+    <div class="category"><strong>よく使う</strong>お手本を 作りかえる ときに よく 使う ブロック</div>
+    <div class="category"><strong>動き</strong>動く、回る、ばしょ、向き</div>
+    <div class="category"><strong>見た目</strong>大きさ、見せる・かくす、はいけい、すがた、文字</div>
+    <div class="category"><strong>もし・くり返し</strong>もし、くり返し、待つ、止める</div>
+    <div class="category"><strong>合図</strong>合図を 送る、合図に かかわる 中身</div>
+    <div class="category"><strong>へんすう・リスト</strong>へんすう、リスト、中身を 読む・かえる</div>
+    <div class="category"><strong>計算</strong>たし算などの 計算、くらべる、「かつ」「または」、はじめから ある 計算</div>
+    <div class="category"><strong>しらべる</strong>キー、マウス、ふれて いるか、ばしょ などの ようす</div>
+    <div class="category"><strong>音</strong>音、音の 大きさ、音の 高さ</div>
+    <div class="category"><strong>ペン</strong>線、色、太さ、スタンプ</div>
+    <div class="category"><strong>自分で作ったブロック</strong>自分で 作った ブロックを 使う</div>
+    <div class="category"><strong>コピー</strong>キャラクターの コピーを 作る・けす</div>
+    <div class="category"><strong>メモ</strong>あとで 思い出す ための メモ</div>
+  </div>
+
+  <h3>「ブロックの しゅるい」で しぼりこむ</h3>
+  <p>「さがす・作るを ひらく」で 開く「ブロックの しゅるい」で、<strong>すべてのブロック</strong>、<strong>つなぐブロック</strong>、<strong>はめるブロック</strong>を 切りかえられるよ。</p>
+  <ul>
+    <li><strong>つなぐブロック</strong>：上から じゅんに 動く ブロックだよ。</li>
+    <li><strong>はめるブロック</strong>：数、文字、「あてはまる・あてはまらない」、へんすう、計算、きまりなど、あいている ところに 入れる ものだよ。</li>
+    <li><strong>使えないブロックも見せる</strong>：この ばしょでは 使えない ブロックも 見られるよ。おすと 使えない わけが 出て、本文には 入らないよ。</li>
+  </ul>
+
+  <h3>つなぐブロックと はめるブロックは 入る ばしょが ちがう</h3>
+  <div class="cards">
+    <div class="card"><strong>つなぐブロック</strong>本文の 中で、上下に つなぐよ。れい：前へ 10 歩 進む、1 秒 待つ、「こんにちは」と 言う。</div>
+    <div class="card"><strong>はめるブロック</strong>ブロックや ほかの 計算の あいている ところに はめるよ。れい：点数、1＋2、点数が 10<ruby>以上<rt>いじょう</rt></ruby>、マウスの よこの ばしょ。</div>
+  </div>
+  <p>ブロックの 文字は、コードの 文と 同じ ことばだよ。「待つ」の ブロックに だれが するかを 書いて いない ときは、「1 秒 待つ」と 出て、この 本文 ぜんたいが 待つよ。だれが するかを かえる ときは、ブロックを えらんで 道具の「だれが」から えらぼう。前の 文の だれがを ひきついで、ほかの キャラクターが する ブロックには、「だれが」の ところに、ひきついだ 名前が うすい 色で「（おばあさんは）」のように 出るよ。コードには 書かれないよ。中を 開くときは、文の うしろの「…」を おすよ。</p>
+  <div class="callout warn">つなぐブロックを あいている ところに 入れたり、はめるブロックを つなぐブロックの ならびに そのまま 入れたりは できないよ。入れられない ところの 上では、運んでいる ブロックが はい色に なって「ここには おけないよ」と 出るよ。</div>
+  <p>「出発」の 合図を 受ける 本文が、この 作品に ありません。受ける 部品の 本文の はじめに「「出発」という合図を受けたとき、」と 書きます</p>
+</section>
+
+<section id="edit">
+  <h2>4. ブロックを 入れる・運ぶ・なおす</h2>
+  <p>「はじめて」では、使う ブロックを しぼって 見せるよ。「話す」「待つ」「くり返す」が 先に ならんで いて、そのまま 入れて「▶ 動かす」を おしても、見て 分かる 動きに なる 数が 入っているよ（「くり返す」は 3回だよ）。「くり返す」を 入れたら、次に 入れた ブロックが その 中に 入るよ。中が からっぽの「くり返す」は、中に ブロックを 入れるまで 動かせないよ。「かんたん」「くわしく」に 切りかえると、ほかの なかまや「ブロックを さがす」も 使えるよ。「はじめて」で 見えない ブロックや きっかけが 入った 作品も、けさずに のこすよ。</p>
+  <h3>入れる</h3>
+  <p>ブロックの 一らんの つなぐブロックを おすと、えらんで いる ブロックの すぐ 下に 入るよ。何も えらんで いなければ、本文の いちばん 下に 入るよ。「＋ ここに入れる」で ばしょを えらんだ ときは、その ばしょに 入るよ。えらぶのを やめる ときは、「入れるのを やめる」か Escキーを おそう。本文や、もとに もどせる きろくは かわらないよ。</p>
+  <p>ブロックの 一らんの ブロックを おしたまま 作業台へ 運ぶと、入る ばしょが 線と「ここにつなぐ」で 出るよ。作業台の 中で はなすと、いちばん 近い 入れられる ところに 入るよ。つなぐブロックの 上半分で はなすと その 前、下半分で はなすと その うしろだよ。作業台と ブロックの 一らんの 外で はなすと、もとの ばしょに もどって「入れるのを やめたよ」と 出るよ。</p>
+  <p>ブロックの あいだには 細い 線だけが 出ていて、本文と まとまりの いちばん 下に「＋ ここに入れる」が 出るよ。ブロックを 運んでいる あいだは、あいだの 線も「＋ ここに入れる」の 大きさに 広がるよ。</p>
+  <h3>「もし」や「くり返し」で かこむ</h3>
+  <p>「もし」や「くり返し」の ブロックを、下に ブロックが つづく「＋ ここに入れる」へ 入れると、その 下の ブロックを ぜんぶ 中に 入れるよ。運んでいる あいだは「下の 3この ブロックを 中に 入れる」のように 出るよ。下に ブロックが ない ところへ 入れると、中が からっぽの まとまりに なるよ。「もとに もどす」を 1回 おすと、入れる 前に もどるよ。</p>
+  <h3>ブロックの 中身を かえる</h3>
+  <p>数や 文字の らんを おすと、中身 ぜんぶが えらばれて、打った 文字に 入れかわるよ。数の らんに 数で ない ものを 入れると、その らんの すぐ 下に「数だけを 入れてね。れい：1、0.5」のように 出るよ。「歩」「秒」「度」などの たんいが 決まっている らんでは、たんいは 文字で 出るよ。へんすう・リスト・部品・絵や音・自分で作ったブロックの 名前は、えらべる ものから えらべるよ。まだ 作っていない 名前が 本文に あっても、かってに けさずに のこすよ。</p>
+  <h3>ブロックを えらんで 使う 道具</h3>
+  <p>ブロックを えらぶと、ブロックの そばに 道具が 出るよ（ふつうは ブロックの 右どなりで、右に ばしょが ないときは すぐ 上だよ）。ほかの ブロックの ばしょは かわらないよ。</p>
+  <table>
+    <thead><tr><th>道具</th><th>何を するか</th></tr></thead>
+    <tbody>
+      <tr><td>↑ まえへ／↓ あとへ</td><td>同じ 本文の 中で、ブロックを 1つずつ 前や あとへ ならべかえるよ。</td></tr>
+      <tr><td>けす</td><td>えらんだ ブロックを 本文から 外すよ。まとまりを けすと、中の ブロックも きえるよ。</td></tr>
+      <tr><td>ほかへ もっていく</td><td>ブロックを ほかの ばしょへ うつすよ（「ほかのそうさ」の 中に あるよ）。</td></tr>
+      <tr><td>ここから下を まとめて もっていく</td><td>えらんだ ブロックと、その 下に つづく ブロックを まとめて うつすよ。</td></tr>
+      <tr><td>同じものを もう1つ 作る</td><td>同じ ブロックを もう1つ 作るよ。</td></tr>
+      <tr><td>計算を入れる</td><td>はめるブロックの ばしょに、ほかの 計算を 入れるよ（「かんたん」では 道具の「…」から、「くわしく」では らんを えらんだ ときの 道具から 使えるよ）。</td></tr>
+      <tr><td>メモ</td><td>その ブロックの 行の おわりに つける メモを なおすよ。</td></tr>
+    </tbody>
+  </table>
+  <p>どの そうさも「↶ もとに もどす」「↷ やり直す」で たしかめながら ためそう。</p>
+
+  <h3>おしたまま 運んで 組みかえる</h3>
+  <p>ブロックを おしたまま 運ぶと、その ブロック 1つが うつるよ（まとまりなら 中身ごと うつるよ）。下に つづく ブロックも いっしょに うつす ときは、「ここから下を まとめて もっていく」を 使おう。ブロックを 作業台の はしへ もって いくと、その 向きへ 作業台が 自動で スクロールするよ。</p>
+  <h3>ブロックを けす</h3>
+  <p>ブロックを けすには、作業台の ブロックを ブロックの 一らんの 上まで 運んで はなす（一らんが 赤く なり「ここで はなすと けす」と 出るよ）、ブロックを えらんで Deleteキーか Backspaceキーを おす、道具の「けす」を おす、の どれかを 使うよ。どれも「もとに もどす」で もどせるよ。</p>
+  <div class="callout">おしたまま 運んでいる あいだは、本文は まだ かわらないよ。正しい ばしょで はなした ときに、1回だけ 決まるよ。おける ばしょの 外で はなす、<kbd>Esc</kbd>で やめる、とちゅうで 止まる、といった ときは、もとの 本文と、もとに もどせる きろくを そのまま のこすよ。</div>
+
+  <h3>入れる ものが いくつも ある ブロック</h3>
+  <p>入れる ものを ふやせる ばしょでは、「＋」で ふやすよ。それぞれの 横の「↑」「↓」「外す」で、じゅんばんを かえたり 外したり できるよ。</p>
+
+  <h3>メモ</h3>
+  <ul>
+    <li>メモだけの 行は、「メモ」の ブロックで なおすよ。</li>
+    <li>ブロックの 行の おわりの メモは、「ほかのそうさ」→「メモ」で なおすよ。</li>
+    <li>メモに 行がえを 入れると、いくつかの メモの 行として のこるよ。</li>
+  </ul>
+</section>
+
+<section id="move">
+  <h2>5. 動きの ブロック</h2>
+  <p>作品画面の ばしょは、画面の 左下の はしが「よこ0・たて0」で、右へ 行くほど よこの ばしょが、上へ 行くほど たての ばしょが 大きく なるよ。部品の ばしょは、その 部品の まん中だよ。向きは、右が 0度、上が 90度、左が 180度、下が 270度だよ。</p>
+  <table>
+    <thead><tr><th>ブロック</th><th>コードの 文</th><th>何を するか</th></tr></thead>
+    <tbody>
+      <tr><td>決めたばしょへ行く</td><td>画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く</td><td>画面の 左下の はしから、右へ 100歩、上へ 50歩の ところへ 行くよ。新しく 入れると、いまの まん中の ばしょが 入るよ。</td></tr>
+      <tr><td>いまのばしょから動く</td><td>いまのばしょから、右へ10歩動く</td><td>いま いる ところから 動くよ。向きは「右・左・上・下」から えらぶよ。</td></tr>
+      <tr><td>前へ進む</td><td>前へ10歩進む</td><td>いま 向いている ほうへ 進むよ。「後ろ」を えらぶと、反対の ほうへ 動くよ。</td></tr>
+      <tr><td>〜のところへ行く</td><td>「ロケット」のところへ行く</td><td>相手の まん中へ 行くよ。相手には 部品か マウスを えらぶよ（「かんたん」「くわしく」）。</td></tr>
+    </tbody>
+  </table>
+  <p>どの 動きの ブロックも、向きは かえないよ（前へ進むだけは、いまの 向きへ 進むよ）。</p>
+  <ul>
+    <li><strong>2つの 向きへ 動く：</strong>「いまのばしょから動く」の「…」で「＋ たてにも動く」「＋ よこにも動く」を おすと、もう1つの 向きを 足せるよ。「右へ 10 歩、上へ 5 歩」のように、よこ、たての じゅんに ならぶよ。</li>
+    <li><strong>時間を かけて 動く：</strong>「…」で「時間をかけて行く」「時間をかけて動く」「時間をかけて進む」「時間をかけて回る」を おすと、「1 秒かけて、」が 足されて、なめらかに 動くよ。「時間を外す」で もとに もどるよ。</li>
+    <li><strong>回る：</strong>「右に 15 度 回る」は 時計の はりと 同じ 回り方、「左に 15 度 回る」は 反対の 回り方だよ。</li>
+  </ul>
+  <p>「はじめて」で 使える 動きの ブロックは、「決めたばしょへ行く」「いまのばしょから動く」「前へ進む」だよ。「かんたん」では、これに「〜のところへ行く」が ふえるよ。</p>
+</section>
+
+<section id="control">
+  <h2>6. 「もし」と「くり返し」と「ふれたとき」</h2>
+<p>下の「点数」の れいでは、先に「<ruby>変数<rt>へんすう</rt></ruby>・リスト」で、作品 ぜんたいの へんすう「点数」を 作っておこう。おされた ときの 本文で ためして みよう。</p>
+  <p>「もし」や「くり返し」は、中に 入れる ブロックを まとまりで かこむよ。きまり・回数・中の ブロックが 決まるまでは、あいている ところを 書きかけとして のこし、「あてはまる」・0・「何もしない」を かってに 入れたりは しないよ。</p>
+  <h3>もし</h3>
+  <div class="block control">もし <span class="slot">点数が10点<ruby>以上<rt>いじょう</rt></ruby></span> なら
+    <div class="block-body"><span class="block look">「10点！」と 言う</span></div>
+  </div>
+  <p>きまりの ところには、「点数が10点<ruby>以上<rt>いじょう</rt></ruby>」のような 文を 入れるよ。「＋「そうでなければ」を 入れる」を おすと、もう1つの 分かれ道を ふやせるよ。</p>
+  <h3>回数を 決めて くり返す</h3>
+  <div class="block control"><span class="slot">10</span> 回 くり返す
+    <div class="block-body"><span class="block">いまのばしょから、右へ 10 歩 動く</span></div>
+  </div>
+  <p>くり返しの 1回の 中で 部品が 動いたり 見た目が かわったり すると、次の 回は 1秒を 60に 分けた こまの 1つ 先から 始まるよ。だから「待つ」を 入れなくても、動きが 少しずつ 見えるよ。上の れいでは、100歩を 6分の1秒ぐらいで 動くよ。くり返しの あとの ブロックも、次の こまから 始まるよ。</p>
+  <h3>きまりで くり返す・待つ</h3>
+  <p>「きまりに あてはまる あいだ」「きまりに あてはまるまで」の くり返しや、「きまりに あてはまるまで待つ」を 使えるよ。きまりを 作るときは、くらべる ブロックや「かつ」「または」の ブロックを、あいている ところに はめて 組み立てよう。</p>
+  <h3>ふれたとき（「かんたん」「くわしく」）</h3>
+  <p>「いつ動く？」で「ふれたとき」を えらぶと、「なにに ふれたとき？」で 相手を えらべるよ。相手は、ほかの 部品、画面のはし、画面の 上・下・右・左の はしだよ。見出しの ブロックには「たくどん・「だんご」に ふれたとき」のように 出るよ。ふれて いない ときから ふれた ときに かわる たびに 始まるよ。ふれた ままの あいだは、もう一度は 始まらないよ。「画面のはし」は、はしごとに 見るので、右の はしに ふれた まま 上の はしにも ふれた ときにも 始まるよ。絵の キャラクターは、絵の 見えている ところどうしが 重なると ふれるよ。文字の 部品や、すがたが 文字の キャラクターは、まわりの 四角が 重なると ふれるよ。</p>
+  <div class="callout warn"><strong>からっぽの まとまりは 書きかけだよ。</strong> きまりや 中の ブロックが 決まるまでは、あいている ところを のこして、「あてはまる」・0・「何もしない」で かってに うめたりは しないよ。動かせる 作品に する 前に、いる 中身を 自分で 決めよう。あいている ところが あるまま「▶ 動かす」を おすと、その ところに うつって、「「そうでなければ」の ところが あいているよ。することを 入れてね」のように、どこに 何を 入れるかを おしえるよ。</div>
+  <h3>あいて いては いけない ところの 計算を 運ぶとき</h3>
+  <p>きまりや 数は、それぞれの やくわりが 分かる ばしょに 入れるよ。計算を 運んだ あとも、もとの 文や 中身は なくならず、まだ 決めていない ところは 書きかけとして のこるよ。もとの ばしょを からっぽに できない ときは「もとの ばしょに 入れる ブロックを えらぶ」が 出るので、かわりの ブロックを えらんでから 運ぼう。</p>
+</section>
+
+<section id="data">
+  <h2>7. へんすうと リストを 使う</h2>
+  <p>作品 ぜんたいや、部品ごとに 使う へんすう・リストは、右の「キャラクター・部品」の 下に ある<strong>「<ruby>変数<rt>へんすう</rt></ruby>・リスト」</strong>で 先に 作るよ。ブロックの 一らんの「さがす・作るを ひらく」の 中に ある「＋ へんすう・リストを作る」からも 作れるよ。作った 名前は、ブロックで えらべる ように なるよ。</p>
+  <p>「<ruby>変数<rt>へんすう</rt></ruby>・リスト」の まどでは、「どこで使う」で「作品」か「えらんだ キャラクター」（キャラクターで ない 部品を えらんで いる ときは「えらんだ 部品」）、「しゅるい」で「へんすう：1つ おぼえる はこ」か「リスト：じゅんばんに ならべる」を えらび、名前と はじめの 中身を 入れて「作る」を おすよ。</p>
+  <h3>へんすう</h3>
+  <div class="block data"><span class="slot">点数</span> を <span class="slot">0</span> に する</div>
+  <div class="block data"><span class="slot">点数</span> を <span class="slot">1</span> ふやす</div>
+  <p>へんすうには、数・文字・「あてはまる・あてはまらない」を 入れられるよ。「あてはまる」「あてはまらない」は、数や 文字とは べつの 中身だよ。へんすうには、作品 ぜんたいで 使う ものと、部品ごとに 使う ものが あるよ。</p>
+  <h3>リスト</h3>
+  <p>リストには、いくつもの 中身を じゅんばんに ならべて おぼえられるよ。「リストのさいごに入れる」「リストの とちゅうに入れる」「リストの中身を1つ入れかえる」「リストの中身を1つ消す」「リストの中身を全部消す」「〜の中身を先頭から一つずつ見て、次のことを行う」などの ブロックが あるよ。</p>
+  <h3>名前の 持ち主</h3>
+  <p>名前の 左に ある えらぶ ところで、<strong>とくに なし</strong>、<strong>【 】</strong>、<strong>自分の</strong>、<strong>作品の</strong>を えらべるよ。「に」「を」などが 入った 名前のように、くぎりが いる 名前には「【 】」を 使おう。コードモードに 切りかえても、この 中身は のこるよ。</p>
+</section>
+
+<section id="recipes">
+  <h2>8. 作品づくりの れい</h2>
+  <h3>れい1：おすたびに 点数を ふやす</h3>
+  <ol>
+    <li>「<ruby>変数<rt>へんすう</rt></ruby>・リスト」で、作品 ぜんたいの「点数」を、たんい「点」を 使う へんすうとして 作る。</li>
+    <li>「「動かす」を おしたとき」の 本文に、<code>点数を0点にする。</code> の 文を おく。</li>
+    <li>「おされたとき」の 本文に、<code>点数を1点ふやす。</code> の 文を おく。</li>
+    <li>中身を 見たいときは、「点数を言う。」を 足す（ブロックでは「点数を 言う」と 出るよ。「に」「を」などが 入った 名前は「【点数】を言う。」のように【 】で かこむよ）。</li>
+  </ol>
+  <h3>れい2：10点 <ruby>以上<rt>いじょう</rt></ruby>に なったら ことばを 出す</h3>
+<p>れい1で 点数を ふやす ブロックの 下に、次の「もし」を つなごう。10回 おすと ことばが 出て、11回目からも きまりに あてはまるよ。</p>
+  <ol>
+    <li>「おされたとき」の 本文に「もし」を 入れる。</li>
+    <li>きまりの ところに、くらべる ブロックを 組み立てて <code>点数が10点以上</code> に する。</li>
+    <li>中に <code>「10点だよ！」と言う。</code> を 入れる。</li>
+  </ol>
+  <h3>れい3：同じ 動きを 10回 する</h3>
+  <ol>
+    <li>「もし・くり返し」から「回数を決めてくり返す」を 入れる。</li>
+    <li>回数を 10に する。</li>
+    <li>まとまりの 中に <code>いまのばしょから、右へ10歩動く。</code> を 入れる。</li>
+  </ol>
+  <h3>れい4：星に ふれたとき 点数を ふやす（「かんたん」「くわしく」）</h3>
+  <ol>
+    <li>「＋ キャラクター・部品を ふやす」の「★ 星」で 星を おいてから、たくどんを えらび、「いつ動く？」で「ふれたとき」、「なにに ふれたとき？」で 星（「星1」）を えらんで 決める。</li>
+    <li>その 本文に <code>点数を1ふやす。</code> を 入れる。</li>
+    <li>たくどんを 動かす 本文を 作って「▶ 動かす」で ためそう。たくどんが 星に ふれる たびに、1つずつ ふえるよ。</li>
+  </ol>
+  <h3>れい5：キーを おしている あいだ 動かす（「かんたん」「くわしく」）</h3>
+  <p>きっかけの ブロックの すぐ 下の「＋ キーを おす間など、つづけて動かす」を おして 開き、中の「＋ つづけて動くルール」を おそう。「1秒に 200歩」で 右へ 動く ブロックが できるよ。あいている〔つづける きまりを えらぶ〕に、なかまの「しらべる」に ある「スペース キーがおされている」を はめて、キーを「右」に かえると、「「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける」に なるよ。キーを おしている あいだだけ、1秒に 200歩の 速さで 右へ 動くよ。</p>
+</section>
+
+<section id="run">
+  <h2>9. 動かす・たしかめる・ほぞんする</h2>
+  <h3>作品チェック</h3>
+  <p>書き方・名前・だれが 動くか などの まちがいが あると、その ブロックに ⚠ が つくよ。まだ 動かせない ときに「▶ 動かす」を おすと「まだ 動かせないよ。作品に 直す ところが あるよ。⚠ が ついた ところを 見てね。」と 出て、⚠ の ついた ブロックは オレンジの わくで 見えるよ。まちがいでは ないけれど、思った とおりに 動かない かも しれない ところは、ⓘ が ついた ところに、動き方の 知らせが 出るよ（「ⓘ 知らせ」を おすと 開くよ）。「くわしく」では、右の「キャラクター・部品」の 下の「作品チェック」で、ばしょ・行・わけと 知らせを まとめて 見られるよ。</p>
+  <h3>動かす</h3>
+  <ul>
+    <li><strong>▶ 動かす</strong>：作る 画面に だけ あるよ。おすと、作品を はじめの ようすから 動かす 画面に なるよ。</li>
+    <li><strong>■ 止める</strong>：動かす 画面に だけ あるよ。おすと 動きを おわらせて、作る 画面に もどるよ。</li>
+    <li>動かす 画面では、作品画面の 下に「いま 動いている 文：」と、いま 動いている ブロックの 文が 出るよ。</li>
+    <li>ぜんぶ おわると「おわったよ」と 出て、さいごの 画面が のこるよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね。おされた ときの 本文などが あって、まだ 動けるときは、「おわったよ」の かわりに「「たくどん」を おすと 動くよ」のように 出るよ。</li>
+    <li>「はじめて」で 動かしている あいだは、ブロックの 一らんと、きっかけの ボタン、「＋ だんご」などの ボタン、「＋ ここに入れる」を しまって、作品画面を 大きく 見せるよ。「キャラクター・部品」は、組み立てた ブロックの 下に うつるよ。「⏸ いったん止める」は、作品画面の 下の「いま 動いている 文：」の 行の 右はしに 出るよ。せまい 画面では、作品画面と「キャラクター・部品」だけに なるよ。</li>
+    <li>動かす 画面には、どの レベルでも、動いている あいだは「⏸ いったん止める」が、いったん 止めている あいだは 同じ ところに「▶ つづける」が 出るよ。「かんたん」「くわしく」では「1つずつ 動かす」「本文を見て たしかめる」も 出るよ。まちがいで 止まった ときは「▶ つづける」は 出ないよ。</li>
+    <li>動いている あいだに 使えない ボタン（「お手本を開く」「保存」「↶ もとに もどす」「いっしょに作る」など）は、動かす 画面には 出ないよ。</li>
+    <li>動いている あいだや、いったん 止めている あいだは、本文を かえられないよ。</li>
+  </ul>
+  <p>「はじめて」で とちゅうで 止まった ときは「動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。」と 出るよ。「とじる」を おしてから「■ 止める」を おして、オレンジの わくの ところを なおしてね。</p>
+  <h3>ほぞん</h3>
+  <ol><li>ブロックの 中に 入れ終わったら、Enterキーか「決める」で 決めよう。</li><li>上の「<ruby>保存<rt>ほぞん</rt></ruby>」を おそう。「この <ruby>名前<rt>なまえ</rt></ruby>で <ruby>保存<rt>ほぞん</rt></ruby>するけど いいかな？」と きかれたら、青い わくで かこまれた 作品名を たしかめてね。よければ「はい」、名前を かえたい ときは「いいえ」を おして、作品名を なおして、もう一度「<ruby>保存<rt>ほぞん</rt></ruby>」を おしてね。</li><li>ダウンロードされた <code>.akari.md</code> を たしかめよう。</li><li>つづきは、あかりの「開く」で その ファイルを えらぼう。</li></ol>
+  <p>「ほぞん」と「うごく作品を ファイルにする」の ちがいは、<a href="../MANUAL.html#save">マニュアルの入口の ほぞんの せつめい</a>で たしかめられるよ。</p>
+  <p>「ほぞん」は、なおしつづける ための <code>.akari.md</code> を 作るよ。ブロックモードの ままで ほぞんでき、コードに 切りかえなくて いいよ。なおして いる 作品は、「ほぞん」を おさなくても、とちゅうまで このパソコンに のこるよ。かならず のこしたい 作品は、ファイルにも ほぞんしよう。前の あかりで ほぞんした <code>.akari.md</code> は、この あかりでは 開けないよ（<a href="../MANUAL.html#old-files">くわしく</a>）。</p>
+  <h3>うごく作品の ファイルにする</h3>
+  <p>できた 作品は「うごく作品を ファイルにする」で、作る 画面の ない 1つの HTMLファイルに できるよ。ブロックモードからでも、コードモードからでも、決まっている 本文から 同じ 動きの ファイルが できるよ。うごく作品には、作る 画面の 10歩ごとの 点は 出ないよ。</p>
+  <div class="callout warn">「自分で作ったブロック」の まどで なおして いる ものは、先に「自分で作ったブロックを 決める」で 作品に 決めておこう。書きかけの ままでは、作品の 中で 使える 自分で作ったブロックには ならないよ。</div>
+</section>
+
+<section id="undo">
+  <h2>10. もとに もどす・やり直すと、入れかけの 中身</h2>
+  <h3>もとに もどす・やり直す</h3>
+  <p>「↶ もとに もどす」「↷ やり直す」と、<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Z</kbd>、<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Y</kbd> または <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Shift</kbd>＋<kbd>Z</kbd> は、コードと ブロックで 同じ きろくを 使うよ。</p>
+  <p>作る 画面には、どの レベルでも、この ボタンが 出るよ。もどせる ことが ないときは 使えないよ。動かす 画面には 出ないよ。1つの ブロックの なおしは、本文や メモも ふくめて、1回で もどせるよ。見せ方を 切りかえた だけでは、新しい きろくは できないよ。</p>
+  <h3>「決める」と、やめる ボタン</h3>
+  <p>あいている ところ、「－」だけの 数、日本語の へんかんの とちゅう、おしたまま 運んでいる とちゅう などは、まだ 本文に 入って いないよ。入れかけの ものが ある ときだけ、入れている らんの そばに<strong>「決める」</strong>が 出るので、おして 決めよう。やめる ときは、している ことの 名前が ついた ボタンを 使おう。数や 文字を 入れている ときは<strong>「入力を やめる」</strong>、入れる ばしょを えらんで いる ときや 入れかけの ブロックが ある ときは<strong>「入れるのを やめる」</strong>、ブロックを もっていく ときは<strong>「もって いくのを やめる」</strong>だよ。「自分で作ったブロック」の まどの「入力を やめる」も、入れかけや、うまく いかなかった 入力が ある ときだけ 出て、もう 入った 書きかけ ぜんたいは けさないよ。</p>
+  <div class="callout danger">入れかけの ものが のこって いる あいだは、動かす・うごく作品を ファイルにする・なおす ものの 切りかえ・見せ方の 切りかえ などが できない ことが あるよ。出てきた わけを 見て、入れ終わるか、やめてね。「ほぞん」は できて、入れかけの 中身も ファイルに のこるよ。</div>
+</section>
+
+<section id="code">
+  <h2>11. コードモードとの かんけい</h2>
+  <p>コードと ブロックは、べつべつの プログラムでは ないよ。えらんだ「動かすもの」と「きっかけ」の <strong>同じ 日本語の 本文</strong>を、文字で 見るか、ブロックで 見るかの ちがいだよ。</p>
+  <ul class="checklist">
+    <li>見せ方を 切りかえる だけでは、本文、「。」、何も 書いていない 行、行の はじめの ずらし方、メモ、ほぞんして いない ようす、もとに もどす・やり直すの きろくは かわらないよ。レベルも かわらないよ。</li>
+    <li>数や 名前を かえた ときは、その ところだけを かえて、かえて いない ことばの じゅんばん・空白・メモは そのままだよ。ブロックを 入れたり 運んだり したときは、いる ところだけを 日本語の きほんの 書き方に そろえるよ。</li>
+    <li>コードに 書き方の まちがいが ある あいだは、「コードモード ⇄」を おしても ブロックモードには ならないで、「コードの 赤い ところを 直すと、ブロックに もどれるよ」と 出るよ。</li>
+    <li>名人の 本文が ある 作品は、ぜんぶ コードモードで 書くので、ブロックモードには できないよ。</li>
+    <li>書き方として 読める 本文なら、まだ 作っていない 名前や、その キャラクターでは 使えない ブロックも けさずに、わけを つけて ブロックで 見せるよ。</li>
+    <li>ほぞんするのは 日本語の 本文だよ。ブロックだけの ほかの プログラムや、作業台の 上の ブロックの ばしょは ほぞんしないよ。</li>
+  </ul>
+</section>
+
+<section id="trouble">
+  <h2>12. こまった とき</h2>
+  <table>
+    <thead><tr><th>こまった こと</th><th>たしかめる こと</th></tr></thead>
+    <tbody>
+      <tr><td>「コードモード ⇄」を おしても ブロックモードに ならない</td><td>コードの 本文に、書き方の まちがいが あるよ。コードモードで 赤い ところを 直すと、ブロックモードに 切りかえられるよ。</td></tr>
+      <tr><td>「ブロックモード ⇄」を おしても コードモードに ならない</td><td>「はじめて」の あいだは、コードモードに ならないよ。コードを 使うときは、上の レベルで「かんたん」か「くわしく」を えらんでから おしてね。</td></tr>
+      <tr><td>ほしい ブロックが 見つからない</td><td>「ブロックを さがす」の ことばを 短くする、なかまを「すべて」に する、「ブロックの しゅるい」を「すべてのブロック」に する、の じゅんに たしかめよう。「はじめて」に ない ブロックは、「かんたん」か「くわしく」で 出るよ。</td></tr>
+      <tr><td>ブロックは あるのに 入れられない</td><td>「使えないブロックも見せる」で 見せて いるのかも しれないよ。ブロックを おすと、この キャラクターや ばしょで 使えない わけが 出るよ。</td></tr>
+      <tr><td>はめるブロックを 入れられない</td><td>先に あいている ところを えらぶか、はめるブロックを 合う ところへ おしたまま 運ぼう。つなぐブロックの ならびには、はめるブロックだけを おく ことは できないよ。</td></tr>
+      <tr><td>からっぽの まとまりが のこって いる</td><td>あいている ところは、書きかけとして のこるよ。きまり・回数・中の ブロックを 決めるか、まとまりを けそう。</td></tr>
+      <tr><td>動かす ことに 進めない</td><td>入れかけや、おしたまま 運んでいる とちゅうが のこって いないか たしかめよう。「決める」か、「入力を やめる」などの やめる ボタンを 使おう。日本語を へんかんして いる とちゅうなら、先に Enterキーで 決めよう。</td></tr>
+      <tr><td>作業台で まいごに なった</td><td>「見わたす」で ぜんたいを 見て、「さいしょへ」で いちばん はじめに もどろう。「−」「＋」で 大きさも かえられるよ。</td></tr>
+      <tr><td>動いている あいだに なおせない</td><td>動いている あいだや、いったん 止めている あいだは、本文を かえられないよ。「■ 止める」で 作る 画面に もどろう。</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="keyboard">
+  <h2>13. キーボードと 指でも そうさできる</h2>
+  <ul>
+    <li><kbd>Tab</kbd>：ツールバー、ブロックの 一らん、作業台、作品画面と 右の 列の じゅんに 動くよ。</li>
+    <li><kbd>Enter</kbd>：「かんたん」「くわしく」では、「＋ ここに入れる」で おすと「ブロックを さがす」に 入力できるよ。ことばを 入れて もう一度 おすと、いちばん 上の ブロックが その ばしょに 入るよ。<kbd>↓</kbd>キーで ほかの ブロックへ 進めるよ。</li>
+    <li><kbd>Delete</kbd>・<kbd>Backspace</kbd>：えらんだ ブロックを けすよ（入力らんの 中では 文字を けすよ）。</li>
+    <li><kbd>Esc</kbd>：メニュー、入力、ブロックを 運ぶこと などを やめるよ。</li>
+    <li>作品の 一らんは、やじるしキー、<kbd>Home</kbd>、<kbd>End</kbd>で えらび、<kbd>Enter</kbd>で 開けるよ。</li>
+  </ul>
+  <p>指で そうさする ときは、作業台を 指で 上下に なぞると、作業台が スクロールするよ。ブロックを 運ぶときは、ブロックを 横へ ずらしはじめるか、少し 長く おしてから ずらそう。2本の 指を 広げると 大きく、せばめると 小さく なるよ（50%から 200%まで）。部品の 大きさを かえる ときは、作品画面の 上の「たて・よこを そろえる」で たてと よこを そろえられるよ。</p>
+  <p>日本語の へんかんの とちゅうは、Enterキーで 決めてから、次の そうさに 進んでね。</p>
+</section>
+
+<section>
+  <h2>ブロックモードで だいじな 考え方</h2>
+  <ol>
+    <li><strong>はじめに「動かすもの」と「きっかけ」を 決める。</strong></li>
+    <li><strong>つなぐブロックは、上から 下へ つなぐ。</strong></li>
+    <li><strong>数・計算・きまりは、あいている ところに はめる。</strong></li>
+    <li><strong>「もし」「くり返し」は、まとまりの 中に ブロックを 入れる。</strong></li>
+    <li><strong>分からない ときは「ブロックを さがす」と「使えないブロックも見せる」で わけを しらべる。</strong></li>
+    <li><strong>動かない ときは ⚠ の ついた ところを 見る（「くわしく」では「作品チェック」も 使える）。のこしたい 作品は「<ruby>保存<rt>ほぞん</rt></ruby>」。</strong></li>
+  </ol>
+</section>
+<section id="drawing">
+  <h2>見た目のコピーと お絵かき</h2>
+  <p>作品の 部品を えらび、部品の 一らんの すぐ下に ある「見た目のコピー」で、見た目と せっていを もった 部品を もう1つ ふやせるよ。ふやした 部品は 本文を もたないよ。ブロックの「同じものを もう1つ 作る」とは ちがって、部品を まるごと ふやすよ。同じ ところの「🗑 この キャラクターを けす」（キャラクターで ない 部品では「🗑 この 部品を けす」）で けせるよ。「せってい」を たたんで いても、この 2つの ボタンは 出ているよ。「せってい」「動きのようす」は、見出しの ボタンで 開いたり たたんだり できるよ。</p>
+  <p>「🎨 お絵かき」では、とうめいな、よこ500・たて500の 紙に 絵を かけるよ。「決めて おく」で 絵の まわりの とうめいな ところを 切って、ふつうの 絵の キャラクターとして おくよ。小さな 絵は、はばと 高さが 8より 小さく ならない ように、とうめいな ところを 足すよ。おいた あとで かきなおす ことや、書きかけを のこす ことは できないよ。</p>
+</section>
+</main>
+</div>
+
+<footer>
+<div class="chapter-links"><a href="../MANUAL.html#faq">こまった とき</a><a href="./code-mode-beginner.html">コード<ruby>初級<rt>しょきゅう</rt></ruby> →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
+  <p>あかり 1.0.0 の マニュアルだよ。書き方と 意味の くわしい きまりは <a href="../LANGUAGE_1_0_0.md">LANGUAGE_1_0_0.md</a> を 見てね。</p>
+</footer>
+</body>
+</html>

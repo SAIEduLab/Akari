@@ -1,0 +1,117 @@
+import {inputInventory} from '../lib/input-snapshot.cjs';
+import {browserProcesses} from '../lib/browser-processes.mjs';
+import {warmBrowser} from '../lib/browser-warmup.mjs';
+import { currentProductFile } from "./../lib/product-path.cjs";
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import cp from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import assert from 'node:assert/strict';
+import {snapshot as inputSnapshot} from '../lib/product-test-host.mjs';
+import {verifyBrowserGroup} from '../lib/verify-browser-results.mjs';
+import {browserShards,parseUnit,childLimit} from '../lib/shard-plan.cjs';
+import {partLog,verifyBrowserShard} from '../lib/shard-evidence.mjs';
+
+const here=path.dirname(fileURLToPath(import.meta.url));
+const root=path.resolve(here,'../..');
+const casesDir=path.join(here,'cases');
+const args=process.argv.slice(2);
+const value=(flag,def='')=>{const i=args.indexOf(flag);return i>=0?args[i+1]:def;};
+const product=value('--product',currentProductFile());
+const audit=value('--audit','AUDIT.md');
+const manifestPath=value('--manifest',path.join(here,'browser-audit-manifest.json'));
+const evidence=path.resolve(root,value('--evidence','audit-evidence/full-browser'));
+// A CI shard (--shard <id>) runs the tasks and task parts the shard plan gives it, across groups.
+const shard=value('--shard',null),group=shard?null:value('--group','all');
+if(shard&&!Object.hasOwn(browserShards,shard))throw new Error('Unknown browser audit shard: '+shard);
+const before=inputSnapshot(product);
+const config=JSON.parse(fs.readFileSync(path.resolve(root,manifestPath),'utf8'));
+if(group&&group!=='all'&&!Object.hasOwn(config.groups,group))throw new Error('Unknown browser audit group: '+group);
+for(const p of [product,audit,manifestPath])if(!fs.existsSync(path.resolve(root,p)))throw new Error('Missing audit input: '+p);
+const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+const run=(cmd,a,opts={})=>{
+  const r=cp.spawnSync(cmd,a,{cwd:root,encoding:'utf8',maxBuffer:64*1024*1024,...opts});
+  if(r.error){
+    // Preserve the child's output before propagating the original execution error.
+    // A timeout remains a failure with exactly the same command and limit.
+    try{
+      fs.writeFileSync(path.join(evidence,'child-execution-error.log'),(r.stdout||'')+'\n'+(r.stderr||'')+'\n'+r.error.stack+'\n');
+      fs.writeFileSync(path.join(evidence,'child-execution-error.json'),JSON.stringify({command:cmd,args:a,timeoutMs:opts.timeout,
+        status:r.status,signal:r.signal,error:{name:r.error.name,code:r.error.code,message:r.error.message,stack:r.error.stack}},null,2)+'\n');
+    }catch(captureError){process.stderr.write('Child error evidence could not be written: '+captureError.message+'\n');}
+    throw r.error;
+  }
+  return r;
+};
+if(fs.existsSync(evidence))throw new Error('Evidence directory already exists; choose a fresh output path: '+evidence);
+fs.mkdirSync(evidence,{recursive:true});
+const prep=run(process.env.AKARI_PYTHON||'python3',[path.join(casesDir,'prepare-media.py')],{timeout:120000});
+fs.writeFileSync(path.join(evidence,'prepare-media.log'),(prep.stdout||'')+'\n'+(prep.stderr||''));
+if(prep.status!==0){
+  const detail=((prep.stdout||'')+'\n'+(prep.stderr||'')).trim();
+  if(detail)process.stderr.write(detail+'\n');
+  throw new Error('Media fixture preparation failed');
+}
+
+const candidate=path.join(evidence,'candidate');
+fs.mkdirSync(candidate,{recursive:true});
+const tracked=Object.keys(inputInventory());
+const files=[];
+for(const rel of tracked){
+  const src=path.join(root,rel),dst=path.join(candidate,rel);
+  fs.mkdirSync(path.dirname(dst),{recursive:true});
+  const bytes=fs.readFileSync(src);fs.writeFileSync(dst,bytes);
+  files.push({path:rel,bytes:bytes.length,sha256:sha(bytes)});
+}
+fs.cpSync(casesDir,path.join(candidate,'runner'),{recursive:true,filter:s=>!s.includes(path.sep+'media'+path.sep)});
+if(fs.existsSync(path.join(casesDir,'media')))fs.cpSync(path.join(casesDir,'media'),path.join(candidate,'media'),{recursive:true});
+const head=before.productSha256;
+const generatedMedia=['fixture-manifest.json','picture.jpg','picture.png','picture.webp','silence.mp3','tone.wav'];
+const runnerFiles=generatedMedia.map(name=>({path:'audit/browser/cases/media/'+name,snapshotPath:'media/'+name,
+  sha256:sha(fs.readFileSync(path.join(casesDir,'media',name)))}));
+const snapshot={
+  provenanceVersion:2,
+  capturedAt:new Date().toISOString(),head,
+  candidate:product,files,runnerFiles,auditContract:audit,productVersion:config.productVersion
+};
+fs.writeFileSync(path.join(candidate,'manifest.json'),JSON.stringify(snapshot,null,2));
+
+const task=(name,a=[candidate])=>({name,args:a,script:path.join(casesDir,name+'.cjs')});
+const ui=name=>task(name,[path.join(candidate,product),path.join(evidence,name)]);
+const groups={
+  session:['browser-session','browser-storage-media','browser-events','browser-event-traces','browser-condition','browser-runtime','browser-boundaries'].map(n=>task(n)),
+  ui:['ui-interactions','ui-compact-menu','ui-shell','ui-stage-gesture'].map(ui)
+    .concat(task('workbench-matrix'),task('workbench-direct'),task('run-editor-regression',[path.join(candidate,product),candidate]),task('browser-owner-delete')),
+  limits:['browser-design-limits','browser-runtime-limits','browser-product','browser-asset-limits'].map(n=>task(n))
+    .concat(task('browser-media-boundaries',[path.join(candidate,product),path.join(evidence,'media-boundaries')])),
+  schemas:[task('schema-shards')],
+  extra:[task('parent-qa',[path.join(candidate,product),path.join(evidence,'parent-qa.json')]),
+    task('perf-input',[candidate,'keyboard-insert','16666']),task('perf-input',[candidate,'clipboard-paste','16666']),
+    task('modern-browser'),task('long-regression')]
+};
+const taskKey=t=>t.name+(t.name==='perf-input'?':'+t.args[1]:'');
+const selected=shard?browserShards[shard].map(text=>{const {name,part}=parseUnit(text),item=Object.values(groups).flat().find(t=>taskKey(t)===name);if(!item)throw new Error('Unknown browser task '+name);return {...item,part};})
+  :(group==='all'?Object.values(groups).flat():groups[group]).map(item=>({...item,part:null}));
+for(const [name,tasks] of Object.entries(groups))assert.deepEqual(tasks.map(t=>t.name+(t.name==='perf-input'?':'+t.args[1]:'')),config.groups[name],'manifest/runner divergence '+name);
+const records=[];
+if(selected.length)warmBrowser(process.env.AKARI_BROWSER,product);
+for(const item of selected){
+  const started=new Date().toISOString();
+  const timeout=childLimit(item.name,item.part);
+  console.log('browser processes before '+item.name+(item.part?'@'+item.part:'')+': '+browserProcesses());
+  // Native tab activation is required by the trusted window-blur check.
+  // Keep this suite headed; never substitute a synthetic blur or headless fallback.
+  const headed=item.name==='ui-stage-gesture'&&process.platform==='linux';
+  const r=run(headed?'xvfb-run':process.execPath,headed?['-a',process.execPath,item.script,...item.args]:[item.script,...item.args],{timeout,...(item.part?{env:{...process.env,AKARI_PART:item.part}}:{})});
+  const base=item.name+(item.name==='perf-input'?'-'+item.args[1]:''),log=item.part?partLog(base,item.part):base+'.log';
+  fs.writeFileSync(path.join(evidence,log),(r.stdout||'')+'\n'+(r.stderr||''));
+  records.push({task:taskKey(item),...(shard?{part:item.part}:{}),name:item.name,args:item.args.map(x=>path.relative(root,x)||x),status:r.status,signal:r.signal,started,finished:new Date().toISOString(),log});
+  if(r.status!==0)process.stderr.write(((r.stdout||'')+'\n'+(r.stderr||'')).slice(-6000));
+}
+const summary={head,...(shard?{shard}:{group}),productVersion:config.productVersion,records,passed:records.filter(r=>r.status===0).length,failed:records.filter(r=>r.status!==0).length};
+fs.writeFileSync(path.join(evidence,'summary.json'),JSON.stringify(summary,null,2));
+assert.deepEqual(inputSnapshot(product),before,'inputs changed during browser run');
+if(!summary.failed){if(shard)verifyBrowserShard(evidence,shard,before);else verifyBrowserGroup(evidence,group,before);}
+console.log(JSON.stringify(summary,null,2));
+if(summary.failed)process.exitCode=1;

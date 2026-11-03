@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {finiteCases} from '../fixtures/language/forms.mjs';
+import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
+import {sha} from '../lib/product-test-host.mjs';
+const read=p=>JSON.parse(fs.readFileSync(p)),manifest=read('audit/manifests/language-form-coverage.json'),expected=read('audit/fixtures/language/expected.json');
+const oracle=read('audit/fixtures/capability-oracle.json');
+assert.equal(finiteCases.length,256);assert.equal(new Set(finiteCases.map(c=>c.id)).size,42);
+assert.deepEqual(finiteCases,manifest.cases.map(({id,key,source,canonical})=>({id,key,source,canonical})));
+assert.equal(sha(JSON.stringify(manifest.cases)),'d3d6d07a3213151af41bbd4a093ef63bbb663cd3c9bb76719c98cadba6b67aa4','independent source/canonical AST expectations');
+assert.equal(sha(JSON.stringify({golden:expected.golden,corpus:expected.corpus,schemaIds:expected.schemaIds})),'eef752666e6b7eff83eef2e3039d1d58aa2b8c2b82d3070a0cfa4d5f4c6ef4b6','independent runtime/corpus expectations');
+const ids=expectedLanguageIds(manifest);assert.equal(ids.length,607);assert.equal(new Set(ids).size,ids.length);
+assert.deepEqual(Object.keys(expected.golden).sort(),manifest.cases.map(c=>c.id+'/'+c.key).sort());
+for(const c of manifest.cases){assert.ok(c.source&&c.canonical&&c.canonicalAst);assert.ok(expected.golden[c.id+'/'+c.key]);}
+assert.equal(expected.corpus.length,95);assert.deepEqual(expected.schemaIds,oracle.schemaIds);
+for(const c of expected.corpus)assert.ok(c.source&&c.ast);
+console.log(JSON.stringify({status:'PASS',stableIds:ids.length,finiteInputs:finiteCases.length,groups:42,corpus:expected.corpus.length,schemas:oracle.schemaIds.length,expectationsSha256:sha(fs.readFileSync('audit/fixtures/language/expected.json')),manifestSha256:sha(fs.readFileSync('audit/manifests/language-form-coverage.json'))}));

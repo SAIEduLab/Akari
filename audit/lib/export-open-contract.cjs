@@ -1,0 +1,203 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const ids=[
+  "EXPORT-CHOICE-CANCEL-FOCUS",
+  "EXPORT-CHOICE-NARROW-ONE-DOWNLOAD",
+  "EXPORT-CONTROLS-DEFAULT-OPERATIONS",
+  "EXPORT-CONTROLS-FINISHED",
+  "EXPORT-CONTROLS-SCALE",
+  "EXPORT-PACKED-ASSETS-CHECKED",
+  "EXPORT-CONTROLS-TOUCH-SIZE",
+  "EXPORT-ARTWORK-SIZE-RELOAD-INPUT",
+  "EXPORT-ARTWORK-QUESTION-ANSWER-STOP",
+  "EXPORT-ARTWORK-AUDIO-PERMITTED",
+  "EXPORT-ARTWORK-IMAGE-PEN-STOP",
+  "EXPORT-ARTWORK-CACHED-RETURN",
+  "EXPORT-ARTWORK-IFRAME",
+  "EXPORT-ARTWORK-INITIALIZATION-ERROR",
+  "EXPORT-ARTWORK-RECORDED-AUDIO",
+  "EXPORT-ARTWORK-INVALID-AUDIO",
+  "EXPORT-ARTWORK-DECODE-FAILURE",
+  "EXPORT-ARTWORK-AUDIO-DEVICE-ERROR",
+  "OPEN-AUTOSAVE-FAILURE-STILL-PROTECTED",
+  "OPEN-RECOVERY-DIRTY-PROTECTED",
+  "OPEN-RECOVERY-SAVED-DRAFT-CLEAN",
+  "OPEN-CLEAN-AUTOSAVE-DIRECT",
+  "OPEN-DIRTY-CANCEL-STATE-KEYBOARD",
+  "OPEN-APPROVAL-PICKER-CANCEL-REUSE",
+  "OPEN-SAVE-EDIT-UNDO-REDO",
+  "OPEN-APPROVED-CORRUPT-RETAINED",
+  "OPEN-APPROVED-SUCCESS-SAME-SELECTION",
+  "OPEN-ALTERNATE-ROUTE-PROTECTED",
+  "OPEN-CHANGED-AFTER-APPROVAL",
+  "OPEN-UNFINISHED-CODE-AND-SAVED-DRAFT",
+  "EXPORT-AUDIO-WAIT-MOUSE",
+  "EXPORT-AUDIO-WAIT-KEYBOARD",
+  "EXPORT-AUDIO-WAIT-TOUCH",
+  "EXPORT-AUDIO-ACTIVATION-FAILURE",
+  "EXPORT-NO-AUDIO-DOES-NOT-WAIT"
+];
+const fixed={
+  'EXPORT-CHOICE-CANCEL-FOCUS':{downloads:1,staticExamples:0,canceledPending:3,reopenedOnce:true},
+  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true,singlePressWithinHalfSecondRuns:true,pauseSlotGuard:true,ignoredStopKeepsStageFocus:true},
+  'EXPORT-CONTROLS-FINISHED':{failedReasonVisible:true,bodiesEnded:'playerStop:■ 止める',bodiesState:'FINISHED',stopAll:'playerStop:■ 止める',stopAllState:'FINISHED',sentenceAfterStopAllSaid:false,afterStop:['playerStart:▶ 動かす','playerStart:▶ 動かす']},
+  'EXPORT-CONTROLS-SCALE':{small1366:true,small1920:true,large1920:true,large1366Fits:true,tall650Fits:true,small650Fits:true},
+  'EXPORT-PACKED-ASSETS-CHECKED':{made:'accepted',mismatched:'F508',restored:'accepted',refused:{text:'X602',sha256:'X602',byteLength:'X602',program:'X602',claimedText:'X602',claimedHash:'X602',claimedLength:'X602'}},
+  'EXPORT-CONTROLS-TOUCH-SIZE':{allAtLeast40:true},
+  'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':{noControls:true,nativeButtonAndKey:true},
+  'EXPORT-ARTWORK-QUESTION-ANSWER-STOP':{answer:true,stop:true,stopMessageVisible:true},
+  'EXPORT-ARTWORK-AUDIO-PERMITTED':{automatic:true},
+  'EXPORT-ARTWORK-IMAGE-PEN-STOP':{painted:true,programStop:true,pictureKept:true},
+  'EXPORT-ARTWORK-CACHED-RETURN':{persistedEvents:'same execution retained',nativeHistoryBack:true},
+  'EXPORT-ARTWORK-IFRAME':{automatic:true},
+  'EXPORT-ARTWORK-INITIALIZATION-ERROR':{rejected:true,detailsVisible:true,errorCode:'X602'},
+  'EXPORT-ARTWORK-RECORDED-AUDIO':{decodeAndPlayback:true},
+  'EXPORT-ARTWORK-INVALID-AUDIO':{invalidMimeRejected:true,noActivationWait:true,errorCode:'X602'},
+  'EXPORT-ARTWORK-DECODE-FAILURE':{faultInjection:'decodeAudioData rejection',noActivationWait:true,errorCode:'R415'},
+  'EXPORT-ARTWORK-AUDIO-DEVICE-ERROR':{faultInjection:'invalid sinkId; native resume and error event',nativeError:true,noActivationWait:true,safeStop:true,detailsVisible:true,errorCode:'R415'},
+  'OPEN-AUTOSAVE-FAILURE-STILL-PROTECTED':{faultInjection:'IndexedDB and localStorage unavailable',unsavedStillProtected:true},
+  'OPEN-RECOVERY-DIRTY-PROTECTED':{restoredUnsavedProtected:true},
+  'OPEN-CLEAN-AUTOSAVE-DIRECT':{direct:true,autosavePresent:true},
+  'OPEN-DIRTY-CANCEL-STATE-KEYBOARD':{pickers:0},
+  'OPEN-APPROVAL-PICKER-CANCEL-REUSE':{currentRetained:true,confirmationAgain:true},
+  'OPEN-SAVE-EDIT-UNDO-REDO':{saveClean:true,undoClean:true,redoDirty:true},
+  'OPEN-APPROVED-CORRUPT-RETAINED':{retained:true,dialogs:0},
+  'OPEN-APPROVED-SUCCESS-SAME-SELECTION':{oneConfirmation:true,sameSelection:true,dialogs:0},
+  'OPEN-ALTERNATE-ROUTE-PROTECTED':{retained:true},
+  'OPEN-CHANGED-AFTER-APPROVAL':{changedStateProtected:true},
+  'OPEN-UNFINISHED-CODE-AND-SAVED-DRAFT':{unfinishedProtected:true,savedUnchangedDirect:true},
+  'EXPORT-AUDIO-ACTIVATION-FAILURE':{faultInjection:'resume rejected after native user operation',safeStop:true,childMessage:true,details:true,errorCode:'R415'},
+  'EXPORT-NO-AUDIO-DOES-NOT-WAIT':{automatic:true},
+};
+const extraKeys={
+  'EXPORT-PACKED-ASSETS-CHECKED':['semantics'],
+  'EXPORT-CONTROLS-SCALE':['observed'],
+  'EXPORT-CONTROLS-TOUCH-SIZE':['sizes'],
+  'EXPORT-CHOICE-NARROW-ONE-DOWNLOAD':['count','box'],
+  'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':['box','touch'],
+  'EXPORT-ARTWORK-AUDIO-PERMITTED':['starts'],
+  'EXPORT-ARTWORK-IMAGE-PEN-STOP':['images'],
+  'EXPORT-ARTWORK-CACHED-RETURN':['nativeCacheRestored'],
+  'EXPORT-ARTWORK-IFRAME':['box'],
+  'OPEN-RECOVERY-SAVED-DRAFT-CLEAN':['variants','savedCallable'],
+  'OPEN-DIRTY-CANCEL-STATE-KEYBOARD':['before','after'],
+  'OPEN-APPROVAL-PICKER-CANCEL-REUSE':['before','after'],
+  'OPEN-APPROVED-CORRUPT-RETAINED':['before','after','variants','validSecond'],
+  'OPEN-ALTERNATE-ROUTE-PROTECTED':['before','after','dialogs'],
+  'OPEN-CHANGED-AFTER-APPROVAL':['before','after','dialogs'],
+};
+for(const input of ['MOUSE','KEYBOARD','TOUCH'])extraKeys['EXPORT-AUDIO-WAIT-'+input]=['box','stage','colors','starts','startsBefore','phaseBefore','outputBefore','duplicateInput'];
+const stage=box=>assert.deepEqual(box,{x:0,y:0,width:640,height:400});
+function verifyArtworkTouch(e){
+ assert.deepEqual(Object.keys(e).sort(),['single','pinch','pan','shrink','target','input','events','final'].sort());
+ const state=s=>{assert.deepEqual(Object.keys(s).sort(),['scale','left','top','width','height','stage'].sort());for(const k of ['scale','width','height'])assert.ok(Number.isFinite(s[k])&&s[k]>0);for(const k of ['left','top'])assert.ok(Number.isFinite(s[k])&&s[k]>=0);assert.deepEqual(s.stage,[1200,800]);};
+ for(const s of [e.single.before,e.single.after,e.pinch.before,e.pinch.after,e.pan.before,e.pan.after,e.shrink.before,e.shrink.after,e.final])state(s);
+ assert.deepEqual(e.single.after,e.single.before);assert.equal(e.single.before.scale,1);assert.deepEqual(e.single.marker,[135,320]);assert.equal(e.single.output,'押下\n解放');
+ assert.ok(e.single.events.filter(x=>x.type==='pointermove').length>=6);assert.equal(e.single.events.filter(x=>x.type==='pointercancel').length,0);
+ assert.ok(e.pinch.after.scale>e.pinch.before.scale);assert.equal(e.pinch.cancelOutput,'押下\n解放\n押下\n解放');
+ assert.ok(e.pan.after.left>e.pan.before.left);assert.ok(e.shrink.after.scale<e.shrink.before.scale);
+ assert.deepEqual(e.target,{visible:true,taps:1});assert.deepEqual(e.input,{focused:true,value:'入力確認'});
+ assert.ok(e.events.filter(x=>x.type==='pointercancel').length>=2);
+ assert.equal(e.events.filter(x=>x.type==='click'&&x.target==='touch-target').length,1);assert.equal(e.events.filter(x=>x.type==='click'&&x.target==='touch-input').length,1);
+ for(const row of [...e.single.events,...e.events]){assert.equal(row.trusted,true);assert.ok(['pointerdown','pointermove','pointerup','pointercancel','click'].includes(row.type));assert.ok(Number.isFinite(row.x)&&Number.isFinite(row.y));}
+}
+function oneTone(starts){assert.equal(starts.length,1);assert.deepEqual(Object.keys(starts[0]).sort(),['at','frequency']);assert.equal(starts[0].frequency,440);assert.ok(Number.isFinite(starts[0].at)&&starts[0].at>=0);}
+function verifyExportSemantics(e){
+ assert.deepEqual(Object.keys(e).sort(),['roundtrips','trace']);const r=e.roundtrips;assert.deepEqual(Object.keys(r).sort(),['attempted','meijin','metadata','rejected','restored']);
+ const worlds=['common','meijin'].flatMap(area=>JSON.parse(fs.readFileSync('audit/fixtures/spec-expectations/'+area+'/cases.json','utf8')).cases.filter(c=>c.world).map(c=>({id:area+':'+c.id,positive:c.kind==='run'||c.kind==='check'&&!c.expect.stops})));
+ assert.deepEqual(r.attempted,worlds.map(c=>c.id));assert.ok(r.restored.length>0);assert.equal(new Set([...r.restored,...r.rejected]).size,r.attempted.length);assert.deepEqual([...r.restored,...r.rejected].sort(),[...r.attempted].sort());for(const c of worlds.filter(c=>c.positive))assert.ok(r.restored.includes(c.id),c.id+' positive world restored');
+ const lines=fs.readFileSync(require('./product-path.cjs').currentLanguageFile(),'utf8').split('\n'),meijin=[];for(let i=0;i<lines.length;i++)if(lines[i]==='<!-- akari-example: meijin -->'&&lines[i+1]==='```text')meijin.push('LANGUAGE.md:'+(i+2));assert.ok(meijin.length>0);assert.deepEqual(r.meijin,meijin);
+ assert.deepEqual(r.metadata,{checked:true,negativeFields:['args','definition','definitionKind','event','filter','meijin','targetId','targetType'],origin:{start:{editor:['名人の本文 / 「動かす」を おしたとき'],player:['名人の本文 / 「動かす」を おしたとき']},click:{editor:['名人の本文 / おされた とき'],player:['名人の本文 / おされた とき']},wrongFlagRejected:'X602',legacyAccepted:true}});
+ const t=e.trace;assert.deepEqual(Object.keys(t).sort(),['editor','expectedSpeech','final','player','rejectsChangedSample','sameTrace','samples','stepMs']);assert.equal(t.stepMs,1);assert.equal(t.samples,121);assert.equal(t.sameTrace,true);assert.equal(t.rejectsChangedSample,true);assert.deepEqual(t.expectedSpeech,['11','14']);assert.deepEqual(t.final,{x:123,y:100,points:14});assert.deepEqual(t.player,t.editor);assert.equal(t.editor.stepMs,1);assert.equal(t.editor.rows.length,121);
+ for(const [i,row]of t.editor.rows.entries()){assert.equal(row.at,i);for(const key of ['x','y','points','tasks'])assert.ok(Number.isFinite(row[key]),key);assert.equal(typeof row.running,'boolean');}assert.deepEqual(t.editor.speech.map(x=>x.text),['11','14']);assert.equal(t.editor.speech[0].at,0);assert.deepEqual([t.editor.rows[0].x,t.editor.rows[0].y,t.editor.rows[0].points],[100,100,11]);assert.deepEqual([t.editor.rows[120].x,t.editor.rows[120].y,t.editor.rows[120].points],[123,100,14]);
+}
+function evidenceFor(id,e){
+  assert.ok(e&&typeof e==='object'&&!Array.isArray(e),id+' evidence object');
+  assert.deepEqual(Object.keys(e).sort(),[...Object.keys(fixed[id]||{}),...(extraKeys[id]||[])].sort(),id+' exact observation schema');
+  for(const [key,value]of Object.entries(fixed[id]||{}))assert.deepEqual(e[key],value,id+'/'+key);
+  if(id==='EXPORT-ARTWORK-SIZE-RELOAD-INPUT')verifyArtworkTouch(e.touch);
+  if(id==='EXPORT-PACKED-ASSETS-CHECKED')verifyExportSemantics(e.semantics);
+  if(id==='EXPORT-CHOICE-NARROW-ONE-DOWNLOAD'){
+    assert.equal(e.count,1);assert.deepEqual(Object.keys(e.box).sort(),['height','width','x','y']);
+    for(const value of Object.values(e.box))assert.ok(Number.isFinite(value));
+    assert.ok(e.box.width>0&&e.box.height>0&&e.box.x>=0&&e.box.x+e.box.width<=320&&e.box.y>=0);
+  }
+  if(['EXPORT-ARTWORK-SIZE-RELOAD-INPUT','EXPORT-ARTWORK-IFRAME'].includes(id))stage(e.box);
+  if(id==='EXPORT-ARTWORK-AUDIO-PERMITTED')oneTone(e.starts);
+  if(id==='EXPORT-ARTWORK-IMAGE-PEN-STOP'){assert.ok(e.images.length>0);for(const image of e.images){assert.deepEqual(Object.keys(image).sort(),['complete','width']);assert.equal(image.complete,true);assert.ok(Number.isFinite(image.width)&&image.width>0);}}
+  if(id==='EXPORT-ARTWORK-CACHED-RETURN')assert.equal(typeof e.nativeCacheRestored,'boolean');
+  if(id==='EXPORT-CONTROLS-TOUCH-SIZE'){assert.deepEqual(Object.keys(e.sizes).sort(),['pause','questionStop','questionSubmit','start','stop']);for(const v of Object.values(e.sizes))assert.ok(Number.isFinite(v)&&v>=40);}
+  if('before'in e){
+    assert.deepEqual(e.after,e.before,id+' current work retained');
+    assert.equal(typeof e.before.project,'string');assert.ok(Array.isArray(JSON.parse(e.before.project).scripts));
+    assert.equal(typeof e.before.source,'string');assert.equal(typeof e.before.dirty,'boolean');
+    assert.ok(Number.isInteger(e.before.history)&&e.before.history>=1);assert.ok(Number.isInteger(e.before.redo)&&e.before.redo>=0);
+  }
+  if(id==='OPEN-APPROVED-CORRUPT-RETAINED'){
+    assert.deepEqual(e.variants.map(v=>v.kind),['invalid-file','wrong-target','wrong-event','restore-failure']);
+    for(const v of e.variants){
+      assert.deepEqual(v.after,v.before,v.kind+' retains current work');
+      assert.ok(v.before.dirty&&v.before.history>=2&&v.before.redo>=1);
+      assert.ok(v.autosaveBefore&&v.autosaveBefore.frames.length>=2);
+      assert.deepEqual(v.autosaveAfter,v.autosaveBefore,v.kind+' retains recovery data');
+      assert.equal(v.faultTriggered,v.kind==='restore-failure');assert.equal(v.confirmationAgain,true);assert.equal(v.dialogs,0);
+    }
+    assert.deepEqual(e.validSecond,{selectedScriptId:'incoming-second',input:'「読込み途中'});
+  }
+  if(['OPEN-ALTERNATE-ROUTE-PROTECTED','OPEN-CHANGED-AFTER-APPROVAL'].includes(id)){assert.deepEqual(e.dialogs,['「検証用の作品」には まだ ほぞんして いない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);}
+  if(id==='OPEN-RECOVERY-SAVED-DRAFT-CLEAN'){
+    assert.deepEqual(e.variants.map(x=>x.kind),['code','blocks']);
+    for(const variant of e.variants){assert.equal(variant.savedUnchangedConfirmation,false);assert.equal(variant.pickers,1);}
+    assert.equal(e.variants[1].cancelledSavedPendingConfirmation,true);
+    for(const observed of [...e.variants.map(v=>v.newProject),e.savedCallable]){
+      assert.equal(observed.cleanDialogs,0);assert.equal(observed.openedNew,true);assert.equal(observed.editedDialogs,1);
+      assert.deepEqual(observed.afterNewCancel,observed.before);assert.deepEqual(observed.afterOpenCancel,observed.before);
+    }
+  }
+  if(id.startsWith('EXPORT-AUDIO-WAIT-')){
+    stage(e.stage);oneTone(e.starts);assert.equal(e.startsBefore,0);assert.equal(e.phaseBefore,'WAITING');assert.equal(e.outputBefore,'');assert.equal(e.duplicateInput,false);
+    assert.deepEqual(Object.keys(e.box).sort(),['height','width','x','y']);for(const value of Object.values(e.box))assert.ok(Number.isFinite(value));
+    assert.ok(e.box.width>0&&e.box.height>0&&Math.abs(e.box.x+e.box.width/2-320)<1&&Math.abs(e.box.y+e.box.height/2-200)<1);
+    assert.deepEqual(e.colors,{background:'rgb(255, 255, 255)',color:'rgb(0, 0, 0)',border:'rgb(0, 0, 0)',opacity:'1'});
+  }
+}
+function verifyExportOpen(report, inputs){
+  assert.equal(report.schema,'akari-export-open-v1');
+  assert.deepEqual(report.snapshot,inputs,'current candidate snapshot required');
+  assert.equal(report.productSha256,inputs.productSha256);
+  assert.deepEqual(report.results.map(r=>r.id),ids,'all cases once, in the declared order');
+  assert.equal(report.status,'PASS');
+  for(const result of report.results){assert.equal(result.status,'PASS',result.id);evidenceFor(result.id,result.evidence);}
+  assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);
+}
+function checkEvidenceNegatives(report,inputs){
+  // Check the observation validator separately, even when a product case failed.
+  for(const result of report.results.filter(r=>r.status==='PASS'))evidenceFor(result.id,result.evidence);
+  const change=(id,mutate)=>{const item=structuredClone(report.results.find(r=>r.id===id));assert.equal(item.status,'PASS');mutate(item.evidence);assert.throws(()=>evidenceFor(id,item.evidence),id+' false PASS must be rejected');};
+  change('EXPORT-CHOICE-CANCEL-FOCUS',e=>e.downloads=7);
+  change('EXPORT-ARTWORK-SIZE-RELOAD-INPUT',e=>e.box.width=-1);
+  for(const mutate of [e=>delete e.touch,e=>e.touch.pinch.after.scale=1,e=>e.touch.pan.after.left=e.touch.pan.before.left,e=>e.touch.single.marker=[0,0],e=>e.touch.pinch.cancelOutput='押下',e=>e.touch.target.taps=2])change('EXPORT-ARTWORK-SIZE-RELOAD-INPUT',mutate);
+  change('EXPORT-ARTWORK-AUDIO-PERMITTED',e=>e.starts.push({...e.starts[0]}));
+  change('OPEN-DIRTY-CANCEL-STATE-KEYBOARD',e=>e.after.project='{}');
+  change('OPEN-RECOVERY-SAVED-DRAFT-CLEAN',e=>e.savedCallable.editedDialogs=0);
+  change('OPEN-APPROVED-CORRUPT-RETAINED',e=>e.variants[1].autosaveAfter=null);
+  change('OPEN-APPROVED-CORRUPT-RETAINED',e=>e.variants[3].after.history=1);
+  change('EXPORT-ARTWORK-INVALID-AUDIO',e=>e.errorCode='WAITING');
+  change('EXPORT-ARTWORK-AUDIO-DEVICE-ERROR',e=>e.errorCode='WAITING');
+  change('EXPORT-AUDIO-WAIT-MOUSE',e=>e.startsBefore=1);
+  change('EXPORT-CONTROLS-TOUCH-SIZE',e=>e.sizes.pause=33);
+  change('EXPORT-PACKED-ASSETS-CHECKED',e=>e.mismatched='accepted');
+  change('EXPORT-PACKED-ASSETS-CHECKED',e=>e.refused.claimedText='accepted');
+  change('EXPORT-PACKED-ASSETS-CHECKED',e=>e.refused.claimedHash='accepted');
+  change('EXPORT-PACKED-ASSETS-CHECKED',e=>e.refused.claimedLength='accepted');
+  for(const mutate of [e=>e.semantics.roundtrips.metadata.negativeFields.splice(4,1),e=>e.semantics.roundtrips.metadata.origin.start.player[0]='画面1',e=>delete e.semantics,e=>e.semantics.roundtrips.attempted.pop(),e=>e.semantics.roundtrips.meijin.pop(),e=>e.semantics.trace.player.rows[20].x+=1,e=>e.semantics.trace.samples=1])change('EXPORT-PACKED-ASSETS-CHECKED',mutate);
+  change('EXPORT-CONTROLS-DEFAULT-OPERATIONS',e=>e.ignoredStopKeepsStageFocus=false);
+  change('EXPORT-CONTROLS-FINISHED',e=>e.failedReasonVisible=false);
+  change('EXPORT-ARTWORK-QUESTION-ANSWER-STOP',e=>e.stopMessageVisible=false);
+  const fabricated=structuredClone(report);fabricated.status='PASS';for(const r of fabricated.results){r.status='PASS';r.evidence={width:-1,starts:99,downloads:7};}
+  assert.throws(()=>verifyExportOpen(fabricated,inputs),'fabricated PASS must be rejected');
+  for(const [mutate,reason] of [[r=>r.results.pop(),'all cases once, in the declared order'],[r=>r.results.push(r.results[0]),'all cases once, in the declared order'],[r=>r.snapshot.productSha256='invalid','current candidate snapshot required']]){
+    const copy=structuredClone(fabricated);mutate(copy);
+    assert.throws(()=>verifyExportOpen(copy,inputs),error=>error.code==='ERR_ASSERTION'&&error.message.includes(reason),'the targeted envelope guard must reject');
+  }
+}
+module.exports={ids,verifyExportOpen,checkEvidenceNegatives,verifyExportSemantics};

@@ -1,0 +1,43 @@
+import {openPaletteTools,revealRegressionControl} from '../browser/cases/regression-setup.cjs';
+import U from '../browser/cases/ui-routes.cjs';
+import {pressStop} from './stop-press.cjs';
+import {showView} from './gate-ui-fixture.mjs';
+export const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState;return {source:s.main.sourceText,project:JSON.stringify(a.project),history:s.history,redo:s.redo,dirty:s.dirty,pending:s.main.pendingEdit,block:s.main.blockView,draft:s.main.blockDraft,ast:s.main.syntaxAst,owner:s.main.ownerKey};});
+export const node=(p,s)=>p.locator('#blockEditor .blockui-node[data-schema-id="'+s+'"]').first();
+export async function reveal(locator){await revealRegressionControl(locator);const closed=()=>locator.locator('xpath=ancestor::details[not(@open)]');for(let i=0;await closed().count();i++){if(i>=12)throw new Error('disclosure ancestors did not open');await closed().first().locator(':scope > summary').click();}return locator;}
+async function selectDisplayLevel(p,level){
+ const current=await p.evaluate(()=>({level:document.body.dataset.uiLevel,value:document.querySelector('#uiLevel').value}));
+ // Native same-value selection still fires change and forces an editor redraw.
+ if(current.level===level&&current.value===level)return;
+ await p.locator('#uiLevel').selectOption(level);
+ await p.waitForFunction(level=>document.body.dataset.uiLevel===level&&document.querySelector('#uiLevel').value===level&&!['PREPARING','IMPORTING'].includes(Akari.app.editorState.state),level);
+}
+export async function install(p,source,{mode='blocks',level='advanced',event='start',extraScripts=[],localLists=[],actorLists=[],localVariables=[],actorVariables=[]}={}){
+ await selectDisplayLevel(p,level);
+ await showView(p,'code');const mascot=p.locator('.tool.sprite-preset[data-sprite-preset="dango"]');await reveal(mascot);await mascot.click();
+ const file=await p.evaluate(({source,event,extraScripts,localLists,actorLists,localVariables,actorVariables})=>{const q=Akari.makeEmptyProject(),d=structuredClone(Akari.app.project.components.find(c=>c.name==='だんご'));q.components[0].localData.lists=actorLists;q.components[0].localData.variables=actorVariables;d.localData.variables=localVariables;q.name='操作契約02';Object.assign(q.components[0],{name:'あかり',x:170,y:130});Object.assign(d,{id:'dango',x:510,y:130});d.localData.lists=localLists;q.components.push(d);q.projectData.variables=[{id:'score',name:'点数',initialValue:0}];q.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];q.scripts=[{id:'main',targetId:'sprite-1',event,source},...extraScripts];return Akari.serializeProject(q,Akari.app.assetStore);},{source,event,extraScripts,localLists,actorLists,localVariables,actorVariables});
+ // The added preset is unsaved work, so the product asks before replacing it; the fixture replaces it.
+ // A page that already answers the question itself (answerProductConfirms) may have done so first.
+ // The product drops an open whose work changed while it asked, and the preset added above may still be settling in the
+ // editor (an edit's history entry is queued for 250 ms). The file is opened once the work and the editor sessions have
+ // held still for 300 ms, longer than that queue.
+ await p.waitForFunction(()=>{
+  const now=JSON.stringify([Akari.app.project,Akari.app.editorState.main,Akari.app.editorState.draft]),seen=window.__fixtureStill,at=performance.now();
+  if(seen?.text!==now){window.__fixtureStill={text:now,since:at};return false;}
+  return at-seen.since>=300;
+ },null,{polling:50});
+ await p.locator('#fileInput').setInputFiles({name:'ux-normal.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
+ await p.waitForFunction(()=>document.querySelector('#loseConfirmModal.show')||Akari.app.project.name==='操作契約02');
+ await p.evaluate(()=>document.querySelector('#loseConfirmModal.show #loseConfirmProceed')?.click());
+ try{await p.waitForFunction(source=>!document.querySelector('#fileInput').value&&Akari.app.project.name==='操作契約02'&&Akari.app.project.scripts.find(s=>s.id==='main')?.source===source,source);}
+ catch(error){
+  // The page as it was, so a failure shows whether the open was dropped or is still loading.
+  const seen=await p.evaluate(()=>({asked:!!document.querySelector('#loseConfirmModal.show'),input:document.querySelector('#fileInput').value,work:Akari.app.project.name,state:Akari.app.editorState.state,status:document.querySelector('#statusText')?.textContent}));
+  error.message+=' (page: '+JSON.stringify(seen)+')';throw error;
+ }
+ await selectDisplayLevel(p,level);await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption(event);if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await showView(p,mode);if(mode==='blocks')await openPaletteTools(p.locator('#blockEditor'));
+}
+export async function add(p,schema,search){await openPaletteTools(p.locator('#blockEditor'));const q=p.locator('#blockEditor [data-blockui-search]');await q.fill(search);await p.locator('#blockEditor [data-blockui-schema="'+schema+'"]').click();}
+export async function edit(field,value){await reveal(field);await field.fill(value);await field.press('Enter');}
+export async function action(n,name){await U.nodeAction(n,name);}
+export async function speak(p,text){await p.locator('#runBtn').click();await p.waitForFunction(t=>[...document.querySelectorAll('.sprite-bubble-text')].some(n=>n.textContent===t),text);await pressStop(p.locator('#stopBtn'));}

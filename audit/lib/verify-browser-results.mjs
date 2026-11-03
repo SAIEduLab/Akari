@@ -1,0 +1,96 @@
+import {inputInventory} from './input-snapshot.cjs';
+import { currentProductFile } from "./product-path.cjs";
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {sha} from './product-test-host.mjs';
+import schemaContract from './block-schema-contract.cjs';
+import {verifyEventTraces} from './event-traces-contract.mjs';
+const read=p=>JSON.parse(fs.readFileSync(p));
+export const browserContract=()=>read('audit/manifests/browser-results.json');
+// A browser case is executed by exactly one task; a second task re-running the same case keys is duplicate execution.
+export function assertSingleBrowserOwner(entries){
+  const owner=new Map();
+  for(const entry of entries)for(const key of entry.keys){
+    assert.ok(!owner.has(key),'browser case '+key+' is registered by '+owner.get(key)+' and '+entry.task);
+    owner.set(key,entry.task);
+  }
+  return owner.size;
+}
+export function verifyBrowserReport(report,spec,expectedSnapshot,options={}) {
+  assert.ok(!report.error,spec.task+': '+report.error);
+  for(const key of ['pageErrors','networkRequests','errors','network'])if(key in report)assert.deepEqual(report[key],[],spec.task+'/'+key);
+  for(const key of ['failed'])if(key in report)assert.equal(report[key],0);
+  for(const key of ['sourceUnchanged','sourceFileUnchanged','environmentPass','complete'])if(key in report)assert.equal(report[key],true);
+  for(const key of ['sha256','htmlSha256','sha','finalSha'])if(key in report)assert.equal(report[key],expectedSnapshot.productSha256,'wrong product '+spec.task);
+  if(report.manifest){assert.equal(report.manifest.candidate,currentProductFile());assert.equal(report.manifest.head,expectedSnapshot.productSha256);assert.equal(report.manifest.files.find(f=>f.path===currentProductFile())?.sha256,expectedSnapshot.productSha256);}
+  if(spec.task!=='schema-shards')assert.ok(typeof report.browser==='string'&&report.browser.length>0,'missing browser '+spec.task);
+  if(spec.key==='single'){
+    assert.equal(report.pass,true);assert.equal(report.method,spec.keys[0]);assert.equal(report.lines,16666);
+    assert.equal(report.sourceUnchanged,true);assert.equal(report.state.mode,'blocks');assert.equal(report.state.chars,99995);assert.ok(Number.isInteger(report.state.dom)&&report.state.dom>0&&report.state.dom<=5000);
+    // perf-input's existing deadline covers input and switching together, not each independently.
+    for(const key of ['inputMs','switchMs'])assert.ok(Number.isFinite(report[key])&&report[key]>=0,'missing/invalid '+key);
+    assert.ok(report.inputMs+report.switchMs<=30000,'perf-input exceeded its 30-second deadline');
+    return;
+  }
+  assert.ok(Array.isArray(report.results));
+  const keys=report.results.map(r=>spec.key==='viewport/zoom'?r.evidence.viewport.width+'/'+r.evidence.workbenchZoom:
+    spec.key==='id/viewport/mode'?r.id+'/'+r.viewport.width+'/'+r.mode:
+    spec.key==='long'&&r.id==='BROWSER-LONG-SWITCH'?r.id+'/'+r.n+'/'+r.where:r.id);
+  assert.deepEqual([...keys].sort(),[...spec.keys].sort(),'missing/duplicate/unexpected cases '+spec.task);
+  assert.equal(new Set(keys).size,keys.length,'duplicate case tuple');
+  for(const r of report.results){
+    if(spec.key==='long'){
+      if(r.id==='BROWSER-LONG-SWITCH'){assert.equal(r.roundTrip,true);assert.equal(r.focused,true);assert.equal(r.visible,true);assert.ok(r.count<=120);}
+      else for(const k of ['pagesRetained','all300Reachable','cancel','moveAcrossOriginalGap','undoRedo'])assert.equal(r[k],true);
+    }else assert.equal(r.pass,true,spec.task+'/'+r.id);
+    if('status' in r)assert.equal(r.status,'PASS');
+    assert.ok(!r.error,spec.task+': '+r.error);
+  }
+  if(spec.task==='browser-event-traces')verifyEventTraces(report,spec,expectedSnapshot,options);
+  if(spec.task==='ui-stage-gesture'){
+    const e=report.results.find(r=>r.id==='stage-gesture:window-blur-cleans-up').evidence;
+    assert.equal(e.environment.phase,'gesture');assert.equal(e.environment.headless,false);
+    assert.equal(e.environment.adapters.length,2);
+    for(const a of e.environment.adapters){assert.equal(a.playwright,'1.55.0');assert.equal(a.session,'playwright-main-frame');assert.equal(a.enabled,false);}
+    assert.equal(e.environment.lostFocus.focused,false);assert.equal(e.environment.regainedFocus,true);
+    const trusted=events=>events.some(x=>x.type==='blur'&&x.target==='window'&&x.trusted===true);
+    assert.ok(trusted(e.environment.lostFocus.events),'missing preflight native blur');
+    assert.equal(e.focusBeforeDrag.focused,true);assert.equal(e.blurredFocus,false);
+    assert.ok(trusted(e.blurred.events),'missing gesture native blur');
+  }
+  if(spec.task==='schema-shards'){
+    // The GUI rows are the current schema list, never a past snapshot of it.
+    const inputs=schemaContract.currentInputs(),schemaIds=inputs.schemaIds;
+    schemaContract.verifySchemaContract({...inputs,guiKeys:spec.keys});
+    assert.equal(report.complete,true);assert.equal(report.expected,schemaIds.length);assert.equal(report.shards.length,2);
+    assert.equal(report.schemaContract.schemas,schemaIds.length);schemaContract.verifySchemaContractNegatives(report.schemaContract.negatives);
+    for(const s of report.shards){assert.equal(s.exit,0);assert.equal(s.expected,s.actual);assert.deepEqual(s.pageErrors,[]);assert.deepEqual(s.networkRequests,[]);}
+  }
+}
+export function verifyBrowserGroup(dir,group,expectedSnapshot) {
+  const config=read('audit/browser/browser-audit-manifest.json'),contract=browserContract();
+  const tasks=group==='all'?Object.values(config.groups).flat():config.groups[group];
+  const summary=read(path.join(dir,'summary.json'));
+  assert.equal(summary.head,expectedSnapshot.productSha256);assert.equal(summary.group,group);
+  assert.equal(summary.failed,0);assert.equal(summary.passed,tasks.length);
+  assert.deepEqual(summary.records.map(r=>r.task).sort(),[...tasks].sort());
+  for(const r of summary.records){assert.equal(r.status,0);assert.equal(r.signal,null);assert.ok(fs.existsSync(path.join(dir,r.log)));}
+  const manifest=read(path.join(dir,'candidate/manifest.json'));assert.equal(manifest.candidate,currentProductFile());
+  assert.equal(manifest.head,expectedSnapshot.productSha256);  assert.deepEqual(Object.fromEntries(manifest.files.filter(f=>!f.gitRef).map(f=>[f.path,f.sha256]).sort(([a],[b])=>a.localeCompare(b))),
+    Object.fromEntries(Object.entries(inputInventory()).sort(([a],[b])=>a.localeCompare(b))),'browser snapshot input coverage');
+  for(const f of manifest.files)assert.equal(sha(fs.readFileSync(path.join(dir,'candidate',f.path))),f.sha256,'changed browser input '+f.path);
+  assert.deepEqual(manifest.runnerFiles.map(f=>f.snapshotPath).sort(),['fixture-manifest.json','picture.jpg','picture.png','picture.webp','silence.mp3','tone.wav'].map(n=>'media/'+n));
+  for(const f of manifest.runnerFiles)assert.equal(sha(fs.readFileSync(path.join(dir,'candidate',f.snapshotPath))),f.sha256,'changed generated fixture '+f.path);
+  const media=read(path.join(dir,'candidate/media/fixture-manifest.json'));
+  assert.deepEqual(media.files.map(f=>f.path).sort(),['picture.jpg','picture.png','picture.webp','silence.mp3','tone.wav']);
+  for(const f of media.files){const bytes=fs.readFileSync(path.join(dir,'candidate/media',f.path));assert.equal(bytes.length,f.bytes);assert.equal(sha(bytes),f.sha256);}
+  const specs=contract.entries.filter(e=>group==='all'||e.group===group);
+  assert.deepEqual(specs.map(s=>s.task).sort(),[...tasks].sort());
+  for(const spec of specs)verifyBrowserReport(read(path.join(dir,spec.report)),spec,expectedSnapshot,{artifactDir:path.dirname(path.join(dir,spec.report))});
+  if(group==='schemas'||group==='all')for(let i=0;i<2;i++){
+    const r=read(path.join(dir,'candidate/schema-shard-'+i+'/browser-schemas-selected.json'));
+    assert.ok(typeof r.browser==='string'&&r.browser.length>0);assert.deepEqual(r.pageErrors,[]);assert.deepEqual(r.networkRequests,[]);
+  }
+  return {group,tasks:specs.length,cases:specs.reduce((n,s)=>n+s.keys.length,0)};
+}

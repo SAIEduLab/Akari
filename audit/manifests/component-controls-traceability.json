@@ -1,0 +1,44 @@
+{
+  "schema": "akari-ui-capability-traceability-v1",
+  "uiContracts": [
+    {
+      "id": "ui:component-controls-scroll",
+      "featureReference": {
+        "path": "audit/manifests/features.json",
+        "pointer": "/uiContracts/componentControls"
+      },
+      "specification": {
+        "path": "LANGUAGE_1_0_0.md",
+        "text": "「キャラクター・部品」の中を別にスクロールさせず、列が画面に入りきらないときは、右の列全体をスクロールします"
+      },
+      "auditContract": {
+        "path": "AUDIT.md",
+        "section": "部品操作欄の到達性"
+      },
+      "testReferences": [
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-RESPONSIVE"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-KEYBOARD"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-LIST"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-TOUCH"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-ZOOM"
+        }
+      ],
+      "verifier": "audit/tests/component-controls-verify.mjs",
+      "executionStatus": "REQUIRES_CURRENT_SNAPSHOT_EVIDENCE"
+    }
+  ]
+}

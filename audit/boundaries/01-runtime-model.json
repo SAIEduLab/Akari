@@ -1,0 +1,7 @@
+{
+  "schema": "akari-source-boundary-v1",
+  "file": "src/js/01-runtime-model.js",
+  "uses": [
+    "src/js/01-runtime-base.js"
+  ]
+}
