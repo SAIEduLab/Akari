@@ -689,6 +689,13 @@ function runCoreTests() {
       eq(meijinRun('犬と鳥に「出発」と知らせて、その合図で始まったことが全部終わるまで待つ。\nねこは「みんな」と言う。', { until: 50, extra }).speech, ['0:犬:いくよ', '0:鳥:ぼくも', '0:ねこ:みんな']);
     });
     test('meijin one part is stopped, and its timed speech is waited for', () => {
+      const symbols=buildSymbols(meijinWork(''));
+      for(const source of ['ねこが話し終わるまで待つ。','ねこが言い終わるまで待つ。','ねこの音が鳴り終わるまで待つ。']){
+        const parsed=meijin=>parseSyntax(source,{symbols,targetId:'core-cat',event:'start',meijin});
+        eq(parsed(false).syntaxDiagnostics.map(d=>d.code),['P205']);
+        eq(parsed(true).syntaxDiagnostics,[]);
+        eq(parsed(true).ast.body[0].kind,'WaitUntil');
+      }
       const stop = meijinRun('1秒待つ。\nねこの動きを止める。\n点数を、ねこのよこのばしょにする。', { until: 2500, extra: [{ id: 'core-cat-go', targetId: 'core-cat', event: 'start', source: '2秒かけて、いまのばしょから、右へ100歩動く。\n「ついた」と言う。' }] });
       ok(Math.abs(stop.vars.点数 - 50) <= 1 && stop.speech.length === 0, JSON.stringify(stop));
       eq(meijinRun('0.1秒待つ。\nねこが話し終わるまで待つ。\n犬は「おわった」と言う。', { until: 3000, extra: [{ id: 'core-cat-say', targetId: 'core-cat', event: 'start', source: '「やあ」と2秒話す。' }] }).speech,

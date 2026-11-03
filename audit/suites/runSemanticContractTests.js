@@ -659,8 +659,20 @@ function runSemanticContractTests() {
       const same=actorUnitFixture('いぬのところへ行く。');same.projectData.variables.push({id:'core-same-name',name:'いぬ',initialValue:1});
       ok(compileProject(same).errors.some(d=>d.code==='S316'),'a variable named like a part');
       const model=new RuntimeModel(actorUnitFixture(''),{});reject(()=>model.requireActor({runtimeId:'no-such-part'}),'R407');
+      // The standalone public host uses the release standard by default and honours an explicit standard.
+      const releaseStandard={languageContractId:AUDIT_EXECUTABLE_CONTRACT.languageContractId,runtimeContractId:AUDIT_EXECUTABLE_CONTRACT.runtimeContractId};
+      const hostManifest=standard=>({id:'audit.host-standard',name:'契約の確認',version:'1.0.0',apiContract:1,standard,description:'試験',dependencies:[],capabilities:[],offline:true,selfContained:true,
+        state:{formatVersion:1,initial:null},commands:[],events:[],calculations:[]});
+      const factory=()=>({commands:{},calculations:{}});
+      for(const options of [undefined,{}, {standard:releaseStandard},{standard:{languageContractId:6,runtimeContractId:7}}]){
+        const host=Akari.createAkariExtensionHost(options),expected=options?.standard||releaseStandard;
+        host.register(hostManifest(expected),factory);
+        eq(host.requirements().required.map(r=>r.id),['audit.host-standard']);
+        reject(()=>host.register({...hostManifest({...expected,runtimeContractId:expected.runtimeContractId+1}),id:'audit.wrong-standard',name:'別の契約'},factory),'E701');
+      }
+      for(const key of ['languageContractId','runtimeContractId'])reject(()=>Akari.createAkariExtensionHost({standard:{...releaseStandard,[key]:0}}),'E701');
       // An extension session needs AbortController, which the browser run has and the node-product context does not;
-      // the browser run of this suite reaches E705, the node run the four codes above.
+      // the browser run of this suite reaches E705; the node run checks the other diagnostics above.
       if(typeof AbortController!=='function')return;
       const contract=Akari.EXECUTABLE_CONTRACT,standard={languageContractId:contract.languageContractId,runtimeContractId:contract.runtimeContractId};
       const manifest={id:'audit.wrong-value',name:'ちがう値の拡張',version:'1.0.0',apiContract:1,standard,description:'試験',dependencies:[],capabilities:[],offline:true,selfContained:true,
@@ -693,6 +705,7 @@ function runSemanticContractTests() {
       }
     });
     test('an exported work opens every listed picture type and refuses another type, size or content', () => {
+      eq(Akari.EXECUTABLE_CONTRACT,AUDIT_EXECUTABLE_CONTRACT);
       const packed=JSON.parse(JSON.stringify(packExecutable(makeDefaultProject())));
       const opened=change=>{const data=JSON.parse(JSON.stringify(packed));change(data);let error=null;try{AKARI_RUNTIME.restoreExecutable(data);}catch(e){error=e.code+' '+e.message;}return error;};
       eq(packed.assets.map(a=>[a.kind,a.mime]),[['image','image/png']]);

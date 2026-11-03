@@ -786,7 +786,7 @@
     {
       "id": "CI-081",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "保存データは formatVersion 5・languageContractId 4、実行データは projectFormatVersion 5・programFormatVersion 4・languageContractId 4・runtimeContractId 4 を持ち、作品ファイルの復元データは F5 の印（AKARI-PROJECT-F5-DATA-BEGIN・END）で囲まれる。部品の x・y は画面の左下のはしから部品のまん中までの歩数、direction は右を0度とする左回りの0以上360未満の数で保存する",
+      "summary": "保存データは formatVersion 6・languageContractId 5、実行データは projectFormatVersion 6・programFormatVersion 4・languageContractId 5・runtimeContractId 5 を持ち、作品ファイルの復元データは F6 の印（AKARI-PROJECT-F6-DATA-BEGIN・END）で囲まれる。部品の x・y は画面の左下のはしから部品のまん中までの歩数、direction は右を0度とする左回りの0以上360未満の数で保存する",
       "polarity": "positive",
       "coverage": "unexpressible",
       "reason": "書き出した保存ファイル・実行データの中の欄の値を読む観察が要る。file の save-reopen は scripts の欄と本文しか確かめられず、形式・契約の番号、復元データの印、部品の x・y・direction を形式に表す場所がない",
