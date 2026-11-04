@@ -101,8 +101,9 @@ function outcome(scriptFile, suites, recordFile) {
   });
 }
 
-// Survivors among the mutants of the given lines: [{file, line, operator, source}], with source the line's own text.
-export async function survivingMutants({script, shift, lineOffsets, lines, suitesFor, parallel = Math.max(1, os.cpus().length - 1)}) {
+// The mutants of the given lines, in a fixed order: the same script and lines give the same list in every process, so
+// the parts of the guard (audit/tests/change-guard.mjs --part) each run their own share of one list.
+export function mutantPlan({script, shift, lineOffsets, lines, suitesFor}) {
   const jobs = [];
   for (const {file, line, text: source} of lines) {
     const range = lineOffsets(file, line);
@@ -111,9 +112,22 @@ export async function survivingMutants({script, shift, lineOffsets, lines, suite
     for (const m of mutantsIn(script, [[start, end]])) {
       const mutated = script.slice(0, m.start) + m.replacement + script.slice(m.end);
       try { new vm.Script(mutated); } catch { continue; } // a mutant that does not parse is no test of the tests
-      jobs.push({file, line, operator: m.operator, source: source.trim(), mutated, suites: suitesFor(file, line)});
+      jobs.push({index: jobs.length, file, line, operator: m.operator, source: source.trim(), start: m.start, end: m.end, replacement: m.replacement, suites: suitesFor(file, line)});
     }
   }
+  // Two parts that hold the same digest mutate the same script in the same places and run the same suites.
+  const digest = crypto.createHash('sha256').update(crypto.createHash('sha256').update(script).digest('hex') + '\u0000' + JSON.stringify(jobs)).digest('hex');
+  return {script, jobs, digest};
+}
+// The mutants of part `index` (1-based) of `count`: every count-th mutant from its own place, so neighbouring mutants of
+// one line go to different parts.
+export const partJobs = (jobs, index, count) => jobs.filter(job => job.index % count === index - 1);
+const bySurvivor = (a, b) => (a.file + a.line + a.operator).localeCompare(b.file + b.line + b.operator);
+export const sortSurvivors = survivors => [...survivors].sort(bySurvivor);
+
+// Runs the given mutants of the script and returns their survivors: [{file, line, operator, source}], with source the
+// line's own text.
+export async function runMutants(script, jobs, parallel = Math.max(1, os.cpus().length - 1)) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'akari-mutants-')), survivors = [];
   try {
     // The script as it is passes every suite the mutants use, or a mutant's failing suite says nothing about it (the
@@ -127,7 +141,7 @@ export async function survivingMutants({script, shift, lineOffsets, lines, suite
     const worker = async () => {
       while (!failed && next < jobs.length) {
         const job = jobs[next], file = path.join(dir, 'mutant-' + next++ + '.js');
-        fs.writeFileSync(file, job.mutated);
+        fs.writeFileSync(file, script.slice(0, job.start) + job.replacement + script.slice(job.end));
         let result;
         try { result = await outcome(file, job.suites, record); } catch (error) { failed = true; throw error; }
         if (result === 'survived') survivors.push({file: job.file, line: job.line, operator: job.operator, source: job.source});
@@ -136,7 +150,7 @@ export async function survivingMutants({script, shift, lineOffsets, lines, suite
     };
     await Promise.all(Array.from({length: Math.min(parallel, jobs.length)}, worker));
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
-  return {mutants: jobs.length, survivors: survivors.sort((a, b) => (a.file + a.line + a.operator).localeCompare(b.file + b.line + b.operator))};
+  return sortSurvivors(survivors);
 }
 
 // The record of equivalent mutants: {schema, equivalents: [{file, source, operator, reason}]}. Each survivor of this

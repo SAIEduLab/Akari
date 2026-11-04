@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,treeIdentity,git,nextPatch} from '../lib/change-guard.mjs';
+import {changeGuard,guardMutantPart,mergeGuardParts,treeIdentity,git,nextPatch} from '../lib/change-guard.mjs';
 import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract,changeGuardLabel} from '../lib/gate-contract.mjs';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
-import {currentPart,partItems} from '../lib/shard-plan.cjs';
+import {currentPart,partItems,changeGuardParts} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
@@ -234,6 +234,29 @@ try {
     const recordOnly=derive({...equivalents});
     for(const options of [{},{eventPath:approved}]){const r=await guard(recordOnly,options);assert.equal(r.status,'FAIL');assert.ok(r.mutationIssues.some(m=>/but no such mutant survives/.test(m)),JSON.stringify(r.mutationIssues));}
     pass('mutants/record-without-survivor');
+  }
+  // The guard in parts (audit/tests/change-guard.mjs --part, mergeGuardParts) gives the verdict of one run: the main part
+  // and the mutant parts of the head with its survivors recorded, merged, are the whole guard's report. A merge refuses
+  // parts that are missing, repeated or undeclared, that ran another plan or another share, that guard another head or
+  // failed, and a merge without the main part.
+  {
+    const whole=await guard(pinnedHead,{eventPath:approved}),count=changeGuardParts.length-1;
+    const main=await changeGuard({repo,base,head:pinnedHead,eventPath:approved,workDir:trees,part:'main'});
+    assert.deepEqual([main.status,main.mutation.mutants,whole.status],['PART',whole.mutation.mutants,'PASS'],'the main part plans the mutants it leaves to the parts');
+    const shares=[];for(let index=1;index<=count;index++)shares.push(await guardMutantPart({repo,base,head:pinnedHead,index,count}));
+    const merge=parts=>mergeGuardParts({repo,base,head:pinnedHead,parts,count});
+    assert.deepEqual(merge([main,...shares]),whole,'the merged parts give the whole guard report');pass('mutants/parts-merged-as-one-run');
+    const refused=(id,parts,pattern)=>{const r=merge(parts);assert.equal(r.status,'FAIL',id);assert.ok(r.errors.some(m=>pattern.test(m)),id+': '+JSON.stringify(r.errors));pass('mutants/parts-'+id);};
+    const changed=change=>[{...shares[0],...change(shares[0])},...shares.slice(1)];
+    refused('missing-part',[main,...shares.slice(1)],/mutant part m1 is reported 0 times/);
+    refused('repeated-part',[main,...shares,shares[0]],/mutant part m1 is reported 2 times/);
+    refused('undeclared-part',[main,...shares,{...shares[0],part:'m'+(count+1),index:count+1}],new RegExp('an undeclared part m'+(count+1)+' is reported'));
+    refused('other-plan',[main,...changed(()=>({plan:'0'.repeat(64)}))],/m1 ran a share of another plan/);
+    assert.ok(shares[0].ran.length>0,'the first part runs a mutant');
+    refused('other-share',[main,...changed(s=>({ran:s.ran.slice(1)}))],/m1 ran mutants .*, not its share/);
+    refused('other-head',[main,...changed(()=>({head:base}))],/m1 guards head/);
+    refused('failed-part',[main,...changed(()=>({errors:['the coverage run did not finish']}))],/m1: the coverage run did not finish/);
+    refused('no-main',shares,/the main part is reported 0 times/);
   }
   // A changed line only the worlds run is judged by the worlds' record: an early return they notice whenever it is taken.
   {

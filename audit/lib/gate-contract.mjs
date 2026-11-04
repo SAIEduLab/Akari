@@ -1,7 +1,7 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {selftestShards,browserShards,acceptanceShards} from './shard-plan.cjs';
+import {selftestShards,browserShards,acceptanceShards,changeGuardParts} from './shard-plan.cjs';
 // One sealed bundle per CI shard (audit/lib/shard-plan.cjs); the aggregate merges them for the full validators.
 export const auditBundleKinds=[...Object.keys(selftestShards).map(s=>'selftest-'+s),'audio-codecs-win32',...Object.keys(browserShards).map(s=>'full-browser-'+s)];
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
@@ -145,6 +145,7 @@ export const acceptanceCommands={
 const sameRepository="${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}";
 const afterNeeds="${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}";
 const requestedSha={AKARI_REQUESTED_SHA:'${{ github.event.pull_request.head.sha || github.sha }}'};
+const guardShas={AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKARI_HEAD_SHA:'${{ github.event.pull_request.head.sha }}'};
 export const workflowContract=Object.freeze({
   'akari-audit.yml':{triggers:'audit',env:requestedSha,jobs:{
     selftest:{if:sameRepository,needs:[],shards:Object.keys(selftestShards),entries:[
@@ -171,9 +172,12 @@ export const workflowContract=Object.freeze({
     'owner-work-authorization':{needs:[],fullHistory:true,trustedBase:true,entries:[
       {run:'node audit/tests/work-authorization.mjs --github audit-evidence/work-authorization/report.json',env:{GITHUB_TOKEN:'${{ github.token }}'}}]},
   }},
+  // The guard runs in parts side by side (audit/lib/shard-plan.cjs changeGuardParts); audit-change-guard merges them.
   'akari-change-guard.yml':{triggers:'guard',jobs:{
-    'audit-change-guard':{needs:[],fullHistory:true,entries:[
-      {run:'node audit/tests/change-guard.mjs "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:{AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKARI_HEAD_SHA:'${{ github.event.pull_request.head.sha }}'}}]},
+    'change-guard-part':{needs:[],fullHistory:true,shards:changeGuardParts,entries:[
+      {run:'node audit/tests/change-guard.mjs --part "${{ matrix.shard }}" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-${{ matrix.shard }}/part.json"',env:guardShas}]},
+    'audit-change-guard':{if:"${{ always() && github.event_name == 'pull_request' }}",needs:['change-guard-part'],fullHistory:true,entries:[
+      {run:'node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:guardShas}]},
   }},
 });
 export const changeGuardLabel='owner-approved-audit-change';

@@ -111,6 +111,8 @@ reject('acceptance/kind-dropped','acceptance',/acceptance kinds/,f=>edit(f,accep
 reject('matrix/shard-dropped','matrix',/shards must be exactly/,f=>edit(f,audit,'shard: [s01, s02, s03, s04, s05, s06, s07, s08, s09]','shard: [s01, s02, s03, s04, s05, s06, s07, s08]'));
 reject('matrix/fail-fast','matrix',/must not cancel/,f=>edit(f,acceptance,'      fail-fast: false\n','      fail-fast: true\n'));
 reject('matrix/unplanned-matrix','matrix',/only planned shard jobs/,f=>edit(f,audit,'    timeout-minutes: 25\n','    timeout-minutes: 25\n    strategy:\n      matrix:\n        shard: [s01]\n'));
+// The guard runs exactly its planned parts.
+reject('matrix/guard-part-dropped','matrix',/shards must be exactly/,f=>edit(f,guard,'shard: [main, m1, m2, m3, m4, m5, m6]','shard: [main, m1, m2, m3, m4, m5]'));
 reject('checkout/guard-shallow-history','checkout',/full history/,f=>edit(f,guard,'      - uses: actions/checkout@v5\n        with:\n          fetch-depth: 0\n','      - uses: actions/checkout@v5\n'));
 
 writeCaseReport(output,'workflow-contract',results,{workflows:Object.keys(current)});

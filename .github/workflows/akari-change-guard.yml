@@ -9,9 +9,13 @@ concurrency:
   group: akari-change-guard-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  audit-change-guard:
+  change-guard-part:
     runs-on: windows-latest
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [main, m1, m2, m3, m4, m5, m6]
     defaults:
       run:
         shell: bash
@@ -25,11 +29,46 @@ jobs:
       - run: |
           npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
+      - name: Run one part of the change guard
+        env:
+          AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node audit/tests/change-guard.mjs --part "${{ matrix.shard }}" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-${{ matrix.shard }}/part.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-change-guard-part-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/change-guard-${{ matrix.shard }}/
+          if-no-files-found: error
+          retention-days: 3
+  audit-change-guard:
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    needs: [change-guard-part]
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.2'
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
+      - uses: actions/download-artifact@v4
+        with:
+          # Partial reruns retain earlier attempts; the merge counts each part's newest attempt.
+          pattern: akari-change-guard-part-*-${{ github.run_id }}-*
+          path: downloaded-guard-parts
       - name: Require the owner label for removed audit checks and changed pins
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node audit/tests/change-guard.mjs "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json
+        run: node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
