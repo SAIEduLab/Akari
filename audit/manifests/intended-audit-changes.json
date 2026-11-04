@@ -68,6 +68,10 @@
     {
       "change": "workflow-entry:akari-change-guard.yml/audit-change-guard/node audit/tests/change-guard.mjs \"$AKARI_BASE_SHA\" \"$AKARI_HEAD_SHA\" audit-evidence/change-guard/report.json",
       "reason": "The guard runs in parts: change-guard-part runs each part with --part, and audit-change-guard merges them with --merge."
+    },
+    {
+      "change": "pin:0453f26f6f2b920ff604aac5b9445bf1c93a035e0d632a9a7f0c976dbce16d91",
+      "reason": "fixedIdSha256 of audit/manifests/product-tests.json is the digest of the product test IDs; the 1.0.1 tests add eight IDs (six TEST-CONTRACT, one CORE and one LANG case) and remove none."
     }
   ]
 }
