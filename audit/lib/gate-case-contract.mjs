@@ -22,7 +22,7 @@ export const workflowRejectionIds=Object.freeze([
   'workflow-set/unknown-file','workflow-set/missing-file',
   'yaml/anchor','yaml/alias','yaml/tab-indentation','yaml/flow-mapping','yaml/folded-scalar','yaml/duplicate-key',
   'workflow-keys/top-level-defaults','workflow-env/changed',
-  'triggers/missing-push','triggers/extra-branch','triggers/missing-dispatch','triggers/extra-schedule','triggers/path-filter','triggers/guard-without-label-events',
+  'triggers/missing-push','triggers/extra-branch','triggers/missing-dispatch','triggers/extra-schedule','triggers/path-filter','triggers/guard-with-label-events','triggers/guard-without-base-guard','triggers/guard-head-run-unfiltered',
   'permissions/write-contents','permissions/job-write',
   'concurrency/cancels-main','concurrency/shared-main-group','concurrency/missing',
   'jobs/missing-job','jobs/extra-job','jobs/condition-changed','job-keys/reusable-workflow',
@@ -33,19 +33,20 @@ export const workflowRejectionIds=Object.freeze([
   'artifact/retention-days','artifact/missing-retention','artifact/missing-files-allowed',
   'commands/ad-hoc-audit-check','commands/ad-hoc-shell-check','commands/missing-entry','commands/reordered-entries','commands/duplicate-entry',
   'step-condition/disabled-entry','step-env/entry-env-changed','step-env/undeclared','step-keys/shell-override','actions/unknown-action',
-  'bundles/matrix-group-dropped','acceptance/kind-dropped','matrix/shard-dropped','matrix/fail-fast','matrix/unplanned-matrix','checkout/guard-shallow-history']);
+  'bundles/matrix-group-dropped','acceptance/kind-dropped','matrix/shard-dropped','matrix/fail-fast','matrix/unplanned-matrix','checkout/guard-shallow-history','checkout/guard-merge-commit','checkout/guard-keeps-token','step-condition/guard-base-guard-always','matrix/guard-part-dropped']);
 // Synthetic base/head trees for every change-guard rule, plus accepted controls.
 export const changeGuardCaseIds=Object.freeze([
   'real-tree/identity-extracted','control/documentation-only','control/additions-only','control/pin-moved','control/base-advanced-after-branch',
   'removed/gate-step','removed/gate-case','removed/integrity-control','removed/acceptance-suite','removed/browser-group','removed/browser-task','removed/browser-case',
   'removed/product-suite','removed/product-test','removed/language-test','removed/workflow-job','removed/workflow-entry',
   'pin/changed','pin/removed',
-  'label/approves-removal','label/other-label-only','label/missing-event','label/payload-without-labels','label/unreadable-payload',
-  'version/source-changed-without-bump','version/product-changed-without-bump','version/patch-bump-accepted','version/patch-skipped','version/patch-skipped-with-label','version/minor-bump','version/minor-bump-with-label','version/major-bump-with-label','version/lower-with-label','version/bump-without-product-change','version/label-does-not-excuse',
+  'record/approves-removal','record/other-change-only','record/kept-from-base','record/without-reason','record/wrong-shape','record/less-only-in-audit-change','record/pin-with-product-change','control/guard-code-named',
+  'version/source-changed-without-bump','version/product-changed-without-bump','version/patch-bump-accepted','version/patch-skipped','version/patch-skipped-recorded','version/minor-bump','version/minor-bump-recorded','version/major-bump-recorded','version/lower-recorded','version/bump-without-product-change','version/record-does-not-excuse',
   'release/two-manifests','release/wrong-name','release/missing',
   'identity/head-evaluation-failure','identity/no-merge-base',
-  'language/reader-table-changed','language/verbs-changed','language/reader-change-with-label','language/candidate-not-base-canonical',
-  'behaviour/unrecorded-change','behaviour/recorded-change-needs-label','moves/moved-unchanged-accepted','moves/moved-and-changed-needs-label','assertions/fewer-checks-needs-label','coverage/extension-line-mutated','test-map/names-the-suites','mutants/survivor-needs-record-and-label','mutants/record-without-survivor','mutants/worlds-judge-their-lines','behaviour/record-without-change','limits/worlds-never-finish']);
+  'language/reader-table-changed','language/verbs-changed','language/reader-change-recorded','language/candidate-not-base-canonical',
+  'behaviour/unrecorded-change','behaviour/recorded-change-listed','moves/moved-unchanged-accepted','moves/moved-and-changed-needs-record','assertions/fewer-checks-needs-record','coverage/extension-line-mutated','test-map/names-the-suites','mutants/survivor-needs-record','mutants/equivalent-told-apart-by-assist','mutants/record-without-survivor','mutants/worlds-judge-their-lines','behaviour/record-without-change','limits/worlds-never-finish',
+  ...['merged-as-one-run','missing-part','repeated-part','undeclared-part','other-plan','other-share','other-head','failed-part','no-main'].map(n=>'mutants/parts-'+n)]);
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);

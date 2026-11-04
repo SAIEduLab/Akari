@@ -16,7 +16,7 @@
 
 公開CIはWindows上で実行する。固定browserと媒体fixtureを使い、OS・入力・run/attemptの一致を検証する。Windowsの結果をLinuxの実行証拠として扱わない。
 
-監査基盤自体の検査（ファイルの到達性、workflowの契約、変更ガード、文の形の網羅、仕様の例文、仕様の期待値）はgateの必須段で、内容は [AUDIT.md](../AUDIT.md) の「監査基盤の保証」を参照する。PRでは`audit-change-guard`が、検査の削除・固定値の変更・製品版の上げ方を確認し、所有者のラベル`owner-approved-audit-change`がない変更を止める。
+監査基盤自体の検査（ファイルの到達性、workflowの契約、変更ガード、文の形の網羅、仕様の例文、仕様の期待値）はgateの必須段で、内容は [AUDIT.md](../AUDIT.md) の「監査基盤の保証」を参照する。PRでは`audit-change-guard`が、baseのガードで、検査の削除・固定値の変更・製品版の上げ方を確認し、`audit/manifests/intended-audit-changes.json` に理由の記録がない変更を止める。
 
 ## 結果を見る
 
