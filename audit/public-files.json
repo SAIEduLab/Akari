@@ -1,6 +1,6 @@
 {
   "schema": "akari-public-files-v1",
-  "productVersion": "1.0.0",
+  "productVersion": "1.0.1",
   "files": [
     ".gitattributes",
     ".github/CODEOWNERS",
@@ -10,9 +10,9 @@
     ".github/workflows/akari-work-authorization.yml",
     ".gitignore",
     "AUDIT.md",
-    "Akari_1_0_0.html",
+    "Akari_1_0_1.html",
     "EXTENSIONS.md",
-    "LANGUAGE_1_0_0.md",
+    "LANGUAGE_1_0_1.md",
     "LICENSE",
     "MANUAL.html",
     "Manual/.gitkeep",
@@ -47,6 +47,7 @@
     "audit/boundaries/07-semantic-analysis-core.json",
     "audit/boundaries/07-semantic-analysis.json",
     "audit/boundaries/08-stage-and-export.json",
+    "audit/boundaries/09-editor-search-core.json",
     "audit/boundaries/09-editor-search.json",
     "audit/boundaries/09-editor-sessions.json",
     "audit/boundaries/10-block-view.json",
@@ -259,9 +260,11 @@
     "audit/manifests/component-controls-traceability.json",
     "audit/manifests/features.json",
     "audit/manifests/intended-audit-changes.json",
+    "audit/manifests/intended-behaviour-changes.json",
     "audit/manifests/language-form-coverage.json",
+    "audit/manifests/mutation-equivalents.json",
     "audit/manifests/product-tests.json",
-    "audit/manifests/release-1.0.0.json",
+    "audit/manifests/release-1.0.1.json",
     "audit/manifests/samples.json",
     "audit/public-files.json",
     "audit/renumber-release.mjs",
@@ -450,6 +453,7 @@
     "src/js/07-semantic-analysis-core.js",
     "src/js/07-semantic-analysis.js",
     "src/js/08-stage-and-export.js",
+    "src/js/09-editor-search-core.js",
     "src/js/09-editor-search.js",
     "src/js/09-editor-sessions.js",
     "src/js/10-block-view.js",
@@ -465,5 +469,5 @@
     "src/js/11-application.js",
     "src/js/12-public-api.js"
   ],
-  "productFile": "Akari_1_0_0.html"
+  "productFile": "Akari_1_0_1.html"
 }

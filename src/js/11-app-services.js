@@ -143,7 +143,7 @@
         if(label.replace(/[\s。]/g,'')!==proposal.text.replace(/[\s。]/g,'')){code.id=(binding.kind==='draft'?'callable':'editor')+'-assist-'+index;code.textContent=proposal.text;button.append(code);button.setAttribute('aria-describedby',code.id);}
         button.onclick=()=>{
           if(!current())return;
-          const source=basis.slice(0,proposal.start)+proposal.source+basis.slice(proposal.end),written=basis.slice(proposal.start,proposal.end);
+          const source=basis.slice(0,proposal.start)+proposal.source+basis.slice(proposal.end),written=basis.slice(proposal.start,proposal.end).replace(/[。\s]+$/,'');
           try{
             commitSource(binding,source,{atomic:true,flushQueued:true});binding.textarea.value=source;n.hidden=true;
             let status=`✓ 「${written}」を 書きかえたよ`;
@@ -155,8 +155,6 @@
         choices.append(button);
         if(proposal.description){const small=document.createElement('small');small.textContent=proposal.description;choices.append(small);}
       }
-      const other=data.headerEvent==='valueChanged'?null:appVars.project.components.find(c=>c.id!==ctx.targetId&&(c.name===data.subject||/止まる|止める|とまる|とめる/.test(data.text)&&data.names.some(n=>n.kind==='part'&&n.name===c.name)));
-      if(other){const note=document.createElement('small');note.className='assist-note';note.textContent=`${other.name}が する ことは、${other.name}の 本文に 書きます`;choices.append(note);}
       const cancel=n.querySelector('[data-intent-cancel]')||document.createElement('button');cancel.type='button';cancel.dataset.intentCancel='';cancel.textContent='この あんないを とじる';cancel.onclick=()=>appCalls.closeAssist(binding);choices.append(cancel);n.append(choices);
       if(!n.assistKeyHandler){n.addEventListener('keydown',event=>{if(event.key==='Escape'&&event.target.closest('.intent-choices,.assist-choices')){event.preventDefault();event.stopPropagation();appCalls.closeAssist(binding);}});n.assistKeyHandler=true;}
     }
@@ -175,7 +173,8 @@
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
           d.line ? d.line + '行目 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
-      const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
+      // A rewrite keeps who does the next sentence (assistProposalKeepsSubject).
+      const proposals = (error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || []).map(p => assistProposalKeepsSubject(p, error?.proposalSource, { ...appCalls.bindingContext(binding), symbols: buildSymbols(appVars.project) }, appVars.project));
       const presentation=JSON.stringify([error?.proposalSource,appVars.editorContextRevision,proposals.map(p=>p.source),reason]);
       const retain=binding.failurePresentation===presentation;
       if(!retain){appCalls.cancelAssist(binding);for(const choices of n.querySelectorAll('.intent-choices,.assist-choices,.assist-none'))choices.remove();appCalls.showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);binding.failurePresentation=presentation;}
@@ -232,6 +231,8 @@
             try {field.focus();} finally {appVars.intentInputFocus=previousFocus;}
           };
           choices.append(button);
+          // What the rewrite also writes in the next sentence (自分は) is shown under the button, as for the near sentences.
+          if(proposal.note){const small=document.createElement('small');small.textContent=proposal.note;choices.append(small);}
         }
         const cancel = document.createElement('button');
         cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = 'この あんないを とじる';

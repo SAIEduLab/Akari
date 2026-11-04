@@ -8,7 +8,7 @@ import {pressStop} from './stop-press.cjs';
 
 // Independent fixtures from EXTENSIONS.md factory/context and LANGUAGE.md extension-event lifetime.
 const manifest={id:'audit.context',name:'監査の見え方',version:'1.0.0',apiContract:1,
-  standard:{languageContractId:4,runtimeContractId:4},description:'公開APIの見え方を確かめる。',
+  standard:{languageContractId:5,runtimeContractId:5},description:'公開APIの見え方を確かめる。',
   dependencies:[],capabilities:[],offline:true,selfContained:true,state:{formatVersion:1,initial:null},
   commands:[{id:'inspect',name:'見え方を記録する',description:'呼出しの見え方を記録する。',args:[{name:'番号',type:'number',unit:null}],returns:{type:'number',unit:null},async:false},{id:'hold',name:'停止を待つ',description:'実行中の呼出しを保つ。',args:[],returns:{type:'number',unit:null},async:true},{id:'read-later',name:'あとで読み直す',description:'ほかの本文が動いた後の見え方を読む。',args:[],returns:{type:'number',unit:null},async:true}],
   calculations:[{id:'inspect-value',name:'見え方を数にする',description:'計算の呼出しを記録する。',args:[{name:'番号',type:'number',unit:null}],returns:{type:'number',unit:null},async:false}],

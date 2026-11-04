@@ -1382,10 +1382,7 @@
     }
     return errors;
   }
-  // Notices never stop a run, a save or an export. ねこは1秒待つ。だんごは言う。: only ねこ waits, so だんご's
-  // sentence runs at once; say so where the next sentence of the same flow has another subject.
-  // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
-  const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
+  // Notices never stop a run, a save or an export.
   // B-17: 画面の左下のはしから、右へ320歩のばしょへ行く goes to たて0 (the bottom edge). The notice says so and gives the two
   // fixes: keep the place (上へ（たてのばしょ）歩) or write the 0 (上へ0歩). 画面の左下のはしへ行く means 0 on purpose.
   // The fixes are offered wherever the sentence's own text is known: on its own line, after another sentence of the line,
@@ -1430,7 +1427,8 @@
             [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
             let text = lanes ? null : write(leg, STATEMENT_EXPLICIT_ACTORS.has(goto));
             if (text && chained) text = text.replace(/行く$/, '行って');
-            if (lanes) {
+            // A line split after the parts written together (、鳥は…) is more than their sentence: no rewrite of the whole line.
+            if (lanes && !MEIJIN_SPLIT_GROUPS.has(node)) {
               const bare = write(leg, false), named = write(leg, true);
               if (bare && named?.endsWith(bare)) text = group.replace(/、$/, '') + (named.slice(0, -bare.length).endsWith('、') ? '、' : '') + bare;
             }
@@ -1465,7 +1463,7 @@
         visit(e, negated);
         for (const [key, value] of Object.entries(e)) if (key !== 'sourceSpan' && value && typeof value === 'object') walk(value, negated !== (e.kind === 'UnaryExpression' && e.op === 'NOT' && key === 'value'));
       };
-      for (const [key, value] of Object.entries(node)) if (!['body', 'thenBody', 'elseBody', 'lanes', 'sourceSpan', 'actorRef', 'laneRef'].includes(key) && value && typeof value === 'object') walk(value, false);
+      for (const [key, value] of Object.entries(node)) if (!['body', 'thenBody', 'elseBody', 'lanes', 'sourceSpan', 'actorRef'].includes(key) && value && typeof value === 'object') walk(value, false);
     };
     const statements = function* (nodes) { for (const n of nodes || []) { if (!n || typeof n !== 'object') continue; yield n; for (const key of ['body', 'thenBody', 'elseBody']) yield* statements(n[key]); for (const lane of n.lanes || []) yield* statements(lane); } };
     // The touch of a condition, with who touches when it is written (名人: ねこが「石」にふれていれば).
@@ -1638,6 +1636,21 @@
       for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])
         for (const {node:m,actor} of effects(nodes,other)) { if (m.kind === 'MotionCommand' || m.kind === 'ContinuousRule') movers.push([other.key, flow, actor]);
           if (m.kind === 'LooksCommand' && m.op === 'SHOW') showers.push([other.key, flow, actor]); } }
+    // I139: which flows change a variable of the work: [item key, flow, name]. A sentence that names it as what it changes
+    // counts, in a definition too (a definition may be called from anywhere).
+    const changed = m => m.target?.name ?? m.variable?.name ?? null, changers = [];
+    for (const other of compiled.items || []) { const a = compiled.astByKey?.get(other.key); if (!a) continue;
+      for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])
+        for (const m of flowStatements(nodes)) if (changed(m)) changers.push([other.definitionKind ? null : other.key, flow, changed(m)]); }
+    const workVariables = new Set((project.projectData?.variables || []).map(v => v.name)), partVariables = new Set(project.components.flatMap(c => (c.localData?.variables || []).map(v => v.name)));
+    // The variables a wait's condition reads, when it reads only variables of the work, numbers, texts and calculations
+    // (nothing that changes by itself: timer, answer, keys, mouse, touching, a part's place).
+    const conditionVariables = e => { const names = new Set(); let plain = true;
+      const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }
+        if (x.kind === 'VariableRead') { if (x.qualifier || !workVariables.has(x.name) || partVariables.has(x.name)) plain = false; else names.add(x.name); return; }
+        if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression'].includes(x.kind)) { plain = false; return; }
+        for (const [k, v] of Object.entries(x)) if (k !== 'sourceSpan') visit(v); };
+      visit(e); return plain ? [...names] : []; };
     for (const [flow, nodes] of [['body', ast.body], ...(ast.units || []).map((u, i) => ['unit' + i, u.body])]) {
       const visit = (list, hidden) => {
         (list || []).forEach((n, i) => {
@@ -1670,6 +1683,19 @@
               const heading=sentenceHeadingSource({event:'touchStart',actorRef:item.meijin||toucher!==owner?{kind:'named',name:toucher}:{kind:'self'},filter:{target:targetName}});
               note('I134', n, `${toucher}が ${shown}に ふれるまで、ここで 待ちます。${toucher}を 動かす 文は この あとに あります。まだ ふれて いない ときは、この あとの 動く 文には 進みません。`
                 + (item.meijin ? `ふれる たびに する ときは「${heading}」と 書いて、する ことを 次の 行に 右へ ずらして 書きます` : `ふれる たびに する ときは「${heading}」の 本文に 書きます`));
+            }
+            // I139: a wait for variables of the work that only this flow changes, and only after the wait: when it starts
+            // and the condition is not true, the flow waits for ever (点数が1になるまで待つ。犬は点数を1にする。). A variable no
+            // sentence changes gets no notice (the work may start with it as it is waited for).
+            const names = conditionVariables(n.condition);
+            if (names.length) {
+              const order = [...effects(nodes, item)].map(e => e.node), at = order.indexOf(n), here = order.flatMap((m, k) => names.includes(changed(m)) ? [k] : []);
+              // A change in a lane (次のことを同時に始める, あいだ) may run at the same time as the wait: it is not after it.
+              const laned = new Set([...flowStatements(nodes)].flatMap(m => (m.lanes || []).flatMap(lane => [...flowStatements(lane)])));
+              const elsewhere = changers.some(([k, f, name]) => names.includes(name) && !(k === item.key && f === flow)) || here.some(k => laned.has(order[k]));
+              if (at >= 0 && !elsewhere && here.length && here.every(k => k > at))
+                note('I139', n, `${names.map(name => `「${name}」`).join('や')}を かえる 文は、この 本文の この 文より あとに しか ありません。待ち始めた ときに あてはまって いないと、ずっと 待って、あとの 文には 進みません。`
+                  + (item.meijin ? 'かえる ことを 同時に する ときは、「次のことを同時に始める。」の 中に 書きます' : 'かえる ことを 同時に する ときは、「同じ きっかけの 本文を ふやす」で 本文を ふやして、そこに 書きます'));
             }
           }
           if (n.kind === 'Forever' && !endsLoop(n.body)) {
@@ -1746,35 +1772,9 @@
   }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
-    const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
     for (const item of compiled.items || []) {
       const ast = compiled.astByKey?.get(item.key);
       if (!ast) continue;
-      const self = item.targetId === 'stage' ? project.stage.name : project.components.find(c => c.id === item.targetId)?.name || '自分';
-      const who = ref => ref?.kind === 'named' ? ref.name : ref?.kind === 'self' ? self : null;
-      const walk = nodes => {
-        if (!Array.isArray(nodes)) return;
-        nodes.forEach((n, i) => {
-          for (const key of ['body', 'thenBody', 'elseBody']) walk(n?.[key]);
-          // ねこと犬は1秒待つ。 (名人): each part written waits, as one subject does (決まり2).
-          const lanes = n?.kind === 'Parallel' && n.lanes?.length > 1 && n.lanes.every(l => l.length === 1 && l[0].kind === 'WaitTime' && l[0].actorRef?.kind === 'named') ? n.lanes.map(l => l[0].actorRef.name) : null;
-          if (!lanes && (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all')) return;
-          const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
-          for (const m of nodes.slice(i + 1)) {
-            if (m.kind === 'CommentLine') continue;
-            if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all' || m.laneRef) break;
-            const other = who(m.actorRef);
-            if (!other || waiters.includes(other)) break;
-            const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
-              message: `${item.meijin && !NOTICE_VERBS[m.kind] && !['MotionCommand', 'LooksCommand', 'PenCommand'].includes(m.kind) ? 'この 文は すぐ 行います' : other + 'は すぐ ' + (NOTICE_VERBS[m.kind] || '動きます')}（待つのは ${waiter}だけです）。${item.meijin ? 'この 本文 ぜんたいで' : 'みんなで'} 待つ ときは、「待つ」の 文に 主語を 書きません` };
-            const key = note.where + '|' + note.line + '|' + note.column;
-            if (!seen.has(key)) { seen.add(key); notes.push(note); }
-            break;
-          }
-        });
-      };
-      walk(ast.body);
-      for (const unit of ast.units || []) walk(unit.body);
       for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast), ...flowNotes(project, compiled, item, ast)]) {
         const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
         if (!seen.has(key)) { seen.add(key); notes.push(note); }

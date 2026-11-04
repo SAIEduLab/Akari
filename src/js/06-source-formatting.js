@@ -224,9 +224,10 @@
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
     // A nested suite inherits its surrounding topic, but its topic changes stay local.
-    // A wait of one part always names it (自分は1秒待つ); the wait of the whole flow has no subject.
-    // Under a heading that names a part (たくどんは、3回くり返す。) that part's sentences are written without it, until
-    // another subject comes; a wait still names it, because without a subject it is the wait of the whole flow.
+    // A wait is written with the subject it was written with (自分は1秒待つ), or with none (1秒待つ); either stops the
+    // flow, and a 〜まで待つ reads its condition as its subject's. Under a heading that names a part (たくどんは、3回くり返す。)
+    // that part's sentences are written without it, until another subject comes; a wait still names it, so that its
+    // condition stays that part's.
     const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const wait=EVERYONE_WAITS.has(n.kind),actorRef=n.actorRef||(wait?{kind:'all'}:{kind:'self'}),everyone=actorRef.kind==='all',sameTopic=actorRef.kind==='named'&&!wait&&inheritedActor.kind==='named'&&actorRef.name===inheritedActor.name&&previousActor.kind==='named'&&previousActor.name===inheritedActor.name,actor=!everyone&&!sameTopic&&!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(wait||actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+(actorRef.particle||'は'):'',comment=n.inlineComment||'';let text;
       const controlActor=actorRef.kind!==previousActor.kind||(actorRef.kind==='named'&&actorRef.name!==previousActor.name)
         ? sentenceActorSource(actorRef)+'は、' : '';

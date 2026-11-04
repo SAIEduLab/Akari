@@ -9,7 +9,7 @@
     "src/js/04-syntax-sentences.js",
     "src/js/05-command-presentation.js",
     "src/js/06-source-formatting.js",
-    "src/js/09-editor-search.js",
+    "src/js/09-editor-search-core.js",
     "src/js/09-editor-sessions.js"
   ]
 }

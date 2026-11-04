@@ -4,6 +4,7 @@
   "uses": [
     "src/js/02-language-contracts.js",
     "src/js/05-command-presentation.js",
+    "src/js/09-editor-search-core.js",
     "src/js/09-editor-search.js",
     "src/js/09-editor-sessions.js",
     "src/js/10-diagnostic-text.js"

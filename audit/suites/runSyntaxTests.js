@@ -390,6 +390,50 @@ function runSyntaxTests() {
         eq(formatScript(again), text);
       }
     });
+    // LANGUAGE.md「待つ」: だけ on another sentence is は; a wait written with だけ is stopped and its fix covers the
+    // sentence; two subjects on a timed wait are offered one wait without a subject (two waits would wait twice as long);
+    // two subjects on any other sentence are split; the same part written twice is not two subjects.
+    test('wait subjects are read as the wait of the body', () => {
+      const p = makeDefaultProject(), base = p.components.find((c) => c.type === 'sprite');
+      p.components = ['ねこ', '犬'].map((name, i) => ({ ...structuredClone(base), id: 'wait-subject-' + i, name,
+        costumes: [{ id: 'wait-subject-face-' + i, name: '丸', kind: 'text', value: '●' }], costumeId: 'wait-subject-face-' + i }));
+      const ctx = { symbols: buildSymbols(p), targetId: 'wait-subject-0', event: 'start' },
+        first = (source) => parseSyntax(source, ctx).syntaxDiagnostics[0];
+      for (const written of ['ねこだけ前へ10歩進む。', 'ねこだけは前へ10歩進む。']) eq(formatScript(parsed(written, ctx)).trim(), 'ねこは前へ10歩進む。');
+      const only = first('ねこだけ1秒待つ。');
+      eq([only.code, only.message.split('。')[0], only.proposals.map((x) => [x.source, x.start, x.end])],
+        ['P205', '「ねこだけ」と 書いた「待つ」は 読めません', [['ねこは1秒待つ', 0, 8]]]);
+      const two = first('ねこも犬も1秒待つ。');
+      eq([two.message, two.proposals.map((x) => [x.label, x.source])],
+        ['1つの 文に 書ける 主語は 1つです。待つ 文は、主語を 書かなくても、この 本文が 待ちます', [['この 本文で 待つ', '1秒待つ']]]);
+      eq(first('ねこと犬は前へ10歩進む。').proposals.map((x) => x.source), ['ねこは前へ10歩進む。\n犬は前へ10歩進む']);
+      ok(first('ねこも犬も、画面のはしにふれるまで待つ。').message.includes('書いた じゅんに'));
+      ok(!String(first('ねこもねこも1秒待つ。')?.message).includes('待つ 文は、主語を 書かなくても'));
+      // The same part written twice is no two subjects to split.
+      ok(!String(first('ねこもねこも前へ10歩進む。')?.message).includes('主語ごとに'));
+      // In a body that is not 名人, waiting for a speech is not read, whatever name is written before it.
+      ok(first('だんごが言い終わるまで待つ。').message.startsWith('どう なるまで なのかが 読めません'));
+      // The two subjects do the sentence up to a clause that names its own subject; that clause is written once.
+      for (const joint of ['待って', '待ってから'])
+        eq(first('ねこと犬は1秒' + joint + '、ねこは10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む']);
+      eq(first('ねこと犬は前へ10歩進んで、ねこは「やあ」と言う。').proposals.map((x) => x.source), ['ねこは前へ10歩進む。\n犬は前へ10歩進む。\nねこは「やあ」と言う']);
+      ok(first('ねこと犬は、画面のはしにふれるまで待ってから、ねこは「やあ」と言う。').message.includes('書いた じゅんに'));
+      // A timed wait first is written once, and what the two subjects do after it is split.
+      eq(first('ねこと犬は1秒待ってから、10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む。\n犬は前へ10歩進む']);
+      // What comes after the wait takes no time here, so the subjects do not move one after the other.
+      ok(!first('ねこと犬は1秒待ってから、10歩進む。').message.includes('書いた じゅんに'));
+      ok(first('ねこと犬は10歩進んで、1秒待つ。').message.includes('書いた じゅんに'));
+      // 名人: parts written together that wait and then go on to a clause with its own subject wait together and do that
+      // clause once after them (runCoreTests); also with も, and with more clauses before it. A part in a condition is no subject.
+      const meijin = (source) => { const q = structuredClone(p); q.scripts = [{ id: 'wait-subject-meijin', targetId: 'meijin', mode: 'meijin', event: 'start', source }]; return compileProject(q).errors; };
+      for (const source of ['ねこと犬は1秒待って、ねこは10歩進む。', 'ねこと犬は1秒待ってから、ねこは10歩進む。', 'ねこと犬は1秒待ってからねこは10歩進む。', 'ねこと犬は1秒待つ。ねこは10歩進む。',
+        'ねこも犬も1秒待って、ねこは10歩進む。', 'ねこと犬は1秒待って、10歩進んで、ねこは10歩進む。', 'ねこと犬は1秒待って、ねこが画面のはしにふれるまで待つ。'])
+        eq(meijin(source), []);
+      // A timed wait then timed actions: what comes after the wait is split, runs one subject after the other, and says so.
+      ok(first('ねこと犬は1秒待ってから、2秒かけて、いまのばしょから、右へ40歩動く。').message.includes('書いた じゅんに'));
+      eq(first('ねこと犬は1秒半待つ。').proposals.map((x) => x.source), ['1.5秒待つ']);
+      eq(meijin('ねこと犬は1秒待ってから、10歩進む。'), []);
+    });
     return {
       passed: results.filter((x) => x.pass).length,
       failed: results.filter((x) => !x.pass).length,

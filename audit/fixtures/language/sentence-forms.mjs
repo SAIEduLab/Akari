@@ -401,10 +401,11 @@ export const sentenceFormCases=[
     expected:script([hide(named('ねこ')),wait(1),show(named('ねこ'))]),
     claims:{'te:かくして':'ねこは姿をかくして','te:待って':'1秒待って'},
   },
-  // ── 待つ and its subject: with a subject only that part waits; without one (or みんなは／全体が) the whole flow ──
+  // ── 待つ and its subject: kept as written (みんなは／全体が are no subject); every wait stops the flow it is in.
+  // ねこだけ1秒待つ is not read (it says only ねこ waits); the specification expectations check its message ──
   {
     id:'SF-wait-subject',
-    source:'1秒待つ\nねこは1秒待つ\n自分は1秒待つ\nみんなは1秒待つ\n全体が1秒待つ\nみんなで1秒待つ\nねこだけ1秒待つ\nねこは点数が1と同じになるまで待つ\n点数が1と同じになるまで待つ',
+    source:'1秒待つ\nねこは1秒待つ\n自分は1秒待つ\nみんなは1秒待つ\n全体が1秒待つ\nみんなで1秒待つ\nねこも1秒待つ\nねこは点数が1と同じになるまで待つ\n点数が1と同じになるまで待つ',
     expected:script([wait(1),wait(1,named('ねこ')),wait(1,self),wait(1),wait(1),wait(1),wait(1,named('ねこ')),
       statement('WaitUntil',{condition:compare('EQ',score,num(1))},named('ねこ')),statement('WaitUntil',{condition:compare('EQ',score,num(1))})]),
     claims:{'sentence:WaitTime':'ねこは1秒待つ','sentence:WaitUntil':'ねこは点数が1と同じになるまで待つ'},
@@ -419,7 +420,7 @@ export const sentenceFormCases=[
   // 自分が／自分も are 自分は; まず・それから・すばやく after the subject only say the order or how.
   {
     id:'SF-subject-self-and-lead',
-    source:"自分が1秒待つ\n自分も1秒待つ\nねこは、まず1秒待つ\nそれからねこだけ1秒待つ\nねこはすばやく10歩進む",
+    source:"自分が1秒待つ\n自分も1秒待つ\nねこは、まず1秒待つ\nそれからねこは1秒待つ\nねこはすばやく10歩進む",
     expected:{"kind":"Script","body":[{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":10},"unit":"歩"}],"op":"MOVE","direction":"forward","actorRef":{"kind":"named","name":"ねこ"}}]},
     claims:{"sentence:WaitTime":"自分が1秒待つ","sentence:MotionCommand:MOVE":"ねこはすばやく10歩進む"},
   },

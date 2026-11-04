@@ -1746,6 +1746,15 @@
         '作品の 中身を 読めません。あかりで ほぞんした ファイル（名前が「.akari.md」で おわる ファイル）を えらんで ください',
       );
     }
+    // A work of this project format saved with another language contract (an earlier あかり wrote 4): its sentences may run
+    // otherwise here, so it is not opened, and the child is told it comes from another あかり, as for another format.
+    if (root && typeof root === 'object' && root.schema === 'akari-project' && root.formatVersion === PROJECT_FORMAT_ID &&
+      Number.isSafeInteger(root.languageContractId) && root.languageContractId > 0 && root.languageContractId !== LANGUAGE_CONTRACT_ID)
+      throw Object.assign(new AkariError(
+        'F502',
+        (root.languageContractId < LANGUAGE_CONTRACT_ID ? '前の' : 'あたらしい') +
+          ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。',
+      ), { otherFormat: true });
     const recorded = root;
     if (options.upgradeExtensions && root && typeof root === 'object' && Object.hasOwn(root, 'extensions'))
       root = { ...root, extensions: EXTENSION_HOST.upgradeRequirements(root.extensions).envelope };

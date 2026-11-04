@@ -23,7 +23,7 @@
 
 ## 製品版から独立した命名と受入判定
 
-配布する製品HTMLは `Akari_<major>_<minor>_<patch>.html` とし、`Akari` 直後の `_` を必須にします。`audit/public-files.json` の `productFile` を現行pathの正本にします。製品を変更する作業では、mainの現行製品版からpatchを一度だけ上げます。それ以外の上げ方（minor・major・patchの複数）は所有者の判断であり、PRに所有者のラベル（後掲）を付けた場合だけ受け入れます。版を下げることは認めません。製品不変の指示・監査基盤整理では製品版を変更しません。同じ作業内の複数改修・commit・レビュー対応では版上げを繰り返さず、版上げと関連更新をmergeする作業branch/PRに含めます。製品版、ファイル名、公開リンクを一致させ、現行ツリーには製品HTMLを1つだけ置き、入れ替えた旧製品HTMLを削除します。製品ファイルとrelease freezeの版表示は配布ラベルであり、機能名・安定test ID・保存形式・言語とruntimeの契約番号には流用しません。
+配布する製品HTMLは `Akari_<major>_<minor>_<patch>.html` とし、`Akari` 直後の `_` を必須にします。`audit/public-files.json` の `productFile` を現行pathの正本にします。製品を変更する作業では、mainの現行製品版からpatchを一度だけ上げます。それ以外の上げ方（minor・major・patchの複数）は所有者の判断であり、PRが変更ガードの記録（後掲）に `version:<版>` と理由を書いた場合だけ受け入れます。版を下げることは認めません。製品不変の指示・監査基盤整理では製品版を変更しません。同じ作業内の複数改修・commit・レビュー対応では版上げを繰り返さず、版上げと関連更新をmergeする作業branch/PRに含めます。製品版、ファイル名、公開リンクを一致させ、現行ツリーには製品HTMLを1つだけ置き、入れ替えた旧製品HTMLを削除します。製品ファイルとrelease freezeの版表示は配布ラベルであり、機能名・安定test ID・保存形式・言語とruntimeの契約番号には流用しません。
 
 - 関数・変数・監査IDは機能・責務を示す名前にします。`restoreV103`、`runVersion09Tests`、`parseRelease104`のようにリリース番号を組み込まず、整理番号が必要なら`validateCase001`や`FORMAT-PROJECT-001`のように機能名から区切ります。番号の対応先は製品版ではありません。
 - 製品のリリースラベルは一か所に定義し、UI表示・保存と書出しの作成元記録・公開APIへの露出だけで参照します。`appVersion`は型・長さ・文字種を検証する記録項目で、現在製品版との一致や大小比較を受入条件にしません。
@@ -702,7 +702,7 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
-| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.0.0の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.0.1の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
 | EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。

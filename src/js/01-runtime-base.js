@@ -72,10 +72,10 @@
     };
     // The one place that writes the contract numbers; the extension Standard and the saved data read them.
     const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 4,
-      runtimeContractId: 4,
+      languageContractId: 5,
+      runtimeContractId: 5,
       programFormatVersion: 4,
-      projectFormatVersion: 5,
+      projectFormatVersion: 6,
     });
     const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
       executableBytes: 64 * 1024 * 1024, logChars: 100000,
@@ -377,8 +377,8 @@
         channel.port2.postMessage(0);
       };
     })();
-    // A wait with a subject (だんごは0.2秒待つ) holds only that part: the flow goes on, and the next statement of
-    // that part waits until the hold ends. A wait without one (みんな, {kind:'all'}) stops the whole flow.
+    // The waits that may be written without a subject (0.2秒待つ, みんなは…: {kind:'all'}). Every wait, with a subject
+    // or without one, stops the flow it is in (LANGUAGE.md 待つ).
     function everyoneWaitKind(kind) {
       return ['WaitTime', 'WaitUntil', 'BroadcastAndWait', 'WaitBroadcastGroup'].includes(kind);
     }
@@ -386,9 +386,6 @@
       if (!node || typeof node !== 'object') return false;
       if (node.kind === 'EventCount') return true;
       return Object.values(node).some(v => v && typeof v === 'object' && hasEventCount(v));
-    }
-    function everyoneStatement(node) {
-      return node?.actorRef ? node.actorRef.kind === 'all' : everyoneWaitKind(node?.kind);
     }
     function cloneDesignProject(p) {
       return typeof structuredClone === 'function'

@@ -786,6 +786,36 @@ function runSemanticContractTests() {
         if(notice){ok(notes[0].message.includes('まだ ふれて いない ときは'));ok(!notes[0].message.includes('待ちつづけます'));}
       }
     });
+    test('variable wait notice: only this flow changes the variable, and only after the wait', () => {
+      // I139: 点数が1になるまで待つ。犬は点数を1にする。 waits for ever when 点数 is not 1 as the wait starts; not when the
+      // variable is changed before the wait, in another body, in a lane that runs with it, or by nothing, nor when the
+      // condition reads something that changes by itself.
+      const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+      p.components=['ねこ','犬'].map((name,i)=>({...structuredClone(base),id:'vwait-'+i,name,costumes:[{id:'vwait-face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:'vwait-face-'+i}));
+      p.projectData.variables.push({id:'vwait-score',name:'点数',initialValue:0});
+      const notes=(source,{meijin=false,other=null}={})=>{p.scripts=[{id:'vwait-main',targetId:meijin?'meijin':'vwait-0',...meijin?{mode:'meijin'}:{},event:'start',source},...other?[{id:'vwait-other',targetId:'vwait-1',event:'start',source:other}]:[]];
+        const c=compileProject(p);eq(c.errors,[]);return c.notes.filter(n=>n.code==='I139');};
+      for(const source of ['ねこは、点数が1になるまで待つ。犬は点数を1にする。','点数が1になるまで待つ。\n点数を1にする。','点数＋1が3になるまで待つ。\n点数を2にする。','ずっとくり返す。\n  点数が1になるまで待つ。\n  点数を0にする。','点数が1になるまで待つ。\n「数は？」とたずねて、答えを待つ。\n点数を答えにする。']){
+        const [note,...more]=notes(source);eq(more,[]);ok(note.message.startsWith('「点数」を かえる 文は、この 本文の この 文より あとに しか ありません。'));ok(note.message.includes('「同じ きっかけの 本文を ふやす」'));}
+      ok(notes('ねこは、点数が1になるまで待つ。犬は点数を1にする。',{meijin:true})[0].message.includes('「次のことを同時に始める。」の 中に'));
+      // Each heading of a 名人 body is a flow of its own.
+      eq(notes('作品を動かしたとき、\n  ねこは10歩進む。\n「スペース」キーがおされたとき、\n  点数が1になるまで待つ。\n  点数を1にする。',{meijin:true}).length,1);
+      // A condition that also reads what changes by itself (the timer) may become true while waiting.
+      eq(notes('点数がタイマーより大きくなるまで待つ。\n点数を100にする。'),[]);
+      for(const [source,options]of [['点数を1にする。\n点数が1になるまで待つ。\n点数を2にする。',{}],['点数が1になるまで待つ。\n点数を1にする。',{other:'1秒待つ。\n点数を1にする。'}],['点数が1になるまで待つ。\n10歩進む。',{}],
+        ['次のことを同時に始める。\n  点数が1になるまで待つ。\n  点数を1にする。\nねこは10歩進む。',{meijin:true}],['タイマーが3より大きくなるまで待つ。\nタイマーを0にする。',{}]])
+        eq(notes(source,options),[]);
+      // Nor for a variable of a part (each part has its own), a work variable that a part's variable shares its name with,
+      // or a change in a procedure (it may be called from anywhere).
+      p.components[0].localData={variables:[{id:'vwait-own',name:'体力',initialValue:5}],lists:[]};
+      eq(notes('体力が1になるまで待つ。\n体力を1にする。'),[]);
+      p.components[1].localData={variables:[{id:'vwait-same',name:'点数',initialValue:0}],lists:[]};
+      eq(notes('点数が1になるまで待つ。\n点数を1にする。'),[]);
+      p.components[1].localData={variables:[],lists:[]};
+      p.actions=[{id:'vwait-action',ownerId:'stage',name:'上げる',args:[],source:'点数を1にする。'}];
+      eq(notes('点数が1になるまで待つ。\n【上げる】という手順を行う。'),[]);
+      p.actions=[];
+    });
     test('scoped scalar expressions and quoted list names execute',()=>{
       const p=actorUnitFixture();p.projectData.variables=[];for(const c of p.components)c.localData={variables:[],lists:[]};
       p.projectData.lists=[{id:'advice-list',name:'買うもの',initialValue:['りんご']}];
@@ -839,6 +869,288 @@ function runSemanticContractTests() {
       for(const prefix of ['「字」と言う。','「😀」と言う。','「😀😀」と言う。'])for(const newline of ['', '\r\n']){
         const source=newline?prefix+newline+'（1＋2を言う。':prefix+'（1＋2を言う。',d=parseSyntax(source).syntaxDiagnostics[0];
         eq(d.code,'P207');eq(d.line,newline?2:1);eq(d.column,newline?1:[...prefix].length+1);
+      }
+    });
+    // LANGUAGE.md 保存・実行データの契約と検証: the contract numbers; an extension host built without a Standard
+    // (extensions/build.mjs) takes these, and one given a Standard keeps it.
+    test('contract numbers and the extension Standard',()=>{
+      eq(Akari.EXECUTABLE_CONTRACT,{languageContractId:5,runtimeContractId:5,programFormatVersion:4,projectFormatVersion:6});
+      eq(Akari.createAkariExtensionHost({}).standard,{languageContractId:5,runtimeContractId:5});
+      eq(Akari.createAkariExtensionHost({standard:{languageContractId:7,runtimeContractId:8}}).standard,{languageContractId:7,runtimeContractId:8});
+    });
+    const parts=(prefix,names)=>{const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+      p.components=names.map((name,i)=>({...structuredClone(base),id:prefix+i,name,x:100+i*5,y:100,costumes:[{id:prefix+'face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:prefix+'face-'+i}));return p;};
+    // LANGUAGE.md 読めない文の近い書き方: a near sentence keeps what was written — who does it (ねこは, ねこを…させる,
+    // ねこの…), what it does (最前面へ移動する brings the part to the front; telling a part may be a signal to it), which
+    // way, how much, and what each time is (2秒かけて／2秒で, 2秒後に／2秒待ってから, a time of either kind gives both).
+    // A sentence that says otherwise is not shown, one that keeps all comes first, one that names the subject first. A
+    // sentence with a condition, a loop, a procedure, several subjects or two actions unbroken is not compared by these
+    // roles. Each row: input, the body's owner, the first, then texts that must and must not come, and the parts of the
+    // work when they are not ねこ, 犬, 鳥 and 子ねこ.
+    test('near sentences keep the action written',()=>{
+      const worlds=new Map(),world=names=>{if(!worlds.has(names.join())){const p=parts('near-',names);p.projectData.variables.push({id:'near-score',name:'点数',initialValue:0});
+        p.actions=[{id:'near-jump',ownerId:'stage',name:'ジャンプ',args:[],source:'何もしない。'}];worlds.set(names.join(),p);}return worlds.get(names.join());};
+      const near=(source,targetId,names)=>{const p=world(names),ctx={symbols:buildSymbols(p),targetId,targetType:'sprite',event:'start',args:[],level:'advanced'};
+        return Akari.assistCandidates(p,source,ctx,parseSyntax(source,ctx).syntaxDiagnostics[0]).map(c=>c.text);};
+      const glide='2秒かけて、いまのばしょから、右へ40歩動く。',move='いまのばしょから、右へ40歩動く。',wait='ねこは2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。';
+      const rows=[
+        ['ねこを2秒で右へ40歩移動させる。','near-0','ねこは'+glide,[glide],[move,'「ねこ」のコピーを作る。']],
+        ['ねこを2秒で右へ40歩移動させる。','near-1','ねこは'+glide,[],[glide,move]],
+        ['ねこは2秒で右へ40歩移動する。','near-0','ねこは'+glide,[glide],[move]],
+        ['2秒で右へ40歩移動する。','near-0',glide,[],['ねこは'+glide]],
+        ['ねこを左へ20歩、2秒で移動させる。','near-0','ねこは2秒かけて、いまのばしょから、左へ20歩動く。',[],[]],
+        ['「2秒で右へ40歩」と言わせる。','near-0','「2秒で右へ40歩」と言う。',[],['いまのばしょから、右へ10歩動く。',move]],
+        ['ねこを2秒後に右へ40歩移動させる。','near-0',[wait]],
+        ['ねこを2秒待ってから右へ40歩移動させる。','near-0','2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。',['2秒待つ。\n'+move],['ねこは'+glide]],
+        ['ねこを2秒右へ40歩動かす。','near-0','ねこは'+glide,[wait],[]],
+        ['ねこを右へ40歩移動させて、犬を3秒で左へ10歩移動させる。','near-0','ねこは、'+move+'\n犬は3秒かけて、いまのばしょから、左へ10歩動く。',[],[]],
+        ['ねこを3秒で前へ10歩進ませる。','near-1','ねこは3秒かけて、前へ10歩進む。',[],['前へ10歩進む。']],
+        ['ねこを10歩進ませる。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
+        ['ねこを右に90度回らせる。','near-1','ねこは右に90度回る。',[],['右に90度回る。']],
+        // A part written with を before a verb that moves or turns it (回す, 進める, 移す, 向ける) is the part that does it, as
+        // with させる: in 犬's body, ねこを右へ90度回す turns ねこ, and neither 犬's turn nor a copy of ねこ is near.
+        ['ねこを右へ90度回す。','near-1','ねこは右に90度回る。',[],['右に90度回る。']],
+        ['ねこを右へ90度回す。','near-0','ねこは右に90度回る。',['右に90度回る。'],[]],
+        ['ねこを2秒で右へ40度回す。','near-1','ねこは2秒かけて、右に40度回る。',[],['2秒かけて、右に40度回る。','右に40度回る。']],
+        ['ねこを前へ10歩進める。','near-1','ねこは前へ10歩進む。',[],['前へ10歩進む。']],
+        ['ねこを右へ10歩移す。','near-1','ねこは、いまのばしょから、右へ10歩動く。',[],['いまのばしょから、右へ10歩動く。','「ねこ」のコピーを作る。']],
+        ['ねこを右に向ける。','near-1',null,[],['「ねこ」の方を向く。']],
+        ['ねこをかくす。','near-1','ねこはすがたをかくす。',[],['すがたをかくす。']],
+        // Parts written together with を (ねこと犬を) are not one part, and the part made to do a clause (ねこを…させてから)
+        // is not carried on to the next clause: the body's owner says it.
+        ['ねこと犬を2秒で右へ40歩移動させる。','near-2',[]],
+        ['ねこを右へ40歩移動させてから「やあ」と言う。','near-1','ねこは、'+move+'\n犬は「やあ」と言う。',[],['ねこは、'+move+'\nねこは「やあ」と言う。']],
+        // A sentence that does another action than the one read keeps a way or a number written, not only a name or a
+        // text; no number written is turned into another unit, and no text is added that was not written.
+        ['ねこを右へ40歩、犬を左へ10歩動かす。','near-1',null,[],['ねこは「犬」のコピーを作る。']],
+        ['ねこを2倍の大きさにする。','near-1',null,[],['「ねこ」のところへ行く。','「ねこ」の方を向く。','「ねこ」のコピーを作る。','ねこは「ねこ」のコピーを作る。','大きさを120％にする。','ねこは大きさを120％にする。']],
+        // A copy is made only when a copy is written (コピー, クローン, 複製, 分身, ふやす).
+        ['ねこを大きくする。','near-1',['ねこは大きさを150％にする。']],
+        ['ねこのコピーを3つ作りたい。','near-1',['「ねこ」のコピーを3つ作る。']],
+        // After the nearest sentence, one of the sound, the pen, a move or a variable comes only when the writing names it.
+        ['犬のペンを上げる。','near-0',['犬はペンを上げる。']],
+        ['重なりを上げる。','near-0',null,[],['点数を1ふやす。','ペンを上げる。','音の高さを1段階上げる。']],
+        ['犬のすがたを見せる。','near-0',['犬はすがたを見せる。']],
+        ['右へ40歩回る。','near-0',null,[],['右に15度回る。']],
+        ['右へ40度動く。','near-0',null,[],['いまのばしょから、右へ10歩動く。']],
+        ['すがたを「丸」にかえた。','near-0',null,[],['点数を「丸」にする。']],
+        // A text written without 「 」 is said as it is written; a key's name, as a part's, is no text to say or send.
+        ['こんにちはと言わせる。','near-0','「こんにちは」と言う。'],
+        ['ねこをふやす。','near-1',null,[],['点数を1ふやす。','点数を1へらす。']],
+        ['ねこをかくして、「やあ」と言う。','near-1',null,[],['ねこはペンを下ろす。\n犬は「やあ」と言う。']],
+        ['すがたを「ほし」にかえた。','near-0',null,[],['画面のはしにふれていれば、はね返る。']],
+        // Where no meaning was read, nothing not written is said, asked or sent, and a sound is played only when one is written.
+        ['ねこのすがたを見せる。','near-0','すがたを見せる。',[],['「やったね」と言う。']],
+        ['ペンを下げる。','near-0','ペンを下ろす。',[],['音の高さを1段階下げる。','点数を1へらす。']],
+        // There, the pen is put up or down only when the pen is written (also ぺん, 筆), and the timer is set to 0 only when the
+        // timer or a time is written.
+        ['おわり。','near-0',null,[],['ペンを上げる。']],
+        ['体力を1あげる。','near-0',null,[],['ペンを上げる。']],
+        ['ぺんをあげる。','near-0',['ペンを上げる。']],
+        ['筆を下ろす。','near-0','ペンを下ろす。'],
+        ['線をかきはじめる。','near-0','ペンを下ろす。',[],['タイマーを0にする。']],
+        // まつ written in kana at the end is 待つ.
+        ['2秒でまつ。','near-0','2秒待つ。',[],['「名前は？」とたずねて、答えを待つ。']],
+        ['自分を右に90度回らせる。','near-1','右に90度回る。',[],[]],
+        ['ねこ、前へ10歩進む。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
+        ['ねこは「やあ」と言わせる。','near-1','ねこは「やあ」と言う。',[],['「やあ」と言う。']],
+        ['犬の色を「赤」にする。','near-0','犬は色を「赤」にする。',[],['色を「赤」にする。']],
+        ['ねこのコピーを作らせる。','near-1','「ねこ」のコピーを作る。',[],['自分のコピーを作る。']],
+        ['最前面へ移動する。','near-0','いちばん手前へ出る。',[],['前へ10歩進む。',move]],
+        ['犬に「やあ」と言う。','near-0','「やあ」の合図を送る。',['「やあ」と言う。'],[]],
+        ['犬に「出発」と伝える。','near-0','「出発」の合図を送る。',[],[]],
+        ['「やあ」と小さな声で言う。','near-0','「やあ」と言う。',[],[]],
+        ['1秒やすんで、「やあ」と言う。','near-0','1秒待つ。\n「やあ」と言う。',[],[]],
+        ['1秒半待つ。','near-0','1.5秒待つ。',[],[]],
+        ['しばらくまつ。','near-0','1秒待つ。',[],[]],
+        ['タイマーを0秒にする。','near-0','タイマーを0にする。',[],['0秒待つ。\nタイマーを0にする。']],
+        ['右へ100歩、上へ50歩のばしょへ行く。','near-0','画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。',[],['「犬」のところへ行く。']],
+        ['画面の右上へ行く。','near-0','画面の左下のはしから、右へ640歩、上へ400歩のばしょへ行く。',[],[]],
+        ['「犬」に行く。','near-0','「犬」のところへ行く。',[],['画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。']],
+        ['横に10歩動く。','near-0','いまのばしょから、右へ10歩動く。',['いまのばしょから、左へ10歩動く。'],[]],
+        ['犬は止まる。','near-0','この動きを止める。',['犬は自分のほかの動きを止める。'],['自分のほかの動きを止める。']],
+        ['10歩進む1秒待つ','near-0','前へ10歩進む。\n1秒待つ。',[],[]],
+        ['前へ動き続ける。','near-0','ずっとくり返す。\n  前へ10歩進む。',[],[]],
+        ['ねこと犬と鳥は前へ10歩進む。','near-0','犬は前へ10歩進む。\n鳥は前へ10歩進む。\nねこは前へ10歩進む。',[],[]],
+        ['ジャンプを5秒で行う。','near-0','【ジャンプ】というてじゅんを行う。',[],[]],
+        // A name is a name (回るねこ moves; ねこ inside 子ねこ is no other part), and the part to go to or to face is not
+        // the one that goes. A sentence that does another action and keeps nothing written is not shown.
+        ['子ねこを右へ10歩移動させる。','near-0',['子ねこは、いまのばしょから、右へ10歩動く。']],
+        ['子ねこを2秒で右へ40歩移動させる。','near-0',['子ねこは2秒かけて、いまのばしょから、右へ40歩動く。']],
+        ['回るねこを右へ10歩移動させる。','near-0',['回るねこは、いまのばしょから、右へ10歩動く。'],[],[],['ねこ','回るねこ','犬']],
+        ['「回るねこ」を右へ10歩移動させる。','near-0',['回るねこは、いまのばしょから、右へ10歩動く。'],[],[],['ねこ','回るねこ','犬']],
+        ['『やあ』と言わせる。','near-0',['「やあ」と言う。']],
+        // No number of a unit written is joined by another of it (no 右へ10歩、上へ50歩のばしょへ for 10歩うしろへ), and 自分
+        // written later in the sentence is the body's owner.
+        ['ねこを10歩うしろへ動かす。','near-0',['ねこは後ろへ10歩動く。','後ろへ10歩動く。']],
+        // Up to three clauses that do not read are each put back, also when one says what another says, and a wait between
+        // two moves stays between them.
+        ['ねこを右へ10歩移動させて、犬を左へ10歩移動させて、鳥を上へ10歩移動させる。','near-0',['ねこは、いまのばしょから、右へ10歩動く。\n犬は、いまのばしょから、左へ10歩動く。\n鳥は、いまのばしょから、上へ10歩動く。']],
+        ['ねこを右へ10歩移動させて、犬を左へ10歩移動させて、鳥を上へ10歩移動させて、子ねこを下へ10歩移動させる。','near-0',[]],
+        ['前へ10歩進んで、前に10歩いく。','near-0',['前へ10歩進む。\n前へ10歩進む。']],
+        ['前に10歩いって、前へ10歩進む。','near-0',['前へ10歩進む。\n前へ10歩進む。']],
+        ['右へ10歩動いて、2秒後に左へ10歩動く。','near-0',['いまのばしょから、右へ10歩動く。\n2秒待つ。\nいまのばしょから、左へ10歩動く。']],
+        ['犬は右へ10歩動いて、2秒後に左へ10歩動く。','near-0',['犬は、いまのばしょから、右へ10歩動く。\n犬は2秒待つ。\n犬は、いまのばしょから、左へ10歩動く。']],
+        ['2秒後に、3秒右へ10歩動く。','near-0',['2秒待つ。\n3秒かけて、いまのばしょから、右へ10歩動く。']],
+        // A copy is of the part written (犬にねこのコピー: ねこ; 自分のコピー in 犬's body: 犬), and with nothing that keeps
+        // the number, the sentence that keeps the way comes.
+        ['犬にねこのコピーを作らせる。','near-0',['犬は「ねこ」のコピーを作る。']],
+        ['ねこと犬は右へ10歩移動する。','near-0',null,[],['「犬」のコピーを作る。','「ねこ」のコピーを作る。']],
+        ['子ねこの方をねこが向く。','near-0',['「子ねこ」の方を向く。']],
+        ['自分のコピーを作らせる。','near-1',['自分のコピーを作る。']],
+        ['ねこを右向きに10歩動かす。','near-0',null,['画面の右を向く。'],[]],
+        // What is quoted is not done, and a time alone is no move.
+        ['「右へ40歩」をおぼえる。','near-0',null,[],['いまのばしょから、右へ10歩動く。']],
+        ['「右へ40歩」と書いて。','near-0',null,[],['いまのばしょから、右へ10歩動く。']],
+        ['1秒ごと、','near-0',null,[],['1秒かけて、いまのばしょから、右へ10歩動く。']],
+        ['犬は右へ10歩移動して、自分は左へ10歩移動する。','near-0',['犬は、いまのばしょから、右へ10歩動く。\nねこは、いまのばしょから、左へ10歩動く。']],
+        ['ねこを走る犬のところへ移動させる。','near-0',['ねこは「走る犬」のところへ行く。','「走る犬」のところへ行く。'],[],[],['ねこ','走る犬','犬']],
+        ['ねこを子ねこのところへ移動させる。','near-0',['ねこは「子ねこ」のところへ行く。','「子ねこ」のところへ行く。']],
+        ['犬を子ねこのところへ移動させる。','near-0',['犬は「子ねこ」のところへ行く。']],
+        ['ねこを犬の方へ向かせる。','near-0',['ねこは「犬」の方を向く。','「犬」の方を向く。']],
+        ['「犬」を子ねこのところへ移動させる。','near-0',['犬は「子ねこ」のところへ行く。']],
+        ['犬を「ねこ」のところへ移動させる。','near-0',['犬は「ねこ」のところへ行く。']],
+        ['ねこを右がわへ10歩動かす。','near-0',null,[],['ねこは「ねこ」のところへ行く。','「ねこ」のところへ行く。']],
+        ['子ねこを「犬」の方へ回らせる。','near-0',null,[],['子ねこは点数を1へらす。','作品を全部止める。','子ねこは「犬」の合図を送る。']],
+        // A time the wait before takes is that wait only (2秒たってから: no second wait), and each text is said in its clause.
+        ['2秒たってから右へ10歩動く。','near-0',['2秒待つ。\nいまのばしょから、右へ10歩動く。']],
+        ['「やあ」と言わせて、「またね」と言わせる。','near-0',['「やあ」と言う。\n「またね」と言う。']],
+        ['ねこは10歩動いて止まる。','near-0','ねこは前へ10歩進む。\nねこはこの動きを止める。',[],[]],
+        // 「犬」に is 犬に (a quoted name of a part is the part): told as a signal first, as 犬に「やあ」と言う is.
+        ['「犬」に「やあ」と言う。','near-0',['「やあ」の合図を送る。','「やあ」と言う。']],
+        ['2秒待ってから、右へ10歩動かす。','near-0',['2秒待つ。\nいまのばしょから、右へ10歩動く。']],
+        ['ねこを右に90ど回らせる。','near-0',['ねこは右に90度回る。','右に90度回る。']],
+        ['ねこを複製する。','near-0',['「ねこ」のコピーを作る。','自分のコピーを作る。']],
+        ['ねこを止める。','near-0','自分のほかの動きを止める。\nこの動きを止める。',['この動きを止める。'],[]],
+        ['ねこの大きさを50%にする。','near-0',['大きさを50％にする。']],
+        ['自分は右へ10歩移動させる。','near-0',['ねこは、いまのばしょから、右へ10歩動く。','いまのばしょから、右へ10歩動く。']],
+        ['ねこは右へ10歩移動して、犬は左へ10歩移動する。','near-0',['ねこは、いまのばしょから、右へ10歩動く。\n犬は、いまのばしょから、左へ10歩動く。']],
+      ];
+      // A first given as a list is every near sentence, in order; null leaves the first open.
+      for(const [source,owner,first,has=[],not=[],names=['ねこ','犬','鳥','子ねこ']]of rows){const got=near(source,owner,names),where=source+' ('+owner+'): '+JSON.stringify(got);
+        if(Array.isArray(first))eq(got,first);else if(first!==null)eq(got[0],first);
+        for(const text of has)ok(got.includes(text),where+' lacks '+text);for(const text of not)ok(!got.includes(text),where+' has '+text);}
+    });
+    // LANGUAGE.md 読めない文の近い書き方: a near sentence does not change the other sentences. One that names another subject
+    // (ねこは…) would carry it on to the next sentence without one, so that sentence is given the subject it had (自分は, or
+    // the one carried on to the place of the near sentence). Each row: the body, its owner, and the body after the first
+    // near sentence is chosen.
+    test('near sentences keep who does the next sentence',()=>{
+      const p=parts('next-',['ねこ','犬','鳥']),applied=(body,targetId)=>{const ctx={symbols:buildSymbols(p),targetId,targetType:'sprite',event:'start',args:[],level:'advanced'};
+        const [c]=Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]);return c&&body.slice(0,c.start)+c.source+body.slice(c.end);};
+      const glide='ねこは2秒かけて、いまのばしょから、右へ40歩動く。',written='ねこを2秒で右へ40歩移動させる。';
+      for(const [body,owner,after]of [
+        [written+'「やあ」と言う。','next-1',glide+'自分は「やあ」と言う。'],
+        [written+'\n「やあ」と言う。','next-1',glide+'\n自分は「やあ」と言う。'],
+        ['2回くり返す。\n  '+written+'\n  前へ10歩進む。','next-1','2回くり返す。\n  '+glide+'\n  自分は前へ10歩進む。'],
+        ['鳥は前へ10歩進む。'+written+'「やあ」と言う。','next-1','鳥は前へ10歩進む。'+glide+'鳥は「やあ」と言う。'],
+        [written+'\n犬は「やあ」と言う。','next-1',glide+'\n犬は「やあ」と言う。'],
+        [written+'「やあ」と言う。','next-0',glide+'「やあ」と言う。'],
+        [written,'next-1',glide],
+        // Before a heading the subject is written with 、, as the code writes it.
+        [written+'\n3回くり返す。\n  「やあ」と言う。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。'],
+        [written+'\n3回くり返す。\n  「やあ」と言う。\n前へ10歩進む。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。\n前へ10歩進む。'],
+        // Empty lines and lines of notes (※) are passed; a sentence at another depth, or lines after it, are as written.
+        [written+'\n\n「やあ」と言う。','next-1',glide+'\n\n自分は「やあ」と言う。'],
+        [written+'\n※メモ\n「やあ」と言う。','next-1',glide+'\n※メモ\n自分は「やあ」と言う。'],
+        [written+'\n「やあ」と言う。\n前へ10歩進む。','next-1',glide+'\n自分は「やあ」と言う。\n前へ10歩進む。'],
+        ['2回くり返す。\n  '+written+'\n「やあ」と言う。','next-1','2回くり返す。\n  '+glide+'\n「やあ」と言う。'],
+      ])eq(applied(body,owner),after);
+      // The rewrite of a check keeps it too (assistProposalKeepsSubject).
+      const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start'},body='ねこを2秒かけて右へ40歩うごかす。「やあ」と言う。',[fix]=parseSyntax(body,ctx).syntaxDiagnostics[0].proposals,kept=Akari.assistProposalKeepsSubject(fix,body,ctx,p);
+      eq(body.slice(0,kept.start)+kept.source+body.slice(kept.end),glide+'自分は「やあ」と言う。');
+      eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は 同じです）');
+      // In a loop too; a proposal that asks for a number, or whose place or text is not given, is as it is.
+      const looped='2回くり返す。\n  ねこを2秒かけて右へ40歩うごかす。\n  「やあ」と言う。',[loopFix]=parseSyntax(looped,ctx).syntaxDiagnostics[0].proposals,loopKept=Akari.assistProposalKeepsSubject(loopFix,looped,ctx,p);
+      eq(looped.slice(0,loopKept.start)+loopKept.source+looped.slice(loopKept.end),'2回くり返す。\n  '+glide+'\n  自分は「やあ」と言う。');
+      for(const asIs of [{...fix,input:{kind:'angle'}},{...fix,start:undefined},{...fix,end:1.5},{...fix,source:null}])ok(Akari.assistProposalKeepsSubject(asIs,body,ctx,p)===asIs);
+      ok(Akari.assistProposalKeepsSubject(fix,null,ctx,p)===fix);
+      // The stage's body: the part named moves (the stage does not); a sentence of the part's body gets the part's name
+      // (ねこのすがたを見せる → ねこはすがたを見せる), the number written is kept, and no sentence is shown twice.
+      const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'},onStage=text=>Akari.assistCandidates(p,text,stage,parseSyntax(text,stage).syntaxDiagnostics[0]).map(c=>c.text);
+      eq(onStage(written),[glide]);
+      eq(onStage('ねこのすがたを見せる。'),['ねこはすがたを見せる。']);
+      eq(onStage('ねこの向きを90度にする。'),['ねこは画面の上を向く。']);
+      eq(onStage('ねこの向きを45度にする。'),['ねこは向きを45度にする。']);
+      // Its button keeps the name of what it does, or names the part when the button showed the sentence.
+      const buttons=text=>Akari.assistCandidates(p,text,stage,parseSyntax(text,stage).syntaxDiagnostics[0]).map(c=>[c.label,c.source]);
+      eq(buttons('ねこのすがたを見せる。'),[['すがたを見せる','ねこはすがたを見せる']]);
+      eq(buttons(written),[['いまの ばしょから動く','ねこは2秒かけて、いまのばしょから、右へ40歩動く']]);
+    });
+    // The same in the work of the assist examples (audit/fixtures/assist): ねこ (whose body it is), 犬 and 星, the
+    // variable 点数, the list 持ち物, the sound ベル, the procedure ジャンプ, and with ui the parts 文字1, ボタン1 and
+    // 入力らん1. Each row: input, whether the work has the ui parts, and either every near sentence in order or the first
+    // and the sentences that must not come; a sentence is its text, or [its button's name, its text] when they differ.
+    test('near sentences in the work of the assist examples',()=>{
+      const example=ui=>{const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+        p.components=[...['ねこ','犬','星'].map((name,i)=>({...structuredClone(base),id:'sprite-'+(i+1),name,costumes:base.costumes.map((c,j)=>({...c,id:'sprite-'+(i+1)+'-costume-'+j})),costumeId:'sprite-'+(i+1)+'-costume-0',localData:{variables:[],lists:[]}})),
+          ...(ui?[['文字1','label'],['ボタン1','button'],['入力らん1','input']].map(([name,type])=>{const c={...structuredClone(base),id:type+'-1',type,name,localData:{variables:[],lists:[]}};delete c.costumes;delete c.costumeId;return c;}):[])];
+        p.projectData={variables:[{id:'variable-0',name:'点数',initialValue:0}],lists:[{id:'list-0',name:'持ち物',initialValue:[]}]};
+        p.sounds=[{id:'sound-0',name:'ベル',assetId:'sound-asset-0'}];p.actions=[{id:'action-0',ownerId:'stage',name:'ジャンプ',args:[],source:'何もしない。'}];
+        p.scripts=[{id:'s1',targetId:'sprite-1',event:'start',source:'何もしない。'}];return p;};
+      const works=[example(false),example(true)];
+      const near=(source,ui)=>{const p=works[Number(!!ui)],ctx={symbols:buildSymbols(p),targetId:'sprite-1',targetType:'sprite',event:'start',args:[],level:'advanced'};
+        const got=Akari.assistCandidates(p,source,ctx,parseSyntax(source,ctx).syntaxDiagnostics[0]);ok(got.every(c=>c.assist===true),source+': every near sentence is marked as one');
+        return got.map(c=>c.label===c.text?c.text:[c.label,c.text]);};
+      const step='前へ10歩進む。',stop='この動きを止める。\n1秒待つ。';
+      const rows=[
+        // The near sentences the rules of 1.0.1 shape: what is said, played, drawn or changed only when it is written, a
+        // part written with を, and a wait written in kana.
+        ['「ベル」をかける。',false,[['えらんだ音を鳴らして待つ','「ベル」を鳴らす。']]],
+        ['330Hzの音を0.5秒出す。',false,[['音を鳴らして待つ','330Hzの音を0.5秒鳴らす。']]],
+        ['音をけす。',false,{first:['すべての音を止める','すべての音を止める。'],not:['持ち物の1番目を消す。']}],
+        ['ペンを下げる。',false,[['ペンを下ろす','ペンを下ろす。']]],
+        ['線を引く。',false,[['ペンを下ろす','ペンを下ろす。']]],
+        ['ペンを上げた。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['ペンを上にあげる。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['犬のペンを上げる。',false,[['ペンを上げる','犬はペンを上げる。']]],
+        ['ペンを上げておく。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['ペンを下におく。',false,{first:['ペンを下ろす','ペンを下ろす。'],not:['点数を1へらす。','音の高さを1段階下げる。']}],
+        ['ほかのぜんぶを止める。',false,[['ほかの動きを全部止める','ほかの動きを全部止める。'],['自分のほかの動きを止める','自分のほかの動きを止める。'],['作品を全部止める','作品を全部止める。'],['この動きを止める','この動きを止める。']]],
+        ['点数が10になるまで待ちたい。',false,[['きまりに あてはまるまで待つ','点数が10になるまで待つ。'],['秒待つ','10秒待つ。']]],
+        ['点数が10になるまでまちなさい。',false,[['きまりに あてはまるまで待つ','点数が10になるまで待つ。'],['秒待つ','10秒待つ。']]],
+        ['点数が10になるまでずっと待つ。',false,[['きまりに あてはまるまで待つ','点数が10になるまで待つ。'],['秒待つ','10秒待つ。']]],
+        ['点数を1さげる。',false,[['数を へらす','点数を1へらす。']]],
+        ['2番目に「かさ」を入れる。',false,[['リストの とちゅうに入れる','持ち物の2番目に「かさ」を入れる。']]],
+        ['持ち物の2番目を「かさ」にとりかえる。',false,[['リストの中身を1つ入れかえる','持ち物の2番目を「かさ」にかえる。']]],
+        ['ねこのすがたを見せる。',false,[['すがたを見せる','すがたを見せる。']]],
+        ['持ち物がからっぽになるまで待つ。',false,{first:['きまりに あてはまるまで待つ','持ち物の数が0になるまで待つ。'],not:['「開始」の合図を送って、その合図で始まったことが全部終わるまで待つ。','「名前は？」とたずねて、答えを待つ。']}],
+        ['「ベル」を聞かせる。',false,[['えらんだ音を鳴らして待つ','「ベル」を鳴らす。']]],
+        ['3回くり返す。\n  おわる。',false,[['このくり返しを終える','このくり返しを終える。'],['作品を全部止める','作品を全部止める。']]],
+        ['おわり。',false,[['作品を全部止める','作品を全部止める。']]],
+        ['3番目に「ボール」を入れる。',false,[['リストの とちゅうに入れる','持ち物の3番目に「ボール」を入れる。']]],
+        ['持ち物の3番目を「ボール」にとりかえる。',false,[['リストの中身を1つ入れかえる','持ち物の3番目を「ボール」にかえる。']]],
+        ['点数が12の約数になるまで待つ。',false,{first:['きまりに あてはまるまで待つ','条件（点数が0より大きいかつ切り捨て（点数）が点数と同じかつ12÷点数のあまりが0と同じ）が成り立つまで待つ。'],not:['「開始」の合図を送って、その合図で始まったことが全部終わるまで待つ。']}],
+        ['すがたを「丸」にかえた。',false,{first:['すがたを かえる','すがたを「丸」にかえる。'],not:['次のすがたにかえる。','前のすがたにかえる。','点数を「丸」にする。','色を「丸」にする。']}],
+        ['もし点数が10以上なら、もし点数が20以下なら、\n    何もしない。',false,{first:['もし','もし点数が10以上なら、\n  もし点数が20以下なら、\n    何もしない。'],not:['もし点数が10以上なら、\n  点数を0にする。']}],
+        ['ずっとくり返す。\n  とばして次へ。',false,[['この回の のこりを とばして 次の回へ','この回の残りをとばして、次の回へ進む。']]],
+        ['すがたを切りかえる。',false,[['次のすがた','次のすがたにかえる。'],['すがたを かえる','すがたを「たくどん」にかえる。']]],
+        ['前へ10歩。',false,[['前へ進む',step]]],
+        ['前へ、10歩進む',false,[['前へ進む',step]]],
+        ['10歩前にいって。',false,[['前へ進む',step]]],
+        ['1秒、待つ。',false,[['秒待つ','1秒待つ。']]],
+        ['左に90度曲がる。',false,[['左に回る','左に90度回る。']]],
+        ['ペンを紙からはなす。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['とまって、1秒待つ',false,{first:['この動きを止める',stop],not:[]}],
+        ['ぶつかったら、はねる。',false,[['はしで はね返る','画面のはしにふれていれば、はね返る。']]],
+        ['「星」にふれたら、止まる。',false,{first:['ふれる たびに する','「星」にふれたとき、\n  この動きを止める。'],not:[]}],
+        ['2秒待ってから、右へ10歩動かす。',false,[['いまの ばしょから動く','2秒待つ。\nいまのばしょから、右へ10歩動く。']]],
+        ['ねこは10歩動いて止まる。',false,{first:['前へ進む','ねこは前へ10歩進む。\nねこはこの動きを止める。'],not:[]}],
+        ['ねこを2びょうで右へ40ほ移動させる。',false,[['いまの ばしょから動く','ねこは2秒かけて、いまのばしょから、右へ40歩動く。'],['いまの ばしょから動く','2秒かけて、いまのばしょから、右へ40歩動く。']]],
+        ['「スペース」キーが押されるのを待ちます。',true,{first:['きまりに あてはまるまで待つ','「スペース」キーがおされるまで待つ。'],not:['「スペース」キーがおされるまで、くり返す。\n  前へ10歩進む。','「スペース」とたずねて、答えを待つ。','「スペース」の合図を送って、その合図で始まったことが全部終わるまで待つ。']}],
+        ['「入力らん1」を空にする。',true,[['入力らんに入れる','「入力らん1」に「」を入れる。']]],
+        ['「入力らん1」に「こんにちは」をいれる。',true,[['入力らんに入れる','「入力らん1」に「こんにちは」を入れる。']]],
+      ];
+      for(const [source,ui,expected]of rows){const got=near(source,ui);
+        if(Array.isArray(expected))eq(got,expected);else{eq(got[0],expected.first);for(const s of expected.not)ok(!got.some(g=>(Array.isArray(g)?g[1]:g)===s),source+' has '+s);}}
+    });
+    // LANGUAGE.md 作品チェックの知らせ: a count in a loop while touching is told for the touch as written, not for its
+    // negation (もし「石」にふれていなければ、 counts while they do not touch).
+    test('loop touch count notice reads the touch, not its negation',()=>{
+      const p=parts('loop-touch-',['ねこ','石']);p.projectData.variables.push({id:'loop-touch-score',name:'点数',initialValue:0});
+      for(const [condition,notice]of [['もし「石」にふれていれば、',true],['もし「石」にふれていなければ、',false]]){
+        p.scripts=[{id:'loop-touch-main',targetId:'loop-touch-0',event:'start',source:'ずっとくり返す。\n  '+condition+'\n    点数を1ふやす。'}];
+        const c=compileProject(p);eq(c.errors,[]);eq(c.notes.filter(n=>n.code==='I121').length,notice?1:0);
       }
     });
     return {
