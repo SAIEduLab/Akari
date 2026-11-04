@@ -850,13 +850,58 @@ function runSemanticContractTests() {
     });
     const parts=(prefix,names)=>{const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
       p.components=names.map((name,i)=>({...structuredClone(base),id:prefix+i,name,x:100+i*5,y:100,costumes:[{id:prefix+'face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:prefix+'face-'+i}));return p;};
-    // LANGUAGE.md 読めない文の近い書き方: a near sentence does what was asked (最前面へ移動する brings the part to the
-    // front, not a move); telling a part (犬に「やあ」と言う) may be a signal to it as well as the words said.
+    // LANGUAGE.md 読めない文の近い書き方: a near sentence keeps what was written — who does it (ねこは, ねこを…させる,
+    // ねこの…), what it does (最前面へ移動する brings the part to the front; telling a part may be a signal to it), which
+    // way, how much, and what each time is (2秒かけて／2秒で, 2秒後に／2秒待ってから, a time of either kind gives both).
+    // A sentence that says otherwise is not shown, one that keeps all comes first, one that names the subject first. A
+    // sentence with a condition, a loop, a procedure, several subjects or two actions unbroken is not compared by these
+    // roles. Each row: input, the body's owner (ねこ unless written), the first, then texts that must and must not come.
     test('near sentences keep the action written',()=>{
-      const p=parts('near-',['ねこ','犬']),ctx={symbols:buildSymbols(p),targetId:'near-0',targetType:'sprite',event:'start',args:[],level:'advanced'};
-      const near=source=>Akari.assistCandidates(p,source,ctx,parseSyntax(source,ctx).syntaxDiagnostics[0]).map(c=>c.text);
-      eq(near('最前面へ移動する。'),['いちばん手前へ出る。']);
-      eq(near('犬に「やあ」と言う。'),['「やあ」の合図を送る。','「やあ」と言う。']);
+      const p=parts('near-',['ねこ','犬','鳥','子ねこ']);p.projectData.variables.push({id:'near-score',name:'点数',initialValue:0});
+      p.actions=[{id:'near-jump',ownerId:'stage',name:'ジャンプ',args:[],source:'何もしない。'}];
+      const near=(source,targetId='near-0')=>{const ctx={symbols:buildSymbols(p),targetId,targetType:'sprite',event:'start',args:[],level:'advanced'};
+        return Akari.assistCandidates(p,source,ctx,parseSyntax(source,ctx).syntaxDiagnostics[0]).map(c=>c.text);};
+      const glide='2秒かけて、いまのばしょから、右へ40歩動く。',move='いまのばしょから、右へ40歩動く。',wait='ねこは2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。';
+      const rows=[
+        ['ねこを2秒で右へ40歩移動させる。','near-0','ねこは'+glide,[glide],[move,'「ねこ」のコピーを作る。']],
+        ['ねこを2秒で右へ40歩移動させる。','near-1','ねこは'+glide,[],[glide,move]],
+        ['ねこは2秒で右へ40歩移動する。','near-0','ねこは'+glide,[glide],[move]],
+        ['2秒で右へ40歩移動する。','near-0',glide,[],['ねこは'+glide]],
+        ['ねこを左へ20歩、2秒で移動させる。','near-0','ねこは2秒かけて、いまのばしょから、左へ20歩動く。',[],[]],
+        ['「2秒で右へ40歩」と言わせる。','near-0','「2秒で右へ40歩」と言う。',[],['いまのばしょから、右へ10歩動く。',move]],
+        ['ねこを2秒後に右へ40歩移動させる。','near-0',wait,[],['ねこは'+glide,glide]],
+        ['ねこを2秒待ってから右へ40歩移動させる。','near-0','2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。',['2秒待つ。\n'+move],['ねこは'+glide]],
+        ['ねこを2秒右へ40歩動かす。','near-0','ねこは'+glide,[wait],[]],
+        ['ねこを右へ40歩移動させて、犬を3秒で左へ10歩移動させる。','near-0','ねこは、'+move+'\n犬は3秒かけて、いまのばしょから、左へ10歩動く。',[],[]],
+        ['ねこを3秒で前へ10歩進ませる。','near-1','ねこは3秒かけて、前へ10歩進む。',[],['前へ10歩進む。']],
+        ['ねこを10歩進ませる。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
+        ['ねこを右に90度回らせる。','near-1','ねこは右に90度回る。',[],['右に90度回る。']],
+        ['自分を右に90度回らせる。','near-1','右に90度回る。',[],[]],
+        ['子ねこを右へ10歩移動させる。','near-0','子ねこは、いまのばしょから、右へ10歩動く。',[],[]],
+        ['ねこ、前へ10歩進む。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
+        ['ねこは「やあ」と言わせる。','near-1','ねこは「やあ」と言う。',[],['「やあ」と言う。']],
+        ['犬の色を「赤」にする。','near-0','犬は色を「赤」にする。',[],['色を「赤」にする。']],
+        ['ねこのコピーを作らせる。','near-1','「ねこ」のコピーを作る。',[],['自分のコピーを作る。']],
+        ['最前面へ移動する。','near-0','いちばん手前へ出る。',[],['前へ10歩進む。',move]],
+        ['犬に「やあ」と言う。','near-0','「やあ」の合図を送る。',['「やあ」と言う。'],[]],
+        ['犬に「出発」と伝える。','near-0','「出発」の合図を送る。',[],[]],
+        ['「やあ」と小さな声で言う。','near-0','「やあ」と言う。',[],[]],
+        ['1秒やすんで、「やあ」と言う。','near-0','1秒待つ。\n「やあ」と言う。',[],[]],
+        ['1秒半待つ。','near-0','1.5秒待つ。',[],[]],
+        ['しばらくまつ。','near-0','1秒待つ。',[],[]],
+        ['タイマーを0秒にする。','near-0','タイマーを0にする。',[],['0秒待つ。\nタイマーを0にする。']],
+        ['右へ100歩、上へ50歩のばしょへ行く。','near-0','画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。',[],['「犬」のところへ行く。']],
+        ['画面の右上へ行く。','near-0','画面の左下のはしから、右へ640歩、上へ400歩のばしょへ行く。',[],[]],
+        ['「犬」に行く。','near-0','「犬」のところへ行く。',[],['画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。']],
+        ['横に10歩動く。','near-0','いまのばしょから、右へ10歩動く。',['いまのばしょから、左へ10歩動く。'],[]],
+        ['犬は止まる。','near-0','この動きを止める。',['犬は自分のほかの動きを止める。'],['自分のほかの動きを止める。']],
+        ['10歩進む1秒待つ','near-0','前へ10歩進む。\n1秒待つ。',[],[]],
+        ['前へ動き続ける。','near-0','ずっとくり返す。\n  前へ10歩進む。',[],[]],
+        ['ねこと犬と鳥は前へ10歩進む。','near-0','犬は前へ10歩進む。\n鳥は前へ10歩進む。\nねこは前へ10歩進む。',[],[]],
+        ['ジャンプを5秒で行う。','near-0','【ジャンプ】というてじゅんを行う。',[],[]],
+      ];
+      for(const [source,owner,first,has,not]of rows){const got=near(source,owner),where=source+' ('+owner+'): '+JSON.stringify(got);
+        eq(got[0],first);for(const text of has)ok(got.includes(text),where+' lacks '+text);for(const text of not)ok(!got.includes(text),where+' has '+text);}
     });
     // LANGUAGE.md 作品チェックの知らせ: a count in a loop while touching is told for the touch as written, not for its
     // negation (もし「石」にふれていなければ、 counts while they do not touch).

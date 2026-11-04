@@ -2622,13 +2622,12 @@
           "schemaId": "MotionCommand:GOTO_PART",
           "text": "「犬」のところへ行く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:GOTO",
             "text": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -2641,6 +2640,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味をすべて保つ文があるときは、その一部を落とした文を示しません。落とした文とは、時間や数や向きを書かない文、書いたことと別のことをする文（名前が同じなだけの文）です。"
         }
       ]
     },
@@ -4218,13 +4221,12 @@
           "schemaId": "MotionCommand:POINT_TO",
           "text": "「犬」の方を向く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:TURN_RIGHT",
             "text": "右に15度回る。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -4237,6 +4239,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味をすべて保つ文があるときは、その一部を落とした文を示しません。落とした文とは、時間や数や向きを書かない文、書いたことと別のことをする文（名前が同じなだけの文）です。"
         }
       ]
     },

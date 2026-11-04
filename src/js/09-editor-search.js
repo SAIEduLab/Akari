@@ -470,11 +470,10 @@
     }return frames;
   }
   // How a candidate keeps the frames written: null when it says something else (another subject, way, number, text or
-  // part, a text not written, a time of another kind, a time added to an action, or a sentence more or fewer), else the number of roles it
-  // leaves out or does otherwise (missing: a way, a number, a text, another action) and whether it names each subject
-  // written as it was written (explicit). A time that may be either kind (a move or a turn) is kept as the time of the
-  // action or as a wait just before it. A part it leaves out is not counted: the place where the part is now (「犬」に
-  // 行く: 右へ100歩、上へ50歩のばしょへ行く) is one meaning of going to it. One frame with no action known (ねこの動きを
+  // part, a text not written, a time of another kind, a time added to an action, or a sentence more or fewer), else the
+  // number of roles it leaves out or does otherwise (missing: a way, a number, a text, a part, another action) and
+  // whether it names each subject written as it was written (explicit). A time that may be either kind (a move or a
+  // turn) is kept as the time of the action or as a wait just before it. One frame with no action known (ねこの動きを
   // 止める) says only its roles, which hold for every sentence of the candidate.
   function assistMeaningPair(w,g) {
     let missing=0,explicit=true;
@@ -485,7 +484,7 @@
       if(same.length&&!same.some(x=>x.value===q.value))return null;if(!same.length&&g.quantities.some(x=>x.unit===q.unit))return null;if(!same.length)missing++;}
     if(w.action&&w.action!=='wait'&&g.quantities.some(x=>x.unit==='秒'&&!w.quantities.some(q=>q.unit==='秒')))return null;
     if(w.strings.length&&g.strings.some(v=>!w.strings.includes(v)))return null;missing+=w.strings.filter(v=>!g.strings.includes(v)).length;
-    if(w.objects.length&&g.objects.length&&!w.objects.some(o=>g.objects.includes(o)))return null;
+    if(w.objects.length&&g.objects.length&&!w.objects.some(o=>g.objects.includes(o)))return null;if(w.objects.length&&!g.objects.length)missing++;
     return {missing,explicit};
   }
   function assistMeaningMatch(want,got) {
