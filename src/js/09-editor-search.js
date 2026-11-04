@@ -408,8 +408,8 @@
   // or 離す, まって: 待って or 止まって) states none.
   // A clause that ends in a number, a place or a particle (右へ100歩、2秒かけて、いまのばしょから、) belongs to the next one.
   const ASSIST_ACTION_ENDS=[['say',/(?:言|話)(?:う|って|わせる|わせて|わせ|い|す|して|させる|させて|させ|し)$|いう$|いわせ(?:る|て)?$|しゃべ|叫|つぶや/],
-    ['clone',/(?:コピー|クローン|複製|ふくせい|分身)を?(?:作|つく)(?:る|って|らせる|らせて|らせ|り)$|(?:コピー|クローン|複製|ふくせい)(?:する|して|させる|させて)$/],
-    ['wait',/待(?:つ|って|ち)$/],['turn',/(?:回|まわ)(?:る|って|す|して|らせる|らせて|り)$|回転(?:する|して|させる|させて)$/],
+    ['clone',/(?:コピー|クローン|複製|ふくせい|分身)を?(?:\d+(?:つ|こ|個|体|匹)、?)?(?:作|つく)(?:る|って|らせる|らせて|らせ|り)$|(?:コピー|クローン|複製|ふくせい)(?:する|して|させる|させて)$/],
+    ['wait',/待(?:つ|って|ち)$|まつ$/],['turn',/(?:回|まわ)(?:る|って|す|して|らせる|らせて|り)$|回転(?:する|して|させる|させて)$/],
     ['move',/(?:動|うご)(?:く|いて|き|かす|かして|かせる|かせて)$|(?:進|すす)(?:む|んで|み|ませる|ませて|める|めて)$|(?:移動|いどう)(?:する|して|させる|させて|させ|し)$|行(?:く|って|き|かせる|かせて)$|(?:走|はし)(?:る|って|り|らせる|らせて)$|ジャンプ(?:する|して|させる|させて)$/]];
   const assistActionOf=id=>!id?null:/^MotionCommand:(?:TURN|SET_DIRECTION|POINT_TO)/.test(id)?'turn':/^MotionCommand:/.test(id)?'move':/^CloneCommand:/.test(id)?'clone':({Say:'say',Think:'say',Ask:'ask',WaitTime:'wait',WaitUntil:'wait'})[id]||'other:'+id.split(':')[0];
   const ASSIST_DIRECTIONS={右:'right',左:'left',上:'up',下:'down',前:'forward',後ろ:'backward',うしろ:'backward'};
@@ -421,8 +421,9 @@
   const ASSIST_VERB_STEMS=/動(?!き[をがはのに])|進|移動|走|待|回|言|話/g;
   // Names read longest first, so that a name inside another (ねこ in 子ねこ, in 回るねこ) is not read in it.
   const assistLongestFirst=(a,b)=>b.length-a.length;
-  // Verbs that move or turn the part written with を (ねこを回す, 進める, 移す, 向ける): that part does it, as with させる.
-  const ASSIST_MOVED_PART=/(?:回|まわ)(?:す|して)|(?:進|すす)(?:める|めて)|(?:移|うつ)(?:す|して)|(?:向|む)(?:ける|けて)/;
+  // Verbs that move, turn, hide, show or change the part written with を (ねこを回す, 進める, 移す, 向ける, かくす, 見せる,
+  // ねこを2倍の大きさにする, 大きくする): that part does it, as with させる.
+  const ASSIST_PART_VERBS=/(?:回|まわ)(?:す|して)|(?:進|すす)(?:める|めて)|(?:移|うつ)(?:す|して)|(?:向|む)(?:ける|けて)|(?:隠|かく)(?:す|して)|(?:見|み)(?:せる|せて)|(?:に|く)(?:する|して)/;
   function assistMeaningFrames(data,project,ctx,source) {
     const owner=project.components.find(c=>c.id===ctx.targetId)?.name||null,parts=project.components.map(c=>c.name).sort(assistLongestFirst);
     const text=data.text;if(data.subjects||/もし|なら|たら|れば|とき|時(?=[、。]|$)|場合|ばあい|だと|あいだ|まで|ずっと|続け|つづけ|くり返|繰り返|くりかえ|ごとに|たびに|おきに|毎秒|\d+回|何回|次の回|この回|ずつ|一つずつ|ひとつずつ|順に|順番|じゅんに|じゅんばん|同時|速さ|はやさ|スピード|手順|てじゅん|という|合図|メッセージ|知らせ|として|ながら|うちに|答え|こたえ|返事/.test(text.replace(/「[^「」]*」|『[^『』]*』/g,''))||data.names.some(n=>['action','function'].includes(n.kind)))return null;
@@ -442,8 +443,11 @@
       if((masked.match(ASSIST_VERB_STEMS)||[]).length>1)return null;
       if(!ending&&index<data.clauses.length-1&&(/(?:かけて|かけ|から|まで|歩|秒|度|％|\d)$/.test(end)||/[^ぁ-ん](?:で|に|へ|を|と|は|が|も)$/.test(end)||!/[ぁ-ん]$/.test(end))){pending=raw+'、';continue;}
       pending='';
-      const named=new RegExp('^(?:「)?('+[names,'自分'].filter(Boolean).join('|')+')(?:」)?(?:は|が|も)、?').exec(outside)||(names?new RegExp('('+names+')(?:を|に)(?=.*(?:させ|せる|せて|かす|かして|かせ))').exec(outside)||new RegExp('('+names+')を(?=.*(?:'+ASSIST_MOVED_PART.source+'))').exec(outside):null);
-      if(named){subject=named[1]==='自分'?owner:named[1];written=true;}
+      // The part made to do the clause (ねこを…させて, ねこを回して) does only that clause; parts written together with を
+      // (ねこと犬を…させる) are no one part, so no sentence of one subject keeps them.
+      const made=names&&(new RegExp('((?:「?(?:'+names+')」?(?:と|、))+「?(?:'+names+')」?)(?:を|に)(?=.*(?:させ|せる|せて|かす|かして|かせ|'+ASSIST_PART_VERBS.source+'))').exec(outside)||new RegExp('('+names+')(?:を|に)(?=.*(?:させ|せる|せて|かす|かして|かせ))').exec(outside)||new RegExp('('+names+')を(?=.*(?:'+ASSIST_PART_VERBS.source+'))').exec(outside));
+      const named=new RegExp('^(?:「)?('+[names,'自分'].filter(Boolean).join('|')+')(?:」)?(?:は|が|も)、?').exec(outside)||made,carried=[subject,written];
+      if(named){subject=named[1]==='自分'?owner:named[1].replace(/[「」]/g,'');written=true;}
       const read=raw.replace(/「([^「」]*)」|『([^『』]*)』/g,(quote,a,b)=>words.includes(a??b)?quote:'「□」');
       // A say, a copy or a wait is what its end says; any other action is the work's reading of the words (最前面へ移動する
       // brings the part to the front), or else its end. Only an action its end says (stated) is one a candidate must do:
@@ -451,9 +455,11 @@
       const told=['say','clone','wait'].includes(ending),intent=told?null:searchIntent(read,ctx),action=told?ending:assistActionOf(intent?.schemaId)||ending;
       const way=/(?<![一-龯ァ-ヶ])(右|左|上|下|前|後ろ|うしろ)(?:へ|に|の方|方向|むき|向き|側|がわ)/.exec(masked.replace(/画面の|がめんの/g,''));
       // 犬に「やあ」と言う tells 犬: a signal to it keeps that meaning as well as the words said.
-      const frame={action,stated:!!ending,subject,written,directions:['move','turn',null].includes(action)?intent?.directions||(intent?.direction?[intent.direction]:way?[ASSIST_DIRECTIONS[way[1]]]:[]):[],quantities:[],strings:quotes.filter(q=>!(q.toward&&parts.includes(q.value))).map(q=>q.value),objects:[],tell:action==='say'&&!!names&&new RegExp('(?:'+names+')」?に').test(outside)},before=[];
-      for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)(歩|ほ|ぽ|度|ど|秒|びょう|％|%)(半|はん)?/g)){
-        const unit=({ほ:'歩',ぽ:'歩',ど:'度',びょう:'秒','%':'％'})[m[2]]||m[2],value=Number(m[1])+(m[3]&&unit==='秒'?0.5:0),after=outside.slice(m.index+m[0].length);
+      const frame={action,stated:!!ending,subject,written,directions:['move','turn',null].includes(action)?intent?.directions||(intent?.direction?[intent.direction]:way?[ASSIST_DIRECTIONS[way[1]]]:[]):[],quantities:[],strings:quotes.filter(q=>!(q.toward&&parts.includes(q.value))).map(q=>q.value),names:quotes.map(q=>q.value).filter(v=>words.includes(v)),copy:/(?:コピー|こぴー|クローン|くろーん|複製|ふくせい|分身|ぶんしん|ふや|増や)/.test(masked),quoted:/[「」『』（）()【】［］〈〉《》｢｣"]/.test(raw),objects:[],tell:action==='say'&&!!names&&new RegExp('(?:'+names+'|「(?:'+names+')」)に').test(raw.replace(/「([^「」]*)」(?!に)/g,quote=>'§'.repeat(quote.length)))},before=[];
+      for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)(歩|ほ|ぽ|度|ど|秒|びょう|％|%|倍|ばい)(半|はん)?/g)){
+        const unit=({ほ:'歩',ぽ:'歩',ど:'度',びょう:'秒','%':'％',ばい:'倍'})[m[2]]||m[2],value=Number(m[1])+(m[3]&&unit==='秒'?0.5:0),after=outside.slice(m.index+m[0].length);
+        // N倍 is N×100％ (2倍にする is 大きさを200％にする).
+        if(unit==='倍'){frame.quantities.push({unit:'％',value:value*100,role:'％'});continue;}
         if(unit!=='秒'){frame.quantities.push({unit,value,role:unit});continue;}
         if(action==='wait')frame.quantities.push({unit,value,role:'wait'});
         else if(/^(?:後|ご|あと|たって|経って|たった|待って|まって|待ち)/.test(after))before.push({action:'wait',subject,written,directions:[],quantities:[{unit,value,role:'wait'}],strings:[],objects:[]});
@@ -468,6 +474,7 @@
       for(const q of quotes)if(q.toward&&parts.includes(q.value)&&q.value!==subject)frame.objects.push(q.value);
       // A clause whose time is the wait before it and that says nothing else (2秒たって、) is that wait only.
       frames.push(...before,...(before.length&&!frame.action&&![frame.directions,frame.quantities,frame.strings,frame.objects].some(r=>r.length)?[]:[frame]));
+      if(named&&named===made)[subject,written]=[carried[0]??owner,carried[1]];
     }
     return frames.some(f=>f.action||f.directions.length||f.quantities.length||f.strings.length||f.objects.length||f.subject&&f.subject!==owner)?frames:null;
   }
@@ -480,14 +487,14 @@
     for(const n of ast.body||[]){
       if(n.kind==='CommentLine')continue;if(n.body||n.thenBody||n.lanes)return null;
       const id=n.op?n.kind+':'+n.op:n.kind,action=assistActionOf(id);
-      const subject=n.actorRef?.kind==='named'?n.actorRef.name:n.actorRef?.kind==='all'?null:owner,strings=[],objects=[],quantities=[];
+      const subject=n.actorRef?.kind==='named'?n.actorRef.name:n.actorRef?.kind==='all'?null:owner,strings=[],said=[],objects=[],quantities=[];
       const direction=n.op==='MOVE_BY'?(n.x?n.xDir:n.y?n.yDir:null):n.op==='MOVE'?n.direction:n.op==='TURN_RIGHT'?'right':n.op==='TURN_LEFT'?'left':null;
       for(const key of ['x','y','seconds'])if(number(n[key]))quantities.push({...number(n[key]),role:key==='seconds'?(n.kind==='WaitTime'?'wait':'during'):number(n[key]).unit});
       for(const arg of n.args||[]){const q=number(arg);if(q)quantities.push({...q,role:q.unit});else if(arg?.kind==='StringLiteral')(parts.includes(arg.value)?objects:strings).push(arg.value);}
       // What is said, asked or sent as a signal is a text, even when it is a part's name.
-      for(const key of ['value','message','question'])if(n[key]?.kind==='StringLiteral')strings.push(n[key].value);
+      for(const key of ['value','message','question'])if(n[key]?.kind==='StringLiteral'){strings.push(n[key].value);said.push(n[key].value);}
       if(n.kind==='CloneCommand'&&n.op==='CREATE_SELF')objects.push(subject);
-      frames.push({action,subject,direction,ways:ASSIST_WAYS.test(id),whole:ASSIST_WHOLE_WORK.test(id),quantities,strings,objects,explicit:n.actorRef?.kind==='named'});
+      frames.push({action,subject,direction,ways:ASSIST_WAYS.test(id),whole:ASSIST_WHOLE_WORK.test(id),creates:n.kind==='CloneCommand'&&/^CREATE/.test(n.op),quantities,strings,said,objects,explicit:n.actorRef?.kind==='named'});
     }return frames;
   }
   // How a candidate keeps the frames written: null when it says something else (another subject, way, number, text or
@@ -501,8 +508,10 @@
   // itself.
   function assistMeaningPair(w,g) {
     if(['move','turn'].includes(g.action)&&g.objects.includes(g.subject))return null;
-    let missing=0,explicit=true,kept=0;
-    const other=w.stated&&w.action&&g.action!==w.action&&!(w.tell&&/^other:Broadcast/.test(g.action));if(other)missing++;
+    // A copy is made only when a copy is written (コピー, 複製, ふやす…): not for ねこを2倍の大きさにする.
+    if(g.creates&&w.copy===false)return null;
+    let missing=0,explicit=true,kept=0,named=0;
+    const differs=w.action&&g.action!==w.action&&!(w.tell&&/^other:Broadcast/.test(g.action)),other=w.stated&&differs;if(other)missing++;
     if(!g.whole&&w.action!=='wait'&&w.subject){if(g.subject!==w.subject)return null;if(w.written&&!g.explicit)explicit=false;}
     if(w.directions.length&&g.ways){if(!g.direction)missing++;else if(!w.directions.includes(g.direction))return null;else kept++;}
     for(const q of w.quantities){if(q.kept){kept++;continue;}const same=g.quantities.filter(x=>x.unit===q.unit&&(q.role==='unknown'||x.role===q.role));
@@ -510,19 +519,51 @@
     if(w.action&&w.action!=='wait'&&g.quantities.some(x=>x.unit==='秒'&&!w.quantities.some(q=>q.unit==='秒')))return null;
     // A number of a unit written is not joined by another of that unit (10歩うしろへ is not 右へ10歩、上へ50歩).
     if(g.quantities.some(x=>x.unit!=='秒'&&w.quantities.some(q=>q.unit===x.unit)&&!w.quantities.some(q=>q.unit===x.unit&&q.value===x.value)))return null;
-    if(w.strings.length&&g.strings.some(v=>!w.strings.includes(v)))return null;missing+=w.strings.filter(v=>!g.strings.includes(v)).length;kept+=w.strings.filter(v=>g.strings.includes(v)).length;
-    if(w.objects.length&&g.objects.length&&!w.objects.some(o=>g.objects.includes(o)))return null;if(w.objects.length&&!g.objects.length)missing++;else if(w.objects.length)kept++;
-    return other&&!kept?null:{missing,explicit};
+    // Nor is a number written turned into a number of another unit (右へ40歩回る is not 右に15度回る, 2倍の大きさ is not
+    // 120％), but by facing (画面の右を向く faces 0度). A text not written is not added, and with nothing quoted nothing is said,
+    // asked or sent (an empty text is 空 written; a name in the work, as 「ベル」 for 音を出す, may fill a place).
+    if(!(g.action==='turn'&&!g.ways)&&w.quantities.some(q=>q.unit!=='秒')&&g.quantities.some(x=>x.unit!=='秒'&&!w.quantities.some(q=>q.unit===x.unit)))return null;
+    if(w.strings.length&&g.strings.some(v=>!w.strings.includes(v))||!w.quoted&&g.said.some(v=>v!==''))return null;missing+=w.strings.filter(v=>!g.strings.includes(v)).length;for(const v of w.strings)if(g.strings.includes(v)){kept++;if(w.names?.includes(v))named++;}
+    if(w.objects.length&&g.objects.length&&!w.objects.some(o=>g.objects.includes(o)))return null;if(w.objects.length&&!g.objects.length)missing++;else if(w.objects.length){kept++;named++;}
+    // A sentence that does another action than the one read and keeps only names in the work written (a part, a costume,
+    // a sound) is not near (ねこを2倍の大きさにする is not 「ねこ」のところへ行く, すがたを「丸」にかえた is not 点数を「丸」にする).
+    return other&&!kept||differs&&named&&kept===named?null:{missing,explicit,nameOnly:named>0&&kept===named};
   }
   function assistMeaningMatch(want,got) {
     if(!want||!got)return want&&!got?null:{missing:0,explicit:true};
-    if(want.length===1&&!want[0].action){const pairs=got.map(g=>assistMeaningPair(want[0],g));return pairs.length&&pairs.every(Boolean)?{missing:Math.min(...pairs.map(p=>p.missing)),explicit:pairs.every(p=>p.explicit)}:null;}
+    if(want.length===1&&!want[0].action){const pairs=got.map(g=>assistMeaningPair(want[0],g));return pairs.length&&pairs.every(Boolean)?{missing:Math.min(...pairs.map(p=>p.missing)),explicit:pairs.every(p=>p.explicit),nameOnly:pairs.every(p=>p.nameOnly),actions:[...new Set(got.map(g=>g.action))].sort().join()}:null;}
     let missing=0,explicit=true,j=0;
     for(const w of want){let g=got[j++];if(!g)return null;
       const either=['move','turn'].includes(w.action)&&w.quantities.find(q=>q.unit==='秒'&&q.role==='unknown');let frame=w;
       if(either&&g.action==='wait'&&got[j]&&got[j].action!=='wait'){if(g.quantities.find(x=>x.unit==='秒')?.value!==either.value)return null;g=got[j++];frame={...w,quantities:w.quantities.map(q=>q===either?{...q,kept:true}:q)};}
       const pair=assistMeaningPair(frame,g);if(!pair)return null;missing+=pair.missing;explicit&&=pair.explicit;
     }return j===got.length?{missing,explicit}:null;
+  }
+  // The subject carried on to the end of text, as the product reads a sentence written there (自分 is {kind:'self'}); null
+  // when the text there does not read.
+  function assistTopicAt(text,ctx) {
+    const mark='あかりの目印';let found=null;
+    const walk=n=>{if(found||!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(walk);return;}if(n.kind==='Say'&&n.value?.kind==='StringLiteral'&&n.value.value===mark){found=n.actorRef||{kind:'self'};return;}for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')walk(v);};
+    try{walk(parseSyntax(text+'「'+mark+'」と言う。',ctx).ast);}catch{return null;}
+    return found;
+  }
+  // A near sentence does not change the other sentences (LANGUAGE.md 読めない文の近い書き方). One that names another subject
+  // (ねこは…) would carry it on to the next sentence written without one, at the same depth (ねこは…。「やあ」と言う。); that
+  // sentence is given the subject it had there: the one carried on to the place of the near sentence, else 自分. The
+  // result is where the next sentence begins and what is written up to it, or null when nothing is to be written.
+  function assistNextSubject(basis,start,end,written,indent,ctx,project,topic) {
+    const owner=project.components.find(c=>c.id===ctx.targetId)?.name;if(!owner)return null;
+    let at=end;while(['。',' ','\t'].includes(basis[at]))at++;
+    while(basis[at]==='\n'){const lineEnd=basis.indexOf('\n',at+1),line=basis.slice(at+1,lineEnd<0?basis.length:lineEnd);
+      if(line.trim()&&!line.trim().startsWith('※')){if(line.match(/^\s*/)[0].length!==indent)return null;at=at+1+indent;break;}at=lineEnd<0?basis.length:lineEnd;}
+    if(at>=basis.length||basis[at]==='\n')return null;
+    const names=[...project.components.map(c=>c.name),'自分','みんな','全体'].sort(assistLongestFirst).map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+    if(new RegExp('^「?(?:'+names+')」?(?:は|が|も|だけ|、)').test(basis.slice(at)))return null;
+    if(!('before' in topic))topic.before=assistTopicAt(basis.slice(0,start),ctx);
+    const after=assistTopicAt(basis.slice(0,start)+written+(basis[end]==='。'?'。':''),ctx),who=r=>r?.kind==='named'?r.name:r?.kind==='self'?owner:null;
+    if(!topic.before||!after||who(topic.before)===who(after))return null;
+    const subject=sentenceActorSource(who(topic.before)===owner?{kind:'self'}:topic.before)+'は';
+    return {at,between:basis.slice(end,at)+subject,note:`つぎの 文の はじめに「${subject}」を 書きます（つぎの 文を する 部品は かわりません）`};
   }
   // A candidate made whole from one that leaves out a subject or a time written: ねこは, 2秒かけて、 (the time the action
   // takes) or 2秒待ってから、 (a wait before it); a time that may be either gives both. Each is checked as any candidate.
@@ -835,10 +876,13 @@
       pool.splice(i,0,...made.map(meaningOf).filter(c=>c?.meaning&&(!from||c.meaning.missing<from.missing||c.meaning.explicit&&!from.explicit)).map(({text})=>({...pool[i],text,ast:null,label:pool[i].label===pool[i].text?text:pool[i].label})));}
     const now=()=>globalThis.performance?.now?.()??Date.now();
     const contextHints=hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}),knownSchemas=new Set(contextHints.filter(h=>h.mode==='statement').map(h=>hintSchemaId(h.id).replace(/:timed$/,'')));
-    const hasHigher=pool.some(p=>p.layer<6),seen=new Set(existing.map(p=>p.source.replace(/[\s。]/g,''))),out=[],started=now();
+    const hasHigher=pool.some(p=>p.layer<6),seen=new Set(existing.map(p=>p.source.replace(/[\s。]/g,''))),out=[],started=now(),topic={};let unread=null;
     for(const p of pool){if(p.layer===6&&hasHigher)continue;const key=p.text.replace(/[\s。]/g,'');if(key===range.text.replace(/[\s。]/g,'')||seen.has(key))continue;
       const canonical=assistCanonical(p.text,ctx,previous);if(!canonical)continue;
       const meaning=assistMeaningMatch(want,assistAstFrames(canonical.ast,project,ctx));if(!meaning)continue;
+      // With no action read (すがたを「丸」にかえた), a sentence that keeps only names in the work does the action of the
+      // nearest sentence shown (not 点数を「丸」にする).
+      if(meaning.nameOnly&&unread!==null&&meaning.actions!==unread)continue;
       const allowed=p.allowedSchemas||new Set(hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).filter(h=>h.mode==='statement'&&h.enabled).map(h=>hintSchemaId(h.id)));
       const localNames=new Set([...(ctx.args||[]),...(ctx.localNames||[])]),knownFor=actor=>new Set([...(project.projectData?.variables||[]),...(project.projectData?.lists||[]),...(project.components.find(c=>c.id===actor)?.localData?.variables||[]),...(project.components.find(c=>c.id===actor)?.localData?.lists||[])].map(n=>n.name));
       const gather=node=>{if(!node||typeof node!=='object')return;if(['LocalVariableDeclaration','LocalListDeclaration'].includes(node.kind))localNames.add(node.name);if(node.kind==='ForEach')localNames.add(node.binder);for(const [k,v]of Object.entries(node))if(k!=='sourceSpan'&&v&&typeof v==='object')Array.isArray(v)?v.forEach(gather):gather(v);};gather(canonical.ast);
@@ -852,12 +896,15 @@
         if(node.kind==='MotionCommand'&&['GOTO_PART','POINT_TO'].includes(node.op)&&node.args?.[0]?.kind==='StringLiteral'&&!project.components.some(c=>c.name===node.args[0].value)&&node.args[0].value!=='マウス')forbidden=true;
         if(node.kind==='SoundCommand'&&['SAMPLE','SAMPLE_WAIT'].includes(node.op)&&node.args?.[0]?.kind==='StringLiteral'&&!project.sounds.some(c=>c.name===node.args[0].value))forbidden=true;
         if(node.kind==='LooksCommand'&&node.op==='SET_COSTUME'&&node.args?.[0]?.kind==='StringLiteral'&&!project.components.find(c=>c.id===actor)?.costumes?.some(c=>c.name===node.args[0].value))forbidden=true;
+        if(node.kind==='LooksCommand'&&node.op==='SET_COLOR'&&node.args?.[0]?.kind==='StringLiteral')try{resolveColor(node.args[0].value);}catch{forbidden=true;}
         for(const [k,v]of Object.entries(node))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v,actor);};visit(canonical.ast);
       if(p.schemaId?.startsWith('Heading:'))forbidden=forbidden||!!ctx.definitionKind||ctx.targetId==='stage';if(forbidden)continue;
-      const start=p.start??range.start,end=p.end??range.end,source=(p.text.endsWith('。')&&basis[end]==='。'?p.text.slice(0,-1):p.text).replace(/\n/g,() => ('\n'+' '.repeat(range.indent))),replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;
+      const start=p.start??range.start,written=(p.text.endsWith('。')&&basis[p.end??range.end]==='。'?p.text.slice(0,-1):p.text).replace(/\n/g,() => ('\n'+' '.repeat(range.indent)));
+      // The next sentence keeps who does it: one the near sentence's subject would carry on to is given its own.
+      const kept=assistNextSubject(basis,start,p.end??range.end,written,range.indent,ctx,project,topic),end=kept?kept.at:p.end??range.end,source=kept?written+kept.between:written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;
       const following=basis.slice(end).split('\n').slice(1).find(line=>line.trim()&&line.match(/^\s*/)[0].length<=range.indent);if(following&&/^そうでなければ、/.test(following.trim())&&canonical.ast.body?.[0]?.kind!=='IfStatement')continue;
       try{const parsed=parseSyntax(replacement,ctx),next=parsed.syntaxDiagnostics[0],from=basis.slice(0,start).split('\n').length,to=from+source.split('\n').length-1;valid=!!parsed.ast||next&&!['P208','F504'].includes(next.code)&&(next.line<from||next.line>to||next.code==='P202'&&next.line===from);}catch{}
-      if(valid){const label=(p.label||BLOCK_SCHEMA_BY_ID.get(p.schemaId)?.label||p.text).replace(/いまのばしょから/g,'いまの ばしょから').replace(/決めたばしょへ/g,'決めた ばしょへ').replace(/始まったことが/g,'始まった ことが');seen.add(key);(meaning.missing?partial:out).push({assist:true,schemaId:p.schemaId,origin:p.origin,label,text:p.text,source,start,end,...(p.description?{description:p.description}:{}),...(want?{meaning}:{})});}
+      if(valid){const label=(p.label||BLOCK_SCHEMA_BY_ID.get(p.schemaId)?.label||p.text).replace(/いまのばしょから/g,'いまの ばしょから').replace(/決めたばしょへ/g,'決めた ばしょへ').replace(/始まったことが/g,'始まった ことが');seen.add(key);if(meaning.actions!==undefined)unread??=meaning.actions;(meaning.missing?partial:out).push({assist:true,schemaId:p.schemaId,origin:p.origin,label,text:p.text,source,start,end,...(p.description||kept?{description:[p.description,kept?.note].filter(Boolean).join(' ')}:{}),...(want?{meaning}:{})});}
       // As many candidates are looked at as are shown: one that leaves a role out still takes its place, so the ones
       // further down (less near to what was written) are not reached to fill the places it leaves.
       const taken=out.length+partial.length;if(taken>=ASSIST_MAX||!hasHigher&&taken>=2||now()-started>ASSIST_BUDGET_MS)break;

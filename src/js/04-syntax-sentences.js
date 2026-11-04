@@ -1164,13 +1164,21 @@
     // ねこもだんごも1秒待つ / ねことだんごは…: a sentence has one subject, so each part gets its own sentence. A wait
     // of a time stops the flow whoever waits, so it is written once, without a subject (two would wait twice as long).
     {const both=actorNamePatterns(symbols).both.exec(code);
-      if(both&&both[1]!==both[2]&&/^[^、。]*秒(?:間)?(?:待つ|まつ|待ちます)$/.test(surfaceMask(both[3]))){const once=canonicalStatementSource(both[3],symbols);
+      // The two subjects do the sentence up to a clause that names its own subject (ねこと犬は1秒待って、鳥は10歩進む):
+      // that clause and the ones after it are written once, after the sentence split or written without a subject.
+      const names=actorNamePatterns(symbols).partNames.map(name=>name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+      const later=both&&new RegExp('、(?:'+names+')(?:は|が)').exec(surfaceMask(both[3])),own=later?both[3].slice(0,later.index):both?.[3],then=text=>later?text+both[3].slice(later.index):text;
+      // What the two subjects do, a sentence for each subject (the clauses after it once).
+      const split=text=>later?canonicalStatementSource(both[1]+'は'+text+'、'+both[2]+'は'+then(text),symbols):canonicalStatementSource(both[1]+'は'+text,symbols)+'。\n'+canonicalStatementSource(both[2]+'は'+text,symbols);
+      // A timed wait first (ねこと犬は1秒待ってから、10歩進む) is written once, and what comes after it is split.
+      const wait=both&&/^[^、。]*秒(?:間)?(?:待つ|まつ|待ちます|待って|まって)(?:から)?(?=、|$)/.exec(surfaceMask(own));
+      if(both&&both[1]!==both[2]&&wait){const rest=own.slice(wait[0].length+1),once=rest?canonicalStatementSource(own.slice(0,wait[0].length).replace(/(?:待って|まって)(?:から)?$/,'待つ'),symbols)+'。\n'+split(rest):canonicalStatementSource(then(own),symbols);
         throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。待つ 文は、主語を 書かなくても、この 本文が 待ちます',line,parseSyntax(once+'。',{symbols}).ast?[{label:'この 本文で 待つ',source:once}]:[],{kind:'WaitTime'});}
-      if(both&&both[1]!==both[2]){const one=name=>canonicalStatementSource(name+'は'+both[3],symbols),split=one(both[1])+'。\n'+one(both[2]);
-        // A timed action (or a wait for a condition) split into sentences runs one subject after the other; say so
-        // before the child splits it.
-        const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:話す|はなす|言う|いう|鳴らす|ならす)|を(?:最後まで)?(?:鳴らす|ならす)|まで(?:待つ|まつ|待ちます)$)/.test(surfaceMask(both[3]));
-        throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?'。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かす ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます':''),line,parseSyntax(split+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split}]:[],{kind:'Sequence'});}}
+      if(both&&both[1]!==both[2]){const split2=split(own);
+        // A timed action (or a wait) split into sentences runs one subject after the other; say so before the child
+        // splits it.
+        const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:話す|はなす|言う|いう|鳴らす|ならす|待つ|まつ|待って|まって)|を(?:最後まで)?(?:鳴らす|ならす)|まで(?:待つ|まつ|待ちます|待って|まって)(?:から)?$)/.test(surfaceMask(own));
+        throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?'。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かす ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます':''),line,parseSyntax(split2+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split2}]:[],{kind:'Sequence'});}}
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).
     const reads=source=>{

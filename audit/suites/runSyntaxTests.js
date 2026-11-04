@@ -409,6 +409,23 @@ function runSyntaxTests() {
       eq(first('ねこと犬は前へ10歩進む。').proposals.map((x) => x.source), ['ねこは前へ10歩進む。\n犬は前へ10歩進む']);
       ok(first('ねこも犬も、画面のはしにふれるまで待つ。').message.includes('書いた じゅんに'));
       ok(!String(first('ねこもねこも1秒待つ。')?.message).includes('待つ 文は、主語を 書かなくても'));
+      // The two subjects do the sentence up to a clause that names its own subject; that clause is written once.
+      for (const joint of ['待って', '待ってから'])
+        eq(first('ねこと犬は1秒' + joint + '、ねこは10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む']);
+      eq(first('ねこと犬は前へ10歩進んで、ねこは「やあ」と言う。').proposals.map((x) => x.source), ['ねこは前へ10歩進む。\n犬は前へ10歩進む。\nねこは「やあ」と言う']);
+      ok(first('ねこと犬は、画面のはしにふれるまで待ってから、ねこは「やあ」と言う。').message.includes('書いた じゅんに'));
+      // A timed wait first is written once, and what the two subjects do after it is split.
+      eq(first('ねこと犬は1秒待ってから、10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む。\n犬は前へ10歩進む']);
+      ok(first('ねこと犬は10歩進んで、1秒待つ。').message.includes('書いた じゅんに'));
+      // 名人: parts written together that wait and then go on to a clause with its own subject would each do that clause;
+      // it is stopped, and the fix waits with the parts together and does the clause once.
+      const meijin = (source) => { const q = structuredClone(p); q.scripts = [{ id: 'wait-subject-meijin', targetId: 'meijin', mode: 'meijin', event: 'start', source }]; return compileProject(q).errors; };
+      for (const joint of ['待って', '待ってから']) {
+        const [together] = meijin('ねこと犬は1秒' + joint + '、ねこは10歩進む。');
+        eq([together?.code, together?.proposals?.map((x) => x.source)], ['P205', ['ねこと犬は1秒待つ。\nねこは10歩進む']]);
+      }
+      eq(meijin('ねこと犬は1秒待つ。ねこは10歩進む。'), []);
+      eq(meijin('ねこと犬は1秒待ってから、10歩進む。'), []);
     });
     return {
       passed: results.filter((x) => x.pass).length,

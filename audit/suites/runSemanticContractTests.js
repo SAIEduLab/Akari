@@ -885,6 +885,25 @@ function runSemanticContractTests() {
         ['ねこを前へ10歩進める。','near-1','ねこは前へ10歩進む。',[],['前へ10歩進む。']],
         ['ねこを右へ10歩移す。','near-1','ねこは、いまのばしょから、右へ10歩動く。',[],['いまのばしょから、右へ10歩動く。','「ねこ」のコピーを作る。']],
         ['ねこを右に向ける。','near-1',null,[],['「ねこ」の方を向く。']],
+        ['ねこをかくす。','near-1','ねこはすがたをかくす。',[],['すがたをかくす。']],
+        // Parts written together with を (ねこと犬を) are not one part, and the part made to do a clause (ねこを…させてから)
+        // is not carried on to the next clause: the body's owner says it.
+        ['ねこと犬を2秒で右へ40歩移動させる。','near-2',[]],
+        ['ねこを右へ40歩移動させてから「やあ」と言う。','near-1','ねこは、'+move+'\n犬は「やあ」と言う。',[],['ねこは、'+move+'\nねこは「やあ」と言う。']],
+        // A sentence that does another action than the one read keeps a way or a number written, not only a name or a
+        // text; no number written is turned into another unit, and no text is added that was not written.
+        ['ねこを右へ40歩、犬を左へ10歩動かす。','near-1',null,[],['ねこは「犬」のコピーを作る。']],
+        ['ねこを2倍の大きさにする。','near-1',null,[],['「ねこ」のところへ行く。','「ねこ」の方を向く。','「ねこ」のコピーを作る。','ねこは「ねこ」のコピーを作る。','大きさを120％にする。','ねこは大きさを120％にする。']],
+        // A copy is made only when a copy is written (コピー, クローン, 複製, 分身, ふやす).
+        ['ねこを大きくする。','near-1',['ねこは大きさを150％にする。']],
+        ['ねこのコピーを3つ作りたい。','near-1',['「ねこ」のコピーを3つ作る。']],
+        ['犬のペンを上げる。','near-0','犬はペンを上げる。'],
+        ['犬のすがたを見せる。','near-0',['犬はすがたを見せる。']],
+        ['右へ40歩回る。','near-0',null,[],['右に15度回る。']],
+        ['右へ40度動く。','near-0',null,[],['いまのばしょから、右へ10歩動く。']],
+        ['すがたを「丸」にかえた。','near-0',null,[],['点数を「丸」にする。']],
+        // まつ written in kana at the end is 待つ.
+        ['2秒でまつ。','near-0','2秒待つ。',[],['「名前は？」とたずねて、答えを待つ。']],
         ['自分を右に90度回らせる。','near-1','右に90度回る。',[],[]],
         ['ねこ、前へ10歩進む。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
         ['ねこは「やあ」と言わせる。','near-1','ねこは「やあ」と言う。',[],['「やあ」と言う。']],
@@ -950,7 +969,8 @@ function runSemanticContractTests() {
         ['2秒たってから右へ10歩動く。','near-0',['2秒待つ。\nいまのばしょから、右へ10歩動く。']],
         ['「やあ」と言わせて、「またね」と言わせる。','near-0',['「やあ」と言う。\n「またね」と言う。']],
         ['ねこは10歩動いて止まる。','near-0','ねこは前へ10歩進む。\nねこはこの動きを止める。',[],[]],
-        ['「犬」に「やあ」と言う。','near-0',['「やあ」と言う。','「やあ」の合図を送る。']],
+        // 「犬」に is 犬に (a quoted name of a part is the part): told as a signal first, as 犬に「やあ」と言う is.
+        ['「犬」に「やあ」と言う。','near-0',['「やあ」の合図を送る。','「やあ」と言う。']],
         ['2秒待ってから、右へ10歩動かす。','near-0',['2秒待つ。\nいまのばしょから、右へ10歩動く。']],
         ['ねこを右に90ど回らせる。','near-0',['ねこは右に90度回る。','右に90度回る。']],
         ['ねこを複製する。','near-0',['「ねこ」のコピーを作る。','自分のコピーを作る。']],
@@ -963,6 +983,24 @@ function runSemanticContractTests() {
       for(const [source,owner,first,has=[],not=[],names=['ねこ','犬','鳥','子ねこ']]of rows){const got=near(source,owner,names),where=source+' ('+owner+'): '+JSON.stringify(got);
         if(Array.isArray(first))eq(got,first);else if(first!==null)eq(got[0],first);
         for(const text of has)ok(got.includes(text),where+' lacks '+text);for(const text of not)ok(!got.includes(text),where+' has '+text);}
+    });
+    // LANGUAGE.md 読めない文の近い書き方: a near sentence does not change the other sentences. One that names another subject
+    // (ねこは…) would carry it on to the next sentence without one, so that sentence is given the subject it had (自分は, or
+    // the one carried on to the place of the near sentence). Each row: the body, its owner, and the body after the first
+    // near sentence is chosen.
+    test('near sentences keep who does the next sentence',()=>{
+      const p=parts('next-',['ねこ','犬','鳥']),applied=(body,targetId)=>{const ctx={symbols:buildSymbols(p),targetId,targetType:'sprite',event:'start',args:[],level:'advanced'};
+        const [c]=Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]);return c&&body.slice(0,c.start)+c.source+body.slice(c.end);};
+      const glide='ねこは2秒かけて、いまのばしょから、右へ40歩動く。',written='ねこを2秒で右へ40歩移動させる。';
+      for(const [body,owner,after]of [
+        [written+'「やあ」と言う。','next-1',glide+'自分は「やあ」と言う。'],
+        [written+'\n「やあ」と言う。','next-1',glide+'\n自分は「やあ」と言う。'],
+        ['2回くり返す。\n  '+written+'\n  前へ10歩進む。','next-1','2回くり返す。\n  '+glide+'\n  自分は前へ10歩進む。'],
+        ['鳥は前へ10歩進む。'+written+'「やあ」と言う。','next-1','鳥は前へ10歩進む。'+glide+'鳥は「やあ」と言う。'],
+        [written+'\n犬は「やあ」と言う。','next-1',glide+'\n犬は「やあ」と言う。'],
+        [written+'「やあ」と言う。','next-0',glide+'「やあ」と言う。'],
+        [written,'next-1',glide],
+      ])eq(applied(body,owner),after);
     });
     // The same in the work of the assist examples (audit/fixtures/assist): ねこ (whose body it is), 犬 and 星, the
     // variable 点数, the list 持ち物, the sound ベル, the procedure ジャンプ, and with ui the parts 文字1, ボタン1 and

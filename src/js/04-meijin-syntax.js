@@ -690,6 +690,12 @@
         // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) {
+          // ねこと犬は1秒待って、鳥は10歩進む: each part would wait and then do 鳥's sentence. The parts wait together, and the
+          // sentence with its own subject comes once after the wait.
+          const own = new RegExp('、(?:' + actorNamePatterns(symbols).partNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?:は|が)').exec(surfaceMask(body));
+          if (own && /(?:待って|まって)(?:から)?$/.test(surfaceMask(body.slice(0, own.index))))
+            throw sentenceDiagnostic('ならべた 主語の 文を「待って」で つづけて、ほかの 主語の 文を 書くと、その 文を ならべた 部品の 数だけ 行います。待つ 文を 分けて 書きます', line,
+              [{ label: 'いっしょに 待ってから つづける', source: phrase + particle + body.slice(0, own.index).replace(/(?:待って|まって)(?:から)?$/, '待つ') + '。\n' + body.slice(own.index + 1) }], { kind: 'Parallel' });
           // ねこと犬と鳥は、順番に、…: parts written together start together; the check says 順番に does not order them.
           const lanes = meijinGroup(node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
           if (/^(?:順番|じゅんばん)に$/.test(order?.[1] || '')) MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
