@@ -1,6 +1,6 @@
 // How much each audit file checks (AUDIT.md「監査の変更ガード」). The calls that make a test fail are counted in every
 // audit script: assert and its methods, the suites' ok, eq and reject, and Playwright's expect. A change that lowers the
-// count of a file removes checks from it, and the change guard asks the owner's label for it, as for a removed test ID.
+// count of a file removes checks from it, and the change guard asks a recorded reason for it, as for a removed test ID.
 import {createRequire} from 'node:module';
 const require = createRequire(import.meta.url);
 const {parse} = require('@babel/parser');

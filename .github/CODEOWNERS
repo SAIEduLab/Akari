@@ -15,6 +15,8 @@
 /audit/lib/script-packages.mjs @SAIEduLab
 /audit/manifests/intended-behaviour-changes.json @SAIEduLab
 /audit/manifests/mutation-equivalents.json @SAIEduLab
+/audit/manifests/intended-audit-changes.json @SAIEduLab
+/audit/lib/code-assist-host.mjs @SAIEduLab
 /audit/lib/gate-contract.mjs @SAIEduLab
 /audit/lib/workflow-contract.mjs @SAIEduLab
 /audit/tests/workflow-contract.mjs @SAIEduLab

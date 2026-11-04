@@ -89,6 +89,16 @@ const acceptanceShards={
 };
 // Reads the whole merged composition directory, so it runs in the aggregate job.
 const acceptanceAfterMerge={composition:['audit/tests/actions-transfer-verify.mjs']};
+
+// Change guard parts (.github/workflows/akari-change-guard.yml, audit/tests/change-guard.mjs --part): `main` runs every
+// check but the mutants, and m1..m6 each run every sixth mutant; the job audit-change-guard merges them into one verdict.
+// Planned from runs 41748539936 and 41748539575 (windows-latest): the guard as one job ran 1251 s for 412 mutants and
+// every other check, and ended 7 minutes after the audit. The account runs at most 20 jobs at once; a head starts the 17
+// audit jobs, the 4 acceptance jobs and the guard together, so the guard waits for a runner, and most runners came free
+// 5.5-7.1 minutes after the start. Six parts hold at most 209 s of mutants each (1251 s / 6), so a part that starts on a
+// runner freed then ends near the last audit shards (about 10 minutes); more parts would each set up and run the coverage
+// again for less time.
+const changeGuardParts=['main','m1','m2','m3','m4','m5','m6'];
 // Files a step reads inside another step's output directory (exact output files are found from the commands).
 const acceptanceReads={composition:{'audit/tests/child-ux.mjs/matrix':['audit/run-ux-normal-gui.mjs']}};
 
@@ -198,4 +208,4 @@ function verifyShardPlan({steps,tasks,acceptance},plan=defaultPlan){
   return problems;
 }
 
-module.exports={childLimitMs,childLimit,splits,selftestShards,selftestAfterMerge,browserShards,acceptanceShards,acceptanceAfterMerge,acceptanceReads,parseUnit,planRows,currentPart,partItems,verifyPartCoverage,verifyShardPlan};
+module.exports={childLimitMs,childLimit,splits,selftestShards,selftestAfterMerge,browserShards,acceptanceShards,acceptanceAfterMerge,acceptanceReads,changeGuardParts,parseUnit,planRows,currentPart,partItems,verifyPartCoverage,verifyShardPlan};

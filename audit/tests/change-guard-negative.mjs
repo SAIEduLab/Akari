@@ -5,12 +5,13 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,treeIdentity,git,nextPatch} from '../lib/change-guard.mjs';
-import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract,changeGuardLabel} from '../lib/gate-contract.mjs';
+import {changeGuard,guardMutantPart,mergeGuardParts,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema} from '../lib/change-guard.mjs';
+import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract} from '../lib/gate-contract.mjs';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
-import {currentPart,partItems} from '../lib/shard-plan.cjs';
+import {currentPart,partItems,changeGuardParts} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
+import {assistDifferences,mutationIssues,equivalentsFile,equivalentsSchema} from '../lib/mutation.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
 const part=currentPart('change-guard-negative'),mine=new Set(partItems('change-guard-negative',gateCaseIds['change-guard-negative'],part));
 const {results,pass}=caseRecorder();
@@ -46,17 +47,15 @@ try {
   const text=file=>fs.readFileSync(file,'utf8');
   const replaced=(file,from,to)=>{const t=text(file);assert.ok(t.includes(from),file+' lacks '+JSON.stringify(from.slice(0,80)));return t.replace(from,to);};
   const json=(file,change)=>{const value=JSON.parse(text(file));change(value);return JSON.stringify(value,null,2)+'\n';};
-  const event=(name,payload)=>{const file=path.join(tmp,name);fs.writeFileSync(file,typeof payload==='string'?payload:JSON.stringify(payload));return file;};
-  const approved=event('approved.json',{pull_request:{number:1,labels:[{name:'documentation'},{name:changeGuardLabel}]}});
-  const otherLabel=event('other-label.json',{pull_request:{number:1,labels:[{name:'documentation'}]}});
-  const withoutLabels=event('without-labels.json',{pull_request:{number:1}});
-  const unreadable=event('unreadable.json','{"pull_request":');
-  const guard=(head,{from=base,eventPath,limitMs}={})=>changeGuard({repo,base:from,head,eventPath,workDir:trees,limitMs});
+  // The record of audit changes, with a reason for each change named (auditChangesFile).
+  const record=(...changes)=>({[auditChangesFile]:JSON.stringify({schema:auditChangesSchema,changes:changes.map(change=>({change,reason:'an audit change made for this guard case'}))},null,2)+'\n'});
+  const guard=(head,{from=base,limitMs}={})=>changeGuard({repo,base:from,head,workDir:trees,limitMs});
   const accepted=(id,report,removed={})=>{
     assert.equal(report.status,'PASS',id+': '+JSON.stringify(report));assert.deepEqual(report.removed,removed,id+' removed');pass(id);
   };
+  // A removal that the change does not record with a reason fails.
   const removal=(id,report,removed)=>{
-    assert.deepEqual(report.removed,removed,id+' removed');assert.equal(report.approved,false,id);
+    assert.deepEqual(report.removed,removed,id+' removed');assert.ok(report.auditChangeIssues.some(m=>/is not recorded with a reason/.test(m)),id+': '+JSON.stringify(report.auditChangeIssues));
     assert.deepEqual([report.errors,report.versionIssues,report.releaseIssues],[[],[],[]],id+' fails only for the removal');
     assert.equal(report.status,'FAIL',id);pass(id);
   };
@@ -74,7 +73,7 @@ try {
   // Shared by the groups: the next patch release, a record of intended behaviour changes, and the expression file.
   const bumped=release(nextPatch(version),{productBytes:text(product)+'\n'});
   const intended=cases=>({'audit/manifests/intended-behaviour-changes.json':JSON.stringify({schema:'akari-intended-behaviour-changes-v1',changes:cases.map(c=>({case:c,reason:'a left turn turns right in this audit fixture'}))},null,2)+'\n'});
-  const exprFile='src/js/04-syntax-expressions.js',exprText=text(exprFile);
+  const exprFile='src/js/04-syntax-expressions.js',exprText=text(exprFile),assistFile='audit/fixtures/assist/code-assist-cases.json';
   // A CI part (AKARI_PART) runs its planned group (audit/lib/shard-plan.cjs): the behaviour, limit and mutant rules
   // and the test map, or the rest.
   if(mine.has('real-tree/identity-extracted')){
@@ -98,7 +97,13 @@ try {
   pass('real-tree/identity-extracted');
 
   const documentation={'AUDIT.md':text('AUDIT.md')+'\n<!-- note -->\n'},docHead=derive(documentation);
-  accepted('control/documentation-only',await guard(docHead));
+  const documented=await guard(docHead);accepted('control/documentation-only',documented);
+  // The report names whose guard judged the change: here the guard of the base, which the head keeps; a head that edits
+  // the guard leaves it the base's only.
+  assert.deepEqual(documented.guardCode,{base:true,head:true},'the guard running here is the base\'s and the head\'s');
+  assert.ok(formatGuardReport(documented).includes("Guard code: the base's"),'the report names the base\'s guard');
+  const editedGuard=await guard(derive({'audit/lib/change-guard.mjs':text('audit/lib/change-guard.mjs')+'\n// edited\n'}));
+  assert.deepEqual([editedGuard.status,editedGuard.guardCode],['PASS',{base:true,head:false}],'a head that edits the guard');pass('control/guard-code-named');
   const addedStep=replaced('audit/lib/gate-contract.mjs',"  ['static',","  ['added-check','audit/tests/added-check.mjs'],\n  ['static',");
   accepted('control/additions-only',await guard(derive({'audit/lib/gate-contract.mjs':addedStep,
     'audit/manifests/product-tests.json':json('audit/manifests/product-tests.json',m=>m.suites.find(s=>s.name==='runExtendedTests').ids.push('ADDED-CHECK')),
@@ -108,7 +113,7 @@ try {
   const advanced=await guard(docHead,{from:derive({'audit/lib/gate-contract.mjs':addedStep})});
   assert.equal(advanced.mergeBase,base);accepted('control/base-advanced-after-branch',advanced);
 
-  const withoutStep=derive({'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',"  ['dom-regression','audit/tests/dom-render-regression.cjs',file('dom-regression')],\n",'')});
+  const withoutStepChange={'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',"  ['dom-regression','audit/tests/dom-render-regression.cjs',file('dom-regression')],\n",'')},withoutStep=derive(withoutStepChange);
   removal('removed/gate-step',await guard(withoutStep),{'gate-step':['dom-regression']});
   removal('removed/gate-case',await guard(derive({'audit/lib/gate-case-contract.mjs':replaced('audit/lib/gate-case-contract.mjs',"'dom-regression':['normal-observation',","'dom-regression':[")})),{'gate-case':['dom-regression/normal-observation']});
   removal('removed/integrity-control',await guard(derive({'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',"'freeze-second-release-refused',",'')})),{'integrity-control':['freeze-second-release-refused']});
@@ -140,27 +145,40 @@ try {
   const startMain=JSON.parse(text('audit/fixtures/child-ux-plan.json')).startMain;assert.match(startMain,/^[0-9a-f]{40}$/);
   removal('pin/removed',await guard(derive({'audit/fixtures/child-ux-plan.json':replaced('audit/fixtures/child-ux-plan.json',startMain,'')})),{pin:[startMain]});
 
-  const approvedRemoval=await guard(withoutStep,{eventPath:approved});
-  assert.equal(approvedRemoval.approved,true);accepted('label/approves-removal',approvedRemoval,{'gate-step':['dom-regression']});
-  const other=await guard(withoutStep,{eventPath:otherLabel});
-  assert.deepEqual(other.labels,['documentation']);removal('label/other-label-only',other,{'gate-step':['dom-regression']});
-  failed('label/missing-event',await guard(docHead,{eventPath:path.join(tmp,'missing-event.json')}),'errors',/event payload unreadable/);
-  failed('label/payload-without-labels',await guard(docHead,{eventPath:withoutLabels}),'errors',/no label list/);
-  failed('label/unreadable-payload',await guard(docHead,{eventPath:unreadable}),'errors',/event payload unreadable/);
+  // The record of audit changes: a removal recorded with a reason passes and the report gives the reason; a record of
+  // another change leaves the removal failing and fails itself; an entry kept from the base covers nothing; a record
+  // without a reason, or of another shape, fails.
+  const recordedRemoval=await guard(derive({...withoutStepChange,...record('gate-step:dom-regression')}));
+  accepted('record/approves-removal',recordedRemoval,{'gate-step':['dom-regression']});
+  assert.ok(formatGuardReport(recordedRemoval).includes('- removed gate-step dom-regression: an audit change made for this guard case'),'the reason is listed for the owner');
+  const other=await guard(derive({...withoutStepChange,...record('gate-step:another-step')}));
+  removal('record/other-change-only',other,{'gate-step':['dom-regression']});assert.ok(other.auditChangeIssues.some(m=>/records gate-step:another-step, but this change does not make it/.test(m)),JSON.stringify(other.auditChangeIssues));
+  const recordAtBase=derive(record('gate-step:dom-regression'));
+  removal('record/kept-from-base',await guard(derive({...withoutStepChange,...record('gate-step:dom-regression')},recordAtBase),{from:recordAtBase}),{'gate-step':['dom-regression']});
+  failed('record/without-reason',await guard(derive({...withoutStepChange,[auditChangesFile]:JSON.stringify({schema:auditChangesSchema,changes:[{change:'gate-step:dom-regression',reason:'ok'}]})})),'errors',/each entry names a change and a reason/);
+  failed('record/wrong-shape',await guard(derive({...withoutStepChange,[auditChangesFile]:JSON.stringify({changes:[]})})),'errors',/has the wrong shape/);
+  // A removal recorded in a change that also changes src/ fails: a change that checks less is made in a change of the
+  // audit alone. A pin changed with the product (a product test added re-pins the IDs) is recorded with it and passes.
+  const productRelease=release(nextPatch(version),{changeSource:true,productBytes:text(product)+'\n'});
+  const lessWithProduct=await guard(derive({...productRelease,...withoutStepChange,...record('gate-step:dom-regression')}));
+  assert.deepEqual([lessWithProduct.errors,lessWithProduct.versionIssues,lessWithProduct.releaseIssues],[[],[],[]],'it fails only for the record');
+  failed('record/less-only-in-audit-change',lessWithProduct,'auditChangeIssues',/gate-step:dom-regression checks less, and this change also changes src\/, extensions\/ or the product: record it in a change of the audit alone/);
+  accepted('record/pin-with-product-change',await guard(derive({...productRelease,'audit/manifests/product-tests.json':json('audit/manifests/product-tests.json',m=>m.fixedIdSha256='e'.repeat(64)),...record('pin:'+products.fixedIdSha256)})),{pin:[products.fixedIdSha256]});
 
   failed('version/source-changed-without-bump',await guard(derive(sourceChange)),'versionIssues',new RegExp('must be '+nextPatch(version).replaceAll('.','\\.')));
   failed('version/product-changed-without-bump',await guard(derive({[product]:text(product)+'\n'})),'versionIssues',/must be/);
   accepted('version/patch-bump-accepted',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:text(product)+'\n'}))));
   const skipped=derive(release(nextPatch(nextPatch(version)),{changeSource:true,productBytes:text(product)+'\n'}));
-  failed('version/patch-skipped',await guard(skipped),'versionIssues',/needs the/);
-  accepted('version/patch-skipped-with-label',await guard(skipped,{eventPath:approved}));
+  const raisedTo=next=>'version:'+next;
+  failed('version/patch-skipped',await guard(skipped),'auditChangeIssues',/version:/);
+  accepted('version/patch-skipped-recorded',await guard(derive({...release(nextPatch(nextPatch(version)),{changeSource:true,productBytes:text(product)+'\n'}),...record(raisedTo(nextPatch(nextPatch(version))))})));
   const [major,minor]=version.split('.').map(Number),minorBump=derive(release(major+'.'+(minor+1)+'.0',{changeSource:true,productBytes:text(product)+'\n'}));
-  failed('version/minor-bump',await guard(minorBump),'versionIssues',/needs the/);
-  accepted('version/minor-bump-with-label',await guard(minorBump,{eventPath:approved}));
-  accepted('version/major-bump-with-label',await guard(derive(release((major+1)+'.0.0',{changeSource:true,productBytes:text(product)+'\n'})),{eventPath:approved}));
-  failed('version/lower-with-label',await guard(derive(release(major+'.'+minor+'.0',{changeSource:true,productBytes:text(product)+'\n'})),{eventPath:approved}),'versionIssues',/must be/);
+  failed('version/minor-bump',await guard(minorBump),'auditChangeIssues',/version:/);
+  accepted('version/minor-bump-recorded',await guard(derive({...release(major+'.'+(minor+1)+'.0',{changeSource:true,productBytes:text(product)+'\n'}),...record(raisedTo(major+'.'+(minor+1)+'.0'))})));
+  accepted('version/major-bump-recorded',await guard(derive({...release((major+1)+'.0.0',{changeSource:true,productBytes:text(product)+'\n'}),...record(raisedTo((major+1)+'.0.0'))})));
+  failed('version/lower-recorded',await guard(derive({...release(major+'.'+minor+'.0',{changeSource:true,productBytes:text(product)+'\n'}),...record(raisedTo(major+'.'+minor+'.0'))})),'versionIssues',/must be/);
   failed('version/bump-without-product-change',await guard(derive(release(nextPatch(version)))),'versionIssues',/must stay/);
-  failed('version/label-does-not-excuse',await guard(derive(sourceChange),{eventPath:approved}),'versionIssues',/must be/);
+  failed('version/record-does-not-excuse',await guard(derive({...sourceChange,...record(raisedTo(version))})),'versionIssues',/must be/);
 
   failed('release/two-manifests',await guard(derive({'audit/manifests/release-0.0.1.json':text(currentReleaseFile())})),'releaseIssues',/exactly one release manifest/);
   failed('release/wrong-name',await guard(derive({[currentReleaseFile()]:null,'audit/manifests/release-9.9.9.json':text(currentReleaseFile())})),'releaseIssues',/exactly one release manifest/);
@@ -172,40 +190,42 @@ try {
   const tableChanged=derive({[product]:replaced(product,'const SENTENCE_TE_FORMS = Object.freeze([',"const SENTENCE_TE_FORMS = Object.freeze([['未知て','未知る'],")});
   failed('language/reader-table-changed',await guard(tableChanged),'errors',/reader tables changed/);
   failed('language/verbs-changed',await guard(derive({[product]:replaced(product,"const verbs={MotionCommand:['動く'","const verbs={MotionCommand:['別の動詞'")})),'errors',/reader tables changed/);
-  failed('language/reader-change-with-label',await guard(tableChanged,{eventPath:approved}),'errors',/reader tables changed/);
+  failed('language/reader-change-recorded',await guard(derive({[product]:replaced(product,'const SENTENCE_TE_FORMS = Object.freeze([',"const SENTENCE_TE_FORMS = Object.freeze([['未知て','未知る'],"),...record('reader-tables')})),'errors',/reader tables changed/);
   failed('language/candidate-not-base-canonical',await guard(derive({'audit/fixtures/assist/code-assist-cases.json':json('audit/fixtures/assist/code-assist-cases.json',data=>{data.cases[0].expect.first.text='存在しない書き方。';})})),'errors',/not a base canonical sentence/);
   }
   if(mine.has('behaviour/unrecorded-change')){
   // Behaviour against the base product (AUDIT.md「前の版との振る舞いの差分」): a left turn made a right turn changes the
-  // worlds that turn left; unrecorded it fails, recorded with a reason it needs the label, and a record without a change fails.
+  // worlds that turn left; unrecorded it fails, recorded with a reason it passes with the reason listed, and a record without a change fails.
   const turned=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : -1);");
   const unrecorded=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:turned})));
   failed('behaviour/unrecorded-change',unrecorded,'behaviourIssues',/changed, and audit\/manifests\/intended-behaviour-changes\.json does not record it/);
   const changedCases=unrecorded.behaviour.differences;assert.ok(changedCases.length>0,'the turn changes at least one world');
   const recordedHead=derive({...release(nextPatch(version),{changeSource:true,productBytes:turned}),...intended(changedCases)});
   const recorded=await guard(recordedHead);
-  assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['FAIL',[],changedCases],'a recorded change waits for the label');
-  assert.equal((await guard(recordedHead,{eventPath:approved})).status,'PASS','the label passes a recorded change');pass('behaviour/recorded-change-needs-label');
+  assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes');
+  assert.ok(formatGuardReport(recorded).includes('- changed behaviour of '+changedCases[0]+': '),'the recorded change is listed for the owner');pass('behaviour/recorded-change-listed');
   // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job.
   const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
   failed('limits/worlds-never-finish',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless})),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
   }
   if(mine.has('moves/moved-unchanged-accepted')){
   // A statement moved to another src file keeps its text (AUDIT.md「移動だけの変更」): moved as it is it passes,
-  // moved and changed in the same change it needs the label.
+  // moved and changed in the same change it is an audit change to record.
   const coreFile='src/js/07-semantic-analysis-core.js',otherFile='src/js/07-semantic-analysis.js',coreText=text(coreFile);
   const from=coreText.indexOf('  function validKeyName(key) {'),to=coreText.indexOf('\n  }\n',from)+5;assert.ok(from>0&&to>from,'the moved function');
   const unit=coreText.slice(from,to),withUnit=extra=>({[coreFile]:coreText.slice(0,from)+coreText.slice(to),[otherFile]:text(otherFile)+extra});
   const moved=await guard(derive({...bumped,...withUnit(unit)}));
   assert.deepEqual([moved.status,moved.moves.moved,moved.moves.movedAndChanged],['PASS',['validKeyName: '+coreFile+' -> '+otherFile],[]],'moved as it is');pass('moves/moved-unchanged-accepted');
   const changedMove=await guard(derive({...bumped,...withUnit(unit.replace('(key) {','(key) {\n    void key;'))}));
-  assert.deepEqual([changedMove.status,changedMove.moves.movedAndChanged],['FAIL',['validKeyName: '+coreFile+' -> '+otherFile]],'moved and changed');
-  assert.deepEqual([changedMove.errors,changedMove.versionIssues,changedMove.releaseIssues,changedMove.behaviourIssues],[[],[],[],[]],'it fails only for the move');pass('moves/moved-and-changed-needs-label');
-  // A file that checks less needs the label: one assertion fewer in static-contract.
+  assert.deepEqual([changedMove.status,changedMove.moves.movedAndChanged,changedMove.auditChangeIssues.length],['FAIL',['validKeyName: '+coreFile+' -> '+otherFile],1],'moved and changed');
+  assert.deepEqual([changedMove.errors,changedMove.versionIssues,changedMove.releaseIssues,changedMove.behaviourIssues],[[],[],[],[]],'it fails only for the move');
+  assert.equal((await guard(derive({...bumped,...withUnit(unit.replace('(key) {','(key) {\n    void key;')),...record('moved-and-changed:validKeyName')}))).status,'PASS','a recorded move passes');pass('moves/moved-and-changed-needs-record');
+  // A file that checks less is an audit change to record: one assertion fewer in static-contract.
   const weakenedHead=derive({'audit/tests/static-contract.mjs':replaced('audit/tests/static-contract.mjs',"assert.ok(!publicationPathAllowed('AGENTS.md'));assert.ok(!publicationPathAllowed('audit/AGENTS.md'));","assert.ok(!publicationPathAllowed('AGENTS.md'));")});
   const weakened=await guard(weakenedHead);
-  assert.equal(weakened.status,'FAIL','fewer checks without the label');assert.ok(weakened.weakened.some(w=>w.startsWith('audit/tests/static-contract.mjs: ')),JSON.stringify(weakened.weakened));
-  assert.equal((await guard(weakenedHead,{eventPath:approved})).status,'PASS','the label passes fewer checks');pass('assertions/fewer-checks-needs-label');
+  assert.equal(weakened.status,'FAIL','fewer checks without a record');assert.ok(weakened.weakened.some(w=>w.startsWith('audit/tests/static-contract.mjs: ')),JSON.stringify(weakened.weakened));
+  const weakenedRecorded=await guard(derive({'audit/tests/static-contract.mjs':replaced('audit/tests/static-contract.mjs',"assert.ok(!publicationPathAllowed('AGENTS.md'));assert.ok(!publicationPathAllowed('audit/AGENTS.md'));","assert.ok(!publicationPathAllowed('AGENTS.md'));"),...record('fewer-checks:audit/tests/static-contract.mjs')}));
+  assert.equal(weakenedRecorded.status,'PASS','a recorded file with fewer checks passes');pass('assertions/fewer-checks-needs-record');
   // An extension file the product embeds whole is covered like 01-09, also when no src file changes: a no-op sum at the
   // start of the extension host, which every product start runs, is mutated and its mutants survive.
   {
@@ -217,23 +237,70 @@ try {
     pass('coverage/extension-line-mutated');
   }
   }
-  if(mine.has('mutants/survivor-needs-record-and-label')){
+  if(mine.has('mutants/survivor-needs-record')){
   // A changed line that runs but whose mutants no suite notices fails, unless this change records them as equivalent with a
-  // reason, and then it needs the label: a no-op sum at the start of a function the syntax suite runs.
+  // reason, which the report lists for the owner: a no-op sum at the start of a function the syntax suite runs.
   const noOp='    void (1 + 1);\n',runFn='  function replaceUnprotectedWord(text, from, to) {\n';assert.ok(exprText.includes(runFn),'the anchor for the run line');
   const noOpChange={...bumped,[exprFile]:exprText.replace(runFn,()=>runFn+noOp)};
   const unpinned=await guard(derive(noOpChange));
   assert.equal(unpinned.status,'FAIL','surviving mutants without a record');assert.ok(unpinned.mutationIssues.some(m=>m.startsWith('a mutant survives on '+exprFile)),JSON.stringify(unpinned.mutationIssues));
   const equivalents={'audit/manifests/mutation-equivalents.json':JSON.stringify({schema:'akari-mutation-equivalents-v1',equivalents:unpinned.mutation.survivors.map(s=>({file:s.file,source:s.source,operator:s.operator,reason:'a sum nothing reads, written for this guard case'}))},null,2)+'\n'};
-  const pinnedHead=derive({...noOpChange,...equivalents}),pinned=await guard(pinnedHead);
-  assert.deepEqual([pinned.status,pinned.mutationIssues],['FAIL',[]],'recorded equivalents wait for the label');
-  assert.equal((await guard(pinnedHead,{eventPath:approved})).status,'PASS','the label passes recorded equivalents');pass('mutants/survivor-needs-record-and-label');
-  // An entry added by a change that mutates nothing matches no survivor, with the label too; a later line of the same
+  // The recorded equivalents run the head's assist fixtures as well; the first ten cases keep these runs short (the
+  // guard of a real change runs them all).
+  const fewAssist=extra=>({[assistFile]:json(assistFile,data=>{data.cases=[...data.cases.slice(0,10),...extra];})});
+  const pinnedHead=derive({...noOpChange,...equivalents,...fewAssist([])}),pinned=await guard(pinnedHead);
+  assert.deepEqual([pinned.status,pinned.mutationIssues],['PASS',[]],'recorded equivalents pass');
+  assert.ok(formatGuardReport(pinned).includes('- an equivalent mutant in '+exprFile),'the recorded equivalents are listed for the owner');pass('mutants/survivor-needs-record');
+  // A survivor recorded as equivalent that an assist fixture case tells apart fails (audit/lib/mutation.mjs
+  // assistDifferences, mutationIssues): a line at the start of parseSyntax that answers one input only, with the index
+  // that picks its diagnostic code mutated. The fixture case that gives that input sees the other code and the cases
+  // before it see nothing; the survivor so told apart fails its record and is not listed as an equivalent. The product
+  // script is probed directly, so no guard run and no suite run is added to this part.
+  {
+    const html=text(product),script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
+    const parseStart='  function parseSyntax(source, context = {}) {\n',probe='あかりの変異のためし',probeLine="    if (source === '"+probe+"') return { ast: null, syntaxDiagnostics: [{ code: ['P900', 'P901'][0] }] };\n";
+    assert.equal(script.split(parseStart).length,2,'one parseSyntax in the product script');
+    const probed=script.replace(parseStart,()=>parseStart+probeLine),at=probed.indexOf("['P900', 'P901'][0]")+"['P900', 'P901'][".length;
+    assert.equal(probed[at],'0','the index the mutant changes');
+    const fixture=JSON.parse(text(assistFile)),probeCase={...fixture.cases[0],id:'ASSIST-MUTANT-PROBE',input:{source:probe,line:1},expect:{}};
+    const told=await assistDifferences(probed,[{index:0,start:at,end:at+1,replacement:'(0+1)'}],JSON.stringify({...fixture,cases:[...fixture.cases.slice(0,10),probeCase]}));
+    assert.equal(told.get(0),'ASSIST-MUTANT-PROBE','the probe case tells the index apart, and no case before it does');
+    const line=exprText.slice(0,exprText.indexOf(parseStart)).split('\n').length+1,source=probeLine.trim();
+    const {issues,used}=mutationIssues([{file:exprFile,line,operator:'n->n+1',source,toldApart:told.get(0)}],null,
+      {schema:equivalentsSchema,equivalents:[{file:exprFile,source,operator:'n->n+1',reason:'claimed equivalent for this guard case'}]});
+    assert.ok(issues.some(m=>m.startsWith(equivalentsFile+' calls the mutant on '+exprFile+':'+line+' (n->n+1) equivalent, but the assist fixture case ASSIST-MUTANT-PROBE tells it apart')),JSON.stringify(issues));
+    assert.deepEqual(used,[],'a told-apart entry is not listed as an equivalent');
+    pass('mutants/equivalent-told-apart-by-assist');
+  }
+  // An entry added by a change that mutates nothing matches no survivor; a later line of the same
   // text cannot lean on it.
   {
     const recordOnly=derive({...equivalents});
-    for(const options of [{},{eventPath:approved}]){const r=await guard(recordOnly,options);assert.equal(r.status,'FAIL');assert.ok(r.mutationIssues.some(m=>/but no such mutant survives/.test(m)),JSON.stringify(r.mutationIssues));}
+    {const r=await guard(recordOnly);assert.equal(r.status,'FAIL');assert.ok(r.mutationIssues.some(m=>/but no such mutant survives/.test(m)),JSON.stringify(r.mutationIssues));}
     pass('mutants/record-without-survivor');
+  }
+  // The guard in parts (audit/tests/change-guard.mjs --part, mergeGuardParts) gives the verdict of one run: the main part
+  // and the mutant parts of the head with its survivors recorded, merged, are the whole guard's report. A merge refuses
+  // parts that are missing, repeated or undeclared, that ran another plan or another share, that guard another head or
+  // failed, and a merge without the main part.
+  {
+    const whole=await guard(pinnedHead),count=changeGuardParts.length-1;
+    const main=await changeGuard({repo,base,head:pinnedHead,workDir:trees,part:'main'});
+    assert.deepEqual([main.status,main.mutation.mutants,whole.status],['PART',whole.mutation.mutants,'PASS'],'the main part plans the mutants it leaves to the parts');
+    const shares=[];for(let index=1;index<=count;index++)shares.push(await guardMutantPart({repo,base,head:pinnedHead,index,count}));
+    const merge=parts=>mergeGuardParts({repo,base,head:pinnedHead,parts,count});
+    assert.deepEqual(merge([main,...shares]),whole,'the merged parts give the whole guard report');pass('mutants/parts-merged-as-one-run');
+    const refused=(id,parts,pattern)=>{const r=merge(parts);assert.equal(r.status,'FAIL',id);assert.ok(r.errors.some(m=>pattern.test(m)),id+': '+JSON.stringify(r.errors));pass('mutants/parts-'+id);};
+    const changed=change=>[{...shares[0],...change(shares[0])},...shares.slice(1)];
+    refused('missing-part',[main,...shares.slice(1)],/mutant part m1 is reported 0 times/);
+    refused('repeated-part',[main,...shares,shares[0]],/mutant part m1 is reported 2 times/);
+    refused('undeclared-part',[main,...shares,{...shares[0],part:'m'+(count+1),index:count+1}],new RegExp('an undeclared part m'+(count+1)+' is reported'));
+    refused('other-plan',[main,...changed(()=>({plan:'0'.repeat(64)}))],/m1 ran a share of another plan/);
+    assert.ok(shares[0].ran.length>0,'the first part runs a mutant');
+    refused('other-share',[main,...changed(s=>({ran:s.ran.slice(1)}))],/m1 ran mutants .*, not its share/);
+    refused('other-head',[main,...changed(()=>({head:base}))],/m1 guards head/);
+    refused('failed-part',[main,...changed(()=>({errors:['the coverage run did not finish']}))],/m1: the coverage run did not finish/);
+    refused('no-main',shares,/the main part is reported 0 times/);
   }
   // A changed line only the worlds run is judged by the worlds' record: an early return they notice whenever it is taken.
   {

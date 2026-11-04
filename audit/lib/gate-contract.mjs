@@ -1,7 +1,7 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {selftestShards,browserShards,acceptanceShards} from './shard-plan.cjs';
+import {selftestShards,browserShards,acceptanceShards,changeGuardParts} from './shard-plan.cjs';
 // One sealed bundle per CI shard (audit/lib/shard-plan.cjs); the aggregate merges them for the full validators.
 export const auditBundleKinds=[...Object.keys(selftestShards).map(s=>'selftest-'+s),'audio-codecs-win32',...Object.keys(browserShards).map(s=>'full-browser-'+s)];
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
@@ -145,6 +145,13 @@ export const acceptanceCommands={
 const sameRepository="${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}";
 const afterNeeds="${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}";
 const requestedSha={AKARI_REQUESTED_SHA:'${{ github.event.pull_request.head.sha || github.sha }}'};
+const guardShas={AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKARI_HEAD_SHA:'${{ github.event.pull_request.head.sha }}'};
+// The change guard checks out the head and, run for pull_request_target, puts back the base's guard: its code (the
+// modules audit/tests/change-guard.mjs loads, under these paths) judges the change, and the change's own tests, fixtures and
+// records are the data it judges. Run for pull_request (only for a change to the guard workflow), the head's own guard runs.
+export const guardCodePaths=['audit/lib','audit/tests','audit/browser/cases/audit-lib.cjs','src/build.mjs'];
+const sameRepositoryPr="${{ github.event.pull_request.head.repo.full_name == github.repository }}";
+const baseGuard={run:'git checkout "$AKARI_BASE_SHA" -- '+guardCodePaths.join(' '),if:"${{ github.event_name == 'pull_request_target' }}",env:{AKARI_BASE_SHA:guardShas.AKARI_BASE_SHA}};
 export const workflowContract=Object.freeze({
   'akari-audit.yml':{triggers:'audit',env:requestedSha,jobs:{
     selftest:{if:sameRepository,needs:[],shards:Object.keys(selftestShards),entries:[
@@ -171,12 +178,14 @@ export const workflowContract=Object.freeze({
     'owner-work-authorization':{needs:[],fullHistory:true,trustedBase:true,entries:[
       {run:'node audit/tests/work-authorization.mjs --github audit-evidence/work-authorization/report.json',env:{GITHUB_TOKEN:'${{ github.token }}'}}]},
   }},
-  'akari-change-guard.yml':{triggers:'guard',jobs:{
-    'audit-change-guard':{needs:[],fullHistory:true,entries:[
-      {run:'node audit/tests/change-guard.mjs "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:{AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKARI_HEAD_SHA:'${{ github.event.pull_request.head.sha }}'}}]},
+  // The guard runs in parts side by side (audit/lib/shard-plan.cjs changeGuardParts); audit-change-guard merges them.
+  'akari-change-guard.yml':{triggers:'guard',cancel:"${{ startsWith(github.event_name, 'pull_request') }}",jobs:{
+    'change-guard-part':{if:sameRepositoryPr,needs:[],fullHistory:true,headCheckout:true,shards:changeGuardParts,entries:[baseGuard,
+      {run:'node audit/tests/change-guard.mjs --part "${{ matrix.shard }}" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-${{ matrix.shard }}/part.json"',env:guardShas}]},
+    'audit-change-guard':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}",needs:['change-guard-part'],fullHistory:true,headCheckout:true,entries:[baseGuard,
+      {run:'node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:guardShas}]},
   }},
 });
-export const changeGuardLabel='owner-approved-audit-change';
 
 export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job','merged-selftest','merged-full-browser'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','wrong-platform','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','release-renumber','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure'),...['valid','wrong-schema','wrong-step','failed-status','stale-snapshot','missing-results','missing-case','extra-case','duplicate-case','failed-case','release-record-changed','release-record-missing','node-product-suite-missing'].map(n=>'gate-cases:'+n),
   // CI shards (audit/lib/shard-plan.cjs, audit/lib/shard-evidence.mjs).

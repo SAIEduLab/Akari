@@ -158,7 +158,8 @@ export const concurrencyGroup=file=>file.replace(/\.yml$/,'')+'-${{ github.event
 export const workflowTriggers=Object.freeze({
   audit:{pull_request:{branches:['main']},push:{branches:['main']},workflow_dispatch:null},
   authorization:{pull_request_target:{branches:['main'],types:['opened','synchronize','reopened','edited']}},
-  guard:{pull_request:{branches:['main'],types:['opened','synchronize','reopened','labeled','unlabeled']}},
+  // The change guard runs with the base's guard for every change, and with the head's own for a change to its workflow.
+  guard:{pull_request_target:{branches:['main'],types:['opened','synchronize','reopened']},pull_request:{branches:['main'],types:['opened','synchronize','reopened'],paths:['.github/workflows/akari-change-guard.yml']}},
 });
 const topLevelKeys=['name','on','permissions','env','concurrency','jobs'];
 const jobKeys=['if','needs','runs-on','timeout-minutes','strategy','defaults','permissions','steps'];
@@ -184,7 +185,7 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
     const c=doc.concurrency;
     if(!c||typeof c!=='object')issue('concurrency',file,'concurrency','missing concurrency');
     else {
-      if(c['cancel-in-progress']!==concurrencyCancel)issue('concurrency',file,'cancel-in-progress','only pull-request runs may cancel an in-progress run');
+      if(c['cancel-in-progress']!==(spec.cancel??concurrencyCancel))issue('concurrency',file,'cancel-in-progress','only pull-request runs may cancel an in-progress run');
       if(c.group!==concurrencyGroup(file))issue('concurrency',file,'group','runs outside pull requests need their own concurrency group');
       for(const key of Object.keys(c))if(!['group','cancel-in-progress'].includes(key))issue('concurrency',file,key,'unknown concurrency key');
     }
@@ -232,6 +233,7 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
           }
           if(step.uses==='actions/checkout@v5'&&jobSpec.trustedBase&&step.with?.ref!=='${{ github.event.pull_request.base.sha }}')issue('checkout',file,at,'authorization must check out the trusted base');
           if(step.uses==='actions/checkout@v5'&&jobSpec.fullHistory&&step.with?.['fetch-depth']!=='0')issue('checkout',file,at,'the change guard needs the full history');
+          if(step.uses==='actions/checkout@v5'&&jobSpec.headCheckout&&(step.with?.ref!=='${{ github.event.pull_request.head.sha }}'||step.with?.['persist-credentials']!=='false'))issue('checkout',file,at,'the change guard checks out the head commit without keeping the token');
           return;
         }
         const run=String(step.run).trim(),index=entries.findIndex(e=>e.run===run);

@@ -50,12 +50,15 @@ reject('triggers/extra-branch','triggers',any,f=>edit(f,audit,'  pull_request:\n
 reject('triggers/missing-dispatch','triggers',any,f=>edit(f,acceptance,'  workflow_dispatch:\n',''));
 reject('triggers/extra-schedule','triggers',any,f=>edit(f,acceptance,'  workflow_dispatch:\n',"  workflow_dispatch:\n  schedule:\n    - cron: '0 0 * * *'\n"));
 reject('triggers/path-filter','triggers',any,f=>edit(f,audit,'  pull_request:\n    branches: [main]\n','  pull_request:\n    branches: [main]\n    paths: [src/**]\n'));
-reject('triggers/guard-without-label-events','triggers',any,f=>edit(f,guard,'types: [opened, synchronize, reopened, labeled, unlabeled]','types: [opened, synchronize, reopened]'));
+reject('triggers/guard-with-label-events','triggers',any,f=>edit(f,guard,'types: [opened, synchronize, reopened]','types: [opened, synchronize, reopened, labeled, unlabeled]'));
+// Every change is judged by the base's guard (pull_request_target); the head's own guard runs only for a change to its workflow.
+reject('triggers/guard-without-base-guard','triggers',any,f=>edit(f,guard,'  pull_request_target:\n    branches: [main]\n    types: [opened, synchronize, reopened]\n',''));
+reject('triggers/guard-head-run-unfiltered','triggers',any,f=>edit(f,guard,'    paths: [.github/workflows/akari-change-guard.yml]\n',''));
 reject('permissions/write-contents','permissions',/contents: read/,f=>edit(f,audit,'permissions:\n  contents: read','permissions:\n  contents: write'));
 reject('permissions/job-write','permissions',/read-only/,f=>edit(f,acceptance,'      actions: read','      actions: write'));
 reject('concurrency/cancels-main','concurrency',/cancel/,f=>edit(f,audit,"  cancel-in-progress: ${{ github.event_name == 'pull_request' }}",'  cancel-in-progress: true'));
 reject('concurrency/shared-main-group','concurrency',/own concurrency group/,f=>edit(f,acceptance,'  group: akari-acceptance-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}','  group: akari-acceptance-${{ github.event.pull_request.number || github.ref }}'));
-reject('concurrency/missing','concurrency',/missing concurrency/,f=>edit(f,guard,"concurrency:\n  group: akari-change-guard-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: ${{ github.event_name == 'pull_request' }}\n",''));
+reject('concurrency/missing','concurrency',/missing concurrency/,f=>edit(f,guard,"concurrency:\n  group: akari-change-guard-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}\n  cancel-in-progress: ${{ startsWith(github.event_name, 'pull_request') }}\n",''));
 reject('jobs/missing-job','jobs',/missing job/,f=>edit(f,guard,'  audit-change-guard:\n','  change-guard:\n'));
 reject('jobs/extra-job','jobs',/undeclared job/,f=>({...f,[guard]:f[guard]+'  extra-check:\n    runs-on: windows-latest\n    timeout-minutes: 5\n    steps:\n      - run: echo ok\n'}));
 reject('jobs/condition-changed','jobs',/condition differs/,f=>edit(f,audit,sameRepositoryIf,'    if: ${{ false }}\n'));
@@ -111,7 +114,14 @@ reject('acceptance/kind-dropped','acceptance',/acceptance kinds/,f=>edit(f,accep
 reject('matrix/shard-dropped','matrix',/shards must be exactly/,f=>edit(f,audit,'shard: [s01, s02, s03, s04, s05, s06, s07, s08, s09]','shard: [s01, s02, s03, s04, s05, s06, s07, s08]'));
 reject('matrix/fail-fast','matrix',/must not cancel/,f=>edit(f,acceptance,'      fail-fast: false\n','      fail-fast: true\n'));
 reject('matrix/unplanned-matrix','matrix',/only planned shard jobs/,f=>edit(f,audit,'    timeout-minutes: 25\n','    timeout-minutes: 25\n    strategy:\n      matrix:\n        shard: [s01]\n'));
-reject('checkout/guard-shallow-history','checkout',/full history/,f=>edit(f,guard,'      - uses: actions/checkout@v5\n        with:\n          fetch-depth: 0\n','      - uses: actions/checkout@v5\n'));
+// The guard runs exactly its planned parts.
+reject('matrix/guard-part-dropped','matrix',/shards must be exactly/,f=>edit(f,guard,'shard: [main, m1, m2, m3, m4, m5, m6]','shard: [main, m1, m2, m3, m4, m5]'));
+reject('checkout/guard-shallow-history','checkout',/full history/,f=>edit(f,guard,'          fetch-depth: 0\n',''));
+// The guard checks out the head commit, not the merge commit, and keeps no token in the checkout the head's code runs in.
+reject('checkout/guard-merge-commit','checkout',/checks out the head commit/,f=>edit(f,guard,'          ref: ${{ github.event.pull_request.head.sha }}\n',''));
+reject('checkout/guard-keeps-token','checkout',/without keeping the token/,f=>edit(f,guard,'          persist-credentials: false\n',''));
+// The base's guard is put back only in the run for pull_request_target.
+reject('step-condition/guard-base-guard-always','step-condition',/condition differs/,f=>edit(f,guard,"        if: ${{ github.event_name == 'pull_request_target' }}\n",''));
 
 writeCaseReport(output,'workflow-contract',results,{workflows:Object.keys(current)});
 console.log('Workflow contract: current workflows accepted; '+(results.length-1)+' mutated workflows rejected');

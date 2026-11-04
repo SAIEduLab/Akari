@@ -1,0 +1,73 @@
+{
+  "schema": "akari-intended-audit-changes-v1",
+  "changes": [
+    {
+      "change": "gate-case:workflow-contract/triggers/guard-without-label-events",
+      "reason": "The guard no longer runs on label events; triggers/guard-with-label-events rejects them instead."
+    },
+    {
+      "change": "gate-case:change-guard-negative/label/approves-removal",
+      "reason": "Replaced by record/approves-removal: a removal passes with a reason recorded in the head, not with a label."
+    },
+    {
+      "change": "gate-case:change-guard-negative/label/other-label-only",
+      "reason": "Replaced by record/other-change-only: a record of another change leaves the removal failing."
+    },
+    {
+      "change": "gate-case:change-guard-negative/label/missing-event",
+      "reason": "The guard reads no event payload any more; the record comes from the head tree (record/wrong-shape)."
+    },
+    {
+      "change": "gate-case:change-guard-negative/label/payload-without-labels",
+      "reason": "The guard reads no event payload any more; the record comes from the head tree (record/wrong-shape)."
+    },
+    {
+      "change": "gate-case:change-guard-negative/label/unreadable-payload",
+      "reason": "The guard reads no event payload any more; an unreadable record fails as record/wrong-shape."
+    },
+    {
+      "change": "gate-case:change-guard-negative/version/patch-skipped-with-label",
+      "reason": "Replaced by version/patch-skipped-recorded: the raise is recorded as version:<version> with a reason."
+    },
+    {
+      "change": "gate-case:change-guard-negative/version/minor-bump-with-label",
+      "reason": "Replaced by version/minor-bump-recorded: the raise is recorded as version:<version> with a reason."
+    },
+    {
+      "change": "gate-case:change-guard-negative/version/major-bump-with-label",
+      "reason": "Replaced by version/major-bump-recorded: the raise is recorded as version:<version> with a reason."
+    },
+    {
+      "change": "gate-case:change-guard-negative/version/lower-with-label",
+      "reason": "Replaced by version/lower-recorded: a lower version fails whatever is recorded."
+    },
+    {
+      "change": "gate-case:change-guard-negative/version/label-does-not-excuse",
+      "reason": "Replaced by version/record-does-not-excuse: a record does not excuse a missing patch raise."
+    },
+    {
+      "change": "gate-case:change-guard-negative/language/reader-change-with-label",
+      "reason": "Replaced by language/reader-change-recorded: a reader table change fails whatever is recorded."
+    },
+    {
+      "change": "gate-case:change-guard-negative/behaviour/recorded-change-needs-label",
+      "reason": "Replaced by behaviour/recorded-change-listed: a recorded behaviour change passes and is listed for the owner."
+    },
+    {
+      "change": "gate-case:change-guard-negative/moves/moved-and-changed-needs-label",
+      "reason": "Replaced by moves/moved-and-changed-needs-record: the change is recorded as moved-and-changed:<name>."
+    },
+    {
+      "change": "gate-case:change-guard-negative/assertions/fewer-checks-needs-label",
+      "reason": "Replaced by assertions/fewer-checks-needs-record: the change is recorded as fewer-checks:<file>."
+    },
+    {
+      "change": "gate-case:change-guard-negative/mutants/survivor-needs-record-and-label",
+      "reason": "Replaced by mutants/survivor-needs-record: a recorded equivalent passes without a label and is listed for the owner."
+    },
+    {
+      "change": "workflow-entry:akari-change-guard.yml/audit-change-guard/node audit/tests/change-guard.mjs \"$AKARI_BASE_SHA\" \"$AKARI_HEAD_SHA\" audit-evidence/change-guard/report.json",
+      "reason": "The guard runs in parts: change-guard-part runs each part with --part, and audit-change-guard merges them with --merge."
+    }
+  ]
+}

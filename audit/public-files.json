@@ -258,6 +258,7 @@
     "audit/manifests/capability-traceability.json",
     "audit/manifests/component-controls-traceability.json",
     "audit/manifests/features.json",
+    "audit/manifests/intended-audit-changes.json",
     "audit/manifests/language-form-coverage.json",
     "audit/manifests/product-tests.json",
     "audit/manifests/release-1.0.0.json",
