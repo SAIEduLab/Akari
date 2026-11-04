@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "0453f26f6f2b920ff604aac5b9445bf1c93a035e0d632a9a7f0c976dbce16d91",
+  "fixedIdSha256": "cafbb5d34134ae4e7a4fe6ab8f73d2a18540be94981ae8da7e2e6b1b3ce76ef0",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -195,7 +195,10 @@
         "TEST-CONTRACT touch event advice preserves explicit toucher identity",
         "TEST-CONTRACT motion comma omission preserves both leg spellings and axis order",
         "TEST-CONTRACT delimiter diagnostics count Unicode characters on physical lines",
-        "TEST-CONTRACT unfinished meaning choices require explicit angle or list index"
+        "TEST-CONTRACT unfinished meaning choices require explicit angle or list index",
+        "TEST-CONTRACT contract numbers and the extension Standard",
+        "TEST-CONTRACT near sentences keep the action written",
+        "TEST-CONTRACT loop touch count notice reads the touch, not its negation"
       ],
       "environments": [
         "chromium"
@@ -860,7 +863,8 @@
         "LANG statement roundtrip UserActionCall",
         "LANG statement roundtrip NoOperation",
         "LANG statement roundtrip TimerReset",
-        "LANG generated expression and comment roundtrips"
+        "LANG generated expression and comment roundtrips",
+        "LANG wait subjects are read as the wait of the body"
       ],
       "environments": [
         "chromium"

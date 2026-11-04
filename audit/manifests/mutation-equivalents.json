@@ -1,0 +1,41 @@
+{
+  "schema": "akari-mutation-equivalents-v1",
+  "equivalents": [
+    {
+      "file": "src/js/01-runtime-scheduler.js",
+      "source": "const own = OWN_PART_KINDS.has(node.kind) && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);",
+      "operator": "!==->===",
+      "reason": "actorRef が all（みんな）になるのは待つ文だけで、動き・見た目の文（OWN_PART_KINDS）は all を持たない。変異は own を常に偽にし、どの文でも geometryStamp を進めて見張りをすべて調べ直す側に倒れるので、ふれたときの結果は変わらない"
+    },
+    {
+      "file": "src/js/01-runtime-scheduler.js",
+      "source": "const own = OWN_PART_KINDS.has(node.kind) && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);",
+      "operator": "drop !",
+      "reason": "変異で own が真になるのは OTHER_PART_OPS（文字・入力らんの中身を変える文）だけで、そこでは部品の場所・大きさ・すがたが変わらず、ふれた判定に使う形（runtime-model の箱）は文字を見ない。主語の部品を動いたことにしても、ふれたときの結果は変わらない"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": "drop call",
+      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": "n->n+1",
+      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": "negate condition",
+      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": "true->false",
+      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
+    }
+  ]
+}

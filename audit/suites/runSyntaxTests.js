@@ -390,6 +390,26 @@ function runSyntaxTests() {
         eq(formatScript(again), text);
       }
     });
+    // LANGUAGE.md「待つ」: だけ on another sentence is は; a wait written with だけ is stopped and its fix covers the
+    // sentence; two subjects on a timed wait are offered one wait without a subject (two waits would wait twice as long);
+    // two subjects on any other sentence are split; the same part written twice is not two subjects.
+    test('wait subjects are read as the wait of the body', () => {
+      const p = makeDefaultProject(), base = p.components.find((c) => c.type === 'sprite');
+      p.components = ['ねこ', '犬'].map((name, i) => ({ ...structuredClone(base), id: 'wait-subject-' + i, name,
+        costumes: [{ id: 'wait-subject-face-' + i, name: '丸', kind: 'text', value: '●' }], costumeId: 'wait-subject-face-' + i }));
+      const ctx = { symbols: buildSymbols(p), targetId: 'wait-subject-0', event: 'start' },
+        first = (source) => parseSyntax(source, ctx).syntaxDiagnostics[0];
+      for (const written of ['ねこだけ前へ10歩進む。', 'ねこだけは前へ10歩進む。']) eq(formatScript(parsed(written, ctx)).trim(), 'ねこは前へ10歩進む。');
+      const only = first('ねこだけ1秒待つ。');
+      eq([only.code, only.message.split('。')[0], only.proposals.map((x) => [x.source, x.start, x.end])],
+        ['P205', '「ねこだけ」と 書いた「待つ」は 読めません', [['ねこは1秒待つ', 0, 8]]]);
+      const two = first('ねこも犬も1秒待つ。');
+      eq([two.message, two.proposals.map((x) => [x.label, x.source])],
+        ['1つの 文に 書ける 主語は 1つです。待つ 文は、主語を 書かなくても、この 本文が 待ちます', [['この 本文で 待つ', '1秒待つ']]]);
+      eq(first('ねこと犬は前へ10歩進む。').proposals.map((x) => x.source), ['ねこは前へ10歩進む。\n犬は前へ10歩進む']);
+      ok(first('ねこも犬も、画面のはしにふれるまで待つ。').message.includes('書いた じゅんに'));
+      ok(!String(first('ねこもねこも1秒待つ。')?.message).includes('待つ 文は、主語を 書かなくても'));
+    });
     return {
       passed: results.filter((x) => x.pass).length,
       failed: results.filter((x) => !x.pass).length,

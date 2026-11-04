@@ -21272,7 +21272,7 @@ function createAkariExtensionHost(options) {
     // だんごだけ10歩進む / 自分だけは…: だけ says the same as は. A wait stops the whole flow (LANGUAGE.md 待つ), so
     // だんごだけ0.2秒待つ, which says the other parts do not wait, is stopped with the way to write it.
     const onlyMatch=actorNamePatterns(symbols).only.exec(code),only=onlyMatch&&!dataNameKind(onlyMatch[1]+'だけ',symbols,ctx)?onlyMatch:null;
-    if(only){const inline=working.inline,name=only[0].replace(/だけ(?:は|が)?、?$/,'');working=surfaceLineSlice(working,0,code.length,name+'は'+code.slice(only[0].length));working.comment=line.comment;working.inline=inline;code=working.code;
+    if(only){const inline=working.inline,name=only[1];working=surfaceLineSlice(working,0,code.length,name+'は'+code.slice(only[0].length));working.comment=line.comment;working.inline=inline;code=working.code;
       if(/(?:待つ|まつ|待ちます)$/.test(surfaceMask(code)))throw sentenceDiagnostic(`「${name}だけ」と 書いた「待つ」は 読めません。待つ 文では、この 本文の 流れが 待ち、あとの 文は どの 部品の 文も 待ってから 行います。${ctx.meijin?'ほかの 部品を 待たせない ときは「次のことを同時に始める」で 書きます':'ほかの 部品を 待たせない ときは、その 部品の 文を、その 部品の 本文に 書きます'}`,working,[{label:'この 本文の 流れで 待つ',source:code}],{kind:'WaitTime'});}
     // 1秒みんなで待つ is みんなで1秒待つ.
     const lateEveryone=/^(.+?秒(?:間)?)(みんな|全体)(で|は|が|も)、?(待つ|まつ)$/.exec(code);

@@ -841,6 +841,32 @@ function runSemanticContractTests() {
         eq(d.code,'P207');eq(d.line,newline?2:1);eq(d.column,newline?1:[...prefix].length+1);
       }
     });
+    // LANGUAGE.md 保存・実行データの契約と検証: the contract numbers; an extension host built without a Standard
+    // (extensions/build.mjs) takes these, and one given a Standard keeps it.
+    test('contract numbers and the extension Standard',()=>{
+      eq(Akari.EXECUTABLE_CONTRACT,{languageContractId:5,runtimeContractId:5,programFormatVersion:4,projectFormatVersion:5});
+      eq(Akari.createAkariExtensionHost({}).standard,{languageContractId:5,runtimeContractId:5});
+      eq(Akari.createAkariExtensionHost({standard:{languageContractId:7,runtimeContractId:8}}).standard,{languageContractId:7,runtimeContractId:8});
+    });
+    const parts=(prefix,names)=>{const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+      p.components=names.map((name,i)=>({...structuredClone(base),id:prefix+i,name,x:100+i*5,y:100,costumes:[{id:prefix+'face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:prefix+'face-'+i}));return p;};
+    // LANGUAGE.md 読めない文の近い書き方: a near sentence does what was asked (最前面へ移動する brings the part to the
+    // front, not a move); telling a part (犬に「やあ」と言う) may be a signal to it as well as the words said.
+    test('near sentences keep the action written',()=>{
+      const p=parts('near-',['ねこ','犬']),ctx={symbols:buildSymbols(p),targetId:'near-0',targetType:'sprite',event:'start',args:[],level:'advanced'};
+      const near=source=>Akari.assistCandidates(p,source,ctx,parseSyntax(source,ctx).syntaxDiagnostics[0]).map(c=>c.text);
+      eq(near('最前面へ移動する。'),['いちばん手前へ出る。']);
+      eq(near('犬に「やあ」と言う。'),['「やあ」の合図を送る。','「やあ」と言う。']);
+    });
+    // LANGUAGE.md 作品チェックの知らせ: a count in a loop while touching is told for the touch as written, not for its
+    // negation (もし「石」にふれていなければ、 counts while they do not touch).
+    test('loop touch count notice reads the touch, not its negation',()=>{
+      const p=parts('loop-touch-',['ねこ','石']);p.projectData.variables.push({id:'loop-touch-score',name:'点数',initialValue:0});
+      for(const [condition,notice]of [['もし「石」にふれていれば、',true],['もし「石」にふれていなければ、',false]]){
+        p.scripts=[{id:'loop-touch-main',targetId:'loop-touch-0',event:'start',source:'ずっとくり返す。\n  '+condition+'\n    点数を1ふやす。'}];
+        const c=compileProject(p);eq(c.errors,[]);eq(c.notes.filter(n=>n.code==='I121').length,notice?1:0);
+      }
+    });
     return {
       total: results.length,
       passed: results.filter((x) => x.pass).length,

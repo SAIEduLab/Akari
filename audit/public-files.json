@@ -261,6 +261,7 @@
     "audit/manifests/features.json",
     "audit/manifests/intended-behaviour-changes.json",
     "audit/manifests/language-form-coverage.json",
+    "audit/manifests/mutation-equivalents.json",
     "audit/manifests/product-tests.json",
     "audit/manifests/release-1.0.1.json",
     "audit/manifests/samples.json",
