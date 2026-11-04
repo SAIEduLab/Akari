@@ -36,6 +36,84 @@
       "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
       "operator": "true->false",
       "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(!ast||ast.heading||ast.rules?.length)return null;",
+      "operator": "||->&&",
+      "reason": "候補の ast は assistCanonical が読めた文なので null にならない。見出しや決まりの候補は本文の文を ast.body に持たない（見出しだけの文、決まりの中の文）ので、変異でここを通っても frames は空になる。書いた意味（want）があるとき空の frames は assistMeaningMatch でどの書いた意味とも組めず、null と同じく外れる。want がないときは、どちらでも {missing:0} になる。見出しのあとに本文の文を続けた候補（「〜とき、〜」）を作るのは、もし・たら・とき などを書いた文だけで、その文の want は null である"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(n.kind==='CommentLine')continue;if(n.body||n.thenBody||n.lanes)return null;",
+      "operator": "||->&&",
+      "reason": "本文を持つ文（もし・くり返し・同時に始める）の候補を作るのは、もし・たら・まで・くり返し・ずっと・回・同時・ごとに などを書いた文で、その文は assistMeaningFrames が null を返し、意味を比べない。変異で本文を持つ文の役割を読んでも比べる書いた意味がない。近い書き方の事例1240件と、node の試験と照らし合わせの文のどれでも、書いた意味のある文に本文を持つ候補は出ず、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(!want||!got)return want&&!got?null:{missing:0,explicit:true};",
+      "operator": "true->false",
+      "reason": "この値になるのは書いた意味（want）がないときだけで（want があり got がないときは null）、want がないとき assistCandidates は explicit を読まずに候補を返す（if(!want)return out;）。足りない文を補う処理も want があるときだけ動くので、この explicit はどこでも読まれない"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const either=['move','turn'].includes(w.action)&&w.quantities.find(q=>q.unit==='秒'&&q.role==='unknown');let frame=w;",
+      "operator": "&&->||",
+      "reason": "role が unknown になる量は秒だけなので（歩・度・％の role は単位そのもの）、変異の q.unit==='秒'||q.role==='unknown' は「秒の量」になり、かける時間（during）の秒にも「前に同じ秒の待つ文があれば保つ」を許す。かける時間を書いた文の候補に、同じ秒の待つ文で始まる候補は作られない（待ってからの形を足すのは unknown の時間だけ）ので、示す文は変わらない。事例とすべての試験の文でも変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const lines=String(text).trim().replace(/。$/,'').split(/。?\\n/),merged=lines.length!==want.length,main=merged?want.filter((w,i)=>!(w.action==='wait'&&want[i+1]&&want[i+1].action!=='wait')):want;",
+      "operator": "&&->||",
+      "reason": "変異は、書いた意味の最後が待つ文のとき want[i+1].action を読んで止まる。この filter が動くのは候補の行の数と書いた意味の数がちがうとき（merged）で、待つ文で終わる文（〜して、…待つ）の候補は節ごとに組み立てるので行の数が書いた意味の数と同じになり、merged にならない。事例とすべての試験の文で、この形は起きず、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const head=/^([^、。「」]+?)(?:は|が)、?/.exec(line),named=head&&[...parts,'自分'].includes(head[1]),subject=named?head[0]:w.subject&&w.action!=='wait'?w.subject+'は':'',body=named?line.slice(head[0].length):line;",
+      "operator": "n->n+1",
+      "reason": "変異は、候補の行の先頭に書いた主語（「犬は」）があるときだけ、主語を補う読み方を変える（head[0]→head[1] は「は」を落とし、head[1]→head[2] は主語を読めず、head[0].length→head[1].length は本文を切りちがえる）。そうした行に時間を補ってしか作れない文は、事例とすべての試験の文に無く、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(time&&!/秒/.test(body)&&['move','turn'].includes(w.action)){ways.push(time.value+'秒かけて、'+body);if(time.role==='unknown'&&wait==null)ways.push(time.value+'秒待ってから、'+body);}else ways.push(body);",
+      "operator": "&&->||",
+      "reason": "変異は、かける時間（during）の秒にも「N秒待ってから」の形を足し、前に待つ文がある unknown の秒にも同じ形を足す。かける時間に待つ形を足した文は、待つ秒の役割が書いた意味とちがうので assistMeaningPair で必ず外れる。前に待つ文があるときに足した文は前の待つ文を落とすので、同じ行から作る「N秒かけて」の文（すべてを保つ文）があるかぎり示されない。事例とすべての試験の文で、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "let combos=[[]];for(const [i,part]of parts.entries())combos=combos.flatMap(combo=>(part.readable?[part.options[0]]:part.options.filter(o=>!o.defaultNumericSlots&&(framed||!parts.some((q,k)=>k!==i&&q.readable&&same(q.options[0],o))))).map(o=>[...combo,o]));",
+      "operator": "!==->===",
+      "reason": "変異は、意味を比べない文（want が null）で、読めない節の候補が読める節の文と同じでも使う。意味を比べない文で、読めない節の候補が読める節と同じ文になる組は、事例とすべての試験の文に無く、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};",
+      "operator": ">=->>",
+      "reason": "変異で変わるのは、組み立てた候補の種類（schemaId）を差しかえの種類にするか文から読むかだけで、文と並びは変わらない。差しかえが最初の節のとき、文の最初の文がその差しかえなので文から読む種類も同じになる。事例とすべての試験の文で、候補の文・名前・種類は変わらなかった（照らし合わせは種類も比べた）"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};",
+      "operator": "n->n+1",
+      "reason": "変異で変わるのは、組み立てた候補の種類（schemaId）を差しかえの種類にするか文から読むかだけで、文と並びは変わらない。差しかえが最初の節のとき、文の最初の文がその差しかえなので文から読む種類も同じになる。事例とすべての試験の文で、候補の文・名前・種類は変わらなかった（照らし合わせは種類も比べた）"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};",
+      "operator": "||->&&",
+      "reason": "変異で変わるのは、組み立てた候補の種類（schemaId）を差しかえの種類にするか文から読むかだけで、文と並びは変わらない。差しかえが最初の節のとき、文の最初の文がその差しかえなので文から読む種類も同じになる。事例とすべての試験の文で、候補の文・名前・種類は変わらなかった（照らし合わせは種類も比べた）"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const taken=out.length+partial.length;if(taken>=ASSIST_MAX||!hasHigher&&taken>=2||now()-started>ASSIST_BUDGET_MS)break;",
+      "operator": ">->>=",
+      "reason": "変わるのは、見る時間が上限（ASSIST_BUDGET_MS）のちょうど同じミリ秒のときにもう1つ見るかどうかだけで、どこで止まるかは機械の速さで決まる。示す文の決まりは変わらず、試験で決められる差ではない"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const shown=(out.length?[...out.filter(c=>c.meaning.explicit),...out.filter(c=>!c.meaning.explicit)]:partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);",
+      "operator": "n->n+1",
+      "reason": "上の候補（layer が6より小さい）がないとき、ループは見た数が2で止まる（!hasHigher&&taken>=2）ので、out も partial も2つまでで、slice(0,2) と slice(0,3) は同じになる"
     }
   ]
 }

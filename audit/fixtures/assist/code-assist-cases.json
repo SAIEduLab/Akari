@@ -619,13 +619,12 @@
           "schemaId": "MotionCommand:MOVE",
           "text": "後ろへ10歩動く。"
         },
-        "contains": [
+        "absent": [
           {
             "schemaId": "MotionCommand:GOTO",
             "text": "画面の左下のはしから、右へ10歩、上へ50歩のばしょへ行く。"
           }
         ],
-        "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true
       },
@@ -638,6 +637,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
         }
       ]
     },

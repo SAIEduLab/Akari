@@ -32178,6 +32178,13 @@ function createAkariExtensionHost(options) {
     if(values.length&&stringSlots.length===1){put(node,stringSlots[0].path,{kind:'StringLiteral',value:values[0]});filled.add(stringSlots[0].path);}
     const remaining=data.numbers.filter((n,i)=>!used.has(i)&&!n.unit),numberSlots=slots.filter(s=>s.type==='expression'&&isNumber(get(node,s.path))&&!data.numbers.some(n=>n.unit&&n.unit===s.unit));
     if(remaining.length&&numberSlots.length===1){numberAt(numberSlots[0],remaining[0].value);filled.add(numberSlots[0].path);}
+    // A part named fills a part's place before the part that does the sentence (ねこを子ねこのところへ移動させる goes to
+    // 子ねこ, not to itself; 犬にねこのコピーを作らせる copies ねこ), when the sentence names another. The part that does
+    // it is the part made to do it (ねこを…させる, 犬に…させる), or else the body's owner when no subject is written (a
+    // subject written is not among the names read).
+    const made=/(?:させ|せる|かす|かせ)(?:る)?$/.test(data.text)?project.components.map(c=>c.name).find(name=>['を','に'].some(p=>data.text.startsWith(name+p)||data.text.startsWith('「'+name+'」'+p))):null;
+    const goer=made||(data.subject?null:project.components.find(c=>c.id===ctx.targetId)?.name);
+    data={...data,names:[...data.names].sort((a,b)=>Number(a.name===goer)-Number(b.name===goer))};
     for(const s of slots){const kind=assistSlotNameKind(s);if(!kind)continue;const name=data.names.find(n=>n.kind===kind||kind==='variable'&&['list','argument','local'].includes(n.kind));if(!name)continue;const old=get(node,s.path);if(!old)continue;
       if(old.kind==='StringLiteral')put(node,s.path,{...old,value:name.name});else if(typeof old.name==='string')put(node,s.path,{...old,name:name.name});filled.add(s.path);boundKinds.add(name.kind);
     }
@@ -32206,12 +32213,17 @@ function createAkariExtensionHost(options) {
     if(range.indent===0&&(/、$/.test(range.text)||/(?:たら|とき|ごと|たび)、?$/.test(range.text)))candidates.push(...assistHeadings(project,ctx,data));
     const ranked=[],fallbacks=[],matchedCache=new Map(),match=(words,seed)=>{const key=words+'\0'+seed;if(!matchedCache.has(key))matchedCache.set(key,matchesSearch(words,seed));return matchedCache.get(key);};
     const nextLine=basis.slice(range.lineEnd+1).split('\n')[0]||'',fillContext={...ctx,assistExistingBody:nextLine.trim()&&nextLine.match(/^\s*/)[0].length>range.indent};
+    const spriteNames=new Set(project.components.filter(c=>c.type==='sprite').map(c=>c.name));
     const namedIntent=seed=>{
       if(data.names.some(n=>n.kind==='part'&&project.components.some(c=>c.name===n.name&&['label','button','box'].includes(c.type)))&&data.names.some(n=>['variable','list'].includes(n.kind))&&/^「[^「」]+」を.+にする$/.test(data.text))return {schemaId:'LooksCommand:SET_TARGET_TEXT'};
       if(data.names.some(n=>['action','function'].includes(n.kind))&&/行う|行って|呼び|させる|わた|として|てじゅん|手順/.test(data.text))return null;
       if(data.names.some(n=>['action','function'].includes(n.kind)&&new RegExp('^'+searchReading(n.name).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:する|して|したい|させる)?$').test(searchReading(seed).replace(/[【】]/g,''))))return null;
-      // A quoted text that is not a name in the work is what is said or written, not what is done (「右へ40歩」と言う).
-      let intent=searchIntent(seed.replace(/「([^「」]*)」/g,(quote,value)=>data.names.some(n=>n.name===value)?quote:'「□」'),ctx);
+      // A quoted text that is not a name in the work is what is said or written, not what is done (「右へ40歩」と言う), and
+      // a sprite's name is never an action (回るねこを右へ10歩移動させる moves 回るねこ; the name of an input field or a
+      // text part says what it is).
+      let read=seed.replace(/「([^「」]*)」/g,(quote,value)=>!spriteNames.has(value)&&data.names.some(n=>n.name===value)?quote:'「□」');
+      for(const name of [...spriteNames].sort(assistLongestFirst))read=read.split(name).join('「□」');
+      let intent=searchIntent(read,ctx);
       if(/(?:にする|になる|かえる)$/.test(seed)){const image=data.names.find(n=>['costume','backdrop'].includes(n.kind));if(image)intent={schemaId:image.kind==='costume'?'LooksCommand:SET_COSTUME':'LooksCommand:SET_BACKDROP'};}
       if(data.strings.length&&/と(?:伝える|つたえる)$/.test(seed))intent={schemaId:'Broadcast'};
       if(data.strings.length&&/(?:と|って)(?:きく|聞く)$/.test(seed))intent={schemaId:'Ask'};
@@ -32303,9 +32315,7 @@ function createAkariExtensionHost(options) {
     }
     const covered=new Set(ranked.filter(r=>r.layer<6).flatMap(r=>r.boundKinds||[]));
     const anyVerb=verbs.some(verb=>all.some(h=>{const t=h.terms;return t&&match([...(t.text||[]),...(t.synonyms||[]),...(t.verbForms||[]),...(t.nounForms||[])].join(' '),verb);}));
-    // A sentence that only holds a name written is not what was asked when what is to be done is known (mainIntent:
-    // ねこを右へ40歩移動させる asks a move, not 「ねこ」のコピーを作る).
-    ranked.push(...fallbacks.filter(r=>!anyVerb&&!mainIntent&&r.boundKinds.some(kind=>!covered.has(kind))));
+    ranked.push(...fallbacks.filter(r=>!anyVerb&&r.boundKinds.some(kind=>!covered.has(kind))));
     const noImageName=!data.names.some(n=>['costume','backdrop'].includes(n.kind));
     for(const row of ranked){row.special=0;
       if(noImageName&&/かえ|変え|にする/.test(data.text)&&/^LooksCommand:(?:SET|NEXT|PREV)_(?:COSTUME|BACKDROP)$/.test(row.schemaId))row.special=row.schemaId.includes(':NEXT_')?-2:row.schemaId.includes(':SET_')?-1:0;
@@ -32336,11 +32346,12 @@ function createAkariExtensionHost(options) {
   // word may be either. A quoted text is a value, never an action (「2秒で右へ40歩」と言わせる speaks it). A sentence
   // with a condition, a loop, a heading, a signal, a question or a procedure has no frames (null): they say nothing of it.
   // The ends of a clause listed here (after たい, ます, ください…, with the quoted texts and the names in the work hidden)
-  // state an action in words; a kana word that may be two verbs (いって: 言って or 行って, きく: 聞く or 大きく) states none.
+  // state an action in words; a kana word that may be two verbs (いって: 言って or 行って, きく: 聞く or 大きく, はなす: 話す
+  // or 離す, まって: 待って or 止まって) states none.
   // A clause that ends in a number, a place or a particle (右へ100歩、2秒かけて、いまのばしょから、) belongs to the next one.
-  const ASSIST_ACTION_ENDS=[['say',/(?:言|話)(?:う|って|わせる|わせて|わせ|い|す|して|させる|させて|させ|し)$|いう$|いわせ(?:る|て)?$|はな(?:す|して|させる|させて)$|しゃべ|叫|つぶや/],
+  const ASSIST_ACTION_ENDS=[['say',/(?:言|話)(?:う|って|わせる|わせて|わせ|い|す|して|させる|させて|させ|し)$|いう$|いわせ(?:る|て)?$|しゃべ|叫|つぶや/],
     ['clone',/(?:コピー|クローン|複製|ふくせい|分身)を?(?:作|つく)(?:る|って|らせる|らせて|らせ|り)$|(?:コピー|クローン|複製|ふくせい)(?:する|して|させる|させて)$/],
-    ['wait',/(?:待|ま)(?:つ|って|ち)$/],['turn',/(?:回|まわ)(?:る|って|す|して|らせる|らせて|り)$|回転(?:する|して|させる|させて)$/],
+    ['wait',/待(?:つ|って|ち)$/],['turn',/(?:回|まわ)(?:る|って|す|して|らせる|らせて|り)$|回転(?:する|して|させる|させて)$/],
     ['move',/(?:動|うご)(?:く|いて|き|かす|かして|かせる|かせて)$|(?:進|すす)(?:む|んで|み|ませる|ませて|める|めて)$|(?:移動|いどう)(?:する|して|させる|させて|させ|し)$|行(?:く|って|き|かせる|かせて)$|(?:走|はし)(?:る|って|り|らせる|らせて)$|ジャンプ(?:する|して|させる|させて)$/]];
   const assistActionOf=id=>!id?null:/^MotionCommand:(?:TURN|SET_DIRECTION|POINT_TO)/.test(id)?'turn':/^MotionCommand:/.test(id)?'move':/^CloneCommand:/.test(id)?'clone':({Say:'say',Think:'say',Ask:'ask',WaitTime:'wait',WaitUntil:'wait'})[id]||'other:'+id.split(':')[0];
   const ASSIST_DIRECTIONS={右:'right',左:'left',上:'up',下:'down',前:'forward',後ろ:'backward',うしろ:'backward'};
@@ -32350,19 +32361,22 @@ function createAkariExtensionHost(options) {
   // A clause with two of these is two actions written without a break (10歩進む1秒待つ, 10歩進んだあと1秒待つ): its frame is
   // not known.
   const ASSIST_VERB_STEMS=/動(?!き[をがはのに])|進|移動|走|待|回|言|話/g;
+  // Names read longest first, so that a name inside another (ねこ in 子ねこ, in 回るねこ) is not read in it.
+  const assistLongestFirst=(a,b)=>b.length-a.length;
   function assistMeaningFrames(data,project,ctx,source) {
-    const owner=project.components.find(c=>c.id===ctx.targetId)?.name||null,parts=project.components.map(c=>c.name).sort((a,b)=>b.length-a.length);
+    const owner=project.components.find(c=>c.id===ctx.targetId)?.name||null,parts=project.components.map(c=>c.name).sort(assistLongestFirst);
     const text=data.text;if(data.subjects||/もし|なら|たら|れば|とき|時(?=[、。]|$)|場合|ばあい|だと|あいだ|まで|ずっと|続け|つづけ|くり返|繰り返|くりかえ|ごとに|たびに|おきに|毎秒|\d+回|何回|次の回|この回|ずつ|一つずつ|ひとつずつ|順に|順番|じゅんに|じゅんばん|同時|速さ|はやさ|スピード|手順|てじゅん|という|合図|メッセージ|知らせ|として|ながら|うちに|答え|こたえ|返事/.test(text.replace(/「[^「」]*」|『[^『』]*』/g,''))||data.names.some(n=>['action','function'].includes(n.kind)))return null;
     // The names in the work are names, never the words of an action (a procedure ジャンプ, a sound 歩く音).
-    const words=[...new Set([...parts,...data.names.map(n=>n.name)])].sort((a,b)=>b.length-a.length),escape=n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const words=[...new Set([...parts,...data.names.map(n=>n.name)])].sort(assistLongestFirst),escape=n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
     // ねこは…／ねこが…／ねこを…させる: the subject written, carried on until another is written. ねこの向きを… says whose
     // it is, which is the part that does it, though not written as a subject.
     const names=parts.map(escape).join('|'),causer=names&&/(?:させ|せる|かす|かせ)(?:る)?$/.test(text)?new RegExp('^(?:「)?('+names+')(?:」)?(?:を|に)').exec(text):null;
     let subject=data.subject?(['自分','体'].includes(data.subject)?owner:data.subject):causer?.[1]||null,written=!!causer||!!data.subject&&!new RegExp('^(?:「)?'+escape(data.subject)+'(?:」)?の').test(String(source).trim());
     const frames=[];let pending='';
     for(const [index,clause]of data.clauses.entries()){
-      const raw=pending+assistNumberText(clause.text),quotes=[...raw.matchAll(/「([^「」]*)」|『([^『』]*)』/g)].map(m=>({value:m[1]??m[2],at:m.index,end:m.index+m[0].length}));
-      let outside=raw;for(const q of quotes)outside=outside.slice(0,q.at)+'§'.repeat(q.end-q.at)+outside.slice(q.end);
+      // Each quoted text, and whether it names the part written to (「犬」のところへ, 「犬」に).
+      const raw=pending+assistNumberText(clause.text),quotes=[...raw.matchAll(/「([^「」]*)」(の|へ|に|を|まで)?|『([^『』]*)』/g)].map(m=>({value:m[1]??m[3],toward:!!m[2]}));
+      const outside=raw.replace(/「[^「」]*」|『[^『』]*』/g,quote=>'§'.repeat(quote.length));
       let masked=outside;for(const name of words)masked=masked.split(name).join('□'.repeat(name.length));
       const end=masked.replace(/(?:たい|ます|ました|なさい|ください|てね|ね|よ|ほしい|ちゃう|ちゃって|[！!。])+$/,''),ending=ASSIST_ACTION_ENDS.find(([,pattern])=>pattern.test(end))?.[0]||null;
       if((masked.match(ASSIST_VERB_STEMS)||[]).length>1)return null;
@@ -32370,14 +32384,14 @@ function createAkariExtensionHost(options) {
       pending='';
       const named=new RegExp('^(?:「)?('+[names,'自分'].filter(Boolean).join('|')+')(?:」)?(?:は|が|も)、?').exec(outside)||(names?new RegExp('('+names+')(?:を|に)(?=.*(?:させ|せる|せて|かす|かして|かせ))').exec(outside):null);
       if(named){subject=named[1]==='自分'?owner:named[1];written=true;}
-      let read=raw;for(const q of [...quotes].reverse())if(!words.includes(q.value))read=read.slice(0,q.at)+'「□」'+read.slice(q.end);
+      const read=raw.replace(/「([^「」]*)」|『([^『』]*)』/g,(quote,a,b)=>words.includes(a??b)?quote:'「□」');
       // A say, a copy or a wait is what its end says; any other action is the work's reading of the words (最前面へ移動する
       // brings the part to the front), or else its end. Only an action its end says (stated) is one a candidate must do:
       // 前に出る may be a move or coming to the front. A way is a word of direction with へ／に after it (not 最前面).
       const told=['say','clone','wait'].includes(ending),intent=told?null:searchIntent(read,ctx),action=told?ending:assistActionOf(intent?.schemaId)||ending;
       const way=/(?<![一-龯ァ-ヶ])(右|左|上|下|前|後ろ|うしろ)(?:へ|に|の方|方向|むき|向き|側|がわ)/.exec(masked.replace(/画面の|がめんの/g,''));
       // 犬に「やあ」と言う tells 犬: a signal to it keeps that meaning as well as the words said.
-      const frame={action,stated:!!ending,subject,written,directions:['move','turn',null].includes(action)?intent?.directions||(intent?.direction?[intent.direction]:way?[ASSIST_DIRECTIONS[way[1]]]:[]):[],quantities:[],strings:quotes.map(q=>q.value),objects:[],tell:action==='say'&&!!names&&new RegExp('(?:'+names+')」?に').test(outside)},before=[];
+      const frame={action,stated:!!ending,subject,written,directions:['move','turn',null].includes(action)?intent?.directions||(intent?.direction?[intent.direction]:way?[ASSIST_DIRECTIONS[way[1]]]:[]):[],quantities:[],strings:quotes.filter(q=>!(q.toward&&parts.includes(q.value))).map(q=>q.value),objects:[],tell:action==='say'&&!!names&&new RegExp('(?:'+names+')」?に').test(outside)},before=[];
       for(const m of outside.matchAll(/(-?\d+(?:\.\d+)?)(歩|ほ|ぽ|度|ど|秒|びょう|％|%)(半|はん)?/g)){
         const unit=({ほ:'歩',ぽ:'歩',ど:'度',びょう:'秒','%':'％'})[m[2]]||m[2],value=Number(m[1])+(m[3]&&unit==='秒'?0.5:0),after=outside.slice(m.index+m[0].length);
         if(unit!=='秒'){frame.quantities.push({unit,value,role:unit});continue;}
@@ -32385,10 +32399,15 @@ function createAkariExtensionHost(options) {
         else if(/^(?:後|ご|あと|たって|経って|たった|待って|まって|待ち)/.test(after))before.push({action:'wait',subject,written,directions:[],quantities:[{unit,value,role:'wait'}],strings:[],objects:[]});
         else frame.quantities.push({unit,value,role:/^(?:間)?(?:かけて|かけ|で(?![はもき])|ほどで|くらいで|ぐらいで)/.test(after)?'during':'unknown'});
       }
-      for(const name of parts)if(name!==subject&&outside.includes(name))frame.objects.push(name);
-      for(const q of quotes)if(parts.includes(q.value)&&q.value!==subject&&/^(?:の|へ|に|を|まで)/.test(raw.slice(q.end)))frame.objects.push(q.value);
-      if(quotes.some(q=>parts.includes(q.value)&&/^(?:の|へ|に|を|まで)/.test(raw.slice(q.end))))frame.strings=frame.strings.filter(s=>!parts.includes(s));
-      frames.push(...before,frame);
+      // The longest names are read first: ねこ inside 子ねこ is not another part.
+      // Parts joined by と before は (ねこと犬は) are the ones that do it, not parts acted on.
+      let rest=names?outside.replace(new RegExp('^(?:「?(?:'+names+')」?と)+「?(?:'+names+')」?(?=[はがも])'),group=>'□'.repeat(group.length)):outside;
+      for(const name of parts)if(rest.includes(name)){if(name!==subject)frame.objects.push(name);rest=rest.split(name).join('□'.repeat(name.length));}
+      // 自分 written as what is acted on (自分のコピー) is the part that does it.
+      if(/自分(?![はがも])/.test(rest))frame.objects.push(subject||owner);
+      for(const q of quotes)if(q.toward&&parts.includes(q.value)&&q.value!==subject)frame.objects.push(q.value);
+      // A clause whose time is the wait before it and that says nothing else (2秒たって、) is that wait only.
+      frames.push(...before,...(before.length&&!frame.action&&![frame.directions,frame.quantities,frame.strings,frame.objects].some(r=>r.length)?[]:[frame]));
     }
     return frames.some(f=>f.action||f.directions.length||f.quantities.length||f.strings.length||f.objects.length||f.subject&&f.subject!==owner)?frames:null;
   }
@@ -32407,7 +32426,7 @@ function createAkariExtensionHost(options) {
       for(const arg of n.args||[]){const q=number(arg);if(q)quantities.push({...q,role:q.unit});else if(arg?.kind==='StringLiteral')(parts.includes(arg.value)?objects:strings).push(arg.value);}
       // What is said, asked or sent as a signal is a text, even when it is a part's name.
       for(const key of ['value','message','question'])if(n[key]?.kind==='StringLiteral')strings.push(n[key].value);
-      if(n.kind==='CloneCommand'&&n.op==='CREATE_SELF')objects.push(owner);
+      if(n.kind==='CloneCommand'&&n.op==='CREATE_SELF')objects.push(subject);
       frames.push({action,subject,direction,ways:ASSIST_WAYS.test(id),whole:ASSIST_WHOLE_WORK.test(id),quantities,strings,objects,explicit:n.actorRef?.kind==='named'});
     }return frames;
   }
@@ -32416,18 +32435,24 @@ function createAkariExtensionHost(options) {
   // number of roles it leaves out or does otherwise (missing: a way, a number, a text, a part, another action) and
   // whether it names each subject written as it was written (explicit). A time that may be either kind (a move or a
   // turn) is kept as the time of the action or as a wait just before it. One frame with no action known (ねこの動きを
-  // 止める) says only its roles, which hold for every sentence of the candidate.
+  // 止める) says only its roles, which hold for every sentence of the candidate. A sentence that does another action than
+  // the one written and keeps none of the way, the numbers, the texts and the parts written is not near at all (a copy of
+  // ねこ for ねこを右へ40歩移動させる, 点数を1へらす for 子ねこを「犬」の方へ回らせる), nor is a part going to or facing
+  // itself.
   function assistMeaningPair(w,g) {
-    let missing=0,explicit=true;
-    if(w.stated&&w.action&&g.action!==w.action&&!(w.tell&&/^other:Broadcast/.test(g.action)))missing++;
+    if(['move','turn'].includes(g.action)&&g.objects.includes(g.subject))return null;
+    let missing=0,explicit=true,kept=0;
+    const other=w.stated&&w.action&&g.action!==w.action&&!(w.tell&&/^other:Broadcast/.test(g.action));if(other)missing++;
     if(!g.whole&&w.action!=='wait'&&w.subject){if(g.subject!==w.subject)return null;if(w.written&&!g.explicit)explicit=false;}
-    if(w.directions.length&&g.ways){if(!g.direction)missing++;else if(!w.directions.includes(g.direction))return null;}
-    for(const q of w.quantities){if(q.kept)continue;const same=g.quantities.filter(x=>x.unit===q.unit&&(q.role==='unknown'||x.role===q.role));
-      if(same.length&&!same.some(x=>x.value===q.value))return null;if(!same.length&&g.quantities.some(x=>x.unit===q.unit))return null;if(!same.length)missing++;}
+    if(w.directions.length&&g.ways){if(!g.direction)missing++;else if(!w.directions.includes(g.direction))return null;else kept++;}
+    for(const q of w.quantities){if(q.kept){kept++;continue;}const same=g.quantities.filter(x=>x.unit===q.unit&&(q.role==='unknown'||x.role===q.role));
+      if(same.length&&!same.some(x=>x.value===q.value))return null;if(!same.length&&g.quantities.some(x=>x.unit===q.unit))return null;if(!same.length)missing++;else kept++;}
     if(w.action&&w.action!=='wait'&&g.quantities.some(x=>x.unit==='秒'&&!w.quantities.some(q=>q.unit==='秒')))return null;
-    if(w.strings.length&&g.strings.some(v=>!w.strings.includes(v)))return null;missing+=w.strings.filter(v=>!g.strings.includes(v)).length;
-    if(w.objects.length&&g.objects.length&&!w.objects.some(o=>g.objects.includes(o)))return null;if(w.objects.length&&!g.objects.length)missing++;
-    return {missing,explicit};
+    // A number of a unit written is not joined by another of that unit (10歩うしろへ is not 右へ10歩、上へ50歩).
+    if(g.quantities.some(x=>x.unit!=='秒'&&w.quantities.some(q=>q.unit===x.unit)&&!w.quantities.some(q=>q.unit===x.unit&&q.value===x.value)))return null;
+    if(w.strings.length&&g.strings.some(v=>!w.strings.includes(v)))return null;missing+=w.strings.filter(v=>!g.strings.includes(v)).length;kept+=w.strings.filter(v=>g.strings.includes(v)).length;
+    if(w.objects.length&&g.objects.length&&!w.objects.some(o=>g.objects.includes(o)))return null;if(w.objects.length&&!g.objects.length)missing++;else if(w.objects.length)kept++;
+    return other&&!kept?null:{missing,explicit};
   }
   function assistMeaningMatch(want,got) {
     if(!want||!got)return want&&!got?null:{missing:0,explicit:true};
@@ -32588,7 +32613,7 @@ function createAkariExtensionHost(options) {
     return sources;
   }
   // With the meaning of every clause known (framed), two clauses that do not read are each searched and put together.
-  function assistCompose(project,basis,range,ctx,data,framed=false) {
+  function assistCompose(project,basis,range,ctx,data,framed) {
     if(searchIntent(data.text)?.schemaId==='ContinuousRule')return {sources:[],composed:false};
     if(data.strings.length&&(/(?:たずね|聞[くいき]|き[くい]|質問|しつもん|言って|といい).*(?:答え|こたえ|返事)/.test(data.text)||/(?:合図.*(?:送|おく)|知らせて).*(?:待|まつ)/.test(data.text)))return {sources:[],composed:false};
     if(/をわたして|として|という(?:手順|てじゅん)を/.test(data.text))return {sources:[],composed:false};
@@ -32605,10 +32630,13 @@ function createAkariExtensionHost(options) {
       const seeds=assistSeeds(text,ctx.symbols,ctx),options=assistSearch(project,basis,range,ctx,seeds).filter(c=>c.layer<6).sort((a,b)=>/^音を出/.test(text)?Number(b.schemaId==='SoundCommand:SAMPLE_WAIT')-Number(a.schemaId==='SoundCommand:SAMPLE_WAIT')||assistCompare(a,b,ctx):assistCompare(a,b,ctx)).slice(0,3).map(c=>({text:c.text,schemaId:c.schemaId,defaultNumericSlots:c.defaultNumericSlots}));
       return {options,readable:false};
     });
-    const unreadable=parts.filter(p=>!p.readable);if(unreadable.length>(framed?2:1)||parts.some(p=>!p.options.length))return {sources:[],composed:true};
+    // With the meaning of each clause known, up to three unreadable clauses are put together: three clauses of moves took
+    // 265 ms here and four 359 ms, past the 300 ms the near sentences are given (ASSIST_BUDGET_MS).
+    const unreadable=parts.filter(p=>!p.readable);if(unreadable.length>(framed?3:1)||parts.some(p=>!p.options.length))return {sources:[],composed:true};
     const index=parts.findIndex(p=>!p.readable),sources=[],same=(a,b)=>a.text.replace(/[\s。]/g,'')===b.text.replace(/[\s。]/g,'');
-    // A replacement that keeps a number the child did not write, or says what a readable clause says, is not used.
-    let combos=[[]];for(const [i,part]of parts.entries())combos=combos.flatMap(combo=>(part.readable?[part.options[0]]:part.options.filter(o=>!o.defaultNumericSlots&&!parts.some((q,k)=>k!==i&&q.readable&&same(q.options[0],o)))).map(o=>[...combo,o]));
+    // A replacement that keeps a number the child did not write is not used, nor, when the meaning is not known, one that
+    // says what a readable clause says (with the meaning known, 前へ10歩進んで、前に10歩いく。 is two moves).
+    let combos=[[]];for(const [i,part]of parts.entries())combos=combos.flatMap(combo=>(part.readable?[part.options[0]]:part.options.filter(o=>!o.defaultNumericSlots&&(framed||!parts.some((q,k)=>k!==i&&q.readable&&same(q.options[0],o))))).map(o=>[...combo,o]));
     for(const combo of combos){
       const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};
       if(conditional){const action=texts.slice(1).join('\n');
@@ -32775,7 +32803,7 @@ function createAkariExtensionHost(options) {
       const taken=out.length+partial.length;if(taken>=ASSIST_MAX||!hasHigher&&taken>=2||now()-started>ASSIST_BUDGET_MS)break;
     }
     if(!want)return out;
-    const shown=(out.length?out.sort((a,b)=>Number(b.meaning.explicit)-Number(a.meaning.explicit)):partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);
+    const shown=(out.length?[...out.filter(c=>c.meaning.explicit),...out.filter(c=>!c.meaning.explicit)]:partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);
     return shown.map(({meaning,...candidate})=>candidate);
   }
   function blockPaletteSearchText(schema, project) {
