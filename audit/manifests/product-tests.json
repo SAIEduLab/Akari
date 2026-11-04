@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "80dda8d8e0d73e538248624fa25a8b42e502759d67992e96227526d3db3fcb60",
+  "fixedIdSha256": "8ccfc51023b4db4af373bf6a56d0df24c21f0ac6b6a0abf19b84bc55652cab1a",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -199,6 +199,7 @@
         "TEST-CONTRACT unfinished meaning choices require explicit angle or list index",
         "TEST-CONTRACT contract numbers and the extension Standard",
         "TEST-CONTRACT near sentences keep the action written",
+        "TEST-CONTRACT near sentences keep who does the next sentence",
         "TEST-CONTRACT near sentences in the work of the assist examples",
         "TEST-CONTRACT loop touch count notice reads the touch, not its negation"
       ],

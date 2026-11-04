@@ -51611,8 +51611,12 @@
       },
       "expect": {
         "code": "P205",
+        "first": {
+          "schemaId": "MotionCommand:SET_DIRECTION",
+          "text": "ねこは画面の上を向く。"
+        },
         "absent": [
-          "MotionCommand:SET_DIRECTION"
+          "MotionCommand:SET_DIRECTION:画面の上を向く。"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51626,6 +51630,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "文脈で使えない文型の近い書き方は示しません（答えを もとめる の本文の 止める、くり返しの外の このくり返しを終える など）。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },
@@ -51897,8 +51905,12 @@
       },
       "expect": {
         "code": "S317",
+        "first": {
+          "schemaId": "LooksCommand:SHOW",
+          "text": "ねこはすがたを見せる。"
+        },
         "absent": [
-          "LooksCommand:SHOW"
+          "LooksCommand:SHOW:すがたを見せる。"
         ],
         "maxAssist": 4,
         "differsFromOriginal": true
@@ -51912,6 +51924,10 @@
         {
           "file": "LANGUAGE.md",
           "quote": "文脈で使えない文型の近い書き方は示しません（答えを もとめる の本文の 止める、くり返しの外の このくり返しを終える など）。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語は、本文の持ち主とちがっても、書いたとおりに残します。"
         }
       ]
     },

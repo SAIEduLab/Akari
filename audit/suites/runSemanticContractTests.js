@@ -928,6 +928,13 @@ function runSemanticContractTests() {
         // Where no meaning was read, nothing not written is said, asked or sent, and a sound is played only when one is written.
         ['ねこのすがたを見せる。','near-0','すがたを見せる。',[],['「やったね」と言う。']],
         ['ペンを下げる。','near-0','ペンを下ろす。',[],['音の高さを1段階下げる。','点数を1へらす。']],
+        // There, the pen is put up or down only when the pen is written (also ぺん, 筆), and the timer is set to 0 only when the
+        // timer or a time is written.
+        ['おわり。','near-0',null,[],['ペンを上げる。']],
+        ['体力を1あげる。','near-0',null,[],['ペンを上げる。']],
+        ['ぺんをあげる。','near-0',['ペンを上げる。']],
+        ['筆を下ろす。','near-0','ペンを下ろす。'],
+        ['線をかきはじめる。','near-0','ペンを下ろす。',[],['タイマーを0にする。']],
         // まつ written in kana at the end is 待つ.
         ['2秒でまつ。','near-0','2秒待つ。',[],['「名前は？」とたずねて、答えを待つ。']],
         ['自分を右に90度回らせる。','near-1','右に90度回る。',[],[]],
@@ -1032,10 +1039,14 @@ function runSemanticContractTests() {
       // The rewrite of a check keeps it too (assistProposalKeepsSubject).
       const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start'},body='ねこを2秒かけて右へ40歩うごかす。「やあ」と言う。',[fix]=parseSyntax(body,ctx).syntaxDiagnostics[0].proposals,kept=Akari.assistProposalKeepsSubject(fix,body,ctx,p);
       eq(body.slice(0,kept.start)+kept.source+body.slice(kept.end),glide+'自分は「やあ」と言う。');
-      eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は かわりません）');
-      // The stage's body: the part named moves (the stage does not).
-      const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'};
-      eq(Akari.assistCandidates(p,written,stage,parseSyntax(written,stage).syntaxDiagnostics[0]).map(c=>c.text),[glide]);
+      eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は 同じです）');
+      // The stage's body: the part named moves (the stage does not); a sentence of the part's body gets the part's name
+      // (ねこのすがたを見せる → ねこはすがたを見せる), the number written is kept, and no sentence is shown twice.
+      const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'},onStage=text=>Akari.assistCandidates(p,text,stage,parseSyntax(text,stage).syntaxDiagnostics[0]).map(c=>c.text);
+      eq(onStage(written),[glide]);
+      eq(onStage('ねこのすがたを見せる。'),['ねこはすがたを見せる。']);
+      eq(onStage('ねこの向きを90度にする。'),['ねこは画面の上を向く。']);
+      eq(onStage('ねこの向きを45度にする。'),['ねこは向きを45度にする。']);
     });
     // The same in the work of the assist examples (audit/fixtures/assist): ねこ (whose body it is), 犬 and 星, the
     // variable 点数, the list 持ち物, the sound ベル, the procedure ジャンプ, and with ui the parts 文字1, ボタン1 and

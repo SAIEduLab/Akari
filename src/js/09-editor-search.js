@@ -543,13 +543,17 @@
   // another of these kinds is near only when the writing names it, and one that changes a variable or a list only when
   // its name is written (犬のペンを上げる: not 点数を1ふやす, nor 音の高さを1段階上げる; 音楽をかける is no move). The
   // nearest sentence stands as the search found it (犬を追いかける is 「犬」のところへ行く).
-  const ASSIST_FAMILY_WORDS={SoundCommand:/音|鳴|なら|曲|メロディ|Hz|ヘルツ|歌|うた/,PenCommand:/ペン|線|かく(?!す|し|れ)|描|書|スタンプ|はんこ|ハンコ/,
+  const ASSIST_FAMILY_WORDS={SoundCommand:/音|鳴|なら|曲|メロディ|Hz|ヘルツ|歌|うた/,PenCommand:/ペン|ぺん|えんぴつ|鉛筆|クレヨン|マーカー|筆|ふで|線|かく(?!す|し|れ)|描|書|スタンプ|はんこ|ハンコ/,
     MotionCommand:/歩|\d+(?:ほ|ぽ)|進|すす|動|うご|行|い[くっき]|移動|いどう|走|はし|右|左|上|下|前|後|うしろ|向|む[くけ]|回|まわ|ところ|ばしょ|場所|位置|ジャンプ|跳|はね|戻|もど|方|よこ|たて|座標|飛|と[ぶん]/};
   // Words that ask for something to be said, asked or sent; a text not written is then a placeholder to fill in.
   const ASSIST_SAY_WORDS=/言|いう|いって|いった|いわ|話|はな[さしすせそ]|たず|尋|聞|きい|きく|質問|問|合図|あいず|送|おく[らりるれろっ]|知らせ|しらせ|メッセージ|叫|さけ|つぶや|呼|答|こた|返事|へんじ|セリフ|せりふ|ふきだし|吹き出し/;
   const ASSIST_DATA_KINDS=['Assignment','NumericUpdate','ListAppend','ListInsert','ListReplace','ListDelete','ListClear'];
   function assistKinds(ast) {
     const kinds=new Set(),visit=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}if(n.kind)kinds.add(n.kind);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
+    visit(ast.body);return kinds;
+  }
+  function assistKindsOps(ast) {
+    const kinds=[],visit=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}if(n.kind)kinds.push(n.kind+':'+n.op);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
     visit(ast.body);return kinds;
   }
   function assistFamiliesWritten(ast,data,nearest,dataOnly=false) {
@@ -585,7 +589,7 @@
     if(!topic.before||!after||who(topic.before)===who(after))return null;
     // A heading (もし…、 3回くり返す。) takes its subject with 、 (自分は、3回くり返す。), as the code is written.
     const line=basis.slice(at,(basis.indexOf('\n',at)+1||basis.length+1)-1).trim(),subject=sentenceActorSource(who(topic.before)===owner?{kind:'self'}:topic.before)+(/^もし|、$|(?:くり返す|繰り返す|くりかえす)。?$/.test(line)?'は、':'は');
-    return {at,between:basis.slice(end,at)+subject,note:`つぎの 文の はじめに「${subject}」を 書きます（つぎの 文を する 部品は かわりません）`};
+    return {at,between:basis.slice(end,at)+subject,note:`つぎの 文の はじめに「${subject}」を 書きます（つぎの 文を する 部品は 同じです）`};
   }
   // A proposal of a check (the rewrite buttons under a sentence that does not read) keeps who does the next sentence, as
   // a near sentence does.
@@ -919,6 +923,11 @@
       // Where no meaning was read, a sound is played only when a sound is written, and with the sound, the pen or a move
       // written a variable not written is not changed (ペンを下げる is neither 音の高さを1段階下げる nor 点数を1へらす).
       if(!want&&!assistFamiliesWritten(canonical.ast,data,new Set([...Object.keys(ASSIST_FAMILY_WORDS).filter(k=>k!=='SoundCommand'),...familyNamed?[]:ASSIST_DATA_KINDS])))continue;
+      // Where no meaning was read, the pen is put up or down, or its size set, only when the pen is written (体力を1あげる is
+      // not ペンを上げる; 全部消す may still clear the lines).
+      if(!want&&!ASSIST_FAMILY_WORDS.PenCommand.test(data.text.replace(/「[^「」]*」|『[^『』]*』/g,''))&&assistKindsOps(canonical.ast).some(k=>['PenCommand:UP','PenCommand:DOWN','PenCommand:SET_SIZE'].includes(k)))continue;
+      // Where no meaning was read, the timer is set to 0 only when the timer or a time is written (線をかきはじめる is not タイマーを0にする).
+      if(!want&&!/タイマー|たいまー|秒|びょう|時間|じかん/.test(data.text.replace(/「[^「」]*」|『[^『』]*』/g,''))&&assistKindsOps(canonical.ast).some(k=>k.startsWith('TimerReset')))continue;
       if(want&&(nearest?!assistFamiliesWritten(canonical.ast,data,nearest):want.some(f=>f.objects?.length)&&!assistFamiliesWritten(canonical.ast,data,new Set(),true)))continue;
       const allowed=p.allowedSchemas||new Set(hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).filter(h=>h.mode==='statement'&&h.enabled).map(h=>hintSchemaId(h.id)));
       const localNames=new Set([...(ctx.args||[]),...(ctx.localNames||[])]),knownFor=actor=>new Set([...(project.projectData?.variables||[]),...(project.projectData?.lists||[]),...(project.components.find(c=>c.id===actor)?.localData?.variables||[]),...(project.components.find(c=>c.id===actor)?.localData?.lists||[])].map(n=>n.name));
@@ -948,11 +957,14 @@
     }
     if(!want)return out;
     const shown=(out.length?[...out.filter(c=>c.meaning.explicit),...out.filter(c=>!c.meaning.explicit)]:partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);
-    // The stage does not move: a sentence that names the part that does it (ねこを…移動させる) is looked for in that part's
-    // body, and a near sentence there that names the part, and reads in the stage's body too, is kept.
+    // The stage does not move: a sentence that names the part that does it (ねこを…移動させる, ねこのすがたを…) is looked
+    // for in that part's body; a near sentence of one line there gets the part's name (すがたを見せる → ねこはすがたを見せる),
+    // and is kept when every line names the part and it reads in the stage's body too.
     if(!shown.length&&ctx.targetId==='stage'&&want?.length&&want.every(w=>w.subject&&w.subject===want[0].subject)){
-      const part=project.components.find(c=>c.name===want[0].subject),named=part&&sentenceActorSource({kind:'named',name:part.name})+'は';
-      if(part)return assistCandidates(project,basis,{...context,targetId:part.id,targetType:part.type},null).filter(c=>{try{return c.text.split('\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});
+      const part=project.components.find(c=>c.name===want[0].subject),named=part&&sentenceActorSource({kind:'named',name:part.name})+'は',seenText=new Set();
+      if(part)return assistCandidates(project,basis,{...context,targetId:part.id,targetType:part.type},null)
+        .map(c=>c.text.includes('\n')||c.text.startsWith(named)?c:{...c,text:named+c.text,source:named+c.source,label:c.label===c.text?named+c.text:c.label})
+        .filter(c=>{if(seenText.has(c.text))return false;seenText.add(c.text);try{return c.text.split('\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});
     }
     return shown.map(({meaning,...candidate})=>candidate);
   }
