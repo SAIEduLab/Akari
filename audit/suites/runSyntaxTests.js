@@ -409,6 +409,10 @@ function runSyntaxTests() {
       eq(first('ねこと犬は前へ10歩進む。').proposals.map((x) => x.source), ['ねこは前へ10歩進む。\n犬は前へ10歩進む']);
       ok(first('ねこも犬も、画面のはしにふれるまで待つ。').message.includes('書いた じゅんに'));
       ok(!String(first('ねこもねこも1秒待つ。')?.message).includes('待つ 文は、主語を 書かなくても'));
+      // The same part written twice is no two subjects to split.
+      ok(!String(first('ねこもねこも前へ10歩進む。')?.message).includes('主語ごとに'));
+      // In a body that is not 名人, waiting for a speech is not read, whatever name is written before it.
+      ok(first('だんごが言い終わるまで待つ。').message.startsWith('どう なるまで なのかが 読めません'));
       // The two subjects do the sentence up to a clause that names its own subject; that clause is written once.
       for (const joint of ['待って', '待ってから'])
         eq(first('ねこと犬は1秒' + joint + '、ねこは10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む']);
@@ -416,6 +420,8 @@ function runSyntaxTests() {
       ok(first('ねこと犬は、画面のはしにふれるまで待ってから、ねこは「やあ」と言う。').message.includes('書いた じゅんに'));
       // A timed wait first is written once, and what the two subjects do after it is split.
       eq(first('ねこと犬は1秒待ってから、10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む。\n犬は前へ10歩進む']);
+      // What comes after the wait takes no time here, so the subjects do not move one after the other.
+      ok(!first('ねこと犬は1秒待ってから、10歩進む。').message.includes('書いた じゅんに'));
       ok(first('ねこと犬は10歩進んで、1秒待つ。').message.includes('書いた じゅんに'));
       // 名人: parts written together that wait and then go on to a clause with its own subject wait together and do that
       // clause once after them (runCoreTests); also with も, and with more clauses before it. A part in a condition is no subject.

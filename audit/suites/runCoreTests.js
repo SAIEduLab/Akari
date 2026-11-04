@@ -710,6 +710,23 @@ function runCoreTests() {
         eq(meijinRun(source, { until: 1500, samples: [500, 1500] }).x, { 500: [0, 200, 400], 1500: [0, 200, 410] });
       eq(meijinRun('ねこと犬は2秒かけて、いまのばしょから、右へ40歩動いて、鳥は10歩進む。', { until: 2500, samples: [1000, 2500] }).x, { 1000: [20, 220, 400], 2500: [40, 240, 410] });
       eq(compileProject(meijinWork('ねこと犬は10歩進んで、鳥は10歩進む。\n「やあ」と言う。')).errors.map(e => e.code), ['S304']);
+      // Nor after a sentence of two subjects joined with 〜て (決まり4). The sentence after it says the subject ended.
+      eq(compileProject(meijinWork('ねこは10歩進んで、犬は10歩進む。\n「やあ」と言う。')).errors.map(e => e.code), ['S304']);
+      const split = parseSyntax('ねこと犬は10歩進んで、鳥は10歩進む。\n「やあ」と言う。', { symbols: buildSymbols(meijinWork('何もしない。')), targetId: 'meijin', event: 'start', meijin: true }).ast;
+      eq(split.body.at(-1).actorRef, { kind: 'self', topicEnded: true });
+      // A part in a condition is no other subject: the sentence stays one sentence of the parts together.
+      const kept = parseSyntax('ねこと犬は1秒待って、ねこが画面のはしにふれるまで待つ。', { symbols: buildSymbols(meijinWork('何もしない。')), targetId: 'meijin', event: 'start', meijin: true }).ast;
+      eq(kept.body.map(n => [n.kind, n.lanes?.map(l => l.map(m => m.kind))]), [['Parallel', [['WaitTime', 'WaitUntil'], ['WaitTime', 'WaitUntil']]]]);
+      // The fix of a place with one leg is written for the parts together (ねこと犬は／ねこも犬も…); a line split after them
+      // has the notice without a rewrite of the whole line, which would drop the other subject's clause.
+      const place = '画面の左下のはしから、右へ320歩のばしょへ行く', fixes = source => compileProject(meijinWork(source)).notes.filter(n => n.code === 'I120').map(n => (n.proposals || []).map(x => x.source));
+      for (const group of ['ねこと犬は', 'ねこも犬も'])
+        eq(fixes(group + '、' + place + '。'), [[group + '画面の左下のはしから、右へ320歩、上へ（たてのばしょ）歩のばしょへ行く', group + '画面の左下のはしから、右へ320歩、上へ0歩のばしょへ行く']]);
+      eq(fixes('ねこと犬は、' + place.replace(/行く$/, '行って') + '、鳥は10歩進む。'), [[]]);
+      // A subject held in a variable, written once with 〜て, is carried on as any one subject; with another subject after
+      // it, no subject is carried on.
+      eq(compileProject(meijinWork('主役をねこにする。\n主役は10歩進んで、「やあ」と言う。\n20歩進む。')).errors, []);
+      eq(compileProject(meijinWork('主役をねこにする。\n主役は10歩進んで、犬は「やあ」と言う。\n20歩進む。')).errors.map(e => e.code), ['S304']);
     });
     test('meijin words of 国語 and 算数 for lists and numbers', () => {
       const out = meijinRun('持ち物の最後に「本」を入れる。\n持ち物から「本」を一つ消す。\n合計を、持ち物の長さにする。\n持ち物から「本」を全部消す。\n点数を4にする。\nもし点数が偶数なら、ねこは「偶」と言う。\nもし点数が2の倍数なら、ねこは「倍」と言う。\nもし持ち物が空なら、ねこは「から」と言う。\nねこは、持ち物を一つずつ順に1秒話す。', { until: 1500 });

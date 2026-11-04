@@ -798,9 +798,23 @@ function runSemanticContractTests() {
       for(const source of ['ねこは、点数が1になるまで待つ。犬は点数を1にする。','点数が1になるまで待つ。\n点数を1にする。','点数＋1が3になるまで待つ。\n点数を2にする。','ずっとくり返す。\n  点数が1になるまで待つ。\n  点数を0にする。','点数が1になるまで待つ。\n「数は？」とたずねて、答えを待つ。\n点数を答えにする。']){
         const [note,...more]=notes(source);eq(more,[]);ok(note.message.startsWith('「点数」を かえる 文は、この 本文の この 文より あとに しか ありません。'));ok(note.message.includes('「同じ きっかけの 本文を ふやす」'));}
       ok(notes('ねこは、点数が1になるまで待つ。犬は点数を1にする。',{meijin:true})[0].message.includes('「次のことを同時に始める。」の 中に'));
+      // Each heading of a 名人 body is a flow of its own.
+      eq(notes('作品を動かしたとき、\n  ねこは10歩進む。\n「スペース」キーがおされたとき、\n  点数が1になるまで待つ。\n  点数を1にする。',{meijin:true}).length,1);
+      // A condition that also reads what changes by itself (the timer) may become true while waiting.
+      eq(notes('点数がタイマーより大きくなるまで待つ。\n点数を100にする。'),[]);
       for(const [source,options]of [['点数を1にする。\n点数が1になるまで待つ。\n点数を2にする。',{}],['点数が1になるまで待つ。\n点数を1にする。',{other:'1秒待つ。\n点数を1にする。'}],['点数が1になるまで待つ。\n10歩進む。',{}],
         ['次のことを同時に始める。\n  点数が1になるまで待つ。\n  点数を1にする。\nねこは10歩進む。',{meijin:true}],['タイマーが3より大きくなるまで待つ。\nタイマーを0にする。',{}]])
         eq(notes(source,options),[]);
+      // Nor for a variable of a part (each part has its own), a work variable that a part's variable shares its name with,
+      // or a change in a procedure (it may be called from anywhere).
+      p.components[0].localData={variables:[{id:'vwait-own',name:'体力',initialValue:5}],lists:[]};
+      eq(notes('体力が1になるまで待つ。\n体力を1にする。'),[]);
+      p.components[1].localData={variables:[{id:'vwait-same',name:'点数',initialValue:0}],lists:[]};
+      eq(notes('点数が1になるまで待つ。\n点数を1にする。'),[]);
+      p.components[1].localData={variables:[],lists:[]};
+      p.actions=[{id:'vwait-action',ownerId:'stage',name:'上げる',args:[],source:'点数を1にする。'}];
+      eq(notes('点数が1になるまで待つ。\n【上げる】という手順を行う。'),[]);
+      p.actions=[];
     });
     test('scoped scalar expressions and quoted list names execute',()=>{
       const p=actorUnitFixture();p.projectData.variables=[];for(const c of p.components)c.localData={variables:[],lists:[]};
@@ -1035,11 +1049,22 @@ function runSemanticContractTests() {
         [written,'next-1',glide],
         // Before a heading the subject is written with 、, as the code writes it.
         [written+'\n3回くり返す。\n  「やあ」と言う。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。'],
+        [written+'\n3回くり返す。\n  「やあ」と言う。\n前へ10歩進む。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。\n前へ10歩進む。'],
+        // Empty lines and lines of notes (※) are passed; a sentence at another depth, or lines after it, are as written.
+        [written+'\n\n「やあ」と言う。','next-1',glide+'\n\n自分は「やあ」と言う。'],
+        [written+'\n※メモ\n「やあ」と言う。','next-1',glide+'\n※メモ\n自分は「やあ」と言う。'],
+        [written+'\n「やあ」と言う。\n前へ10歩進む。','next-1',glide+'\n自分は「やあ」と言う。\n前へ10歩進む。'],
+        ['2回くり返す。\n  '+written+'\n「やあ」と言う。','next-1','2回くり返す。\n  '+glide+'\n「やあ」と言う。'],
       ])eq(applied(body,owner),after);
       // The rewrite of a check keeps it too (assistProposalKeepsSubject).
       const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start'},body='ねこを2秒かけて右へ40歩うごかす。「やあ」と言う。',[fix]=parseSyntax(body,ctx).syntaxDiagnostics[0].proposals,kept=Akari.assistProposalKeepsSubject(fix,body,ctx,p);
       eq(body.slice(0,kept.start)+kept.source+body.slice(kept.end),glide+'自分は「やあ」と言う。');
       eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は 同じです）');
+      // In a loop too; a proposal that asks for a number, or whose place or text is not given, is as it is.
+      const looped='2回くり返す。\n  ねこを2秒かけて右へ40歩うごかす。\n  「やあ」と言う。',[loopFix]=parseSyntax(looped,ctx).syntaxDiagnostics[0].proposals,loopKept=Akari.assistProposalKeepsSubject(loopFix,looped,ctx,p);
+      eq(looped.slice(0,loopKept.start)+loopKept.source+looped.slice(loopKept.end),'2回くり返す。\n  '+glide+'\n  自分は「やあ」と言う。');
+      for(const asIs of [{...fix,input:{kind:'angle'}},{...fix,start:undefined},{...fix,end:1.5},{...fix,source:null}])ok(Akari.assistProposalKeepsSubject(asIs,body,ctx,p)===asIs);
+      ok(Akari.assistProposalKeepsSubject(fix,null,ctx,p)===fix);
       // The stage's body: the part named moves (the stage does not); a sentence of the part's body gets the part's name
       // (ねこのすがたを見せる → ねこはすがたを見せる), the number written is kept, and no sentence is shown twice.
       const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'},onStage=text=>Akari.assistCandidates(p,text,stage,parseSyntax(text,stage).syntaxDiagnostics[0]).map(c=>c.text);
@@ -1047,6 +1072,10 @@ function runSemanticContractTests() {
       eq(onStage('ねこのすがたを見せる。'),['ねこはすがたを見せる。']);
       eq(onStage('ねこの向きを90度にする。'),['ねこは画面の上を向く。']);
       eq(onStage('ねこの向きを45度にする。'),['ねこは向きを45度にする。']);
+      // Its button keeps the name of what it does, or names the part when the button showed the sentence.
+      const buttons=text=>Akari.assistCandidates(p,text,stage,parseSyntax(text,stage).syntaxDiagnostics[0]).map(c=>[c.label,c.source]);
+      eq(buttons('ねこのすがたを見せる。'),[['すがたを見せる','ねこはすがたを見せる']]);
+      eq(buttons(written),[['いまの ばしょから動く','ねこは2秒かけて、いまのばしょから、右へ40歩動く']]);
     });
     // The same in the work of the assist examples (audit/fixtures/assist): ねこ (whose body it is), 犬 and 星, the
     // variable 点数, the list 持ち物, the sound ベル, the procedure ジャンプ, and with ui the parts 文字1, ボタン1 and
@@ -1065,6 +1094,33 @@ function runSemanticContractTests() {
         return got.map(c=>c.label===c.text?c.text:[c.label,c.text]);};
       const step='前へ10歩進む。',stop='この動きを止める。\n1秒待つ。';
       const rows=[
+        // The near sentences the rules of 1.0.1 shape: what is said, played, drawn or changed only when it is written, a
+        // part written with を, and a wait written in kana.
+        ['「ベル」をかける。',false,[['えらんだ音を鳴らして待つ','「ベル」を鳴らす。']]],
+        ['330Hzの音を0.5秒出す。',false,[['音を鳴らして待つ','330Hzの音を0.5秒鳴らす。']]],
+        ['音をけす。',false,{first:['すべての音を止める','すべての音を止める。'],not:['持ち物の1番目を消す。']}],
+        ['ペンを下げる。',false,[['ペンを下ろす','ペンを下ろす。']]],
+        ['線を引く。',false,[['ペンを下ろす','ペンを下ろす。']]],
+        ['ペンを上げた。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['ペンを上にあげる。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['犬のペンを上げる。',false,[['ペンを上げる','犬はペンを上げる。']]],
+        ['ペンを上げておく。',false,[['ペンを上げる','ペンを上げる。']]],
+        ['ペンを下におく。',false,{first:['ペンを下ろす','ペンを下ろす。'],not:['点数を1へらす。','音の高さを1段階下げる。']}],
+        ['ほかのぜんぶを止める。',false,[['ほかの動きを全部止める','ほかの動きを全部止める。'],['自分のほかの動きを止める','自分のほかの動きを止める。'],['作品を全部止める','作品を全部止める。'],['この動きを止める','この動きを止める。']]],
+        ['点数が10になるまで待ちたい。',false,[['きまりに あてはまるまで待つ','点数が10になるまで待つ。'],['秒待つ','10秒待つ。']]],
+        ['点数が10になるまでまちなさい。',false,[['きまりに あてはまるまで待つ','点数が10になるまで待つ。'],['秒待つ','10秒待つ。']]],
+        ['点数が10になるまでずっと待つ。',false,[['きまりに あてはまるまで待つ','点数が10になるまで待つ。'],['秒待つ','10秒待つ。']]],
+        ['点数を1さげる。',false,[['数を へらす','点数を1へらす。']]],
+        ['2番目に「かさ」を入れる。',false,[['リストの とちゅうに入れる','持ち物の2番目に「かさ」を入れる。']]],
+        ['持ち物の2番目を「かさ」にとりかえる。',false,[['リストの中身を1つ入れかえる','持ち物の2番目を「かさ」にかえる。']]],
+        ['ねこのすがたを見せる。',false,[['すがたを見せる','すがたを見せる。']]],
+        ['持ち物がからっぽになるまで待つ。',false,{first:['きまりに あてはまるまで待つ','持ち物の数が0になるまで待つ。'],not:['「開始」の合図を送って、その合図で始まったことが全部終わるまで待つ。','「名前は？」とたずねて、答えを待つ。']}],
+        ['「ベル」を聞かせる。',false,[['えらんだ音を鳴らして待つ','「ベル」を鳴らす。']]],
+        ['3回くり返す。\n  おわる。',false,[['このくり返しを終える','このくり返しを終える。'],['作品を全部止める','作品を全部止める。']]],
+        ['おわり。',false,[['作品を全部止める','作品を全部止める。']]],
+        ['3番目に「ボール」を入れる。',false,[['リストの とちゅうに入れる','持ち物の3番目に「ボール」を入れる。']]],
+        ['持ち物の3番目を「ボール」にとりかえる。',false,[['リストの中身を1つ入れかえる','持ち物の3番目を「ボール」にかえる。']]],
+        ['点数が12の約数になるまで待つ。',false,{first:['きまりに あてはまるまで待つ','条件（点数が0より大きいかつ切り捨て（点数）が点数と同じかつ12÷点数のあまりが0と同じ）が成り立つまで待つ。'],not:['「開始」の合図を送って、その合図で始まったことが全部終わるまで待つ。']}],
         ['すがたを「丸」にかえた。',false,{first:['すがたを かえる','すがたを「丸」にかえる。'],not:['次のすがたにかえる。','前のすがたにかえる。','点数を「丸」にする。','色を「丸」にする。']}],
         ['もし点数が10以上なら、もし点数が20以下なら、\n    何もしない。',false,{first:['もし','もし点数が10以上なら、\n  もし点数が20以下なら、\n    何もしない。'],not:['もし点数が10以上なら、\n  点数を0にする。']}],
         ['ずっとくり返す。\n  とばして次へ。',false,[['この回の のこりを とばして 次の回へ','この回の残りをとばして、次の回へ進む。']]],

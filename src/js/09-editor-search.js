@@ -548,29 +548,25 @@
   // Words that ask for something to be said, asked or sent; a text not written is then a placeholder to fill in.
   const ASSIST_SAY_WORDS=/言|いう|いって|いった|いわ|話|はな[さしすせそ]|たず|尋|聞|きい|きく|質問|問|合図|あいず|送|おく[らりるれろっ]|知らせ|しらせ|メッセージ|叫|さけ|つぶや|呼|答|こた|返事|へんじ|セリフ|せりふ|ふきだし|吹き出し/;
   const ASSIST_DATA_KINDS=['Assignment','NumericUpdate','ListAppend','ListInsert','ListReplace','ListDelete','ListClear'];
-  function assistKinds(ast) {
-    const kinds=new Set(),visit=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}if(n.kind)kinds.add(n.kind);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
-    visit(ast.body);return kinds;
+  // Every node of a syntax tree, in the order written (the sentences, the sentences in them and their values).
+  function assistNodes(tree) {
+    const nodes=[],visit=n=>{if(Array.isArray(n)){n.forEach(visit);return;}if(!n||typeof n!=='object')return;if(n.kind)nodes.push(n);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan')visit(v);};
+    visit(tree);return nodes;
   }
-  function assistKindsOps(ast) {
-    const kinds=[],visit=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}if(n.kind)kinds.push(n.kind+':'+n.op);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
-    visit(ast.body);return kinds;
-  }
+  const assistKinds=ast=>new Set(assistNodes(ast.body).map(n=>n.kind));
+  const assistKindsOps=ast=>assistNodes(ast.body).map(n=>n.kind+':'+n.op);
   function assistFamiliesWritten(ast,data,nearest,dataOnly=false) {
-    const sounds=data.names.filter(n=>n.kind==='sound').map(n=>n.name),text=data.text.replace(/「[^「」]*」|『[^『』]*』/g,'');let written=true;
-    const visit=n=>{if(!written||!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}
-      if(!dataOnly&&!nearest.has(n.kind)&&ASSIST_FAMILY_WORDS[n.kind]&&!ASSIST_FAMILY_WORDS[n.kind].test(text)&&!(n.kind==='SoundCommand'&&sounds.some(name=>data.text.includes(name))))written=false;
-      if(!nearest.has(n.kind)&&ASSIST_DATA_KINDS.includes(n.kind)&&n.target?.name&&!data.text.includes(n.target.name))written=false;
-      for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
-    visit(ast.body);return written;
+    const sounds=data.names.filter(n=>n.kind==='sound').map(n=>n.name),text=data.text.replace(/「[^「」]*」|『[^『』]*』/g,'');
+    return assistNodes(ast.body).every(n=>nearest.has(n.kind)||
+      (dataOnly||!ASSIST_FAMILY_WORDS[n.kind]||ASSIST_FAMILY_WORDS[n.kind].test(text)||n.kind==='SoundCommand'&&sounds.some(name=>data.text.includes(name)))&&
+      !(ASSIST_DATA_KINDS.includes(n.kind)&&n.target?.name&&!data.text.includes(n.target.name)));
   }
   // The subject carried on to the end of text, as the product reads a sentence written there (自分 is {kind:'self'}); null
   // when the text there does not read.
   function assistTopicAt(text,ctx) {
-    const mark='あかりの目印';let found=null;
-    const walk=n=>{if(found||!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(walk);return;}if(n.kind==='Say'&&n.value?.kind==='StringLiteral'&&n.value.value===mark){found=n.actorRef||{kind:'self'};return;}for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')walk(v);};
-    try{walk(parseSyntax(text+'「'+mark+'」と言う。',ctx).ast);}catch{return null;}
-    return found;
+    const mark='あかりの目印';let said;
+    try{said=assistNodes(parseSyntax(text+'「'+mark+'」と言う。',ctx).ast).find(n=>n.kind==='Say'&&n.value?.value===mark);}catch{return null;}
+    return said?said.actorRef||{kind:'self'}:null;
   }
   // A near sentence does not change the other sentences (LANGUAGE.md 読めない文の近い書き方). One that names another subject
   // (ねこは…) would carry it on to the next sentence written without one, at the same depth (ねこは…。「やあ」と言う。); that

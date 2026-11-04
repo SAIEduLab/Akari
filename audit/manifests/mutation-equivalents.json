@@ -14,30 +14,6 @@
       "reason": "変異で own が真になるのは OTHER_PART_OPS（文字・入力らんの中身を変える文）だけで、そこでは部品の場所・大きさ・すがたが変わらず、ふれた判定に使う形（runtime-model の箱）は文字を見ない。主語の部品を動いたことにしても、ふれたときの結果は変わらない"
     },
     {
-      "file": "src/js/04-syntax-scripts.js",
-      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
-      "operator": "drop call",
-      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
-    },
-    {
-      "file": "src/js/04-syntax-scripts.js",
-      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
-      "operator": "n->n+1",
-      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
-    },
-    {
-      "file": "src/js/04-syntax-scripts.js",
-      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
-      "operator": "negate condition",
-      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
-    },
-    {
-      "file": "src/js/04-syntax-scripts.js",
-      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
-      "operator": "true->false",
-      "reason": "名人の本文で readMeijinLine が読んだ行のうち、主語が二つになる行と、相手を書く命令（ねこの大きさを…）を主語の形に言い換えた行は、作品の事例・node の試験・23通りの書き方のどれでもこの枝に来なかった。この行で1.0.1が変えたのは主語の待ちの呼び出しを消したことだけで、この判定は前の版と同じ"
-    },
-    {
       "file": "src/js/09-editor-search.js",
       "source": "if(!ast||ast.heading||ast.rules?.length)return null;",
       "operator": "||->&&",
@@ -114,6 +90,42 @@
       "source": "const shown=(out.length?[...out.filter(c=>c.meaning.explicit),...out.filter(c=>!c.meaning.explicit)]:partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);",
       "operator": "n->n+1",
       "reason": "上の候補（layer が6より小さい）がないとき、ループは見た数が2で止まる（!hasHigher&&taken>=2）ので、out も partial も2つまでで、slice(0,2) と slice(0,3) は同じになる"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1||read.nodes.length>1&&read.nodes.some(p=>MEIJIN_GROUP_SUBJECTS.has(p)))scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": "drop call",
+      "reason": "名人の本文で言い換えた行（line.meijinOwned：「ねこの大きさを150％にする。」のように相手を書く命令を、主語を書いた形に読みかえた行）は、言い換えたあとの文がふつうの文として読み直され、ふつうの文を読む枝で同じ印（STATEMENT_EXPLICIT_ACTORS）を消す。このため、readMeijinLine が読んだ行の枝でこの呼び出しを消しても、次の文の主語の読み方は変わらない。node の試験、仕様の世界、「ねこの大きさを150％にする。」「ねこの向きを90度にする。」のあとに主語のない文を書いた例で、結果が同じだった"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1||read.nodes.length>1&&read.nodes.some(p=>MEIJIN_GROUP_SUBJECTS.has(p)))scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": ">->>=",
+      "reason": "主語を並べた並びの文が一つだけの行（ねこと犬は10歩進む。）は、主語を書いた文がないので、この条件より前に meijinTopicAfter が主語の引き継ぎを終える（並べた部品はちがう部品なので、並びの主語がみな同じになることはない）。このため、文の数の比べ方を > から >= にしても、主語の引き継ぎは同じように終わる"
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (k && named(after[0]) && lanes.every(lane => lane.length > k && named(lane[lane.length - k])))",
+      "operator": ">->>=",
+      "reason": "並べた部品の文ごとの並び（lanes）は、区切った前の部分の文と、区切った後ろの文 k 個からできている。前の部分に文がない形（「ねこと犬は、鳥は10歩進む。」）は読めない文（P201）なので、読める文の並びの文の数は k より必ず大きい。このため > を >= にしても、区切るかどうかは変わらない"
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }",
+      "operator": "||->&&",
+      "reason": "条件が作品の変数・数・文字・計算・比べる式だけでできているかを見るたどり方で、印（plain）が false になったあとも見続ける形にしても、終わりで plain が false なら空の一覧を返すので、知らせを出すかどうかは変わらない"
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }",
+      "operator": "drop call",
+      "reason": "条件の木で配列を持つのは、手順や計算の呼び出しの引数だけで、その種類は配列の中を見る前に plain を false にして戻る（「かつ」「または」も left と right で持つ）。このため配列をたどる呼び出しを消しても、知らせを出すかどうかは変わらない"
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "if (at >= 0 && !elsewhere && here.length && here.every(k => k > at))",
+      "operator": ">->>=",
+      "reason": "here は、この流れの文のうち変数を変える文（target か variable を持つ文）の位置で、待つ文（WaitUntil）はそのどちらも持たないので、その位置が待つ文の位置 at と同じになることはない。このため > を >= にしても、知らせを出すかどうかは変わらない"
     }
   ]
 }

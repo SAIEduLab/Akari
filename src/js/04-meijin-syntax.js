@@ -51,7 +51,10 @@
   const MEIJIN_GROUP_SUBJECTS = new WeakMap();
   // ねこと犬と鳥は、順番に、…: the parts of such a sentence (they start together; 作品チェック tells the child).
   const MEIJIN_LISTED_IN_ORDER = new WeakMap();
-  const meijinGroup = (parallel, subject) => { MEIJIN_GROUP_SUBJECTS.set(parallel, subject); return parallel; };
+  // The parts written together of a sentence that goes on to a clause of another subject (meijinGroupSplit): the line is
+  // more than what they do together.
+  const MEIJIN_SPLIT_GROUPS = new WeakSet();
+  const meijinGroup = (parallel, subject, split = null) => { MEIJIN_GROUP_SUBJECTS.set(parallel, subject); if (split) MEIJIN_SPLIT_GROUPS.add(parallel); return parallel; };
   const MEIJIN_DATA_SUFFIXES = ['の数だけ', 'の値', 'の答え', 'の中身', 'の長さ', 'の文字数', 'の色', 'のどれか', 'の中で', 'の中に', 'のあまり', 'の余り'];
   const MEIJIN_DIRECTIONS = { 前: 'forward', 後ろ: 'backward', 右: 'right', 左: 'left', 上: 'up', 下: 'down' };
   // 十歩 → 10歩, 三百二十秒 → 320秒 (for the message only).
@@ -535,13 +538,10 @@
   // (、鳥は); that clause and what follows it are done once after them, in the order written, as when one subject is
   // written (決まり: 「〜して、」でつないだ文は書いた順). A part in a condition (、ねこが…ふれるまで待つ) is no subject: there the
   // sentence is not split. Each lane read the whole sentence; the clauses after the split are cut from the lanes.
-  function meijinGroupSplit(lanes, body, read, symbols) {
+  function meijinGroupSplit(lanes, body, readOr, symbols) {
     const names = actorNamePatterns(symbols).partNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    if (!names) return null;
     for (const m of surfaceMask(body).matchAll(new RegExp('(' + names + ')(?:は|が)', 'g'))) {
-      let after = null;
-      try { after = read(body.slice(m.index)); } catch (error) { if (!(error instanceof AkariError)) throw error; }
-      const k = after?.length || 0, named = n => STATEMENT_EXPLICIT_ACTORS.has(n) && n.actorRef?.kind === 'named' && n.actorRef.name === m[1];
+      const after = readOr(body.slice(m.index)) || [], k = after.length, named = n => STATEMENT_EXPLICIT_ACTORS.has(n) && n.actorRef?.kind === 'named' && n.actorRef.name === m[1];
       if (k && named(after[0]) && lanes.every(lane => lane.length > k && named(lane[lane.length - k])))
         return { lanes: lanes.map(lane => lane.slice(0, lane.length - k)), after };
     }
@@ -697,8 +697,8 @@
       const also = [];
       for (let at = 0, i; (i = mask.indexOf('も', at)) > at && isMeijinPart(code.slice(at, i), symbols, scope); at = i + 1 + (mask[i + 1] === '、' ? 1 : 0)) also.push({ name: code.slice(at, i), end: i + 1 + (mask[i + 1] === '、' ? 1 : 0) });
       if (also.length >= 2 && also.at(-1).end < code.length) {
-        const body = meijinBody(code.slice(also.at(-1).end)), whole = also.map(({ name }) => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, read, symbols), lanes = split ? split.lanes : whole;
-        return done([meijinGroup(node('Parallel', { lanes }), code.slice(0, also.at(-1).end)), ...split?.after || []]);
+        const body = meijinBody(code.slice(also.at(-1).end)), whole = also.map(({ name }) => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, text => attempt(() => read(text)), symbols), lanes = split ? split.lanes : whole;
+        return done([meijinGroup(node('Parallel', { lanes }), code.slice(0, also.at(-1).end), split), ...split?.after || []]);
       }
       const ends = [...mask.matchAll(/[はが]/g)].map(m => m.index).filter(at => at > 0 && at < mask.length - 1);
       for (const at of ends) {
@@ -709,9 +709,9 @@
         // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) {
-          const whole = subject.lanes.map(name => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, read, symbols), laneNodes = split ? split.lanes : whole;
+          const whole = subject.lanes.map(name => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, text => attempt(() => read(text)), symbols), laneNodes = split ? split.lanes : whole;
           // ねこと犬と鳥は、順番に、…: parts written together start together; the check says 順番に does not order them.
-          const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
+          const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''), split);
           if (/^(?:順番|じゅんばん)に$/.test(order?.[1] || '')) MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
           return done([lanes, ...split?.after || []]);
         }

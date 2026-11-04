@@ -1427,7 +1427,8 @@
             [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
             let text = lanes ? null : write(leg, STATEMENT_EXPLICIT_ACTORS.has(goto));
             if (text && chained) text = text.replace(/行く$/, '行って');
-            if (lanes) {
+            // A line split after the parts written together (、鳥は…) is more than their sentence: no rewrite of the whole line.
+            if (lanes && !MEIJIN_SPLIT_GROUPS.has(node)) {
               const bare = write(leg, false), named = write(leg, true);
               if (bare && named?.endsWith(bare)) text = group.replace(/、$/, '') + (named.slice(0, -bare.length).endsWith('、') ? '、' : '') + bare;
             }
@@ -1647,7 +1648,7 @@
     const conditionVariables = e => { const names = new Set(); let plain = true;
       const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }
         if (x.kind === 'VariableRead') { if (x.qualifier || !workVariables.has(x.name) || partVariables.has(x.name)) plain = false; else names.add(x.name); return; }
-        if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression', 'NotExpression'].includes(x.kind)) { plain = false; return; }
+        if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression'].includes(x.kind)) { plain = false; return; }
         for (const [k, v] of Object.entries(x)) if (k !== 'sourceSpan') visit(v); };
       visit(e); return plain ? [...names] : []; };
     for (const [flow, nodes] of [['body', ast.body], ...(ast.units || []).map((u, i) => ['unit' + i, u.body])]) {

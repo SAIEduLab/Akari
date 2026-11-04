@@ -21860,7 +21860,10 @@ function createAkariExtensionHost(options) {
   const MEIJIN_GROUP_SUBJECTS = new WeakMap();
   // ねこと犬と鳥は、順番に、…: the parts of such a sentence (they start together; 作品チェック tells the child).
   const MEIJIN_LISTED_IN_ORDER = new WeakMap();
-  const meijinGroup = (parallel, subject) => { MEIJIN_GROUP_SUBJECTS.set(parallel, subject); return parallel; };
+  // The parts written together of a sentence that goes on to a clause of another subject (meijinGroupSplit): the line is
+  // more than what they do together.
+  const MEIJIN_SPLIT_GROUPS = new WeakSet();
+  const meijinGroup = (parallel, subject, split = null) => { MEIJIN_GROUP_SUBJECTS.set(parallel, subject); if (split) MEIJIN_SPLIT_GROUPS.add(parallel); return parallel; };
   const MEIJIN_DATA_SUFFIXES = ['の数だけ', 'の値', 'の答え', 'の中身', 'の長さ', 'の文字数', 'の色', 'のどれか', 'の中で', 'の中に', 'のあまり', 'の余り'];
   const MEIJIN_DIRECTIONS = { 前: 'forward', 後ろ: 'backward', 右: 'right', 左: 'left', 上: 'up', 下: 'down' };
   // 十歩 → 10歩, 三百二十秒 → 320秒 (for the message only).
@@ -22344,13 +22347,10 @@ function createAkariExtensionHost(options) {
   // (、鳥は); that clause and what follows it are done once after them, in the order written, as when one subject is
   // written (決まり: 「〜して、」でつないだ文は書いた順). A part in a condition (、ねこが…ふれるまで待つ) is no subject: there the
   // sentence is not split. Each lane read the whole sentence; the clauses after the split are cut from the lanes.
-  function meijinGroupSplit(lanes, body, read, symbols) {
+  function meijinGroupSplit(lanes, body, readOr, symbols) {
     const names = actorNamePatterns(symbols).partNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    if (!names) return null;
     for (const m of surfaceMask(body).matchAll(new RegExp('(' + names + ')(?:は|が)', 'g'))) {
-      let after = null;
-      try { after = read(body.slice(m.index)); } catch (error) { if (!(error instanceof AkariError)) throw error; }
-      const k = after?.length || 0, named = n => STATEMENT_EXPLICIT_ACTORS.has(n) && n.actorRef?.kind === 'named' && n.actorRef.name === m[1];
+      const after = readOr(body.slice(m.index)) || [], k = after.length, named = n => STATEMENT_EXPLICIT_ACTORS.has(n) && n.actorRef?.kind === 'named' && n.actorRef.name === m[1];
       if (k && named(after[0]) && lanes.every(lane => lane.length > k && named(lane[lane.length - k])))
         return { lanes: lanes.map(lane => lane.slice(0, lane.length - k)), after };
     }
@@ -22506,8 +22506,8 @@ function createAkariExtensionHost(options) {
       const also = [];
       for (let at = 0, i; (i = mask.indexOf('も', at)) > at && isMeijinPart(code.slice(at, i), symbols, scope); at = i + 1 + (mask[i + 1] === '、' ? 1 : 0)) also.push({ name: code.slice(at, i), end: i + 1 + (mask[i + 1] === '、' ? 1 : 0) });
       if (also.length >= 2 && also.at(-1).end < code.length) {
-        const body = meijinBody(code.slice(also.at(-1).end)), whole = also.map(({ name }) => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, read, symbols), lanes = split ? split.lanes : whole;
-        return done([meijinGroup(node('Parallel', { lanes }), code.slice(0, also.at(-1).end)), ...split?.after || []]);
+        const body = meijinBody(code.slice(also.at(-1).end)), whole = also.map(({ name }) => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, text => attempt(() => read(text)), symbols), lanes = split ? split.lanes : whole;
+        return done([meijinGroup(node('Parallel', { lanes }), code.slice(0, also.at(-1).end), split), ...split?.after || []]);
       }
       const ends = [...mask.matchAll(/[はが]/g)].map(m => m.index).filter(at => at > 0 && at < mask.length - 1);
       for (const at of ends) {
@@ -22518,9 +22518,9 @@ function createAkariExtensionHost(options) {
         // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) {
-          const whole = subject.lanes.map(name => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, read, symbols), laneNodes = split ? split.lanes : whole;
+          const whole = subject.lanes.map(name => read(name + 'は' + body)), split = meijinGroupSplit(whole, body, text => attempt(() => read(text)), symbols), laneNodes = split ? split.lanes : whole;
           // ねこと犬と鳥は、順番に、…: parts written together start together; the check says 順番に does not order them.
-          const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
+          const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''), split);
           if (/^(?:順番|じゅんばん)に$/.test(order?.[1] || '')) MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
           return done([lanes, ...split?.after || []]);
         }
@@ -25609,7 +25609,8 @@ function createAkariExtensionHost(options) {
             [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
             let text = lanes ? null : write(leg, STATEMENT_EXPLICIT_ACTORS.has(goto));
             if (text && chained) text = text.replace(/行く$/, '行って');
-            if (lanes) {
+            // A line split after the parts written together (、鳥は…) is more than their sentence: no rewrite of the whole line.
+            if (lanes && !MEIJIN_SPLIT_GROUPS.has(node)) {
               const bare = write(leg, false), named = write(leg, true);
               if (bare && named?.endsWith(bare)) text = group.replace(/、$/, '') + (named.slice(0, -bare.length).endsWith('、') ? '、' : '') + bare;
             }
@@ -25829,7 +25830,7 @@ function createAkariExtensionHost(options) {
     const conditionVariables = e => { const names = new Set(); let plain = true;
       const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }
         if (x.kind === 'VariableRead') { if (x.qualifier || !workVariables.has(x.name) || partVariables.has(x.name)) plain = false; else names.add(x.name); return; }
-        if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression', 'NotExpression'].includes(x.kind)) { plain = false; return; }
+        if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression'].includes(x.kind)) { plain = false; return; }
         for (const [k, v] of Object.entries(x)) if (k !== 'sourceSpan') visit(v); };
       visit(e); return plain ? [...names] : []; };
     for (const [flow, nodes] of [['body', ast.body], ...(ast.units || []).map((u, i) => ['unit' + i, u.body])]) {
@@ -32546,29 +32547,25 @@ function createAkariExtensionHost(options) {
   // Words that ask for something to be said, asked or sent; a text not written is then a placeholder to fill in.
   const ASSIST_SAY_WORDS=/言|いう|いって|いった|いわ|話|はな[さしすせそ]|たず|尋|聞|きい|きく|質問|問|合図|あいず|送|おく[らりるれろっ]|知らせ|しらせ|メッセージ|叫|さけ|つぶや|呼|答|こた|返事|へんじ|セリフ|せりふ|ふきだし|吹き出し/;
   const ASSIST_DATA_KINDS=['Assignment','NumericUpdate','ListAppend','ListInsert','ListReplace','ListDelete','ListClear'];
-  function assistKinds(ast) {
-    const kinds=new Set(),visit=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}if(n.kind)kinds.add(n.kind);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
-    visit(ast.body);return kinds;
+  // Every node of a syntax tree, in the order written (the sentences, the sentences in them and their values).
+  function assistNodes(tree) {
+    const nodes=[],visit=n=>{if(Array.isArray(n)){n.forEach(visit);return;}if(!n||typeof n!=='object')return;if(n.kind)nodes.push(n);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan')visit(v);};
+    visit(tree);return nodes;
   }
-  function assistKindsOps(ast) {
-    const kinds=[],visit=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}if(n.kind)kinds.push(n.kind+':'+n.op);for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
-    visit(ast.body);return kinds;
-  }
+  const assistKinds=ast=>new Set(assistNodes(ast.body).map(n=>n.kind));
+  const assistKindsOps=ast=>assistNodes(ast.body).map(n=>n.kind+':'+n.op);
   function assistFamiliesWritten(ast,data,nearest,dataOnly=false) {
-    const sounds=data.names.filter(n=>n.kind==='sound').map(n=>n.name),text=data.text.replace(/「[^「」]*」|『[^『』]*』/g,'');let written=true;
-    const visit=n=>{if(!written||!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(visit);return;}
-      if(!dataOnly&&!nearest.has(n.kind)&&ASSIST_FAMILY_WORDS[n.kind]&&!ASSIST_FAMILY_WORDS[n.kind].test(text)&&!(n.kind==='SoundCommand'&&sounds.some(name=>data.text.includes(name))))written=false;
-      if(!nearest.has(n.kind)&&ASSIST_DATA_KINDS.includes(n.kind)&&n.target?.name&&!data.text.includes(n.target.name))written=false;
-      for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v);};
-    visit(ast.body);return written;
+    const sounds=data.names.filter(n=>n.kind==='sound').map(n=>n.name),text=data.text.replace(/「[^「」]*」|『[^『』]*』/g,'');
+    return assistNodes(ast.body).every(n=>nearest.has(n.kind)||
+      (dataOnly||!ASSIST_FAMILY_WORDS[n.kind]||ASSIST_FAMILY_WORDS[n.kind].test(text)||n.kind==='SoundCommand'&&sounds.some(name=>data.text.includes(name)))&&
+      !(ASSIST_DATA_KINDS.includes(n.kind)&&n.target?.name&&!data.text.includes(n.target.name)));
   }
   // The subject carried on to the end of text, as the product reads a sentence written there (自分 is {kind:'self'}); null
   // when the text there does not read.
   function assistTopicAt(text,ctx) {
-    const mark='あかりの目印';let found=null;
-    const walk=n=>{if(found||!n||typeof n!=='object')return;if(Array.isArray(n)){n.forEach(walk);return;}if(n.kind==='Say'&&n.value?.kind==='StringLiteral'&&n.value.value===mark){found=n.actorRef||{kind:'self'};return;}for(const [k,v]of Object.entries(n))if(k!=='sourceSpan'&&v&&typeof v==='object')walk(v);};
-    try{walk(parseSyntax(text+'「'+mark+'」と言う。',ctx).ast);}catch{return null;}
-    return found;
+    const mark='あかりの目印';let said;
+    try{said=assistNodes(parseSyntax(text+'「'+mark+'」と言う。',ctx).ast).find(n=>n.kind==='Say'&&n.value?.value===mark);}catch{return null;}
+    return said?said.actorRef||{kind:'self'}:null;
   }
   // A near sentence does not change the other sentences (LANGUAGE.md 読めない文の近い書き方). One that names another subject
   // (ねこは…) would carry it on to the next sentence written without one, at the same depth (ねこは…。「やあ」と言う。); that
