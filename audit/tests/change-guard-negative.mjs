@@ -11,6 +11,7 @@ import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib
 import {currentPart,partItems,changeGuardParts} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
+import {assistDifferences,mutationIssues,equivalentsFile,equivalentsSchema} from '../lib/mutation.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
 const part=currentPart('change-guard-negative'),mine=new Set(partItems('change-guard-negative',gateCaseIds['change-guard-negative'],part));
 const {results,pass}=caseRecorder();
@@ -250,22 +251,26 @@ try {
   const pinnedHead=derive({...noOpChange,...equivalents,...fewAssist([])}),pinned=await guard(pinnedHead);
   assert.deepEqual([pinned.status,pinned.mutationIssues],['PASS',[]],'recorded equivalents pass');
   assert.ok(formatGuardReport(pinned).includes('- an equivalent mutant in '+exprFile),'the recorded equivalents are listed for the owner');pass('mutants/survivor-needs-record');
-  // A survivor recorded as equivalent that an assist fixture case tells apart fails: a line at the start of the assist
-  // search that answers one input only. The constant in its answer is mutated, no node suite gives that input, and the
-  // fixture case that gives it sees the other answer.
+  // A survivor recorded as equivalent that an assist fixture case tells apart fails (audit/lib/mutation.mjs
+  // assistDifferences, mutationIssues): a line at the start of parseSyntax that answers one input only, with the index
+  // that picks its diagnostic code mutated. The fixture case that gives that input sees the other code and the cases
+  // before it see nothing; the survivor so told apart fails its record and is not listed as an equivalent. The product
+  // script is probed directly, so no guard run and no suite run is added to this part.
   {
-    const assistSource='src/js/09-editor-search.js',assistText=text(assistSource),searchStart='    if(context.meijin||basis.length>ASSIST_FULL_PARSE_CHARS)return [];\n';
-    assert.ok(assistText.includes(searchStart),'the anchor at the start of the assist search');
-    const probe='あかりの変異のためし',probeLine="    if(basis==='"+probe+"')return [{text:'ためし',n:1}];\n";
-    const probeCase={...JSON.parse(text(assistFile)).cases[0],id:'ASSIST-MUTANT-PROBE',input:{source:probe,line:1},expect:{}};
-    const probeChange={...bumped,[assistSource]:assistText.replace(searchStart,()=>probeLine+searchStart),...fewAssist([probeCase])};
-    const open=await guard(derive(probeChange)),constant=open.mutation?.survivors.find(s=>s.file===assistSource&&s.operator==='n->n+1');
-    assert.ok(constant,'the constant of the answer survives the node suites: '+JSON.stringify(open.mutation));
-    const claimed={'audit/manifests/mutation-equivalents.json':JSON.stringify({schema:'akari-mutation-equivalents-v1',equivalents:open.mutation.survivors.map(s=>({file:s.file,source:s.source,operator:s.operator,reason:'claimed equivalent for this guard case'}))},null,2)+'\n'};
-    const told=await guard(derive({...probeChange,...claimed}));
-    assert.equal(told.mutation.survivors.find(s=>s.file===assistSource&&s.operator==='n->n+1')?.toldApart,'ASSIST-MUTANT-PROBE','the probe case tells the constant apart');
-    failed('mutants/equivalent-told-apart-by-assist',told,'mutationIssues',/calls the mutant on src\/js\/09-editor-search\.js:\d+ \(n->n\+1\) equivalent, but the assist fixture case ASSIST-MUTANT-PROBE tells it apart/);
-    assert.ok(!told.mutation.equivalents.some(e=>e.operator==='n->n+1'&&e.file===assistSource),'a told-apart entry is not listed as an equivalent');
+    const html=text(product),script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
+    const parseStart='  function parseSyntax(source, context = {}) {\n',probe='あかりの変異のためし',probeLine="    if (source === '"+probe+"') return { ast: null, syntaxDiagnostics: [{ code: ['P900', 'P901'][0] }] };\n";
+    assert.equal(script.split(parseStart).length,2,'one parseSyntax in the product script');
+    const probed=script.replace(parseStart,()=>parseStart+probeLine),at=probed.indexOf("['P900', 'P901'][0]")+"['P900', 'P901'][".length;
+    assert.equal(probed[at],'0','the index the mutant changes');
+    const fixture=JSON.parse(text(assistFile)),probeCase={...fixture.cases[0],id:'ASSIST-MUTANT-PROBE',input:{source:probe,line:1},expect:{}};
+    const told=await assistDifferences(probed,[{index:0,start:at,end:at+1,replacement:'(0+1)'}],JSON.stringify({...fixture,cases:[...fixture.cases.slice(0,10),probeCase]}));
+    assert.equal(told.get(0),'ASSIST-MUTANT-PROBE','the probe case tells the index apart, and no case before it does');
+    const line=exprText.slice(0,exprText.indexOf(parseStart)).split('\n').length+1,source=probeLine.trim();
+    const {issues,used}=mutationIssues([{file:exprFile,line,operator:'n->n+1',source,toldApart:told.get(0)}],null,
+      {schema:equivalentsSchema,equivalents:[{file:exprFile,source,operator:'n->n+1',reason:'claimed equivalent for this guard case'}]});
+    assert.ok(issues.some(m=>m.startsWith(equivalentsFile+' calls the mutant on '+exprFile+':'+line+' (n->n+1) equivalent, but the assist fixture case ASSIST-MUTANT-PROBE tells it apart')),JSON.stringify(issues));
+    assert.deepEqual(used,[],'a told-apart entry is not listed as an equivalent');
+    pass('mutants/equivalent-told-apart-by-assist');
   }
   // An entry added by a change that mutates nothing matches no survivor; a later line of the same
   // text cannot lean on it.

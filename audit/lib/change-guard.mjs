@@ -92,10 +92,11 @@ export async function treeIdentity(repo,commit,workDir){
     'workflow-job':workflows.flatMap(([file,w])=>Object.keys(w.jobs).map(job=>file+'/'+job)),
     'workflow-entry':workflows.flatMap(([file,w])=>Object.entries(w.jobs).flatMap(([job,j])=>j.entries.map(entry=>file+'/'+job+'/'+entry.run))),
   };
-  // Pins: every standalone SHA-1/SHA-256 hex value in the audit tree except the release record.
+  // Pins: every standalone SHA-1/SHA-256 hex value in the audit tree except the release record and the record of audit
+  // changes, which names the pins a change changes.
   const pins=new Map();
   for(const e of entries){
-    if(releasePattern.test(e.path))continue;
+    if(releasePattern.test(e.path)||e.path===auditChangesFile)continue;
     const bytes=blobs.get(e.oid);if(bytes.includes(0))continue;
     for(const [value] of bytes.toString('utf8').matchAll(pinPattern))pins.set(value,[...new Set([...(pins.get(value)||[]),e.path])]);
   }
