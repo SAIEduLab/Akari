@@ -886,6 +886,16 @@
     const fail = message => { throw new AkariError('P205',message,ctx.lineNo||0,1); };
     // もし答えが「7」になったら: the two readings are named with the words written (final call 12), as for the one with no もし.
     if (mask.includes('になったら')) fail(becomesIfMessage(mask.endsWith('になったら') ? source.slice(0, -'になったら'.length) : null, symbols, ctx));
+    // Completion is an until condition, so subject extraction and connective
+    // sentences use the same wait rule as other conditions.
+    if (ctx.meijin && form === 'until') {
+      const completed=surfaceCapture(/^([^、]+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで$/d,source,mask);
+      if(completed){
+        const name=completed[0].text;
+        if(!isMeijinPart(name,symbols,ctx))fail(`「〜${completed[1].text}まで」の 〜には、部品の 名前を 書きます`);
+        return exprNode('PartState',{state:completed[1].text==='の音が鳴り終わる'?'soundDone':'speechDone',actorRef:{kind:'named',name:meijinBare(name)}});
+      }
+    }
     // Explicit Boolean expression: its parentheses determine scope and operator precedence.
     if (source.startsWith('条件（')) {
       const endings = form === 'if' ? ['が成り立つなら','が成り立つならば','が成り立つのであれば','が成り立たないなら','が成り立たないならば','が成り立たないのであれば'] : form === 'while' ? ['が成り立つあいだ','が成り立つ間','が成り立たないあいだ','が成り立たない間'] : form === 'until' ? ['が成り立つまで','が成り立たないまで'] : ['が成り立つ','が成り立たない'];

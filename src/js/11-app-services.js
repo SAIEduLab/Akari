@@ -173,7 +173,8 @@
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
           d.line ? d.line + '行目 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
-      const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
+      // A rewrite keeps who does the next sentence (assistProposalKeepsSubject).
+      const proposals = (error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || []).map(p => assistProposalKeepsSubject(p, error?.proposalSource, { ...appCalls.bindingContext(binding), symbols: buildSymbols(appVars.project) }, appVars.project));
       const presentation=JSON.stringify([error?.proposalSource,appVars.editorContextRevision,proposals.map(p=>p.source),reason]);
       const retain=binding.failurePresentation===presentation;
       if(!retain){appCalls.cancelAssist(binding);for(const choices of n.querySelectorAll('.intent-choices,.assist-choices,.assist-none'))choices.remove();appCalls.showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);binding.failurePresentation=presentation;}

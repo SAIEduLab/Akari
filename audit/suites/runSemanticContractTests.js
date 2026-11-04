@@ -897,11 +897,21 @@ function runSemanticContractTests() {
         // A copy is made only when a copy is written (コピー, クローン, 複製, 分身, ふやす).
         ['ねこを大きくする。','near-1',['ねこは大きさを150％にする。']],
         ['ねこのコピーを3つ作りたい。','near-1',['「ねこ」のコピーを3つ作る。']],
-        ['犬のペンを上げる。','near-0','犬はペンを上げる。'],
+        // After the nearest sentence, one of the sound, the pen, a move or a variable comes only when the writing names it.
+        ['犬のペンを上げる。','near-0',['犬はペンを上げる。']],
+        ['重なりを上げる。','near-0',null,[],['点数を1ふやす。','ペンを上げる。','音の高さを1段階上げる。']],
         ['犬のすがたを見せる。','near-0',['犬はすがたを見せる。']],
         ['右へ40歩回る。','near-0',null,[],['右に15度回る。']],
         ['右へ40度動く。','near-0',null,[],['いまのばしょから、右へ10歩動く。']],
         ['すがたを「丸」にかえた。','near-0',null,[],['点数を「丸」にする。']],
+        // A text written without 「 」 is said as it is written; a key's name, as a part's, is no text to say or send.
+        ['こんにちはと言わせる。','near-0','「こんにちは」と言う。'],
+        ['ねこをふやす。','near-1',null,[],['点数を1ふやす。','点数を1へらす。']],
+        ['ねこをかくして、「やあ」と言う。','near-1',null,[],['ねこはペンを下ろす。\n犬は「やあ」と言う。']],
+        ['すがたを「ほし」にかえた。','near-0',null,[],['画面のはしにふれていれば、はね返る。']],
+        // Where no meaning was read, nothing not written is said, asked or sent, and a sound is played only when one is written.
+        ['ねこのすがたを見せる。','near-0','すがたを見せる。',[],['「やったね」と言う。']],
+        ['ペンを下げる。','near-0','ペンを下ろす。',[],['音の高さを1段階下げる。','点数を1へらす。']],
         // まつ written in kana at the end is 待つ.
         ['2秒でまつ。','near-0','2秒待つ。',[],['「名前は？」とたずねて、答えを待つ。']],
         ['自分を右に90度回らせる。','near-1','右に90度回る。',[],[]],
@@ -1000,7 +1010,15 @@ function runSemanticContractTests() {
         [written+'\n犬は「やあ」と言う。','next-1',glide+'\n犬は「やあ」と言う。'],
         [written+'「やあ」と言う。','next-0',glide+'「やあ」と言う。'],
         [written,'next-1',glide],
+        // Before a heading the subject is written with 、, as the code writes it.
+        [written+'\n3回くり返す。\n  「やあ」と言う。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。'],
       ])eq(applied(body,owner),after);
+      // The rewrite of a check keeps it too (assistProposalKeepsSubject).
+      const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start'},body='ねこを2秒かけて右へ40歩うごかす。「やあ」と言う。',[fix]=parseSyntax(body,ctx).syntaxDiagnostics[0].proposals,kept=Akari.assistProposalKeepsSubject(fix,body,ctx,p);
+      eq(body.slice(0,kept.start)+kept.source+body.slice(kept.end),glide+'自分は「やあ」と言う。');
+      // The stage's body: the part named moves (the stage does not).
+      const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'};
+      eq(Akari.assistCandidates(p,written,stage,parseSyntax(written,stage).syntaxDiagnostics[0]).map(c=>c.text),[glide]);
     });
     // The same in the work of the assist examples (audit/fixtures/assist): ねこ (whose body it is), 犬 and 星, the
     // variable 点数, the list 持ち物, the sound ベル, the procedure ジャンプ, and with ui the parts 文字1, ボタン1 and
@@ -1035,7 +1053,7 @@ function runSemanticContractTests() {
         ['2秒待ってから、右へ10歩動かす。',false,[['いまの ばしょから動く','2秒待つ。\nいまのばしょから、右へ10歩動く。']]],
         ['ねこは10歩動いて止まる。',false,{first:['前へ進む','ねこは前へ10歩進む。\nねこはこの動きを止める。'],not:[]}],
         ['ねこを2びょうで右へ40ほ移動させる。',false,[['いまの ばしょから動く','ねこは2秒かけて、いまのばしょから、右へ40歩動く。'],['いまの ばしょから動く','2秒かけて、いまのばしょから、右へ40歩動く。']]],
-        ['「スペース」キーが押されるのを待ちます。',true,{first:['きまりに あてはまるまで待つ','「スペース」キーがおされるまで待つ。'],not:['「スペース」キーがおされるまで、くり返す。\n  前へ10歩進む。']}],
+        ['「スペース」キーが押されるのを待ちます。',true,{first:['きまりに あてはまるまで待つ','「スペース」キーがおされるまで待つ。'],not:['「スペース」キーがおされるまで、くり返す。\n  前へ10歩進む。','「スペース」とたずねて、答えを待つ。','「スペース」の合図を送って、その合図で始まったことが全部終わるまで待つ。']}],
         ['「入力らん1」を空にする。',true,[['入力らんに入れる','「入力らん1」に「」を入れる。']]],
         ['「入力らん1」に「こんにちは」をいれる。',true,[['入力らんに入れる','「入力らん1」に「こんにちは」を入れる。']]],
       ];

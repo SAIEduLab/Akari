@@ -84,7 +84,7 @@
     [/(?:となり|隣)(?:へ|に|まで)/, '「となり」では、どこへ 行くかが 決まりません。「〜のところへ行く」か、歩の 数を 書きます'],
     [/^(それ|あれ|これ)(?:は|が)/, m => `「${m[1]}」では、どの 部品かが 決まりません。部品の 名前を 書きます`],
     [/話しかける$/, '「話しかける」では、何を するかが 決まりません。「ねこは「やあ」と言う」のように 書きます'],
-    [/言い終わ/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
+    [/言い終わ(?!るまで待)/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
     [/(?:と同じように|(?<!次)のように)/, '「〜のように」では、まねる はんいが 決まりません。する ことを 一つずつ 文に 書きます'],
     [/(?:はし|端)まで(?:進む|動く|行く)$/, '速さが 決まりません。「1秒に20歩の速さで、画面のはしにふれるまで前へ動き続ける」のように 書きます'],
     // ねこは前へ10歩進んでください: the example is the child's sentence as a plain action.
@@ -531,6 +531,18 @@
     return null;
   }
 
+  // ねこと犬は1秒待って、鳥は10歩進む / ねこも犬も1秒待って、10歩進んで、鳥は…: in parts written together, a wait and then a
+  // sentence with its own subject would be done once by each part (鳥 twice, after both waits). It is stopped, as before;
+  // when the parts only wait before it, the fix waits with the parts together and does that sentence once.
+  function meijinGroupWaitThenOther(lanes, names, written, body, line, symbols) {
+    const waitsThenOther = lanes.some((lane, i) => { const at = lane.findIndex(n => EVERYONE_WAITS.has(n.kind));
+      return at >= 0 && lane.slice(at + 1).some(m => STATEMENT_EXPLICIT_ACTORS.has(m) && !(m.actorRef?.kind === 'named' && m.actorRef.name === names[i])); });
+    if (!waitsThenOther) return;
+    const own = new RegExp('、(?:' + actorNamePatterns(symbols).partNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?:は|が)').exec(surfaceMask(body)), first = own && body.slice(0, own.index);
+    throw sentenceDiagnostic('ならべた 主語の 文を「待って」で つづけて、ほかの 主語の 文を 書くと、その 文を ならべた 部品の 数だけ 行います。待つ 文を 分けて 書きます', line,
+      first && /^[^、。]*(?:待って|まって)(?:から)?$/.test(surfaceMask(first)) ? [{ label: 'いっしょに 待ってから つづける', source: written + first.replace(/(?:待って|まって)(?:から)?$/, '待つ') + '。\n' + body.slice(own.index + 1) }] : [], { kind: 'Parallel' });
+  }
+
   // One 名人 line. { nodes, index } when the line is a 名人 form, { rewrite } when it reads as another
   // sentence, null for the common grammar.
   function readMeijinLine(line, env) {
@@ -679,8 +691,11 @@
     {
       const also = [];
       for (let at = 0, i; (i = mask.indexOf('も', at)) > at && isMeijinPart(code.slice(at, i), symbols, scope); at = i + 1 + (mask[i + 1] === '、' ? 1 : 0)) also.push({ name: code.slice(at, i), end: i + 1 + (mask[i + 1] === '、' ? 1 : 0) });
-      if (also.length >= 2 && also.at(-1).end < code.length)
-        return done([meijinGroup(node('Parallel', { lanes: also.map(({ name }) => read(name + 'は' + meijinBody(code.slice(also.at(-1).end)))) }), code.slice(0, also.at(-1).end))]);
+      if (also.length >= 2 && also.at(-1).end < code.length) {
+        const body = meijinBody(code.slice(also.at(-1).end)), lanes = also.map(({ name }) => read(name + 'は' + body));
+        meijinGroupWaitThenOther(lanes, also.map(({ name }) => name), code.slice(0, also.at(-1).end), body, line, symbols);
+        return done([meijinGroup(node('Parallel', { lanes }), code.slice(0, also.at(-1).end))]);
+      }
       const ends = [...mask.matchAll(/[はが]/g)].map(m => m.index).filter(at => at > 0 && at < mask.length - 1);
       for (const at of ends) {
         const phrase = code.slice(0, at), particle = mask[at], restStart = at + 1 + (mask[at + 1] === '、' ? 1 : 0);
@@ -690,14 +705,10 @@
         // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) {
-          // ねこと犬は1秒待って、鳥は10歩進む: each part would wait and then do 鳥's sentence. The parts wait together, and the
-          // sentence with its own subject comes once after the wait.
-          const own = new RegExp('、(?:' + actorNamePatterns(symbols).partNames.map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?:は|が)').exec(surfaceMask(body));
-          if (own && /(?:待って|まって)(?:から)?$/.test(surfaceMask(body.slice(0, own.index))))
-            throw sentenceDiagnostic('ならべた 主語の 文を「待って」で つづけて、ほかの 主語の 文を 書くと、その 文を ならべた 部品の 数だけ 行います。待つ 文を 分けて 書きます', line,
-              [{ label: 'いっしょに 待ってから つづける', source: phrase + particle + body.slice(0, own.index).replace(/(?:待って|まって)(?:から)?$/, '待つ') + '。\n' + body.slice(own.index + 1) }], { kind: 'Parallel' });
+          const laneNodes = subject.lanes.map(name => read(name + 'は' + body));
+          meijinGroupWaitThenOther(laneNodes, subject.lanes, phrase + particle, body, line, symbols);
           // ねこと犬と鳥は、順番に、…: parts written together start together; the check says 順番に does not order them.
-          const lanes = meijinGroup(node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
+          const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
           if (/^(?:順番|じゅんばん)に$/.test(order?.[1] || '')) MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
           return done([lanes]);
         }
@@ -741,9 +752,6 @@
       return done([node('CloneCommand', { op: 'DELETE_ALL', args: [], actorRef: { kind: 'named', name: p[0].text } })]);
     if (/^(?:できた|作った)コピーを(?:消す|けす)$/.test(mask))
       return done([node('ParallelEach', { list: exprNode('CreatedCopies', {}), binder: MEIJIN_BINDER, body: read('このコピーだけを消す', meijinValueActor(meijinBinderRead()), each) })]);
-    // ねこが話し終わるまで待つ / ねこの音が鳴り終わるまで待つ
-    if ((p = surfaceCapture(/^(.+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで待つ$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope))
-      return done([node('WaitUntil', { condition: exprNode('PartState', { state: p[1].text !== 'の音が鳴り終わる' ? 'speechDone' : 'soundDone', actorRef: { kind: 'named', name: p[0].text } }), actorRef: { kind: 'all' } })]);
     // ねこは、持ち物を一つずつ順に2秒話す: each item in order, said one after another.
     // The one who speaks is the subject written (a part, or a variable holding one), or the subject carried on; it is
     // carried to the next sentence (one subject, 決まり4). The list may be written in 【 】.
@@ -762,13 +770,6 @@
         [{ label: '一つ消す', source: `${p[0].text}から${p[1].text}を一つ消す` }, { label: '全部消す', source: `${p[0].text}から${p[1].text}を全部消す` }], { kind: 'ListRemoveValue', missing: ['count'] });
       return done([node('ListRemoveValue', { target: { name: meijinBare(p[0].text), qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
-    // ねこは、犬が言い終わるまで待つ / ねこが言い終わるまで待ってから、… / 主役が言い終わるまで待つ: the one form that is read.
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
-      throw sentenceDiagnostic(`だれが 待つかは 書きません（本文 ぜんたいが 待ちます）。れい：${p[1].text}が言い終わるまで待つ`, line, [], { kind: 'WaitUntil' });
-    if ((p = surfaceCapture(/^(.+?)が((?:言い|話し)終わる)まで待って(?:から)?、(.+)$/d, code, mask)))
-      throw sentenceDiagnostic(`待つ 文を 分けて 書きます。れい：${p[0].text}が${p[1].text}まで待つ。${p[2].text}`, line, [], { kind: 'WaitUntil' });
-    if ((p = surfaceCapture(/^(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && !isMeijinPart(p[0].text, symbols, scope))
-      throw sentenceDiagnostic('「〜が言い終わるまで待つ」の 〜には、部品の 名前を 書きます', line, [], { kind: 'WaitUntil' });
     // 【長さ】を5として、…、ねこは【かく】という手順を行う: the subject is written first.
     if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という(?:手順|てじゅん)を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
       throw sentenceDiagnostic(`主語は 文の はじめに 書きます。れい：${p[1].text}は、${p[0].text}、${p[2].text}`, line, [], { kind: 'UserActionCall' });

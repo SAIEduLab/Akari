@@ -425,6 +425,13 @@ function runSyntaxTests() {
         eq([together?.code, together?.proposals?.map((x) => x.source)], ['P205', ['ねこと犬は1秒待つ。\nねこは10歩進む']]);
       }
       eq(meijin('ねこと犬は1秒待つ。ねこは10歩進む。'), []);
+      // Also with も, with more clauses before the sentence of another subject; a part in a condition is no subject.
+      eq(meijin('ねこも犬も1秒待って、ねこは10歩進む。')[0]?.proposals?.map((x) => x.source), ['ねこも犬も1秒待つ。\nねこは10歩進む']);
+      eq(meijin('ねこと犬は1秒待って、10歩進んで、ねこは10歩進む。').map((e) => [e.code, e.proposals?.length ?? 0]), [['P205', 0]]);
+      eq(meijin('ねこと犬は1秒待って、ねこが画面のはしにふれるまで待つ。'), []);
+      // A timed wait then timed actions: what comes after the wait is split, runs one subject after the other, and says so.
+      ok(first('ねこと犬は1秒待ってから、2秒かけて、いまのばしょから、右へ40歩動く。').message.includes('書いた じゅんに'));
+      eq(first('ねこと犬は1秒半待つ。').proposals.map((x) => x.source), ['1.5秒待つ']);
       eq(meijin('ねこと犬は1秒待ってから、10歩進む。'), []);
     });
     return {

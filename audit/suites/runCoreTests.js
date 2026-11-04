@@ -693,6 +693,11 @@ function runCoreTests() {
       ok(Math.abs(stop.vars.点数 - 50) <= 1 && stop.speech.length === 0, JSON.stringify(stop));
       eq(meijinRun('0.1秒待つ。\nねこが話し終わるまで待つ。\n犬は「おわった」と言う。', { until: 3000, extra: [{ id: 'core-cat-say', targetId: 'core-cat', event: 'start', source: '「やあ」と2秒話す。' }] }).speech,
         ['0:ねこ:やあ', '2010:犬:おわった']);
+      // The end of a speech is a condition as any other: a wait for it may be joined with 〜てから, or written with a
+      // subject, and the body waits for it as for any wait (LANGUAGE.md「待つ」).
+      const say = [{ id: 'core-cat-say', targetId: 'core-cat', event: 'start', source: '「やあ」と2秒話す。' }];
+      for (const source of ['0.1秒待つ。\nねこが話し終わるまで待ってから、犬は「おわった」と言う。', '0.1秒待つ。\n犬は、ねこが言い終わるまで待つ。\n犬は「おわった」と言う。'])
+        eq(meijinRun(source, { until: 3000, extra: say }).speech, ['0:ねこ:やあ', '2010:犬:おわった']);
     });
     test('meijin words of 国語 and 算数 for lists and numbers', () => {
       const out = meijinRun('持ち物の最後に「本」を入れる。\n持ち物から「本」を一つ消す。\n合計を、持ち物の長さにする。\n持ち物から「本」を全部消す。\n点数を4にする。\nもし点数が偶数なら、ねこは「偶」と言う。\nもし点数が2の倍数なら、ねこは「倍」と言う。\nもし持ち物が空なら、ねこは「から」と言う。\nねこは、持ち物を一つずつ順に1秒話す。', { until: 1500 });
