@@ -126,6 +126,42 @@
       "source": "if (at >= 0 && !elsewhere && here.length && here.every(k => k > at))",
       "operator": ">->>=",
       "reason": "here は、この流れの文のうち変数を変える文（target か variable を持つ文）の位置で、待つ文（WaitUntil）はそのどちらも持たないので、その位置が待つ文の位置 at と同じになることはない。このため > を >= にしても、知らせを出すかどうかは変わらない"
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "const after = readOr(body.slice(m.index)) || [], k = after.length, named = n => STATEMENT_EXPLICIT_ACTORS.has(n) && n.actorRef?.kind === 'named' && n.actorRef.name === m[1];",
+      "operator": "&&->||",
+      "reason": "after[0] is the first statement read from the written name followed by は or が, and a lane holds the statement read from the same words at that place; both name that part as their explicit actor, so a statement that names the part without being an explicit named actor never reaches named(), and (explicit and named) or (same name) gives the answer of all three."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (k && named(after[0]) && lanes.every(lane => lane.length > k && named(lane[lane.length - k])))",
+      "operator": "&&->||",
+      "reason": "after is read from the written name with は or が, so k > 0 and named(after[0]) hold exactly when the lanes have that part named at the same place (they read the same words), and every lane keeps the parts own statements before the cut, so it is always longer than k: either && turned into || splits the same lines."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (also.length >= 2 && also.at(-1).end < code.length) {",
+      "operator": "<-><=",
+      "reason": "The two conditions differ only for a line that ends with its last part written with も (ねこも犬も): there is no sentence for the parts, and read as the parts together or as another subject the line ends with the same diagnostic."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (also.length >= 2 && also.at(-1).end < code.length) {",
+      "operator": "n->n+1",
+      "reason": "also.at(-2).end < code.length differs from also.at(-1).end < code.length only for a line that ends with its last part written with も; there is no sentence for the parts, and the line ends with the same diagnostic either way."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''), split);",
+      "operator": "n->n+1",
+      "reason": "Only order[0] -> order[1] survives: the two differ only by the 、 that may follow みんな, それぞれ or 順番に, and the group subject text is used only by the I120 rewrite, which drops a trailing 、 (group.replace(/、$/, '')), so the rewrite is the same."
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])",
+      "operator": "+->-",
+      "reason": "compileProject gives each heading of a body an item of its own (script:document:...:unit:n), so a compiled item tree has no units and the flow name unit + i is never made for an item that changes a variable."
     }
   ]
 }

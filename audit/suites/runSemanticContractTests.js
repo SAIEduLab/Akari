@@ -795,7 +795,7 @@ function runSemanticContractTests() {
       p.projectData.variables.push({id:'vwait-score',name:'点数',initialValue:0});
       const notes=(source,{meijin=false,other=null}={})=>{p.scripts=[{id:'vwait-main',targetId:meijin?'meijin':'vwait-0',...meijin?{mode:'meijin'}:{},event:'start',source},...other?[{id:'vwait-other',targetId:'vwait-1',event:'start',source:other}]:[]];
         const c=compileProject(p);eq(c.errors,[]);return c.notes.filter(n=>n.code==='I139');};
-      for(const source of ['ねこは、点数が1になるまで待つ。犬は点数を1にする。','点数が1になるまで待つ。\n点数を1にする。','点数＋1が3になるまで待つ。\n点数を2にする。','ずっとくり返す。\n  点数が1になるまで待つ。\n  点数を0にする。','点数が1になるまで待つ。\n「数は？」とたずねて、答えを待つ。\n点数を答えにする。']){
+      for(const source of ['ねこは、点数が1になるまで待つ。犬は点数を1にする。','点数が1になるまで待つ。\n点数を1にする。','点数＋1が3になるまで待つ。\n点数を2にする。','ずっとくり返す。\n  点数が1になるまで待つ。\n  点数を0にする。','点数が1になるまで待つ。\n「数は？」とたずねて、答えを待つ。\n点数を答えにする。','作品の点数が1になるまで待つ。\n点数を1にする。']){
         const [note,...more]=notes(source);eq(more,[]);ok(note.message.startsWith('「点数」を かえる 文は、この 本文の この 文より あとに しか ありません。'));ok(note.message.includes('「同じ きっかけの 本文を ふやす」'));}
       ok(notes('ねこは、点数が1になるまで待つ。犬は点数を1にする。',{meijin:true})[0].message.includes('「次のことを同時に始める。」の 中に'));
       // Each heading of a 名人 body is a flow of its own.
@@ -809,8 +809,16 @@ function runSemanticContractTests() {
       // or a change in a procedure (it may be called from anywhere).
       p.components[0].localData={variables:[{id:'vwait-own',name:'体力',initialValue:5}],lists:[]};
       eq(notes('体力が1になるまで待つ。\n体力を1にする。'),[]);
+      // A condition that also reads a part's variable is no condition of work variables only.
+      eq(notes('点数＋体力が3になるまで待つ。\n点数を2にする。'),[]);
+      eq(notes('作品の点数＋体力が3になるまで待つ。\n点数を2にする。'),[]);
+      // 自分の点数 is the part's own 点数, not the work's: where the part has none, the line does not compile (S301) and no
+      // I139 stands beside the error.
+      {p.scripts=[{id:'vwait-main',targetId:'vwait-0',event:'start',source:'自分の点数が1になるまで待つ。\n点数を1にする。'}];const c=compileProject(p);
+        eq(c.errors.map(e=>e.code),['S301']);eq(c.notes.filter(n=>n.code==='I139'),[]);}
       p.components[1].localData={variables:[{id:'vwait-same',name:'点数',initialValue:0}],lists:[]};
       eq(notes('点数が1になるまで待つ。\n点数を1にする。'),[]);
+      eq(notes('作品の点数が1になるまで待つ。\n点数を1にする。'),[]);
       p.components[1].localData={variables:[],lists:[]};
       p.actions=[{id:'vwait-action',ownerId:'stage',name:'上げる',args:[],source:'点数を1にする。'}];
       eq(notes('点数が1になるまで待つ。\n【上げる】という手順を行う。'),[]);

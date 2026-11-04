@@ -723,6 +723,15 @@ function runCoreTests() {
       for (const group of ['ねこと犬は', 'ねこも犬も'])
         eq(fixes(group + '、' + place + '。'), [[group + '画面の左下のはしから、右へ320歩、上へ（たてのばしょ）歩のばしょへ行く', group + '画面の左下のはしから、右へ320歩、上へ0歩のばしょへ行く']]);
       eq(fixes('ねこと犬は、' + place.replace(/行く$/, '行って') + '、鳥は10歩進む。'), [[]]);
+      // With みんな／それぞれ／順番に the fix keeps the word for the parts together.
+      for (const order of ['みんな', 'それぞれ', '順番に'])
+        eq(fixes('ねこと犬は、' + order + '、' + place + '。'), [['ねこと犬は、' + order + '画面の左下のはしから、右へ320歩、上へ（たてのばしょ）歩のばしょへ行く', 'ねこと犬は、' + order + '画面の左下のはしから、右へ320歩、上へ0歩のばしょへ行く']]);
+      // ねこも犬も: two parts written with も are the parts together. 自分は after the parts together names no other part,
+      // so the line is not split there (and 自分 names no part of the 名人 body: S304).
+      const meijinShape = source => parseSyntax(source, { symbols: buildSymbols(meijinWork('何もしない。')), targetId: 'meijin', event: 'start', meijin: true }).ast.body.map(n => [n.kind, n.lanes?.map(l => l.map(m => m.kind + ':' + m.actorRef?.kind + ':' + (m.actorRef?.name ?? '')))]);
+      eq(meijinShape('ねこも犬も10歩進む。'), [['Parallel', [['MotionCommand:named:ねこ'], ['MotionCommand:named:犬']]]]);
+      eq(meijinShape('ねこと犬は10歩進んで、自分は10歩進む。'), [['Parallel', [['MotionCommand:named:ねこ', 'MotionCommand:self:'], ['MotionCommand:named:犬', 'MotionCommand:self:']]]]);
+      eq(compileProject(meijinWork('ねこと犬は10歩進んで、自分は10歩進む。')).errors.map(e => e.code), ['S304']);
       // A subject held in a variable, written once with 〜て, is carried on as any one subject; with another subject after
       // it, no subject is carried on.
       eq(compileProject(meijinWork('主役をねこにする。\n主役は10歩進んで、「やあ」と言う。\n20歩進む。')).errors, []);

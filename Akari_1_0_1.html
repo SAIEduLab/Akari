@@ -25826,10 +25826,11 @@ function createAkariExtensionHost(options) {
         for (const m of flowStatements(nodes)) if (changed(m)) changers.push([other.definitionKind ? null : other.key, flow, changed(m)]); }
     const workVariables = new Set((project.projectData?.variables || []).map(v => v.name)), partVariables = new Set(project.components.flatMap(c => (c.localData?.variables || []).map(v => v.name)));
     // The variables a wait's condition reads, when it reads only variables of the work, numbers, texts and calculations
-    // (nothing that changes by itself: timer, answer, keys, mouse, touching, a part's place).
+    // (nothing that changes by itself: timer, answer, keys, mouse, touching, a part's place). 作品の点数 is the work's
+    // variable as 点数 is; a name a part's variable shares is left out, written either way.
     const conditionVariables = e => { const names = new Set(); let plain = true;
       const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }
-        if (x.kind === 'VariableRead') { if (x.qualifier || !workVariables.has(x.name) || partVariables.has(x.name)) plain = false; else names.add(x.name); return; }
+        if (x.kind === 'VariableRead') { if ((x.qualifier && x.qualifier !== 'project') || !workVariables.has(x.name) || partVariables.has(x.name)) plain = false; else names.add(x.name); return; }
         if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression'].includes(x.kind)) { plain = false; return; }
         for (const [k, v] of Object.entries(x)) if (k !== 'sourceSpan') visit(v); };
       visit(e); return plain ? [...names] : []; };
