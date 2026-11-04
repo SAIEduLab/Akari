@@ -7730,7 +7730,7 @@ function createAkariExtensionHost(options) {
       languageContractId: 5,
       runtimeContractId: 5,
       programFormatVersion: 4,
-      projectFormatVersion: 5,
+      projectFormatVersion: 6,
     });
     const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
       executableBytes: 64 * 1024 * 1024, logChars: 100000,
@@ -32363,6 +32363,8 @@ function createAkariExtensionHost(options) {
   const ASSIST_VERB_STEMS=/動(?!き[をがはのに])|進|移動|走|待|回|言|話/g;
   // Names read longest first, so that a name inside another (ねこ in 子ねこ, in 回るねこ) is not read in it.
   const assistLongestFirst=(a,b)=>b.length-a.length;
+  // Verbs that move or turn the part written with を (ねこを回す, 進める, 移す, 向ける): that part does it, as with させる.
+  const ASSIST_MOVED_PART=/(?:回|まわ)(?:す|して)|(?:進|すす)(?:める|めて)|(?:移|うつ)(?:す|して)|(?:向|む)(?:ける|けて)/;
   function assistMeaningFrames(data,project,ctx,source) {
     const owner=project.components.find(c=>c.id===ctx.targetId)?.name||null,parts=project.components.map(c=>c.name).sort(assistLongestFirst);
     const text=data.text;if(data.subjects||/もし|なら|たら|れば|とき|時(?=[、。]|$)|場合|ばあい|だと|あいだ|まで|ずっと|続け|つづけ|くり返|繰り返|くりかえ|ごとに|たびに|おきに|毎秒|\d+回|何回|次の回|この回|ずつ|一つずつ|ひとつずつ|順に|順番|じゅんに|じゅんばん|同時|速さ|はやさ|スピード|手順|てじゅん|という|合図|メッセージ|知らせ|として|ながら|うちに|答え|こたえ|返事/.test(text.replace(/「[^「」]*」|『[^『』]*』/g,''))||data.names.some(n=>['action','function'].includes(n.kind)))return null;
@@ -32382,7 +32384,7 @@ function createAkariExtensionHost(options) {
       if((masked.match(ASSIST_VERB_STEMS)||[]).length>1)return null;
       if(!ending&&index<data.clauses.length-1&&(/(?:かけて|かけ|から|まで|歩|秒|度|％|\d)$/.test(end)||/[^ぁ-ん](?:で|に|へ|を|と|は|が|も)$/.test(end)||!/[ぁ-ん]$/.test(end))){pending=raw+'、';continue;}
       pending='';
-      const named=new RegExp('^(?:「)?('+[names,'自分'].filter(Boolean).join('|')+')(?:」)?(?:は|が|も)、?').exec(outside)||(names?new RegExp('('+names+')(?:を|に)(?=.*(?:させ|せる|せて|かす|かして|かせ))').exec(outside):null);
+      const named=new RegExp('^(?:「)?('+[names,'自分'].filter(Boolean).join('|')+')(?:」)?(?:は|が|も)、?').exec(outside)||(names?new RegExp('('+names+')(?:を|に)(?=.*(?:させ|せる|せて|かす|かして|かせ))').exec(outside)||new RegExp('('+names+')を(?=.*(?:'+ASSIST_MOVED_PART.source+'))').exec(outside):null);
       if(named){subject=named[1]==='自分'?owner:named[1];written=true;}
       const read=raw.replace(/「([^「」]*)」|『([^『』]*)』/g,(quote,a,b)=>words.includes(a??b)?quote:'「□」');
       // A say, a copy or a wait is what its end says; any other action is the work's reading of the words (最前面へ移動する

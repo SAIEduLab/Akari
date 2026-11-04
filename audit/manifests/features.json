@@ -496,7 +496,7 @@
     "languageContractId": 5,
     "runtimeContractId": 5,
     "programFormatVersion": 4,
-    "projectFormatVersion": 5
+    "projectFormatVersion": 6
   },
   "schemaIds": [
     "Script",

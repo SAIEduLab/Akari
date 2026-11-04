@@ -844,7 +844,7 @@ function runSemanticContractTests() {
     // LANGUAGE.md 保存・実行データの契約と検証: the contract numbers; an extension host built without a Standard
     // (extensions/build.mjs) takes these, and one given a Standard keeps it.
     test('contract numbers and the extension Standard',()=>{
-      eq(Akari.EXECUTABLE_CONTRACT,{languageContractId:5,runtimeContractId:5,programFormatVersion:4,projectFormatVersion:5});
+      eq(Akari.EXECUTABLE_CONTRACT,{languageContractId:5,runtimeContractId:5,programFormatVersion:4,projectFormatVersion:6});
       eq(Akari.createAkariExtensionHost({}).standard,{languageContractId:5,runtimeContractId:5});
       eq(Akari.createAkariExtensionHost({standard:{languageContractId:7,runtimeContractId:8}}).standard,{languageContractId:7,runtimeContractId:8});
     });
@@ -877,6 +877,14 @@ function runSemanticContractTests() {
         ['ねこを3秒で前へ10歩進ませる。','near-1','ねこは3秒かけて、前へ10歩進む。',[],['前へ10歩進む。']],
         ['ねこを10歩進ませる。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
         ['ねこを右に90度回らせる。','near-1','ねこは右に90度回る。',[],['右に90度回る。']],
+        // A part written with を before a verb that moves or turns it (回す, 進める, 移す, 向ける) is the part that does it, as
+        // with させる: in 犬's body, ねこを右へ90度回す turns ねこ, and neither 犬's turn nor a copy of ねこ is near.
+        ['ねこを右へ90度回す。','near-1','ねこは右に90度回る。',[],['右に90度回る。']],
+        ['ねこを右へ90度回す。','near-0','ねこは右に90度回る。',['右に90度回る。'],[]],
+        ['ねこを2秒で右へ40度回す。','near-1','ねこは2秒かけて、右に40度回る。',[],['2秒かけて、右に40度回る。','右に40度回る。']],
+        ['ねこを前へ10歩進める。','near-1','ねこは前へ10歩進む。',[],['前へ10歩進む。']],
+        ['ねこを右へ10歩移す。','near-1','ねこは、いまのばしょから、右へ10歩動く。',[],['いまのばしょから、右へ10歩動く。','「ねこ」のコピーを作る。']],
+        ['ねこを右に向ける。','near-1',null,[],['「ねこ」の方を向く。']],
         ['自分を右に90度回らせる。','near-1','右に90度回る。',[],[]],
         ['ねこ、前へ10歩進む。','near-0','ねこは前へ10歩進む。',['前へ10歩進む。'],[]],
         ['ねこは「やあ」と言わせる。','near-1','ねこは「やあ」と言う。',[],['「やあ」と言う。']],

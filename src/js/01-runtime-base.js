@@ -75,7 +75,7 @@
       languageContractId: 5,
       runtimeContractId: 5,
       programFormatVersion: 4,
-      projectFormatVersion: 5,
+      projectFormatVersion: 6,
     });
     const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
       executableBytes: 64 * 1024 * 1024, logChars: 100000,

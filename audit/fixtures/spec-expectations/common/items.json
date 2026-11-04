@@ -730,7 +730,7 @@
     {
       "id": "CI-075",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "作品形式4以前（formatVersion 4、3 など）の作品とその実行データは開けず、断る（変換しない）",
+      "summary": "作品形式5以前（formatVersion 5、4、3 など）の作品とその実行データは開けず、断る（変換しない）",
       "polarity": "negative",
       "coverage": "cases",
       "cases": [
@@ -742,7 +742,7 @@
     {
       "id": "CI-076",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "作品形式5・言語契約5の作品は開ける",
+      "summary": "作品形式6・言語契約5の作品は開ける",
       "polarity": "positive",
       "coverage": "cases",
       "cases": [
@@ -752,7 +752,7 @@
     {
       "id": "CI-077",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "より新しい作品形式（6）の作品も、番号が大きいことを理由に受け入れず、断る",
+      "summary": "より新しい作品形式（7）の作品も、番号が大きいことを理由に受け入れず、断る",
       "polarity": "negative",
       "coverage": "cases",
       "cases": [
@@ -762,7 +762,7 @@
     {
       "id": "CI-078",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "言語契約の番号が5でない作品（前のあかりで保存した言語契約4の作品、より大きい6など）は、作品形式が5でも開けず、断る",
+      "summary": "言語契約の番号が5でない作品（前のあかりで保存した言語契約4の作品、より大きい6など）は、作品形式が6でも開けず、断る",
       "polarity": "negative",
       "coverage": "cases",
       "cases": [
@@ -773,10 +773,10 @@
     {
       "id": "CI-079",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "復元データの印が別の作品形式（前のあかりのF4など）を示すファイルはF502で断り、「この ファイルは 開けなかったよ」の画面に「前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。」と示して、いまの作品を保持する",
+      "summary": "復元データの印が別の作品形式（前のあかりのF5など）を示すファイルはF502で断り、「この ファイルは 開けなかったよ」の画面に「前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。」と示して、いまの作品を保持する",
       "polarity": "negative",
       "coverage": "ui-only",
-      "reason": "復元データの印（<!-- AKARI-PROJECT-F4-DATA-BEGIN -->）を持つファイルを「開く」で選ぶ画面の操作でだけ、示す文・フォーカス・いまの作品が変わらないことを確かめられる（file の open-declared は形式の番号を名乗らせるだけで、印を書き換えたファイルを作れない）",
+      "reason": "復元データの印（<!-- AKARI-PROJECT-F5-DATA-BEGIN -->）を持つファイルを「開く」で選ぶ画面の操作でだけ、示す文・フォーカス・いまの作品が変わらないことを確かめられる（file の open-declared は形式の番号を名乗らせるだけで、印を書き換えたファイルを作れない）",
       "cases": [
         "CC-297"
       ]
@@ -784,7 +784,7 @@
     {
       "id": "CI-080",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "自動保存は akari-workspace-f5・akari.autosave.f5 を使い、ほかの番号の保存先（前のあかりが自動保存した akari-workspace-f4 など）は読まず、消しもしない",
+      "summary": "自動保存は akari-workspace-f6・akari.autosave.f6 を使い、ほかの番号の保存先（前のあかりが自動保存した akari-workspace-f5 など）は読まず、消しもしない",
       "polarity": "positive",
       "coverage": "unexpressible",
       "reason": "ブラウザーの保存領域（IndexedDB・localStorage）の中の名前と、ほかの番号の自動保存が復元の対象にならず消えないことの観察が要る。画面の操作だけでは保存領域の中身を確かめられず、この形式の check・run・file・ui でも表せない",
@@ -793,7 +793,7 @@
     {
       "id": "CI-081",
       "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
-      "summary": "保存データは formatVersion 5・languageContractId 4、実行データは projectFormatVersion 5・programFormatVersion 4・languageContractId 4・runtimeContractId 4 を持ち、作品ファイルの復元データは F5 の印（AKARI-PROJECT-F5-DATA-BEGIN・END）で囲まれる。部品の x・y は画面の左下のはしから部品のまん中までの歩数、direction は右を0度とする左回りの0以上360未満の数で保存する",
+      "summary": "保存データは formatVersion 6・languageContractId 5、実行データは projectFormatVersion 6・programFormatVersion 4・languageContractId 5・runtimeContractId 5 を持ち、作品ファイルの復元データは F6 の印（AKARI-PROJECT-F6-DATA-BEGIN・END）で囲まれる。部品の x・y は画面の左下のはしから部品のまん中までの歩数、direction は右を0度とする左回りの0以上360未満の数で保存する",
       "polarity": "positive",
       "coverage": "unexpressible",
       "reason": "書き出した保存ファイル・実行データの中の欄の値を読む観察が要る。file の save-reopen は scripts の欄と本文しか確かめられず、形式・契約の番号、復元データの印、部品の x・y・direction を形式に表す場所がない",

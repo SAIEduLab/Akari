@@ -7348,12 +7348,12 @@
       "id": "CC-156",
       "item": "CI-075",
       "kind": "file",
-      "title": "作品形式4（formatVersion: 4）を名乗る作品は開けず、断る",
+      "title": "作品形式5（formatVersion: 5。前のあかりで保存した作品）を名乗る作品は開けず、断る",
       "polarity": "negative",
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "作品形式4以前の作品（これより前のあかりで保存した作品）と、その実行データは読み込めません。変換の仕組みや、移行のための情報は持ちません。"
+          "quote": "作品形式5以前の作品（これより前のあかりで保存した作品）と、その実行データは読み込めません。変換の仕組みや、移行のための情報は持ちません。"
         },
         {
           "file": "LANGUAGE.md",
@@ -7362,7 +7362,7 @@
       ],
       "action": "open-declared",
       "declare": {
-        "formatVersion": 4
+        "formatVersion": 5
       },
       "expect": {
         "refused": true
@@ -7372,21 +7372,21 @@
       "id": "CC-157",
       "item": "CI-075",
       "kind": "file",
-      "title": "作品形式4（projectFormatVersion: 4）を名乗る実行データも読み込めず、断る",
+      "title": "作品形式5（projectFormatVersion: 5）を名乗る実行データも読み込めず、断る",
       "polarity": "negative",
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "作品形式4以前の作品（これより前のあかりで保存した作品）と、その実行データは読み込めません。変換の仕組みや、移行のための情報は持ちません。"
+          "quote": "作品形式5以前の作品（これより前のあかりで保存した作品）と、その実行データは読み込めません。変換の仕組みや、移行のための情報は持ちません。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "実行データは`schema: \"akari-executable\"`、`projectFormatVersion: 5`、`programFormatVersion: 4`、`languageContractId: 5`、`runtimeContractId: 5`を持ちます。"
+          "quote": "実行データは`schema: \"akari-executable\"`、`projectFormatVersion: 6`、`programFormatVersion: 4`、`languageContractId: 5`、`runtimeContractId: 5`を持ちます。"
         }
       ],
       "action": "open-declared",
       "declare": {
-        "projectFormatVersion": 4
+        "projectFormatVersion": 5
       },
       "expect": {
         "refused": true
@@ -7396,12 +7396,12 @@
       "id": "CC-158",
       "item": "CI-075",
       "kind": "file",
-      "title": "作品形式3（formatVersion: 3）のように4より前の作品も開けず、断る",
+      "title": "作品形式3（formatVersion: 3）のように5より前の作品も開けず、断る",
       "polarity": "negative",
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "作品形式4以前の作品（これより前のあかりで保存した作品）と、その実行データは読み込めません。変換の仕組みや、移行のための情報は持ちません。"
+          "quote": "作品形式5以前の作品（これより前のあかりで保存した作品）と、その実行データは読み込めません。変換の仕組みや、移行のための情報は持ちません。"
         },
         {
           "file": "LANGUAGE.md",
@@ -7420,21 +7420,21 @@
       "id": "CC-159",
       "item": "CI-076",
       "kind": "file",
-      "title": "作品形式5・言語契約5（現在の番号）を名乗る作品は開ける",
+      "title": "作品形式6・言語契約5（現在の番号）を名乗る作品は開ける",
       "polarity": "positive",
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "保存データは`schema: \"akari-project\"`、`formatVersion: 5`、`languageContractId: 5`を持ちます。"
+          "quote": "保存データは`schema: \"akari-project\"`、`formatVersion: 6`、`languageContractId: 5`を持ちます。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "言語契約とruntime契約はそれぞれ5、プログラム形式は4、作品形式は5です。"
+          "quote": "言語契約とruntime契約はそれぞれ5、プログラム形式は4、作品形式は6です。"
         }
       ],
       "action": "open-declared",
       "declare": {
-        "formatVersion": 5,
+        "formatVersion": 6,
         "languageContractId": 5
       },
       "expect": {
@@ -7445,7 +7445,7 @@
       "id": "CC-160",
       "item": "CI-077",
       "kind": "file",
-      "title": "より新しい作品形式6（formatVersion: 6）を名乗る作品は開けず、断る",
+      "title": "より新しい作品形式7（formatVersion: 7）を名乗る作品は開けず、断る",
       "polarity": "negative",
       "basis": [
         {
@@ -7459,7 +7459,7 @@
       ],
       "action": "open-declared",
       "declare": {
-        "formatVersion": 6
+        "formatVersion": 7
       },
       "expect": {
         "refused": true
@@ -7469,12 +7469,12 @@
       "id": "CC-161",
       "item": "CI-078",
       "kind": "file",
-      "title": "作品形式が5でも、言語契約が4（languageContractId: 4。前のあかりで保存した作品）の作品は開けず、断る",
+      "title": "作品形式が6でも、言語契約が4（languageContractId: 4）の作品は開けず、断る",
       "polarity": "negative",
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "保存データは`schema: \"akari-project\"`、`formatVersion: 5`、`languageContractId: 5`を持ちます。"
+          "quote": "保存データは`schema: \"akari-project\"`、`formatVersion: 6`、`languageContractId: 5`を持ちます。"
         },
         {
           "file": "LANGUAGE.md",
@@ -7486,12 +7486,16 @@
         },
         {
           "file": "LANGUAGE.md",
+          "quote": "作品形式の6は、言語契約4の作品を開かないので、作品ファイルの印と自動保存の保存先を前のあかり（作品形式5）と分けるための番号です。"
+        },
+        {
+          "file": "LANGUAGE.md",
           "quote": "対応しない形式・契約・所属先、欠落項目、異なる型、余分な項目も拒否し、現在の作品を保持します。"
         }
       ],
       "action": "open-declared",
       "declare": {
-        "formatVersion": 5,
+        "formatVersion": 6,
         "languageContractId": 4
       },
       "expect": {
@@ -7502,12 +7506,12 @@
       "id": "CC-162",
       "item": "CI-078",
       "kind": "file",
-      "title": "作品形式が5でも、言語契約がより大きい6（languageContractId: 6）の作品は、大きいことを理由に受け入れず、断る",
+      "title": "作品形式が6でも、言語契約がより大きい6（languageContractId: 6）の作品は、大きいことを理由に受け入れず、断る",
       "polarity": "negative",
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "保存データは`schema: \"akari-project\"`、`formatVersion: 5`、`languageContractId: 5`を持ちます。"
+          "quote": "保存データは`schema: \"akari-project\"`、`formatVersion: 6`、`languageContractId: 5`を持ちます。"
         },
         {
           "file": "LANGUAGE.md",
@@ -7516,7 +7520,7 @@
       ],
       "action": "open-declared",
       "declare": {
-        "formatVersion": 5,
+        "formatVersion": 6,
         "languageContractId": 6
       },
       "expect": {
@@ -13609,7 +13613,7 @@
       "id": "CC-297",
       "item": "CI-079",
       "kind": "ui",
-      "title": "作品形式4の印（AKARI-PROJECT-F4-DATA）で囲んだ作品ファイルを「開く」と、F502の文を「この ファイルは 開けなかったよ」の画面に出し、いまの作品をそのまま残す",
+      "title": "前のあかりの作品形式5の印（AKARI-PROJECT-F5-DATA）で囲んだ作品ファイルを「開く」と、F502の文を「この ファイルは 開けなかったよ」の画面に出し、いまの作品をそのまま残す",
       "polarity": "negative",
       "basis": [
         {
@@ -13626,7 +13630,7 @@
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "作品ファイルは復元データを`<!-- AKARI-PROJECT-F5-DATA-BEGIN -->`と`<!-- AKARI-PROJECT-F5-DATA-END -->`で囲みます。"
+          "quote": "作品ファイルは復元データを`<!-- AKARI-PROJECT-F6-DATA-BEGIN -->`と`<!-- AKARI-PROJECT-F6-DATA-END -->`で囲みます。"
         },
         {
           "file": "LANGUAGE.md",
@@ -13634,7 +13638,7 @@
         }
       ],
       "steps": [
-        "作品ファイル（名前が「.akari.md」で おわる ファイル）を一つ用意し、その復元データを囲む印「<!-- AKARI-PROJECT-F5-DATA-BEGIN -->」「<!-- AKARI-PROJECT-F5-DATA-END -->」を「<!-- AKARI-PROJECT-F4-DATA-BEGIN -->」「<!-- AKARI-PROJECT-F4-DATA-END -->」に書きかえたファイルを用意する",
+        "作品ファイル（名前が「.akari.md」で おわる ファイル）を一つ用意し、その復元データを囲む印「<!-- AKARI-PROJECT-F6-DATA-BEGIN -->」「<!-- AKARI-PROJECT-F6-DATA-END -->」を「<!-- AKARI-PROJECT-F5-DATA-BEGIN -->」「<!-- AKARI-PROJECT-F5-DATA-END -->」に書きかえたファイルを用意する",
         "ブロックで「はじめて」のまま、作品を作り直さずに、上部の「作品」から「開く」を押し、そのファイルを選ぶ",
         "出てきた画面を見てから「とじる」を押す"
       ],
