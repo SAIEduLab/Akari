@@ -32578,13 +32578,16 @@ function createAkariExtensionHost(options) {
     while(basis[at]==='\n'){const lineEnd=basis.indexOf('\n',at+1),line=basis.slice(at+1,lineEnd<0?basis.length:lineEnd);
       if(line.trim()&&!line.trim().startsWith('※')){if(line.match(/^\s*/)[0].length!==indent)return null;at=at+1+indent;break;}at=lineEnd<0?basis.length:lineEnd;}
     if(at>=basis.length||basis[at]==='\n')return null;
+    // A heading (「スペース」キーがおされたとき、) begins a body of its own, which carries on no subject.
+    const next=basis.slice(at).split('\n')[0].trim();
+    try{if(readSentenceHeading(next.replace(/。$/,''),ctx.symbols,null,ctx))return null;}catch{}
     const names=[...project.components.map(c=>c.name),'自分','みんな','全体'].sort(assistLongestFirst).map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
     if(new RegExp('^「?(?:'+names+')」?(?:は|が|も|だけ|、)').test(basis.slice(at)))return null;
     if(!('before' in topic))topic.before=assistTopicAt(basis.slice(0,start),ctx);
     const after=assistTopicAt(basis.slice(0,start)+written+(basis[end]==='。'?'。':''),ctx),who=r=>r?.kind==='named'?r.name:r?.kind==='self'?owner:null;
     if(!topic.before||!after||who(topic.before)===who(after))return null;
     // A heading (もし…、 3回くり返す。) takes its subject with 、 (自分は、3回くり返す。), as the code is written.
-    const line=basis.slice(at,(basis.indexOf('\n',at)+1||basis.length+1)-1).trim(),subject=sentenceActorSource(who(topic.before)===owner?{kind:'self'}:topic.before)+(/^もし|、$|(?:くり返す|繰り返す|くりかえす)。?$/.test(line)?'は、':'は');
+    const subject=sentenceActorSource(who(topic.before)===owner?{kind:'self'}:topic.before)+(/^もし|、$|(?:くり返す|繰り返す|くりかえす)。?$/.test(next)?'は、':'は');
     return {at,between:basis.slice(end,at)+subject,note:`つぎの 文の はじめに「${subject}」を 書きます（つぎの 文を する 部品は 同じです）`};
   }
   // A proposal of a check (the rewrite buttons under a sentence that does not read) keeps who does the next sentence, as

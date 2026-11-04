@@ -162,6 +162,72 @@
       "source": "for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])",
       "operator": "+->-",
       "reason": "compileProject gives each heading of a body an item of its own (script:document:...:unit:n), so a compiled item tree has no units and the flow name unit + i is never made for an item that changes a variable."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "while(basis[at]==='\\n'){const lineEnd=basis.indexOf('\\n',at+1),line=basis.slice(at+1,lineEnd<0?basis.length:lineEnd);",
+      "operator": "<-><=",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0, lineEnd<=0 and lineEnd<1 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "while(basis[at]==='\\n'){const lineEnd=basis.indexOf('\\n',at+1),line=basis.slice(at+1,lineEnd<0?basis.length:lineEnd);",
+      "operator": "n->n+1",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0 and lineEnd<1 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(line.trim()&&!line.trim().startsWith('※')){if(line.match(/^\\s*/)[0].length!==indent)return null;at=at+1+indent;break;}at=lineEnd<0?basis.length:lineEnd;}",
+      "operator": "<-><=",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0 and lineEnd<=0 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(line.trim()&&!line.trim().startsWith('※')){if(line.match(/^\\s*/)[0].length!==indent)return null;at=at+1+indent;break;}at=lineEnd<0?basis.length:lineEnd;}",
+      "operator": "n->n+1",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0 and lineEnd<1 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const indent=basis.slice(basis.lastIndexOf('\\n',proposal.start-1)+1).match(/^[ \\t]*/)[0].length,kept=assistNextSubject(basis,proposal.start,proposal.end,proposal.source,indent,ctx,project,{});",
+      "operator": "-->+",
+      "reason": "A proposal's sentence starts at proposal.start and is at least two characters long, so no line break stands at proposal.start or proposal.start+1: lastIndexOf from start-1 and from start+1 finds the same line break."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const kept=assistNextSubject(basis,start,p.end??range.end,written,range.indent,ctx,project,topic),end=kept?kept.at:p.end??range.end,source=kept?written+kept.between:written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;",
+      "operator": "false->true",
+      "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, so the try always assigns valid and its first value is never read."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": ".filter(c=>{if(seenText.has(c.text))return false;seenText.add(c.text);try{return c.text.split('\\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});",
+      "operator": "false->true",
+      "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, and a candidate text always has split; the catch is never reached."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(!shown.length&&ctx.targetId==='stage'&&want?.length&&want.every(w=>w.subject&&w.subject===want[0].subject)){",
+      "operator": "&&->||",
+      "reason": "With no subject written, the stage fallback looks for a part named null and finds none; with subjects that differ, the candidates made in the first part's body keep the other part's subject on its line, and the filter that keeps lines starting with the first part's name drops them: both give no candidate, as the original does."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const frame={action,stated:!!ending,subject,written,directions:['move','turn',null].includes(action)?intent?.directions||(intent?.direction?[intent.direction]:way?[ASSIST_DIRECTIONS[way[1]]]:[]):[],quantities:[],strings:quotes.filter(q=>!(q.toward&&parts.includes(q.value))).map(q=>q.value),names:quotes.map(q=>q.value).filter(v=>words.includes(v)||data.keys.includes(keyWord(v))),raw,copy:/(?:コピー|こぴー|クローン|くろーん|複製|ふくせい|分身|ぶんしん|ふや|増や)/.test(masked),quoted:/[「」『』（）()【】［］〈〉《》｢｣\"]/.test(raw),objects:[],tell:action==='say'&&!!names&&new RegExp('(?:'+names+'|「(?:'+names+')」)に').test(raw.replace(/「([^「」]*)」(?!に)/g,quote=>'§'.repeat(quote.length)))},before=[];",
+      "operator": "&&->||",
+      "reason": "tell only lets a Broadcast candidate count as the written action (line 514: w.tell && other:Broadcast); for a sentence that does not say, a Broadcast candidate never matches its written action anyway. The assist examples (1231 cases) and twelve sentences written with 名前に and another action see no difference."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(named&&named===made)[subject,written]=[carried[0]??owner,carried[1]];",
+      "operator": "n->n+1",
+      "reason": "Only carried[1] -> carried[2] survives: after a clause that makes another part act, written is used only when the next clause takes the carried subject without writing one, and then its candidate is checked against the subject itself. The assist examples (1231 cases) and eight sentences that write a subject before such a clause see no difference."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": ".map(c=>c.text.includes('\\n')||c.text.startsWith(named)?c:{...c,text:named+c.text,source:named+c.source,label:c.label===c.text?named+c.text:c.label})",
+      "operator": "+->-",
+      "reason": "Only the label one survives (named+c.text when the label is the text): a one-line near sentence takes its block's label (BLOCK_SCHEMA_BY_ID), so in the stage's fallback its label is never its text. The assist examples (1231 cases) and the stage sentences built from the three part-body candidates whose label is their text see no difference."
     }
   ]
 }
