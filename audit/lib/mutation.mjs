@@ -125,8 +125,7 @@ export const partJobs = (jobs, index, count) => jobs.filter(job => job.index % c
 const bySurvivor = (a, b) => (a.file + a.line + a.operator).localeCompare(b.file + b.line + b.operator);
 export const sortSurvivors = survivors => [...survivors].sort(bySurvivor);
 
-// Runs the given mutants of the script and returns their survivors: [{file, line, operator, source}], with source the
-// line's own text.
+// Runs the given mutants of the script and returns the indices of those that survive, in order.
 export async function runMutants(script, jobs, parallel = Math.max(1, os.cpus().length - 1)) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'akari-mutants-')), survivors = [];
   try {
@@ -144,13 +143,13 @@ export async function runMutants(script, jobs, parallel = Math.max(1, os.cpus().
         fs.writeFileSync(file, script.slice(0, job.start) + job.replacement + script.slice(job.end));
         let result;
         try { result = await outcome(file, job.suites, record); } catch (error) { failed = true; throw error; }
-        if (result === 'survived') survivors.push({file: job.file, line: job.line, operator: job.operator, source: job.source});
+        if (result === 'survived') survivors.push(job.index);
         fs.rmSync(file, {force: true});
       }
     };
     await Promise.all(Array.from({length: Math.min(parallel, jobs.length)}, worker));
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
-  return sortSurvivors(survivors);
+  return survivors.sort((a, b) => a - b);
 }
 
 // The record of equivalent mutants: {schema, equivalents: [{file, source, operator, reason}]}. Each survivor of this

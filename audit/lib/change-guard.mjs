@@ -172,11 +172,13 @@ async function changedLineMutants(repo,mergeBase,headCommit,limitMs){
   if(!planCache.has(planKey))planCache.set(planKey,{key:planKey,lines,...mutantPlan({script:coverage.script,shift:coverage.shift,lineOffsets:coverage.lineOffsets,lines,suitesFor})});
   return planCache.get(planKey);
 }
-// The survivors of the given mutants of a plan, run once per plan and set of mutants.
+// The survivors of the given mutants of a plan. A mutant of a plan runs once per process: a share of a plan already run
+// whole (the synthetic cases guard a head whole and in parts) runs nothing again.
 async function planSurvivors(plan,jobs){
-  const runKey=plan.key+'\u0000'+jobs.map(job=>job.index).join(',');
-  if(!mutationCache.has(runKey))mutationCache.set(runKey,await runMutants(plan.script,jobs));
-  return mutationCache.get(runKey);
+  if(!mutationCache.has(plan.key))mutationCache.set(plan.key,new Map());
+  const survived=mutationCache.get(plan.key),missing=jobs.filter(job=>!survived.has(job.index));
+  if(missing.length){const ids=new Set(await runMutants(plan.script,missing));for(const job of missing)survived.set(job.index,ids.has(job.index));}
+  return sortSurvivors(jobs.filter(job=>survived.get(job.index)).map(({file,line,operator,source})=>({file,line,operator,source})));
 }
 
 // The verdict from a report whose checks are complete: PASS when nothing fails and every removal, recorded behaviour
