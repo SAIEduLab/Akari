@@ -699,6 +699,18 @@ function runCoreTests() {
       for (const source of ['0.1秒待つ。\nねこが話し終わるまで待ってから、犬は「おわった」と言う。', '0.1秒待つ。\n犬は、ねこが言い終わるまで待つ。\n犬は「おわった」と言う。'])
         eq(meijinRun(source, { until: 3000, extra: say }).speech, ['0:ねこ:やあ', '2010:犬:おわった']);
     });
+    test('meijin parts written together, then a clause of another subject: that clause is done once, after them', () => {
+      // ねこと犬は…して、鳥は…: the parts together do what comes before 、鳥は; 鳥's clause, and what follows it, is done
+      // once after them, in the order written (LANGUAGE.md 決まり「〜して、」でつないだ文は書いた順). The next sentence
+      // takes no subject from it.
+      for (const source of ['ねこと犬は10歩進んで、鳥は10歩進む。', 'ねこも犬も10歩進んで、鳥は10歩進む。', 'ねこと犬は10歩進んで、鳥が10歩進む。'])
+        eq(meijinRun(source, { until: 100, samples: [100] }).x[100], [10, 210, 410]);
+      eq(meijinRun('ねこと犬は10歩進んで、鳥は10歩進んで、20歩進む。', { until: 100, samples: [100] }).x[100], [10, 210, 430]);
+      for (const source of ['ねこと犬は1秒待って、鳥は10歩進む。', 'ねこと犬は1秒待ってから鳥は10歩進む。'])
+        eq(meijinRun(source, { until: 1500, samples: [500, 1500] }).x, { 500: [0, 200, 400], 1500: [0, 200, 410] });
+      eq(meijinRun('ねこと犬は2秒かけて、いまのばしょから、右へ40歩動いて、鳥は10歩進む。', { until: 2500, samples: [1000, 2500] }).x, { 1000: [20, 220, 400], 2500: [40, 240, 410] });
+      eq(compileProject(meijinWork('ねこと犬は10歩進んで、鳥は10歩進む。\n「やあ」と言う。')).errors.map(e => e.code), ['S304']);
+    });
     test('meijin words of 国語 and 算数 for lists and numbers', () => {
       const out = meijinRun('持ち物の最後に「本」を入れる。\n持ち物から「本」を一つ消す。\n合計を、持ち物の長さにする。\n持ち物から「本」を全部消す。\n点数を4にする。\nもし点数が偶数なら、ねこは「偶」と言う。\nもし点数が2の倍数なら、ねこは「倍」と言う。\nもし持ち物が空なら、ねこは「から」と言う。\nねこは、持ち物を一つずつ順に1秒話す。', { until: 1500 });
       eq([out.vars.合計, out.lists.持ち物, out.speech], [2, ['ぼうし'], ['0:ねこ:偶', '0:ねこ:倍', '0:ねこ:ぼうし']]);

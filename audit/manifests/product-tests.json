@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "4dadd2904602d480d1922b076e6969024c2829dc9e9980682168b54549299460",
+  "fixedIdSha256": "d8399f7dce955dc1c303ca587eab84357352f1c3b7b2232057b69a394606ab38",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -728,6 +728,7 @@
         "CORE meijin events: becoming true, every interval, starting to touch, and waiting until it becomes so",
         "CORE meijin a signal goes only to the parts named",
         "CORE meijin one part is stopped, and its timed speech is waited for",
+        "CORE meijin parts written together, then a clause of another subject: that clause is done once, after them",
         "CORE meijin words of 国語 and 算数 for lists and numbers",
         "CORE meijin a procedure made in the text is a procedure of the work",
         "CORE meijin words that give no single meaning are guided",
