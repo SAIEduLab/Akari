@@ -592,7 +592,7 @@
   function assistProposalKeepsSubject(proposal,basis,ctx,project) {
     if(typeof basis!=='string'||typeof proposal?.source!=='string'||proposal.input||!Number.isInteger(proposal.start)||!Number.isInteger(proposal.end))return proposal;
     const indent=basis.slice(basis.lastIndexOf('\n',proposal.start-1)+1).match(/^[ \t]*/)[0].length,kept=assistNextSubject(basis,proposal.start,proposal.end,proposal.source,indent,ctx,project,{});
-    return kept?{...proposal,source:proposal.source+kept.between,end:kept.at,description:[proposal.description,kept.note].filter(Boolean).join(' ')}:proposal;
+    return kept?{...proposal,source:proposal.source+kept.between,end:kept.at,description:[proposal.description,kept.note].filter(Boolean).join(' '),note:kept.note}:proposal;
   }
   // A candidate made whole from one that leaves out a subject or a time written: ねこは, 2秒かけて、 (the time the action
   // takes) or 2秒待ってから、 (a wait before it); a time that may be either gives both. Each is checked as any candidate.

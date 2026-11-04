@@ -1016,6 +1016,7 @@ function runSemanticContractTests() {
       // The rewrite of a check keeps it too (assistProposalKeepsSubject).
       const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start'},body='ねこを2秒かけて右へ40歩うごかす。「やあ」と言う。',[fix]=parseSyntax(body,ctx).syntaxDiagnostics[0].proposals,kept=Akari.assistProposalKeepsSubject(fix,body,ctx,p);
       eq(body.slice(0,kept.start)+kept.source+body.slice(kept.end),glide+'自分は「やあ」と言う。');
+      eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は かわりません）');
       // The stage's body: the part named moves (the stage does not).
       const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'};
       eq(Akari.assistCandidates(p,written,stage,parseSyntax(written,stage).syntaxDiagnostics[0]).map(c=>c.text),[glide]);

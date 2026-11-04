@@ -231,6 +231,8 @@
             try {field.focus();} finally {appVars.intentInputFocus=previousFocus;}
           };
           choices.append(button);
+          // What the rewrite also writes in the next sentence (自分は) is shown under the button, as for the near sentences.
+          if(proposal.note){const small=document.createElement('small');small.textContent=proposal.note;choices.append(small);}
         }
         const cancel = document.createElement('button');
         cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = 'この あんないを とじる';
