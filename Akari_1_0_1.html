@@ -25830,6 +25830,21 @@ function createAkariExtensionHost(options) {
       for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])
         for (const {node:m,actor} of effects(nodes,other)) { if (m.kind === 'MotionCommand' || m.kind === 'ContinuousRule') movers.push([other.key, flow, actor]);
           if (m.kind === 'LooksCommand' && m.op === 'SHOW') showers.push([other.key, flow, actor]); } }
+    // I139: which flows change a variable of the work: [item key, flow, name]. A sentence that names it as what it changes
+    // counts, in a definition too (a definition may be called from anywhere).
+    const changed = m => m.target?.name ?? m.variable?.name ?? null, changers = [];
+    for (const other of compiled.items || []) { const a = compiled.astByKey?.get(other.key); if (!a) continue;
+      for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])
+        for (const m of flowStatements(nodes)) if (changed(m)) changers.push([other.definitionKind ? null : other.key, flow, changed(m)]); }
+    const workVariables = new Set((project.projectData?.variables || []).map(v => v.name)), partVariables = new Set(project.components.flatMap(c => (c.localData?.variables || []).map(v => v.name)));
+    // The variables a wait's condition reads, when it reads only variables of the work, numbers, texts and calculations
+    // (nothing that changes by itself: timer, answer, keys, mouse, touching, a part's place).
+    const conditionVariables = e => { const names = new Set(); let plain = true;
+      const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }
+        if (x.kind === 'VariableRead') { if (x.qualifier || !workVariables.has(x.name) || partVariables.has(x.name)) plain = false; else names.add(x.name); return; }
+        if (x.kind && !/Literal$/.test(x.kind) && !['CompareExpression', 'BinaryExpression', 'LogicalExpression', 'UnaryExpression', 'NotExpression'].includes(x.kind)) { plain = false; return; }
+        for (const [k, v] of Object.entries(x)) if (k !== 'sourceSpan') visit(v); };
+      visit(e); return plain ? [...names] : []; };
     for (const [flow, nodes] of [['body', ast.body], ...(ast.units || []).map((u, i) => ['unit' + i, u.body])]) {
       const visit = (list, hidden) => {
         (list || []).forEach((n, i) => {
@@ -25862,6 +25877,19 @@ function createAkariExtensionHost(options) {
               const heading=sentenceHeadingSource({event:'touchStart',actorRef:item.meijin||toucher!==owner?{kind:'named',name:toucher}:{kind:'self'},filter:{target:targetName}});
               note('I134', n, `${toucher}が ${shown}に ふれるまで、ここで 待ちます。${toucher}を 動かす 文は この あとに あります。まだ ふれて いない ときは、この あとの 動く 文には 進みません。`
                 + (item.meijin ? `ふれる たびに する ときは「${heading}」と 書いて、する ことを 次の 行に 右へ ずらして 書きます` : `ふれる たびに する ときは「${heading}」の 本文に 書きます`));
+            }
+            // I139: a wait for variables of the work that only this flow changes, and only after the wait: when it starts
+            // and the condition is not true, the flow waits for ever (点数が1になるまで待つ。犬は点数を1にする。). A variable no
+            // sentence changes gets no notice (the work may start with it as it is waited for).
+            const names = conditionVariables(n.condition);
+            if (names.length) {
+              const order = [...effects(nodes, item)].map(e => e.node), at = order.indexOf(n), here = order.flatMap((m, k) => names.includes(changed(m)) ? [k] : []);
+              // A change in a lane (次のことを同時に始める, あいだ) may run at the same time as the wait: it is not after it.
+              const laned = new Set([...flowStatements(nodes)].flatMap(m => (m.lanes || []).flatMap(lane => [...flowStatements(lane)])));
+              const elsewhere = changers.some(([k, f, name]) => names.includes(name) && !(k === item.key && f === flow)) || here.some(k => laned.has(order[k]));
+              if (at >= 0 && !elsewhere && here.length && here.every(k => k > at))
+                note('I139', n, `${names.map(name => `「${name}」`).join('や')}を かえる 文は、この 本文の この 文より あとに しか ありません。待ち始めた ときに あてはまって いないと、ずっと 待って、あとの 文には 進みません。`
+                  + (item.meijin ? 'かえる ことを 同時に する ときは、「次のことを同時に始める。」の 中に 書きます' : 'かえる ことを 同時に する ときは、「同じ きっかけの 本文を ふやす」で 本文を ふやして、そこに 書きます'));
             }
           }
           if (n.kind === 'Forever' && !endsLoop(n.body)) {

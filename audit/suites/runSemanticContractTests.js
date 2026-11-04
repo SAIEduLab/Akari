@@ -786,6 +786,22 @@ function runSemanticContractTests() {
         if(notice){ok(notes[0].message.includes('まだ ふれて いない ときは'));ok(!notes[0].message.includes('待ちつづけます'));}
       }
     });
+    test('variable wait notice: only this flow changes the variable, and only after the wait', () => {
+      // I139: 点数が1になるまで待つ。犬は点数を1にする。 waits for ever when 点数 is not 1 as the wait starts; not when the
+      // variable is changed before the wait, in another body, in a lane that runs with it, or by nothing, nor when the
+      // condition reads something that changes by itself.
+      const p=makeDefaultProject(),base=p.components.find(c=>c.type==='sprite');
+      p.components=['ねこ','犬'].map((name,i)=>({...structuredClone(base),id:'vwait-'+i,name,costumes:[{id:'vwait-face-'+i,name:'丸',kind:'text',value:'●'}],costumeId:'vwait-face-'+i}));
+      p.projectData.variables.push({id:'vwait-score',name:'点数',initialValue:0});
+      const notes=(source,{meijin=false,other=null}={})=>{p.scripts=[{id:'vwait-main',targetId:meijin?'meijin':'vwait-0',...meijin?{mode:'meijin'}:{},event:'start',source},...other?[{id:'vwait-other',targetId:'vwait-1',event:'start',source:other}]:[]];
+        const c=compileProject(p);eq(c.errors,[]);return c.notes.filter(n=>n.code==='I139');};
+      for(const source of ['ねこは、点数が1になるまで待つ。犬は点数を1にする。','点数が1になるまで待つ。\n点数を1にする。','点数＋1が3になるまで待つ。\n点数を2にする。','ずっとくり返す。\n  点数が1になるまで待つ。\n  点数を0にする。','点数が1になるまで待つ。\n「数は？」とたずねて、答えを待つ。\n点数を答えにする。']){
+        const [note,...more]=notes(source);eq(more,[]);ok(note.message.startsWith('「点数」を かえる 文は、この 本文の この 文より あとに しか ありません。'));ok(note.message.includes('「同じ きっかけの 本文を ふやす」'));}
+      ok(notes('ねこは、点数が1になるまで待つ。犬は点数を1にする。',{meijin:true})[0].message.includes('「次のことを同時に始める。」の 中に'));
+      for(const [source,options]of [['点数を1にする。\n点数が1になるまで待つ。\n点数を2にする。',{}],['点数が1になるまで待つ。\n点数を1にする。',{other:'1秒待つ。\n点数を1にする。'}],['点数が1になるまで待つ。\n10歩進む。',{}],
+        ['次のことを同時に始める。\n  点数が1になるまで待つ。\n  点数を1にする。\nねこは10歩進む。',{meijin:true}],['タイマーが3より大きくなるまで待つ。\nタイマーを0にする。',{}]])
+        eq(notes(source,options),[]);
+    });
     test('scoped scalar expressions and quoted list names execute',()=>{
       const p=actorUnitFixture();p.projectData.variables=[];for(const c of p.components)c.localData={variables:[],lists:[]};
       p.projectData.lists=[{id:'advice-list',name:'買うもの',initialValue:['りんご']}];

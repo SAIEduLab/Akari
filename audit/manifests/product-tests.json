@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "d8399f7dce955dc1c303ca587eab84357352f1c3b7b2232057b69a394606ab38",
+  "fixedIdSha256": "80dda8d8e0d73e538248624fa25a8b42e502759d67992e96227526d3db3fcb60",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -190,6 +190,7 @@
         "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
         "TEST-CONTRACT timer reset is an effect in value-returning definitions",
         "TEST-CONTRACT touch wait guidance is conditional and excludes unresolved or compound conditions",
+        "TEST-CONTRACT variable wait notice: only this flow changes the variable, and only after the wait",
         "TEST-CONTRACT scoped scalar expressions and quoted list names execute",
         "TEST-CONTRACT connected rotations preserve sequence and genuine repeat choices",
         "TEST-CONTRACT touch event advice preserves explicit toucher identity",
