@@ -53326,7 +53326,7 @@
     {
       "id": "ASSIST-1085",
       "kind": "candidates",
-      "polarity": "negative",
+      "polarity": "positive",
       "world": {
         "parts": [
           "ねこ",
@@ -53360,10 +53360,14 @@
       },
       "expect": {
         "code": "S317",
+        "first": {
+          "schemaId": "MotionCommand:MOVE",
+          "text": "犬は前へ10歩進む。\n星は前へ10歩進む。\n鳥は前へ10歩進む。\n自分は前へ10歩進む。"
+        },
         "absent": [
-          "MotionCommand:MOVE"
+          "Parallel"
         ],
-        "maxAssist": 0,
+        "maxAssist": 4,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -53417,7 +53421,7 @@
         "code": "S317",
         "first": {
           "schemaId": "MotionCommand:MOVE",
-          "text": "犬は前へ10歩進む。\n星は前へ10歩進む。\n鳥は前へ10歩進む。\nねこは前へ10歩進む。"
+          "text": "ねこは前へ10歩進む。\n犬は前へ10歩進む。\n星は前へ10歩進む。\n鳥は前へ10歩進む。"
         },
         "absent": [
           "Parallel"

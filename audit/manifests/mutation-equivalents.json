@@ -195,15 +195,15 @@
     },
     {
       "file": "src/js/09-editor-search.js",
-      "source": "const kept=assistNextSubject(basis,start,p.end??range.end,written,range.indent,ctx,project,topic),end=kept?kept.at:p.end??range.end,source=kept?written+kept.between:written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;",
+      "source": "const text=shown?shown.text:p.text,source=shown?text.replace(/\\n/g,()=>'\\n'+' '.repeat(range.indent)):written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;",
       "operator": "false->true",
       "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, so the try always assigns valid and its first value is never read."
     },
     {
       "file": "src/js/09-editor-search.js",
-      "source": ".filter(c=>{if(seenText.has(c.text))return false;seenText.add(c.text);try{return c.text.split('\\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});",
+      "source": ".filter(c=>{const sentence=c.sentence??c.text;if(seenText.has(sentence))return false;seenText.add(sentence);try{return sentence.split('\\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});",
       "operator": "false->true",
-      "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, and a candidate text always has split; the catch is never reached."
+      "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, and the sentence or text of a candidate always has split; the catch is never reached."
     },
     {
       "file": "src/js/09-editor-search.js",

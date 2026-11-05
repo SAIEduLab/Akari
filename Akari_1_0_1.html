@@ -33004,11 +33004,15 @@ function createAkariExtensionHost(options) {
         for(const [k,v]of Object.entries(node))if(k!=='sourceSpan'&&v&&typeof v==='object')visit(v,actor);};visit(canonical.ast);
       if(p.schemaId?.startsWith('Heading:'))forbidden=forbidden||!!ctx.definitionKind||ctx.targetId==='stage';if(forbidden)continue;
       const start=p.start??range.start,written=(p.text.endsWith('。')&&basis[p.end??range.end]==='。'?p.text.slice(0,-1):p.text).replace(/\n/g,() => ('\n'+' '.repeat(range.indent)));
-      // The next sentence keeps who does it: one the near sentence's subject would carry on to is given its own.
-      const kept=assistNextSubject(basis,start,p.end??range.end,written,range.indent,ctx,project,topic),end=kept?kept.at:p.end??range.end,source=kept?written+kept.between:written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;
+      // The next sentence keeps who does it: one the near sentence's subject would carry on to is given its own. The button
+      // shows what is written (LANGUAGE.md 読めない文の近い書き方): that next line is shown and written with it, as the code
+      // writes it; where it cannot be written so, the near sentence is not shown.
+      const kept=assistNextSubject(basis,start,p.end??range.end,written,range.indent,ctx,project,topic),end=kept?(basis+'\n').indexOf('\n',kept.at):p.end??range.end;
+      const shown=kept&&assistCanonical((written+kept.between+basis.slice(kept.at,end)).replace(new RegExp('\\n[ \\t]{0,'+range.indent+'}','g'),'\n'),ctx,previous);if(kept&&!shown)continue;
+      const text=shown?shown.text:p.text,source=shown?text.replace(/\n/g,()=>'\n'+' '.repeat(range.indent)):written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;
       const following=basis.slice(end).split('\n').slice(1).find(line=>line.trim()&&line.match(/^\s*/)[0].length<=range.indent);if(following&&/^そうでなければ、/.test(following.trim())&&canonical.ast.body?.[0]?.kind!=='IfStatement')continue;
       try{const parsed=parseSyntax(replacement,ctx),next=parsed.syntaxDiagnostics[0],from=basis.slice(0,start).split('\n').length,to=from+source.split('\n').length-1;valid=!!parsed.ast||next&&!['P208','F504'].includes(next.code)&&(next.line<from||next.line>to||next.code==='P202'&&next.line===from);}catch{}
-      if(valid){const label=(p.label||BLOCK_SCHEMA_BY_ID.get(p.schemaId)?.label||p.text).replace(/いまのばしょから/g,'いまの ばしょから').replace(/決めたばしょへ/g,'決めた ばしょへ').replace(/始まったことが/g,'始まった ことが');seen.add(key);if(meaning.actions!==undefined)unread??=meaning.actions;nearest??=assistKinds(canonical.ast);(meaning.missing?partial:out).push({assist:true,schemaId:p.schemaId,origin:p.origin,label,text:p.text,source,start,end,...(p.description||kept?{description:[p.description,kept?.note].filter(Boolean).join(' ')}:{}),...(want?{meaning}:{})});}
+      if(valid){const label=(p.label||BLOCK_SCHEMA_BY_ID.get(p.schemaId)?.label||p.text).replace(/いまのばしょから/g,'いまの ばしょから').replace(/決めたばしょへ/g,'決めた ばしょへ').replace(/始まったことが/g,'始まった ことが');seen.add(key);if(meaning.actions!==undefined)unread??=meaning.actions;nearest??=assistKinds(canonical.ast);(meaning.missing?partial:out).push({assist:true,schemaId:p.schemaId,origin:p.origin,label,text,...(shown?{sentence:p.text}:{}),source,start,end,...(p.description||kept?{description:[p.description,kept?.note].filter(Boolean).join(' ')}:{}),...(want?{meaning}:{})});}
       // As many candidates are looked at as are shown: one that leaves a role out still takes its place, so the ones
       // further down (less near to what was written) are not reached to fill the places it leaves.
       const taken=out.length+partial.length;if(taken>=ASSIST_MAX||!hasHigher&&taken>=2||now()-started>ASSIST_BUDGET_MS)break;
@@ -33017,12 +33021,13 @@ function createAkariExtensionHost(options) {
     const shown=(out.length?[...out.filter(c=>c.meaning.explicit),...out.filter(c=>!c.meaning.explicit)]:partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);
     // The stage does not move: a sentence that names the part that does it (ねこを…移動させる, ねこのすがたを…) is looked
     // for in that part's body; a near sentence of one line there gets the part's name (すがたを見せる → ねこはすがたを見せる),
-    // and is kept when every line names the part and it reads in the stage's body too.
+    // and is kept when every line names the part and it reads in the stage's body too. The lines are those of the near
+    // sentence (sentence), not the next sentence shown after it with its own subject.
     if(!shown.length&&ctx.targetId==='stage'&&want?.length&&want.every(w=>w.subject&&w.subject===want[0].subject)){
       const part=project.components.find(c=>c.name===want[0].subject),named=part&&sentenceActorSource({kind:'named',name:part.name})+'は',seenText=new Set();
       if(part)return assistCandidates(project,basis,{...context,targetId:part.id,targetType:part.type},null)
         .map(c=>c.text.includes('\n')||c.text.startsWith(named)?c:{...c,text:named+c.text,source:named+c.source,label:c.label===c.text?named+c.text:c.label})
-        .filter(c=>{if(seenText.has(c.text))return false;seenText.add(c.text);try{return c.text.split('\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});
+        .filter(c=>{const sentence=c.sentence??c.text;if(seenText.has(sentence))return false;seenText.add(sentence);try{return sentence.split('\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});
     }
     return shown.map(({meaning,...candidate})=>candidate);
   }

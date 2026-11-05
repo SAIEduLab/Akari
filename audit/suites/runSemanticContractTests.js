@@ -1048,24 +1048,35 @@ function runSemanticContractTests() {
         const [c]=Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]);return c&&body.slice(0,c.start)+c.source+body.slice(c.end);};
       const glide='ねこは2秒かけて、いまのばしょから、右へ40歩動く。',written='ねこを2秒で右へ40歩移動させる。';
       for(const [body,owner,after]of [
-        [written+'「やあ」と言う。','next-1',glide+'自分は「やあ」と言う。'],
+        // The next sentence is written as the button shows it: on a line of its own, with 。 (LANGUAGE.md 読めない文の
+        // 近い書き方).
+        [written+'「やあ」と言う。','next-1',glide+'\n自分は「やあ」と言う。'],
         [written+'\n「やあ」と言う。','next-1',glide+'\n自分は「やあ」と言う。'],
         ['2回くり返す。\n  '+written+'\n  前へ10歩進む。','next-1','2回くり返す。\n  '+glide+'\n  自分は前へ10歩進む。'],
-        ['鳥は前へ10歩進む。'+written+'「やあ」と言う。','next-1','鳥は前へ10歩進む。'+glide+'鳥は「やあ」と言う。'],
+        ['鳥は前へ10歩進む。'+written+'「やあ」と言う。','next-1','鳥は前へ10歩進む。'+glide+'\n鳥は「やあ」と言う。'],
         [written+'\n犬は「やあ」と言う。','next-1',glide+'\n犬は「やあ」と言う。'],
         [written+'「やあ」と言う。','next-0',glide+'「やあ」と言う。'],
         [written,'next-1',glide],
         // Before a heading the subject is written with 、, as the code writes it.
         [written+'\n3回くり返す。\n  「やあ」と言う。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。'],
         [written+'\n3回くり返す。\n  「やあ」と言う。\n前へ10歩進む。','next-1',glide+'\n自分は、3回くり返す。\n  「やあ」と言う。\n前へ10歩進む。'],
-        // Empty lines and lines of notes (※) are passed; a sentence at another depth, or lines after it, are as written.
-        [written+'\n\n「やあ」と言う。','next-1',glide+'\n\n自分は「やあ」と言う。'],
+        // Empty lines are left out and lines of notes (※) kept, as the code writes them; a sentence at another depth, or lines
+        // after it, are as written.
+        [written+'\n\n「やあ」と言う。','next-1',glide+'\n自分は「やあ」と言う。'],
         [written+'\n※メモ\n「やあ」と言う。','next-1',glide+'\n※メモ\n自分は「やあ」と言う。'],
         [written+'\n「やあ」と言う。\n前へ10歩進む。','next-1',glide+'\n自分は「やあ」と言う。\n前へ10歩進む。'],
+        [written+'\n「やあ」と言う','next-1',glide+'\n自分は「やあ」と言う。'],
+        [written+'\n「やあ」と言う。前へ10歩進む。','next-1',glide+'\n自分は「やあ」と言う。\n前へ10歩進む。'],
+        // A next sentence that cannot be read cannot be written so: no near sentence is shown.
+        [written+'\nほげほげする。','next-1',undefined],
         ['2回くり返す。\n  '+written+'\n「やあ」と言う。','next-1','2回くり返す。\n  '+glide+'\n「やあ」と言う。'],
         // A heading begins a body of its own, which carries on no subject.
         [written+'\n「スペース」キーがおされたとき、\n  「やあ」と言う。','next-1',glide+'\n「スペース」キーがおされたとき、\n  「やあ」と言う。'],
       ])eq(applied(body,owner),after);
+      // The button shows the next sentence too, as it is written.
+      {const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start',args:[],level:'advanced'},shown=body=>Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]).map(c=>c.text);
+        eq(shown(written+'\n「やあ」と言う。\n前へ10歩進む。'),[glide+'\n自分は「やあ」と言う。']);
+        eq(shown('2回くり返す。\n  '+written+'\n  前へ10歩進む。'),[glide+'\n自分は前へ10歩進む。']);}
       // The button of the near sentence says so under it (its description).
       {const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start',args:[],level:'advanced'},body=written+'「やあ」と言う。';
         eq(Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]).map(c=>c.description),['つぎの 文の はじめに「自分は」を 書きます（つぎの 文は、これまでどおり 犬が します）']);}
@@ -1136,7 +1147,7 @@ function runSemanticContractTests() {
         ["ねこと犬は2秒で右へ40歩移動して、「やあ」と言う。","next-0",[[],[]]],
         ["ねこと犬は点数が10になるまで右へ40歩移動する。","next-0",[[],[]]],
         ["ねこと犬にすがたを見せる。","next-0",[[],[]]],
-        ["ねこは「やあ」と言う。犬を2秒で右へ40歩移動させる。「やあ」と言う。","next-0",[[["いまの ばしょから動く","ねこは「やあ」と言う。犬は2秒かけて、いまのばしょから、右へ40歩動く。自分は「やあ」と言う。"]],[]]],
+        ["ねこは「やあ」と言う。犬を2秒で右へ40歩移動させる。「やあ」と言う。","next-0",[[["いまの ばしょから動く","ねこは「やあ」と言う。犬は2秒かけて、いまのばしょから、右へ40歩動く。\n自分は「やあ」と言う。"]],[]]],
         ["2回くり返す。\n  前へ10歩進む。\nねこを2秒かけて右へ40歩うごかす。\n「やあ」と言う。","next-1",[[],[["2回くり返す。\n  前へ10歩進む。\nねこは2秒かけて、いまのばしょから、右へ40歩動く。\n自分は「やあ」と言う。","つぎの 文の はじめに「自分は」を 書きます（つぎの 文は、これまでどおり 犬が します）"]]]],
       ])eq(all(body,owner),expected);
       // The sentence after them keeps who does it, and the button says by name who does it; parts named in a heading, a
