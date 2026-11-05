@@ -175,7 +175,7 @@ check('gate-child-limit:whole-run',()=>{
     writeSummary(){},verifyGateResults(){},verifyGateShard(){},console:{log(){},error(){}}});
   const steps=gateSteps('/browser','/evidence');
   assert.deepEqual(spawned.map(s=>s.part),steps.map(()=>null),'a whole run gives no part');
-  assert.deepEqual(spawned.map(s=>s.timeout),steps.map(([id])=>['entry-browser','change-guard-negative'].includes(id)?2*childLimitMs:childLimitMs));
+  assert.deepEqual(spawned.map(s=>s.timeout),steps.map(([id])=>({'entry-browser':2,'change-guard-negative':4}[id]??1)*childLimitMs));
 });
 check('gate-child-limit:browser-runner',()=>{
   const runner=fs.readFileSync('audit/browser/run-full-browser-audit.mjs','utf8');
@@ -245,13 +245,13 @@ check('part-report:workbench-failed-case',()=>assert.throws(()=>checkPartReport(
   check('part-report:entry-failed-row',()=>assert.throws(()=>checkPartReport('entry-browser',entryReport('2/2',{status:'FAIL'}),'2/2',inputs),/^AssertionError/));
   const guardIds=gateCaseIds['change-guard-negative'];
   const guardReport=(part,{ids=partItems('change-guard-negative',guardIds,part),status='PASS'}={})=>caseReport('change-guard-negative',ids.map(id=>({id,status})),{part:{name:'change-guard-negative',part}},inputs);
-  check('part-report:guard-valid',()=>checkPartReport('change-guard-negative',guardReport('1/2'),'1/2',inputs));
-  check('part-report:guard-other-cases',()=>assert.throws(()=>checkPartReport('change-guard-negative',guardReport('1/2',{ids:partItems('change-guard-negative',guardIds,'2/2')}),'1/2',inputs),/change-guard-negative: case set/));
+  check('part-report:guard-valid',()=>checkPartReport('change-guard-negative',guardReport('1/4'),'1/4',inputs));
+  check('part-report:guard-other-cases',()=>assert.throws(()=>checkPartReport('change-guard-negative',guardReport('1/4',{ids:partItems('change-guard-negative',guardIds,'2/4')}),'1/4',inputs),/change-guard-negative: case set/));
   check('part-report:guard-merge-run-order',()=>{
-    const parts=['1/2','2/2'].map(part=>{const report=guardReport(part);report.results.reverse();return {part,report};});
+    const parts=['1/4','2/4','3/4','4/4'].map(part=>{const report=guardReport(part);report.results.reverse();return {part,report};});
     assert.deepEqual(mergePartReports('change-guard-negative',parts).results.map(row=>row.id),guardIds,'parts in the order they ran merge in the declared order');
   });
-  check('part-report:guard-failed-case',()=>assert.throws(()=>checkPartReport('change-guard-negative',guardReport('2/2',{status:'FAIL'}),'2/2',inputs),/change-guard-negative: status/));
+  check('part-report:guard-failed-case',()=>assert.throws(()=>checkPartReport('change-guard-negative',guardReport('4/4',{status:'FAIL'}),'4/4',inputs),/change-guard-negative: status/));
 }
 const shardBase=fs.mkdtempSync(path.join(path.dirname(output),'shards-'));
 function gateShardFixture(name,shard='s06'){
