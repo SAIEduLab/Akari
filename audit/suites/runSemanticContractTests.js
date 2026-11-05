@@ -1075,6 +1075,7 @@ function runSemanticContractTests() {
       ])eq(applied(body,owner),after);
       // The button shows the next sentence too, as it is written.
       {const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start',args:[],level:'advanced'},shown=body=>Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]).map(c=>c.text);
+        eq(shown('// メモ\n「やあ」と言う。'),['※ メモ']);
         eq(shown(written+'\n「やあ」と言う。\n前へ10歩進む。'),[glide+'\n自分は「やあ」と言う。']);
         eq(shown('2回くり返す。\n  '+written+'\n  前へ10歩進む。'),[glide+'\n自分は前へ10歩進む。']);}
       // The button of the near sentence says so under it (its description).
@@ -1096,6 +1097,7 @@ function runSemanticContractTests() {
       // (ねこのすがたを見せる → ねこはすがたを見せる), the number written is kept, and no sentence is shown twice.
       const stage={symbols:buildSymbols(p),targetId:'stage',targetType:'stage',event:'start',args:[],level:'advanced'},onStage=text=>Akari.assistCandidates(p,text,stage,parseSyntax(text,stage).syntaxDiagnostics[0]).map(c=>c.text);
       eq(onStage(written),[glide]);
+      eq(onStage('犬は右に行く。'),['犬は、いまのばしょから、右へ10歩動く。','犬はいまのばしょから、右へ10歩動く。']);
       eq(onStage('ねこのすがたを見せる。'),['ねこはすがたを見せる。']);
       eq(onStage('ねこの向きを90度にする。'),['ねこは画面の上を向く。']);
       eq(onStage('ねこの向きを45度にする。'),['ねこは向きを45度にする。']);
