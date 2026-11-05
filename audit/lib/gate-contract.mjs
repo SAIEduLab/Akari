@@ -154,10 +154,10 @@ const sameRepositoryPr="${{ github.event.pull_request.head.repo.full_name == git
 const baseGuard={run:'git checkout "$AKARI_BASE_SHA" -- '+guardCodePaths.join(' '),if:"${{ github.event_name == 'pull_request_target' }}",env:{AKARI_BASE_SHA:guardShas.AKARI_BASE_SHA}};
 export const workflowContract=Object.freeze({
   'akari-audit.yml':{triggers:'audit',env:requestedSha,jobs:{
-    selftest:{if:sameRepository,needs:[],shards:Object.keys(selftestShards),entries:[
+    selftest:{if:sameRepository,needs:[],shards:Object.keys(selftestShards),maxParallel:"${{ github.event_name == 'pull_request' && 7 || 9 }}",entries:[
       {run:'node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"'},
       {run:'node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"',if:'always()'}]},
-    'full-browser-gate':{if:sameRepository,needs:[],shards:Object.keys(browserShards),entries:[
+    'full-browser-gate':{if:sameRepository,needs:[],shards:Object.keys(browserShards),maxParallel:"${{ github.event_name == 'pull_request' && 6 || 7 }}",entries:[
       {run:'node audit/browser/run-full-browser-audit.mjs --shard "${{ matrix.shard }}" --evidence "audit-evidence/full-browser-${{ matrix.shard }}"'},
       {run:'node audit/verify-evidence.mjs seal "full-browser-${{ matrix.shard }}" "audit-evidence/full-browser-${{ matrix.shard }}"',if:'always()'}]},
     'audio-codecs':{if:sameRepository,needs:[],entries:[
@@ -180,10 +180,12 @@ export const workflowContract=Object.freeze({
   }},
   // The guard runs in parts side by side (audit/lib/shard-plan.cjs changeGuardParts); audit-change-guard merges them.
   'akari-change-guard.yml':{triggers:'guard',cancel:"${{ startsWith(github.event_name, 'pull_request') }}",jobs:{
-    'change-guard-part':{if:sameRepositoryPr,needs:[],fullHistory:true,headCheckout:true,shards:changeGuardParts,entries:[baseGuard,
+    'guard-plan':{if:sameRepositoryPr,needs:[],fullHistory:true,headCheckout:true,outputs:{shards:'${{ steps.plan.outputs.shards }}'},entries:[baseGuard,
+      {id:'plan',run:'node audit/tests/change-guard.mjs --part "main" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-main/part.json"',env:guardShas}]},
+    'change-guard-part':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository && needs.guard-plan.result == 'success' && needs.guard-plan.outputs.shards != '[]' }}",needs:['guard-plan'],fullHistory:true,headCheckout:true,shards:changeGuardParts.slice(1),shardExpression:'${{ fromJSON(needs.guard-plan.outputs.shards) }}',entries:[baseGuard,
       {run:'node audit/tests/change-guard.mjs --part "${{ matrix.shard }}" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-${{ matrix.shard }}/part.json"',env:guardShas}]},
-    'audit-change-guard':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}",needs:['change-guard-part'],fullHistory:true,headCheckout:true,entries:[baseGuard,
-      {run:'node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:guardShas}]},
+    'audit-change-guard':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}",needs:['guard-plan','change-guard-part'],fullHistory:true,headCheckout:true,entries:[baseGuard,
+      {run:'node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:{...guardShas,AKARI_GUARD_PLAN_RESULT:'${{ needs.guard-plan.result }}',AKARI_GUARD_PARTS_RESULT:'${{ needs.change-guard-part.result }}'}}]},
   }},
 });
 

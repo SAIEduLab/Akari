@@ -22,6 +22,7 @@ jobs:
         shell: bash
     strategy:
       fail-fast: false
+      max-parallel: ${{ github.event_name == 'pull_request' && 7 || 9 }}
       matrix:
         shard: [s01, s02, s03, s04, s05, s06, s07, s08, s09]
     steps:
@@ -54,6 +55,7 @@ jobs:
         shell: bash
     strategy:
       fail-fast: false
+      max-parallel: ${{ github.event_name == 'pull_request' && 6 || 7 }}
       matrix:
         shard: [b01, b02, b03, b04, b05, b06, b07]
     steps:
