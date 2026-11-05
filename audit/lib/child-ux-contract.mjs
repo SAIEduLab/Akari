@@ -154,7 +154,7 @@ export function verifyManualSessions(sessions,base){
   const keys=sessions.map(s=>s.auditKind+'/'+s.actor+'/'+s.mode+'/'+s.task);assert.equal(new Set(keys).size,keys.length,'one session per audit kind/actor/mode/task; retain retries separately');
   return sessions.map(s=>{const result=verifyManualSession(s);verifyManualEvidence(s,base);return result;});
 }
-export function verifyNeeds(needs){assert.deepEqual(Object.keys(needs).sort(),['composition-acceptance','ux-editing']);for(const n of Object.values(needs))assert.equal(n.result,'success','missing/cancelled/skipped/timed-out job is not success');}
+export function verifyNeeds(needs){assert.deepEqual(Object.keys(needs).sort(),['acceptance-lane','lane-plan']);for(const n of Object.values(needs))assert.equal(n.result,'success','missing/cancelled/skipped/timed-out job is not success');}
 export function verifyRetryHistory(h,p){
   assert.equal(h.schema,'akari-child-ux-retry-history-v1');assert.equal(h.run,p.run);assert.equal(h.testedCommit,p.testedCommit);assert.equal(h.attempt,p.attempt);assert.equal(h.repository,p.repository);
   assert.ok([p.candidateCommit,p.testedCommit].includes(h.workflowHeadCommit));assert.equal(h.priorAttempts.length,Number(p.attempt)-1);

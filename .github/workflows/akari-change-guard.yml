@@ -13,14 +13,12 @@ concurrency:
   group: akari-change-guard-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ startsWith(github.event_name, 'pull_request') }}
 jobs:
-  change-guard-part:
+  guard-plan:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: windows-latest
     timeout-minutes: 360
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [main, m1, m2, m3, m4, m5, m6]
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
     defaults:
       run:
         shell: bash
@@ -41,7 +39,49 @@ jobs:
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
-      - name: Run one part of the change guard
+      - name: Check the change and assign mutation workers from the shared pool
+        id: plan
+        env:
+          AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node audit/tests/change-guard.mjs --part "main" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-main/part.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-change-guard-part-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/change-guard-main/
+          if-no-files-found: error
+          retention-days: 3
+  change-guard-part:
+    needs: [guard-plan]
+    if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository && needs.guard-plan.result == 'success' && needs.guard-plan.outputs.shards != '[]' }}
+    runs-on: windows-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.guard-plan.outputs.shards) }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.2'
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
+      - name: Use the guard of the base with the tests and fixtures of the head
+        if: ${{ github.event_name == 'pull_request_target' }}
+        env:
+          AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
+      - name: Run the assigned share of the mutation plan
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -55,7 +95,7 @@ jobs:
           retention-days: 3
   audit-change-guard:
     if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}
-    needs: [change-guard-part]
+    needs: [guard-plan, change-guard-part]
     runs-on: windows-latest
     timeout-minutes: 10
     defaults:
@@ -87,6 +127,8 @@ jobs:
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          AKARI_GUARD_PLAN_RESULT: ${{ needs.guard-plan.result }}
+          AKARI_GUARD_PARTS_RESULT: ${{ needs.change-guard-part.result }}
         run: node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json
       - uses: actions/upload-artifact@v4
         if: always()

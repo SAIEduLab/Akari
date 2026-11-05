@@ -13,49 +13,37 @@ concurrency:
   group: akari-audit-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  selftest:
+  lane-plan:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 5
+    outputs:
+      lanes: ${{ steps.plan.outputs.lanes }}
     defaults:
       run:
         shell: bash
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [s01, s02, s03, s04, s05, s06, s07, s08, s09]
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24.22.2'
-      - run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 jsdom@26.1.0 @babel/parser@7.28.4 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0 eslint@10.13.0 eslint-plugin-unicorn@79.0.0 eslint-plugin-sonarjs@4.2.2 globals@17.14.0 typescript@6.0.3
-          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
-          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --no-shell chromium
-          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
-      - run: node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"
-      - run: node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"
-        if: always()
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: akari-selftest-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/selftest-${{ matrix.shard }}/
-          if-no-files-found: error
-          retention-days: 3
-          include-hidden-files: true
-  full-browser-gate:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      - id: plan
+        run: node audit/lib/ci-lanes.mjs plan audit
+  audit-lane:
+    needs: [lane-plan]
+    if: ${{ always() && needs.lane-plan.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 360
     defaults:
       run:
         shell: bash
     strategy:
       fail-fast: false
       matrix:
-        shard: [b01, b02, b03, b04, b05, b06, b07]
+        shard: ${{ fromJSON(needs.lane-plan.outputs.lanes) }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -65,57 +53,24 @@ jobs:
         with:
           python-version: '3.12'
       - run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 jsdom@26.1.0 @babel/parser@7.28.4 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0 eslint@10.13.0 eslint-plugin-unicorn@79.0.0 eslint-plugin-sonarjs@4.2.2 globals@17.14.0 typescript@6.0.3
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --no-shell chromium
           python -m pip install Pillow imageio-ffmpeg==0.6.0
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser" --media
           echo "AKARI_PYTHON=python" >> "$GITHUB_ENV"
-      - run: node audit/browser/run-full-browser-audit.mjs --shard "${{ matrix.shard }}" --evidence "audit-evidence/full-browser-${{ matrix.shard }}"
-      - run: node audit/verify-evidence.mjs seal "full-browser-${{ matrix.shard }}" "audit-evidence/full-browser-${{ matrix.shard }}"
-        if: always()
+      - run: node audit/run-ci-lane.mjs audit "${{ matrix.shard }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: akari-full-browser-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/full-browser-${{ matrix.shard }}/
-          if-no-files-found: error
-          retention-days: 3
-          include-hidden-files: true
-  audio-codecs:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: windows-latest
-    timeout-minutes: 25
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24.22.2'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4 mdast-util-from-markdown@2.0.2 micromark@4.0.3 parse5@7.3.0
-          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
-          python audit/install-codec-browser.py "$RUNNER_TEMP/codec-browser"
-      - run: node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json
-      - run: node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json
-      - run: node audit/verify-evidence.mjs seal audio-codecs-win32 audit-evidence/audio
-        if: always()
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: akari-audio-codecs-win32-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/audio/
+          name: akari-audit-lane-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/ci-lane/
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
   aggregate:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    needs: [selftest, full-browser-gate, audio-codecs]
+    needs: [lane-plan, audit-lane]
     runs-on: windows-latest
     timeout-minutes: 10
     defaults:
@@ -135,6 +90,7 @@ jobs:
           # Partial reruns retain earlier jobs; validate each kind's newest attempt.
           pattern: akari-*-${{ github.run_id }}-*
           path: downloaded-evidence
+      - run: node audit/lib/ci-lanes.mjs unpack audit downloaded-evidence
       - run: node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json
         env:
           AKARI_NEEDS: ${{ toJSON(needs) }}

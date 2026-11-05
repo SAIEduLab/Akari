@@ -1,5 +1,7 @@
 // Static contract for .github/workflows/*.yml. The workflows are read as text with a
 // strict YAML subset; anything outside the subset is rejected instead of guessed.
+import {workForUnit} from '../run-ci-lane.mjs';
+import {laneUnits} from './ci-lanes.mjs';
 import {auditBundleKinds,acceptanceCommands,workflowContract} from './gate-contract.mjs';
 
 const yamlError=(line,message)=>new Error('line '+line+': '+message);
@@ -162,8 +164,8 @@ export const workflowTriggers=Object.freeze({
   guard:{pull_request_target:{branches:['main'],types:['opened','synchronize','reopened']},pull_request:{branches:['main'],types:['opened','synchronize','reopened'],paths:['.github/workflows/akari-change-guard.yml']}},
 });
 const topLevelKeys=['name','on','permissions','env','concurrency','jobs'];
-const jobKeys=['if','needs','runs-on','timeout-minutes','strategy','defaults','permissions','steps'];
-const stepKeys=['name','uses','with','run','if','env'];
+const jobKeys=['if','needs','runs-on','timeout-minutes','strategy','defaults','permissions','steps','outputs'];
+const stepKeys=['id','name','uses','with','run','if','env'];
 
 // files: {fileName: text}. Returns [{rule, file, where, detail}]; an empty list accepts the workflows. scriptPackages,
 // when given, names the packages a script may load (audit/lib/script-packages.mjs).
@@ -196,6 +198,7 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
       if(!job||typeof job!=='object'){issue('jobs',file,id,'missing job');continue;}
       for(const key of Object.keys(job))if(key==='continue-on-error')issue('continue-on-error',file,id,'job continues on error');else if(!jobKeys.includes(key))issue('job-keys',file,id+'.'+key,'job key not allowed');
       if((job.if??null)!==(jobSpec.if??null))issue('jobs',file,id+'.if','job condition differs from the contract');
+      if(!same(job.outputs,jobSpec.outputs))issue('jobs',file,id+'.outputs','job outputs differ from the contract');
       const needs=job.needs===undefined?[]:Array.isArray(job.needs)?job.needs:[job.needs];
       if(!sameSet(needs,jobSpec.needs))issue('needs',file,id+'.needs','needs must be '+JSON.stringify(jobSpec.needs));
       if(needs.length&&!/^\$\{\{ always\(\) && /.test(job.if??''))issue('needs',file,id+'.if','a job with needs must run always() so failed dependencies are reported');
@@ -204,13 +207,17 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
       if(job.defaults!==undefined&&!same(job.defaults,{run:{shell:'bash'}}))issue('job-keys',file,id+'.defaults','only defaults.run.shell: bash is allowed');
       if(job['runs-on']!=='windows-latest')issue('runner',file,id+'.runs-on','every CI job must use windows-latest');
       if(!same(job.defaults,{run:{shell:'bash'}}))issue('runner',file,id+'.defaults','Windows CI entry commands require the declared bash shell');
-      const rows=matrixRows(job.strategy?.matrix);
+      const matrix=job.strategy?.matrix;
+      // For a runtime matrix, validate its source exactly and check commands for every possible shard.
+      const fromPlan=jobSpec.shardExpression&&same(matrix,{shard:jobSpec.shardExpression});
+      const rows=matrixRows(fromPlan?{shard:jobSpec.shards}:matrix);
       if(!rows)issue('job-keys',file,id+'.strategy','unsupported matrix form');
       // A sharded job runs exactly the planned shards (audit/lib/shard-plan.cjs), each to completion.
       if(jobSpec.shards){
-        if(!same(job.strategy?.matrix,{shard:jobSpec.shards}))issue('matrix',file,id+'.strategy.matrix','shards must be exactly '+JSON.stringify(jobSpec.shards));
+        if(!same(matrix,{shard:jobSpec.shardExpression??jobSpec.shards}))issue('matrix',file,id+'.strategy.matrix','shards must be exactly '+JSON.stringify(jobSpec.shards));
         if(job.strategy?.['fail-fast']!=='false')issue('matrix',file,id+'.strategy','a failing shard must not cancel the other shards');
-        for(const key of Object.keys(job.strategy||{}))if(!['matrix','fail-fast'].includes(key))issue('matrix',file,id+'.strategy.'+key,'strategy key not allowed');
+        if(job.strategy?.['max-parallel']!==jobSpec.maxParallel)issue('matrix',file,id+'.strategy.max-parallel','parallel limit differs from the contract');
+        for(const key of Object.keys(job.strategy||{}))if(!['matrix','fail-fast','max-parallel'].includes(key))issue('matrix',file,id+'.strategy.'+key,'strategy key not allowed');
       }else if(job.strategy!==undefined)issue('matrix',file,id+'.strategy','only planned shard jobs use a matrix');
       const steps=Array.isArray(job.steps)?job.steps:[];
       if(!steps.length)issue('jobs',file,id+'.steps','job has no steps');
@@ -221,6 +228,7 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
         for(const key of Object.keys(step))if(key==='continue-on-error')issue('continue-on-error',file,at,'step continues on error');else if(!stepKeys.includes(key))issue('step-keys',file,at+'.'+key,'step key not allowed');
         if((step.uses===undefined)===(step.run===undefined)){issue('step-keys',file,at,'a step has exactly one of uses and run');return;}
         if(step.uses!==undefined){
+          if(step.id!==undefined)issue('step-keys',file,at,'action step id not allowed');
           if(!workflowActions.includes(step.uses))issue('actions',file,at,'action not allowed: '+step.uses);
           if(step.uses==='actions/setup-node@v4'){
             if(step.with?.['node-version']!==workflowNodeVersion)issue('node-version',file,at,'the job sets up Node '+step.with?.['node-version']+'; every job sets up Node '+workflowNodeVersion);
@@ -238,6 +246,7 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
         }
         const run=String(step.run).trim(),index=entries.findIndex(e=>e.run===run);
         if(index<0){
+          if(step.id!==undefined)issue('step-keys',file,at,'setup step id not allowed');
           if(step.env!==undefined)issue('step-env',file,at,'undeclared step environment');
           for(const line of run.split('\n').map(s=>s.trim()).filter(Boolean)){
             if(!workflowSetupLines.some(re=>re.test(line)))issue('commands',file,at,'ad-hoc command: '+line);
@@ -257,10 +266,20 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
         if(seen.has(index))issue('commands',file,at,'entry repeated: '+run);
         else if(index!==next)issue('commands',file,at,'entry out of order: '+run);
         seen.add(index);next=Math.max(next,index+1);
+        if(step.id!==entries[index].id)issue('step-keys',file,at,'entry id differs from the contract');
         if((step.if??null)!==(entries[index].if??null))issue('step-condition',file,at,'entry condition differs from the contract');
         if(!same(step.env,entries[index].env))issue('step-env',file,at,'entry environment differs from the contract');
         const args=tokens(run);
-        if(args[1]==='audit/verify-evidence.mjs'&&args[2]==='seal')for(const row of rows||[])sealed.push(args[3].replace(/\$\{\{ matrix\.([A-Za-z_-]+) \}\}/g,(_,k)=>row[k]??'<missing '+k+'>'));
+        if(args[1]==='audit/run-ci-lane.mjs')for(const row of rows||[]){
+          try{
+            for(const unit of laneUnits(args[2],row.shard)){
+              for(const [script,mode,kind] of workForUnit(unit,{}).commands){
+                if(script==='audit/verify-evidence.mjs'&&mode==='seal')sealed.push(kind);
+                if(script==='audit/run-acceptance.mjs'&&!accepted.includes(mode))accepted.push(mode);
+              }
+            }
+          }catch(error){issue('matrix',file,id,error.message);}
+        }
         if(args[1]==='audit/run-acceptance.mjs')accepted.push(args[2]);
       });
       entries.forEach((e,n)=>{if(!seen.has(n))issue('commands',file,id,'missing entry: '+e.run);});

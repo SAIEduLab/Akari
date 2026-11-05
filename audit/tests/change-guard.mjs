@@ -7,16 +7,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {changeGuard,guardMutantPart,mergeGuardParts,formatGuardReport} from '../lib/change-guard.mjs';
+import {planForCommits} from '../lib/ci-lanes.mjs';
 import {changeGuardParts} from '../lib/shard-plan.cjs';
 const mode=process.argv[2]?.startsWith('--')?process.argv[2]:null,[name,base,head,output]=mode?process.argv.slice(3):[null,...process.argv.slice(2)];
 assert.ok(base&&head&&output&&(!mode||name),'usage: change-guard.mjs [--part <part> | --merge <parts dir>] <baseSha> <headSha> <report.json>');
 assert.ok([null,'--part','--merge'].includes(mode),'unknown mode '+mode);
-const repo=path.resolve(import.meta.dirname,'../..'),count=changeGuardParts.length-1,attempt=Number(process.env.GITHUB_RUN_ATTEMPT||1);
+const repo=path.resolve(import.meta.dirname,'../..'),attempt=Number(process.env.GITHUB_RUN_ATTEMPT||1);
+// Whole and manual part runs retain the declared maximum. Hosted workers agree from immutable commits.
+const count=mode&&process.env.GITHUB_ACTIONS==='true'?Math.max(1,planForCommits(repo,base,head).guard):changeGuardParts.length-1;
 const write=report=>{fs.mkdirSync(path.dirname(path.resolve(output)),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');};
 if(mode==='--part'){
   assert.ok(changeGuardParts.includes(name),'the change guard has no part '+name+' (parts: '+changeGuardParts.join(', ')+')');
   const report=name==='main'?await changeGuard({repo,base,head,part:'main'}):await guardMutantPart({repo,base,head,index:Number(name.slice(1)),count});
   write({...report,attempt});
+  if(name==='main'&&process.env.GITHUB_OUTPUT){
+    const shards=changeGuardParts.slice(1,1+Math.min(count,report.mutation?.mutants??0));
+    fs.appendFileSync(process.env.GITHUB_OUTPUT,'shards='+JSON.stringify(shards)+'\n');
+  }
   console.log('Change guard part '+name+': '+(report.errors.length?report.errors.join('; '):name==='main'?'checked, '+(report.mutation?.mutants??0)+' mutants planned':report.ran.length+' of '+report.mutants+' mutants run, '+report.survivors.length+' survive'));
   if(report.errors.length)process.exitCode=1;
 }else{
@@ -28,7 +35,9 @@ if(mode==='--part'){
     for(const part of read)newest.set(part.part,Math.max(newest.get(part.part)??0,part.attempt));
     parts.push(...read.filter(part=>part.attempt===newest.get(part.part)).map(({attempt:_,...part})=>part));
   }
-  const report=mode==='--merge'?mergeGuardParts({repo,base,head,parts,count}):await changeGuard({repo,base,head});
+  const jobResults=process.env.GITHUB_ACTIONS==='true'&&mode==='--merge'
+    ?{plan:process.env.AKARI_GUARD_PLAN_RESULT,parts:process.env.AKARI_GUARD_PARTS_RESULT}:undefined;
+  const report=mode==='--merge'?mergeGuardParts({repo,base,head,parts,count,jobResults}):await changeGuard({repo,base,head});
   write(report);
   const summary=formatGuardReport(report);
   console.log(summary);

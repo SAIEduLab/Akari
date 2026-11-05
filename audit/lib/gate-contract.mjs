@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {selftestShards,browserShards,acceptanceShards,changeGuardParts} from './shard-plan.cjs';
 // One sealed bundle per CI shard (audit/lib/shard-plan.cjs); the aggregate merges them for the full validators.
 export const auditBundleKinds=[...Object.keys(selftestShards).map(s=>'selftest-'+s),'audio-codecs-win32',...Object.keys(browserShards).map(s=>'full-browser-'+s)];
-export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
+export const auditJobIds=['audit-lane','lane-plan'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
   ['audit-inventory','audit/tests/audit-inventory.mjs',file('audit-inventory')],
@@ -152,25 +152,24 @@ const guardShas={AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKAR
 export const guardCodePaths=['audit/lib','audit/tests','audit/browser/cases/audit-lib.cjs','src/build.mjs'];
 const sameRepositoryPr="${{ github.event.pull_request.head.repo.full_name == github.repository }}";
 const baseGuard={run:'git checkout "$AKARI_BASE_SHA" -- '+guardCodePaths.join(' '),if:"${{ github.event_name == 'pull_request_target' }}",env:{AKARI_BASE_SHA:guardShas.AKARI_BASE_SHA}};
+const lanePlan=group=>({if:sameRepository,needs:[],fullHistory:true,outputs:{lanes:'${{ steps.plan.outputs.lanes }}'},entries:[
+  {id:'plan',run:'node audit/lib/ci-lanes.mjs plan '+group}]});
+const laneWorker=(group,shards)=>({if:"${{ always() && needs.lane-plan.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}",
+  needs:['lane-plan'],shards,shardExpression:'${{ fromJSON(needs.lane-plan.outputs.lanes) }}',
+  entries:[{run:'node audit/run-ci-lane.mjs '+group+' "${{ matrix.shard }}"'}]});
 export const workflowContract=Object.freeze({
   'akari-audit.yml':{triggers:'audit',env:requestedSha,jobs:{
-    selftest:{if:sameRepository,needs:[],shards:Object.keys(selftestShards),entries:[
-      {run:'node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"'},
-      {run:'node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"',if:'always()'}]},
-    'full-browser-gate':{if:sameRepository,needs:[],shards:Object.keys(browserShards),entries:[
-      {run:'node audit/browser/run-full-browser-audit.mjs --shard "${{ matrix.shard }}" --evidence "audit-evidence/full-browser-${{ matrix.shard }}"'},
-      {run:'node audit/verify-evidence.mjs seal "full-browser-${{ matrix.shard }}" "audit-evidence/full-browser-${{ matrix.shard }}"',if:'always()'}]},
-    'audio-codecs':{if:sameRepository,needs:[],entries:[
-      {run:'node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json'},
-      {run:'node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json'},
-      {run:'node audit/verify-evidence.mjs seal audio-codecs-win32 audit-evidence/audio',if:'always()'}]},
+    'lane-plan':lanePlan('audit'),
+    'audit-lane':laneWorker('audit',[...Object.keys(selftestShards),...Object.keys(browserShards),'audio']),
     aggregate:{if:afterNeeds,needs:auditJobIds,entries:[
+      {run:'node audit/lib/ci-lanes.mjs unpack audit downloaded-evidence'},
       {run:'node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json',env:{AKARI_NEEDS:'${{ toJSON(needs) }}'}}]},
   }},
   'akari-acceptance.yml':{triggers:'audit',env:requestedSha,jobs:{
-    'composition-acceptance':{if:sameRepository,needs:[],shards:Object.keys(acceptanceShards.composition),entries:[{run:'node audit/run-acceptance.mjs composition --shard "${{ matrix.shard }}"'}]},
-    'ux-editing':{if:sameRepository,needs:[],entries:[{run:'node audit/run-acceptance.mjs editing'}]},
-    'child-ux-aggregate':{if:afterNeeds,needs:['composition-acceptance','ux-editing'],entries:[
+    'lane-plan':lanePlan('acceptance'),
+    'acceptance-lane':laneWorker('acceptance',[...Object.keys(acceptanceShards.composition),'editing']),
+    'child-ux-aggregate':{if:afterNeeds,needs:['acceptance-lane','lane-plan'],entries:[
+      {run:'node audit/lib/ci-lanes.mjs unpack acceptance audit-evidence/child-ux/downloaded'},
       {run:'node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json',if:'always()',env:{GITHUB_TOKEN:'${{ github.token }}'}},
       {run:'node audit/tests/child-ux.mjs aggregate audit-evidence/child-ux/downloaded audit-evidence/child-ux/child-ux-aggregate.json',if:'always()',env:{AKARI_CHILD_UX_NEEDS:'${{ toJSON(needs) }}'}}]},
   }},
@@ -180,10 +179,12 @@ export const workflowContract=Object.freeze({
   }},
   // The guard runs in parts side by side (audit/lib/shard-plan.cjs changeGuardParts); audit-change-guard merges them.
   'akari-change-guard.yml':{triggers:'guard',cancel:"${{ startsWith(github.event_name, 'pull_request') }}",jobs:{
-    'change-guard-part':{if:sameRepositoryPr,needs:[],fullHistory:true,headCheckout:true,shards:changeGuardParts,entries:[baseGuard,
+    'guard-plan':{if:sameRepositoryPr,needs:[],fullHistory:true,headCheckout:true,outputs:{shards:'${{ steps.plan.outputs.shards }}'},entries:[baseGuard,
+      {id:'plan',run:'node audit/tests/change-guard.mjs --part "main" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-main/part.json"',env:guardShas}]},
+    'change-guard-part':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository && needs.guard-plan.result == 'success' && needs.guard-plan.outputs.shards != '[]' }}",needs:['guard-plan'],fullHistory:true,headCheckout:true,shards:changeGuardParts.slice(1),shardExpression:'${{ fromJSON(needs.guard-plan.outputs.shards) }}',entries:[baseGuard,
       {run:'node audit/tests/change-guard.mjs --part "${{ matrix.shard }}" "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" "audit-evidence/change-guard-${{ matrix.shard }}/part.json"',env:guardShas}]},
-    'audit-change-guard':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}",needs:['change-guard-part'],fullHistory:true,headCheckout:true,entries:[baseGuard,
-      {run:'node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:guardShas}]},
+    'audit-change-guard':{if:"${{ always() && github.event.pull_request.head.repo.full_name == github.repository }}",needs:['guard-plan','change-guard-part'],fullHistory:true,headCheckout:true,entries:[baseGuard,
+      {run:'node audit/tests/change-guard.mjs --merge downloaded-guard-parts "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:{...guardShas,AKARI_GUARD_PLAN_RESULT:'${{ needs.guard-plan.result }}',AKARI_GUARD_PARTS_RESULT:'${{ needs.change-guard-part.result }}'}}]},
   }},
 });
 

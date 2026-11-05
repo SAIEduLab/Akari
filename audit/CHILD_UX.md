@@ -113,7 +113,7 @@
 
 機械検査は独立期待・全必須ID・実結果・画像の実在とhash・実操作領域・snapshot・実行由来をすべて満たした場合だけPASS。必須欠落、重複、FAIL、skip、cancel、timeout、別SHA・実行・試行の混在を拒否する。UNVERIFIEDはPASS件数に含めない。負例は製品正本へ変更せず、隔離した結果データで話者・順序・値・分岐・回数・案内・可視性・証拠欠落・集約不整合を変異させて必ず拒否する。負例検証はSYNTHETIC_VALIDATION_ONLYと明示し、製品操作の正例と混同しない。
 
-既存 `akari-audit.yml` と `akari-acceptance.yml` の必須検査を保持する。後者のcomposition-acceptance、ux-editingに観測と独立validatorを追加し、child-ux-aggregateが両ジョブの成功と当該run／attemptのsealed bundle、実ファイルhash、既存validatorの再検証を必須とする。新しいブラウザー実行ジョブを重複増設しない。PRのheadと実際のcheckout（merge）のSHAは別フィールドに記録し、異なる作品・実行証拠を混ぜない。
+既存 `akari-audit.yml` と `akari-acceptance.yml` の必須検査を保持する。後者の実行枠でcompositionとeditingの観測と独立validatorを動かし、child-ux-aggregateが計画と全実行枠の成功、当該run／attemptのsealed bundle、実ファイルhash、既存validatorの再検証を必須とする。新しいブラウザー実行ジョブを重複増設しない。PRのheadと実際のcheckout（merge）のSHAは別フィールドに記録し、異なる作品・実行証拠を混ぜない。
 
 各bundleは同じ公開snapshot、候補SHA、実行SHA、OS、run、attemptを持つ。修正済みSHAの再実行でも以前のFAILを消さない。同runの再試行はGitHubのworkflow-run-attemptとjobsから以前の結論・手順・リンクを取得しretry-history.jsonへ保存する。先行失敗があればRETRIED_AFTER_NON_SUCCESSを明記する。当該attemptに両必須ジョブの証拠が必要なため、失敗ジョブだけの再試行の旧証拠を混ぜて合格にしない。全必須ジョブを実行する。保持は3日、既存concurrencyで重複を抑え、既存画像を再利用しproject hashで証拠容量を抑える。保証・ケース・閾値・既存の実行制限を縮小しない。
 
