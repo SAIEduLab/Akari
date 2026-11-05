@@ -28,6 +28,7 @@ export function declaredLaunches(root) {
   const acceptance = () => Object.values(acceptanceCommands).flat().map(command => command.match(/"[^"]*"|\S+/g)[1]);
   const browser = () => Object.values(JSON.parse(fs.readFileSync(path.join(root, 'audit/browser/browser-audit-manifest.json'), 'utf8')).groups).flat().map(task => 'audit/browser/cases/' + task.split(':')[0] + '.cjs');
   return {
+    'audit/run-ci-lane.mjs': () => literals('audit/run-ci-lane.mjs'),
     'audit/run-local-gate.mjs': gate,
     'audit/run-acceptance.mjs': acceptance,
     // The merge runs only the steps planned after it (audit/lib/shard-plan.cjs).

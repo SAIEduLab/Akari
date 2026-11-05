@@ -39,7 +39,7 @@ jobs:
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
-      - name: Check the change and plan the mutants
+      - name: Check the change and assign mutation workers from the shared pool
         id: plan
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -81,7 +81,7 @@ jobs:
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
-      - name: Run one part of the change guard
+      - name: Run the assigned share of the mutation plan
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}

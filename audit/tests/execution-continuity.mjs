@@ -54,8 +54,8 @@ for(const kind of kinds){
 }
 for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job',...mergedKinds.map(k=>'merged-'+k)])check('aggregate:'+scenario,()=>{
   const calls=[],selections=[],written=new Map(),n=clone(needs),merges=[];
-  if(scenario==='cancelled-job')n.selftest.result='cancelled';
-  if(scenario==='missing-job')delete n.selftest;
+  if(scenario==='cancelled-job')n['audit-lane'].result='cancelled';
+  if(scenario==='missing-job')delete n['audit-lane'];
   if(scenario==='unexpected-job')n.extra={result:'success'};
   const process={argv:['node','verifier','aggregate',downloads,'/aggregate/result.json'],env:{GITHUB_RUN_ID:aggregateProvenance.run,GITHUB_RUN_ATTEMPT:aggregateProvenance.attempt,AKARI_NEEDS:JSON.stringify(n)}};
   if(scenario==='missing-jobs')delete process.env.AKARI_NEEDS;

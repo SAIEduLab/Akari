@@ -6,12 +6,58 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {workflowIssues} from '../lib/workflow-contract.mjs';
 import {scriptPackages} from '../lib/script-packages.mjs';
-import {workflowContract} from '../lib/gate-contract.mjs';
-import {changeGuardParts} from '../lib/shard-plan.cjs';
+import {planLanes,auditSeconds,acceptanceSeconds,bundleKind,unpackLanes} from '../lib/ci-lanes.mjs';
+import {workForUnit} from '../run-ci-lane.mjs';
+import {workflowContract,auditBundleKinds} from '../lib/gate-contract.mjs';
+import {changeGuardParts,acceptanceShards} from '../lib/shard-plan.cjs';
 import {caseRecorder,writeCaseReport} from '../lib/gate-case-contract.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: workflow-contract.mjs <result.json>');
 const dir='.github/workflows';
 const current=Object.fromEntries(fs.readdirSync(dir).filter(name=>/\.ya?ml$/.test(name)).sort().map(name=>[name,fs.readFileSync(path.join(dir,name),'utf8').replace(/\r\n/g,'\n')]));
+// Each logical suite runs once, across the same twenty workers for all workflows of a push.
+assert.deepEqual(Object.keys(auditSeconds).map(bundleKind).sort(),[...auditBundleKinds].sort());
+assert.deepEqual(Object.keys(acceptanceSeconds).sort(),[...Object.keys(acceptanceShards.composition),'editing'].sort());
+const browserEnv={AKARI_BROWSER:'functional',AKARI_CODEC_BROWSER:'codec'};
+for(const unit of Object.keys(auditSeconds)){
+  const {commands,dir}=workForUnit(unit,browserEnv);
+  assert.deepEqual(commands.at(-1),['audit/verify-evidence.mjs','seal',bundleKind(unit),dir]);
+  if(unit==='audio')assert.deepEqual(commands.slice(0,-1),[
+    ['audit/tests/audio-codecs.mjs','codec',dir+'/report.json'],
+    ['audit/tests/block-field-width.mjs','codec',dir+'/block-field-width.json']]);
+  else if(unit.startsWith('s'))assert.deepEqual(commands[0],['audit/run-local-gate.mjs','--shard',unit,'functional',dir]);
+  else assert.deepEqual(commands[0],['audit/browser/run-full-browser-audit.mjs','--shard',unit,'--evidence',dir]);
+}
+for(const unit of Object.keys(acceptanceSeconds)){
+  const args=unit==='editing'?['editing']:['composition','--shard',unit];
+  assert.deepEqual(workForUnit(unit,browserEnv).commands,[['audit/run-acceptance.mjs',...args]]);
+}
+for(const lines of [0,1,20,341,2000]){
+  for(const copies of [1,2]){
+    const plan=planLanes(lines,copies),names=lanes=>lanes.flatMap(lane=>lane.split('+')).sort();
+    assert.deepEqual(names(plan.audit),Object.keys(auditSeconds).sort());
+    assert.deepEqual(names(plan.acceptance),Object.keys(acceptanceSeconds).sort());
+    assert.equal(plan.audit.length+plan.acceptance.length+plan.guard*copies,20);
+    assert.equal(plan.guard>0,lines>0);
+  }
+}
+// Downloaded lanes keep each bundle and attempt separate; a malformed delivery must fail before any move.
+const delivery=fs.mkdtempSync(path.join(os.tmpdir(),'akari-lane-delivery-'));
+try{
+  const artifact=(name,kinds)=>{const dir=path.join(delivery,name);for(const k of kinds)fs.mkdirSync(path.join(dir,k),{recursive:true});};
+  artifact('akari-audit-lane-s01+b01-123-1',['selftest-s01','full-browser-b01']);
+  artifact('akari-audit-lane-b01-123-2',['full-browser-b01']);
+  artifact('akari-audit-lane-s02+audio-123-2',['selftest-s02']);
+  assert.throws(()=>unpackLanes('audit',delivery,'123','2'),/incomplete lane/);
+  assert.ok(!fs.existsSync(path.join(delivery,'akari-selftest-s01-123-1')));
+  artifact('akari-audit-lane-s02+audio-123-2',['audio-codecs-win32']);
+  unpackLanes('audit',delivery,'123','2');
+  for(const id of ['selftest-s01-123-1','full-browser-b01-123-1','full-browser-b01-123-2','audio-codecs-win32-123-2','selftest-s02-123-2'])
+    assert.ok(fs.statSync(path.join(delivery,'akari-'+id)).isDirectory());
+  artifact('akari-acceptance-lane-c01+editing-123-1',['fixed-acceptance-c01','ux-editing']);
+  assert.throws(()=>unpackLanes('acceptance',delivery,'123','2'));
+  artifact('akari-acceptance-lane-c01-123-1',['fixed-acceptance-c01']);
+  assert.throws(()=>unpackLanes('acceptance',delivery,'123','1'),/duplicate lane evidence/);
+}finally{fs.rmSync(delivery,{recursive:true,force:true});}
 const {results,pass}=caseRecorder();
 const packages=new Map(),loads=script=>{if(!packages.has(script))packages.set(script,scriptPackages('.',script));return packages.get(script);};
 const issues=workflowIssues(current,workflowContract,loads);
@@ -31,8 +77,10 @@ function reject(id,rule,detail,mutate,contract=workflowContract){
   assert.ok(found.some(i=>i.rule===rule&&detail.test(i.detail)),id+' must be rejected by '+rule+' '+detail+'; got '+JSON.stringify(found));
   pass(id);
 }
-const gateStep='      - run: node audit/run-local-gate.mjs --shard "${{ matrix.shard }}" "$AKARI_BROWSER" "audit-evidence/selftest-${{ matrix.shard }}"\n';
-const sealStep='      - run: node audit/verify-evidence.mjs seal "selftest-${{ matrix.shard }}" "audit-evidence/selftest-${{ matrix.shard }}"\n        if: always()\n';
+const gateStep='      - run: node audit/run-ci-lane.mjs audit "${{ matrix.shard }}"\n';
+const unpackStep='      - run: node audit/lib/ci-lanes.mjs unpack audit downloaded-evidence\n';
+const aggregateStep='      - run: node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json\n        env:\n          AKARI_NEEDS: ${{ toJSON(needs) }}\n';
+const laneMatrix='shard: ${{ fromJSON(needs.lane-plan.outputs.lanes) }}';
 const sameRepositoryIf="    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}\n";
 const any=/./;
 
@@ -66,7 +114,7 @@ reject('jobs/condition-changed','jobs',/condition differs/,f=>edit(f,audit,sameR
 reject('runner/wrong-platform','runner',/windows-latest/,f=>edit(f,guard,'    runs-on: windows-latest','    runs-on: ubuntu-latest'));
 reject('runner/missing-bash','runner',/declared bash shell/,f=>edit(f,guard,'    defaults:\n      run:\n        shell: bash\n',''));
 reject('job-keys/reusable-workflow','job-keys',/not allowed/,f=>edit(f,guard,'    runs-on: windows-latest\n','    runs-on: windows-latest\n    uses: ./.github/workflows/other.yml\n'));
-reject('needs/dropped-job','needs',/needs must be/,f=>edit(f,audit,'needs: [selftest, full-browser-gate, audio-codecs]','needs: [selftest, full-browser-gate]'));
+reject('needs/dropped-job','needs',/needs must be/,f=>edit(f,audit,'needs: [lane-plan, audit-lane]','needs: [lane-plan]'));
 reject('needs/without-always','needs',/always\(\)/,f=>edit(f,audit,"    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}\n",sameRepositoryIf));
 reject('continue-on-error/job','continue-on-error',/job/,f=>edit(f,guard,'    timeout-minutes: 360\n','    timeout-minutes: 360\n    continue-on-error: true\n'));
 reject('continue-on-error/step','continue-on-error',/step/,f=>edit(f,audit,gateStep,gateStep+'        continue-on-error: true\n'));
@@ -77,7 +125,7 @@ reject('packages/node-path-missing','packages',/change-guard\.mjs may load @babe
 // Every job runs the one Node release the contract names, set up before its first node entry.
 reject('node-version/other-release','node-version',/sets up Node 24\.22\.1; every job sets up Node 24\.22\.2/,f=>edit(f,guard,"node-version: '24.22.2'","node-version: '24.22.1'"));
 reject('node-version/not-set-up','node-version',/runs before the job sets up Node 24\.22\.2/,f=>edit(f,guard,"      - uses: actions/setup-node@v4\n        with:\n          node-version: '24.22.2'\n",''));
-reject('packages/child-not-installed','packages',/run-local-gate\.mjs may load jsdom, and this job does not install it/,f=>edit(f,audit,' jsdom@26.1.0 ',' '));
+reject('packages/child-not-installed','packages',/run-ci-lane\.mjs may load jsdom, and this job does not install it/,f=>edit(f,audit,' jsdom@26.1.0 ',' '));
 // The packages of a child node script count for the script that starts it; a launch of a script named only through
 // a variable needs its launching file declared.
 {
@@ -97,24 +145,24 @@ reject('packages/node-path-elsewhere','packages',/change-guard\.mjs may load @ba
 reject('artifact/retention-days','artifact',/3 days/,f=>edit(f,guard,'retention-days: 3','retention-days: 90'));
 reject('artifact/missing-retention','artifact',/3 days/,f=>edit(f,guard,'          retention-days: 3\n',''));
 reject('artifact/missing-files-allowed','artifact',/missing evidence/,f=>edit(f,guard,'if-no-files-found: error','if-no-files-found: warn'));
-reject('commands/ad-hoc-audit-check','commands',/ad-hoc command: node audit\/tests\/license-verify/,f=>edit(f,audit,sealStep,'      - run: node audit/tests/license-verify.mjs audit-evidence/selftest/license-browser.json\n'+sealStep));
-reject('commands/ad-hoc-shell-check','commands',/ad-hoc command: test -f/,f=>edit(f,audit,'          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"\n','          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"\n          test -f Akari.html || exit 1\n'));
-reject('commands/missing-entry','commands',/missing entry: node audit\/verify-evidence\.mjs seal "selftest-/,f=>edit(f,audit,sealStep,''));
-reject('commands/reordered-entries','commands',/out of order/,f=>edit(f,audit,gateStep+sealStep,sealStep+gateStep));
+reject('commands/ad-hoc-audit-check','commands',/ad-hoc command: node audit\/tests\/license-verify/,f=>edit(f,audit,unpackStep,'      - run: node audit/tests/license-verify.mjs audit-evidence/selftest/license-browser.json\n'+unpackStep));
+reject('commands/ad-hoc-shell-check','commands',/ad-hoc command: test -f/,f=>edit(f,audit,'          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser" --media\n','          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser" --media\n          test -f Akari.html || exit 1\n'));
+reject('commands/missing-entry','commands',/missing entry: node audit\/lib\/ci-lanes\.mjs unpack/,f=>edit(f,audit,unpackStep,''));
+reject('commands/reordered-entries','commands',/out of order/,f=>edit(f,audit,unpackStep+aggregateStep,aggregateStep+unpackStep));
 reject('commands/duplicate-entry','commands',/repeated/,f=>edit(f,audit,gateStep,gateStep+gateStep));
 reject('step-condition/disabled-entry','step-condition',any,f=>edit(f,audit,gateStep,gateStep+'        if: ${{ false }}\n'));
 reject('step-env/entry-env-changed','step-env',/entry environment/,f=>edit(f,audit,'AKARI_NEEDS: ${{ toJSON(needs) }}',"AKARI_NEEDS: '{}'"));
 reject('step-env/undeclared','step-env',/undeclared/,f=>edit(f,guard,"        with:\n          node-version: '24.22.2'\n","        with:\n          node-version: '24.22.2'\n        env:\n          NODE_OPTIONS: --require ./preload.cjs\n"));
 reject('step-keys/shell-override','step-keys',/not allowed/,f=>edit(f,audit,gateStep,gateStep+'        shell: python\n'));
 reject('actions/unknown-action','actions',/not allowed/,f=>edit(f,guard,'      - uses: actions/setup-node@v4\n','      - uses: someone/setup-node@main\n'));
-reject('bundles/matrix-group-dropped','bundles',/full-browser-b07/,f=>edit(f,audit,'shard: [b01, b02, b03, b04, b05, b06, b07]','shard: [b01, b02, b03, b04, b05, b06]'));
+reject('bundles/matrix-group-dropped','bundles',/sealed bundle kinds/,f=>edit(f,audit,laneMatrix,'shard: [b01]'));
 // The kinds rule is independent of the declared entries: change both the workflow and its declaration.
-const singleKind=structuredClone(workflowContract);singleKind[acceptance].jobs['composition-acceptance'].entries=[{run:'node audit/run-acceptance.mjs editing --shard "${{ matrix.shard }}"'}];
-reject('acceptance/kind-dropped','acceptance',/acceptance kinds/,f=>edit(f,acceptance,'run: node audit/run-acceptance.mjs composition','run: node audit/run-acceptance.mjs editing'),singleKind);
+const singleKind=structuredClone(workflowContract);singleKind[acceptance].jobs['acceptance-lane'].shards=['editing'];
+reject('acceptance/kind-dropped','acceptance',/acceptance kinds/,f=>f,singleKind);
 // Shard matrices: exactly the planned shards, each run to completion, and no other matrix.
-reject('matrix/shard-dropped','matrix',/shards must be exactly/,f=>edit(f,audit,'shard: [s01, s02, s03, s04, s05, s06, s07, s08, s09]','shard: [s01, s02, s03, s04, s05, s06, s07, s08]'));
+reject('matrix/shard-dropped','matrix',/shards must be exactly/,f=>edit(f,audit,laneMatrix,'shard: [s01]'));
 reject('matrix/fail-fast','matrix',/must not cancel/,f=>edit(f,acceptance,'      fail-fast: false\n','      fail-fast: true\n'));
-reject('matrix/unplanned-matrix','matrix',/only planned shard jobs/,f=>edit(f,audit,'    timeout-minutes: 25\n','    timeout-minutes: 25\n    strategy:\n      matrix:\n        shard: [s01]\n'));
+reject('matrix/unplanned-matrix','matrix',/only planned shard jobs/,f=>edit(f,audit,'    timeout-minutes: 5\n','    timeout-minutes: 5\n    strategy:\n      matrix:\n        shard: [s01]\n'));
 // The guard runs exactly its planned parts.
 const mutantParts=changeGuardParts.slice(1);
 assert.equal(mutantParts.length,20);

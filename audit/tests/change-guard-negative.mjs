@@ -134,11 +134,12 @@ try {
   const languageManifest=JSON.parse(text('audit/manifests/language-form-coverage.json')),fewerCases={...languageManifest,cases:languageManifest.cases.slice(1)};
   removal('removed/language-test',await guard(derive({'audit/manifests/language-form-coverage.json':JSON.stringify(fewerCases)})),
     {'language-test':expectedLanguageIds(languageManifest).filter(id=>!expectedLanguageIds(fewerCases).includes(id))});
-  const editingEntry='akari-acceptance.yml/ux-editing/node audit/run-acceptance.mjs editing';
-  removal('removed/workflow-job',await guard(derive({'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',"'ux-editing':{if:sameRepository","'ux-edit':{if:sameRepository")})),
-    {'workflow-job':['akari-acceptance.yml/ux-editing'],'workflow-entry':[editingEntry]});
-  removal('removed/workflow-entry',await guard(derive({'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',"{run:'node audit/run-acceptance.mjs editing'}","{run:'node audit/run-acceptance.mjs editing --quick'}")})),
-    {'workflow-entry':[editingEntry]});
+  const unpackEntry='node audit/lib/ci-lanes.mjs unpack acceptance audit-evidence/child-ux/downloaded';
+  const worker='akari-acceptance.yml/acceptance-lane';
+  removal('removed/workflow-job',await guard(derive({'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',"'acceptance-lane':laneWorker","'other-acceptance':laneWorker")})),
+    {'workflow-job':[worker],'workflow-entry':[worker+'/node audit/run-ci-lane.mjs acceptance "${{ matrix.shard }}"']});
+  removal('removed/workflow-entry',await guard(derive({'audit/lib/gate-contract.mjs':replaced('audit/lib/gate-contract.mjs',unpackEntry,unpackEntry+' --quick')})),
+    {'workflow-entry':['akari-acceptance.yml/child-ux-aggregate/'+unpackEntry]});
   const changedPin=await guard(derive({'audit/manifests/product-tests.json':json('audit/manifests/product-tests.json',m=>m.fixedIdSha256='e'.repeat(64))}));
   assert.deepEqual(changedPin.pinFiles,{[products.fixedIdSha256]:['audit/manifests/product-tests.json']});
   removal('pin/changed',changedPin,{pin:[products.fixedIdSha256]});
