@@ -4,15 +4,8 @@
 // the merge requires the two results to be equal), and the final aggregates merge the shard evidence and run the unchanged full
 // validators (verifyGateResults, verifyBrowserGroup, the child UX bundle checks) on the merged tree.
 //
-// Sizing ground (Actions runs 40881943995 and 40881943951, windows-latest, one runner per job):
-// the account runs at most 20 jobs at once and the work-authorization and change-guard jobs start
-// with every pull-request head, leaving 18 runners for the audit jobs without queueing. The
-// measured suite time is 7866 s (18 runners: about 437 s each). A shard is planned at <= 540 s of
-// measured suite time: the largest suite that is not split (ux-normal GUI 504 s) fits, and 18 jobs
-// suffice. With job setup <= 61 s and seal/upload <= 15 s a shard job takes about 10 minutes, far
-// inside the job limits. A suite whose measured time alone exceeds 540 s is split over its own case
-// set (`splits`), never by dropping, sampling or relaxing a case; workbench-matrix (519 s in these
-// runs) later measured over it and is split. The browser shards are planned from later runs (below).
+// Shard times below are from the Windows CI runs named with each group. A producer and its verifier run together.
+// On pull requests the audit matrices share the runner pool with acceptance, authorization and the change guard.
 'use strict';
 
 // Unit syntax: 'name' runs the whole step/task; 'name@part' runs one declared part of it.
@@ -30,10 +23,12 @@ const splits={
   'schema-shards':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
   // 706.8 s over 6 viewport/mode contexts of about 118 s; two parts of three contexts (about 354 s).
   'modern-browser':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
-  // 406 s (run 41454661417) and past the 600 s child limit (run 41453617377) over 55 cases. Two groups of about half the
-  // time each (measured locally on 57 cases: 186 s and 207 s): the behaviour, limit and mutant rules and the test map,
-  // and the rest.
-  'change-guard-negative':{parts:indexed(2),assign:id=>/^(?:behaviour|limits|mutants|test-map)\//.test(id)?'2/2':'1/2'},
+  // Its two halves took 315 s and 270 s locally (69 cases, 685b2f9) and up to 525 s each in CI; in run 41864291413 the
+  // first passed the 600 s child limit and the second took 542 s, about 2.0 times its local time. Four parts, one for each
+  // group the test runs together (gated by its first case), measured locally: the tree, record, version and language
+  // rules (90 s); behaviour and limits (60 s); moves, assertions and the extension line (224 s); mutants, the test map and
+  // the record without a change (210 s). At 2.0 times the largest takes about 450 s, inside the child limit.
+  'change-guard-negative':{parts:indexed(4),assign:id=>/^(?:moves|assertions|coverage)\//.test(id)?'3/4':/^(?:mutants|test-map)\//.test(id)||id==='behaviour/record-without-change'?'4/4':/^(?:behaviour|limits)\//.test(id)?'2/4':'1/4'},
   // 347-574 s (runs 41424226627 and 41424221208) over 9 viewport/zoom contexts of about 55-78 s (runs 41420498555 and
   // 41420493498, whose 598 s reached the 600 s child limit); two parts of five and four contexts (about 319 s and 255 s
   // at the slower run).
@@ -46,17 +41,19 @@ const splits={
 // Planned from the step times of runs 41476744043 and 41490181654, the slower of the two for each step (a split step's
 // part by its own time): s01 516 s, s02 537 s, s03 531 s, s04 536 s, s05 534 s, s06 522 s, s07 407 s, s08 420 s. save-name,
 // grown to 280 cases (pointers, 名人, Escape and the toolbar), took 413 s locally where its 108 cases took 92-131 s and
-// 106 s in CI (run 41510996137); with its verifier it is s09, which no other shard has room for. Nine shards with the
-// seven browser shards, the codec job and the aggregate are the 18 runners above.
+// 106 s in CI (run 41510996137); with its verifier it is s09, which no other shard has room for. The four parts of change-guard-negative
+// (above) go to four shards, as two parts of a step in one shard would write one result file: at 2.0 times their local
+// time (run 41864291413) s04 holds about 420 s and designer's 109 s, s05 about 448 s and 201 s, s07 about 180 s and 383 s,
+// s08 about 120 s and 397 s, where s04 and s05 took 651 s and 801 s in that run.
 const selftestShards={
   s01:[unit('entry-browser','2/2'),'samples','samples-negative','entry-unit'],
   s02:[unit('entry-browser','1/2'),'speech-display','speech-display-verify'],
   s03:['spec-expectations-ui','spec-examples','spec-expectations-static','spec-expectations','integrity'],
-  s04:[unit('change-guard-negative','2/2'),'designer'],
-  s05:[unit('change-guard-negative','1/2'),'toolbar-stage','toolbar-stage-verify','review-first-use','extension-foundation','extension-foundation-negative'],
+  s04:[unit('change-guard-negative','4/4'),'designer'],
+  s05:[unit('change-guard-negative','3/4'),'toolbar-stage','toolbar-stage-verify','review-first-use','extension-foundation','extension-foundation-negative'],
   s06:['static','audit-inventory','product-source','publication-inventory','publication-documents','release-distribution','workflow-contract'],
-  s07:['japanese-intent-browser','review-readable','export-open','ui-buttons'],
-  s08:['product','editor-browser-core','editor-gui','editor-assets','manual','language-boundaries','harness-negative','surface-negative','review-units',
+  s07:[unit('change-guard-negative','1/4'),'japanese-intent-browser','review-readable','export-open','ui-buttons'],
+  s08:[unit('change-guard-negative','2/4'),'product','editor-browser-core','editor-gui','editor-assets','manual','language-boundaries','harness-negative','surface-negative','review-units',
     'release-policy-negative','browser-environment','ci-regression','dom-regression','node-product','language-node','language-browser','editor-node','normal',
     'ownership','block-fields','format-compatibility','language-negative','japanese-contract-static','language-expectations-static','sentence-form-coverage',
     'runtime-boundary','japanese-gate-negative','review-actor','review-language','review-harness-negative','license-static','license-browser','license-verify'],
@@ -90,15 +87,11 @@ const acceptanceShards={
 // Reads the whole merged composition directory, so it runs in the aggregate job.
 const acceptanceAfterMerge={composition:['audit/tests/actions-transfer-verify.mjs']};
 
-// Change guard parts (.github/workflows/akari-change-guard.yml, audit/tests/change-guard.mjs --part): `main` runs every
-// check but the mutants, and m1..m6 each run every sixth mutant; the job audit-change-guard merges them into one verdict.
-// Planned from runs 41748539936 and 41748539575 (windows-latest): the guard as one job ran 1251 s for 412 mutants and
-// every other check, and ended 7 minutes after the audit. The account runs at most 20 jobs at once; a head starts the 17
-// audit jobs, the 4 acceptance jobs and the guard together, so the guard waits for a runner, and most runners came free
-// 5.5-7.1 minutes after the start. Six parts hold at most 209 s of mutants each (1251 s / 6), so a part that starts on a
-// runner freed then ends near the last audit shards (about 10 minutes); more parts would each set up and run the coverage
-// again for less time.
-const changeGuardParts=['main','m1','m2','m3','m4','m5','m6'];
+// Run 41966888731 took 49m55s; its six mutation jobs took 27m17s to 40m41s. Twenty workers
+// share each suite/operator profile across the account's 20 slots. Every worker checks the same plan.
+// During planning, PRs can start seven selftests, six full-browser jobs, one codec job, three composition
+// jobs, one editing job, authorization and the guard planner (20). Other events use the full audit matrices.
+const changeGuardParts=['main',...Array.from({length:20},(_,i)=>'m'+(i+1))];
 // Files a step reads inside another step's output directory (exact output files are found from the commands).
 const acceptanceReads={composition:{'audit/tests/child-ux.mjs/matrix':['audit/run-ux-normal-gui.mjs']}};
 

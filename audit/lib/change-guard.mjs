@@ -328,7 +328,7 @@ export async function guardMutantPart({repo,base,head,index,count,limitMs=guardL
 // The verdict of the parts: the main part and the mutant parts m1..m<count>, each reported once. They guard the same base
 // and head, a part ran exactly its share of the main part's plan, and the survivors of all parts are judged as one run of
 // every mutant would judge them. Anything else is an error of the merged report.
-export function mergeGuardParts({repo,base,head,parts,count}){
+export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
   const mains=parts.filter(p=>p?.part==='main'),main=mains.length===1?mains[0]:null;
   const valid=main?.schema===guardReportSchema&&Array.isArray(main.errors);
   const report=valid?structuredClone(main):emptyReport(base,head),fail=message=>report.errors.push(message);
@@ -337,10 +337,15 @@ export function mergeGuardParts({repo,base,head,parts,count}){
     if(!valid)throw new Error('the main part is reported '+mains.length+' times'+(mains.length===1?', in another form':''));
     const commits=resolveCommits(repo,base,head);report.guardCode=guardCode(repo,commits);
     for(const field of ['base','head','mergeBase'])if(main[field]!==commits[field])fail('the main part guards '+field+' '+main[field]+', not '+commits[field]);
-    const names=Array.from({length:count},(_,i)=>'m'+(i+1)),seen=parts.filter(p=>p!==main).map(p=>p?.part);
+    const plan=main.mutation?.plan??null,mutants=main.mutation?.mutants??0,survivors=[];
+    if(!Number.isSafeInteger(mutants)||mutants<0||(main.mutation!==null&&(!plan||main.status!=='PART')))throw new Error('invalid main mutation plan');
+    if(jobResults && (jobResults.plan!=='success'||jobResults.parts!==(mutants?'success':'skipped')))fail('guard job results disagree with the plan: '+JSON.stringify(jobResults));
+    // Actions starts only nonempty workers. Local runs may also supply all workers, including empty ones.
+    const allNames=Array.from({length:count},(_,i)=>'m'+(i+1));
+    const names=!jobResults&&parts.length===1+count?allNames:allNames.slice(0,mutants);
+    const seen=parts.filter(p=>p!==main).map(p=>p?.part);
     for(const name of names)if(seen.filter(n=>n===name).length!==1)fail('mutant part '+name+' is reported '+seen.filter(n=>n===name).length+' times');
     for(const name of seen)if(!names.includes(name))fail('an undeclared part '+name+' is reported');
-    const plan=main.mutation?.plan??null,mutants=plan?main.mutation.mutants:0,survivors=[];
     for(const part of parts.filter(p=>p!==main)){
       if(!names.includes(part?.part))continue;
       if(part.schema!==guardPartSchema||!Array.isArray(part.errors)||!Array.isArray(part.ran)||!Array.isArray(part.survivors)){fail(part.part+' is not a report of a mutant part');continue;}

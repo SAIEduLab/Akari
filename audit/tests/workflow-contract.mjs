@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {workflowIssues} from '../lib/workflow-contract.mjs';
 import {scriptPackages} from '../lib/script-packages.mjs';
 import {workflowContract} from '../lib/gate-contract.mjs';
+import {changeGuardParts} from '../lib/shard-plan.cjs';
 import {caseRecorder,writeCaseReport} from '../lib/gate-case-contract.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: workflow-contract.mjs <result.json>');
 const dir='.github/workflows';
@@ -115,7 +116,9 @@ reject('matrix/shard-dropped','matrix',/shards must be exactly/,f=>edit(f,audit,
 reject('matrix/fail-fast','matrix',/must not cancel/,f=>edit(f,acceptance,'      fail-fast: false\n','      fail-fast: true\n'));
 reject('matrix/unplanned-matrix','matrix',/only planned shard jobs/,f=>edit(f,audit,'    timeout-minutes: 25\n','    timeout-minutes: 25\n    strategy:\n      matrix:\n        shard: [s01]\n'));
 // The guard runs exactly its planned parts.
-reject('matrix/guard-part-dropped','matrix',/shards must be exactly/,f=>edit(f,guard,'shard: [main, m1, m2, m3, m4, m5, m6]','shard: [main, m1, m2, m3, m4, m5]'));
+const mutantParts=changeGuardParts.slice(1);
+assert.equal(mutantParts.length,20);
+reject('matrix/guard-part-dropped','matrix',/shards must be exactly/,f=>edit(f,guard,'shard: ${{ fromJSON(needs.guard-plan.outputs.shards) }}','shard: ['+mutantParts.slice(0,-1).join(', ')+']'));
 reject('checkout/guard-shallow-history','checkout',/full history/,f=>edit(f,guard,'          fetch-depth: 0\n',''));
 // The guard checks out the head commit, not the merge commit, and keeps no token in the checkout the head's code runs in.
 reject('checkout/guard-merge-commit','checkout',/checks out the head commit/,f=>edit(f,guard,'          ref: ${{ github.event.pull_request.head.sha }}\n',''));

@@ -26,16 +26,16 @@ const skip = new Set(['loc', 'start', 'end', 'extra', 'leadingComments', 'traili
 
 // [{start, end, replacement, operator}] for the nodes that start inside one of the offset ranges, and for the operators
 // that stand inside one (an operator on a changed line of an expression that begins on the line above).
-export function mutantsIn(text, ranges) {
+function collectMutants(text, bucketAt) {
   const ast = parse(text, {sourceType: 'script', allowReturnOutsideFunction: true});
-  const within = at => ranges.some(([s, e]) => at >= s && at < e), inside = n => within(n.start), out = [];
   const visit = n => {
     if (!n || typeof n.type !== 'string') return;
     if ((n.type === 'BinaryExpression' || n.type === 'LogicalExpression') && swaps[n.operator]) {
       const opAt = text.indexOf(n.operator, n.left.end);
-      if (opAt >= 0 && opAt < n.right.start && within(opAt)) out.push({start: opAt, end: opAt + n.operator.length, replacement: swaps[n.operator], operator: n.operator + '->' + swaps[n.operator]});
+      if (opAt >= 0 && opAt < n.right.start) bucketAt(opAt)?.push({start: opAt, end: opAt + n.operator.length, replacement: swaps[n.operator], operator: n.operator + '->' + swaps[n.operator]});
     }
-    if (inside(n)) {
+    const out = bucketAt(n.start);
+    if (out) {
       // Only the ! goes: !(a && b) becomes (a && b).
       if (n.type === 'UnaryExpression' && n.operator === '!') out.push({start: n.start, end: n.start + 1, replacement: '', operator: 'drop !'});
       if (n.type === 'BooleanLiteral') out.push({start: n.start, end: n.end, replacement: String(!n.value), operator: String(n.value) + '->' + String(!n.value)});
@@ -46,6 +46,11 @@ export function mutantsIn(text, ranges) {
     for (const key of Object.keys(n)) { if (skip.has(key)) continue; const v = n[key]; if (Array.isArray(v)) v.forEach(visit); else if (v && typeof v.type === 'string') visit(v); }
   };
   visit(ast.program);
+}
+
+export function mutantsIn(text, ranges) {
+  const out = [];
+  collectMutants(text, at => ranges.some(([start, end]) => at >= start && at < end) ? out : undefined);
   return out;
 }
 
@@ -134,23 +139,34 @@ function outcome(scriptFile, suites, recordFile) {
 // The mutants of the given lines, in a fixed order: the same script and lines give the same list in every process, so
 // the parts of the guard (audit/tests/change-guard.mjs --part) each run their own share of one list.
 export function mutantPlan({script, shift, lineOffsets, lines, suitesFor}) {
-  const jobs = [];
-  for (const {file, line, text: source} of lines) {
+  // Map AST anchors (including operators on continuation lines) to source lines in one pass over the script.
+  const owners = new Uint32Array(script.length), buckets = lines.map(() => []);
+  for (const [i, {file, line}] of lines.entries()) {
     const range = lineOffsets(file, line);
-    if (!range) continue;
-    const [start, end] = range.map(x => x + shift);
-    for (const m of mutantsIn(script, [[start, end]])) {
+    if (range) owners.fill(i + 1, range[0] + shift, range[1] + shift);
+  }
+  if (lines.length) collectMutants(script, at => buckets[owners[at] - 1]);
+  const profiles = new Map();
+  for (const [i, {file, line, text: source}] of lines.entries()) {
+    if (!buckets[i].length) continue;
+    const suites = suitesFor(file, line), suiteKey = JSON.stringify(suites);
+    for (const m of buckets[i]) {
       const mutated = script.slice(0, m.start) + m.replacement + script.slice(m.end);
       try { new vm.Script(mutated); } catch { continue; } // a mutant that does not parse is no test of the tests
-      jobs.push({index: jobs.length, file, line, operator: m.operator, source: source.trim(), start: m.start, end: m.end, replacement: m.replacement, suites: suitesFor(file, line)});
+      // Consecutive jobs with the same tests and operator are dealt around the runners. Each runner receives
+      // either floor or ceil of its share of each profile, even when the inputs alternate in source order.
+      const profile = suiteKey + '\u0000' + m.operator;
+      if (!profiles.has(profile)) profiles.set(profile, []);
+      profiles.get(profile).push({file, line, operator: m.operator, source: source.trim(), start: m.start, end: m.end, replacement: m.replacement, suites});
     }
   }
+  // Keep all operators of each suite set together, so the suite totals balance as well.
+  const jobs = [...profiles.keys()].sort().flatMap(key => profiles.get(key)).map((job, index) => ({index, ...job}));
   // Two parts that hold the same digest mutate the same script in the same places and run the same suites.
   const digest = crypto.createHash('sha256').update(crypto.createHash('sha256').update(script).digest('hex') + '\u0000' + JSON.stringify(jobs)).digest('hex');
   return {script, jobs, digest};
 }
-// The mutants of part `index` (1-based) of `count`: every count-th mutant from its own place, so neighbouring mutants of
-// one line go to different parts.
+// The mutants of part `index` (1-based) of `count`: every count-th job from the ordered profiles.
 export const partJobs = (jobs, index, count) => jobs.filter(job => job.index % count === index - 1);
 const bySurvivor = (a, b) => (a.file + a.line + a.operator).localeCompare(b.file + b.line + b.operator);
 export const sortSurvivors = survivors => [...survivors].sort(bySurvivor);

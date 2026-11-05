@@ -11,7 +11,7 @@ import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib
 import {currentPart,partItems,changeGuardParts} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
-import {assistDifferences,mutationIssues,equivalentsFile,equivalentsSchema} from '../lib/mutation.mjs';
+import {assistDifferences,mutationIssues,equivalentsFile,equivalentsSchema,mutantPlan,mutantsIn,partJobs} from '../lib/mutation.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
 const part=currentPart('change-guard-negative'),mine=new Set(partItems('change-guard-negative',gateCaseIds['change-guard-negative'],part));
 const {results,pass}=caseRecorder();
@@ -285,10 +285,34 @@ try {
   // failed, and a merge without the main part.
   {
     const whole=await guard(pinnedHead),count=changeGuardParts.length-1;
+    // Alternating suite sets in source order must not send one kind of work to only the even workers.
+    const statements=Array.from({length:61},()=>'v = v + 1;').concat(['if (','v || 1',') v = 2;']);
+    const prelude='let v = 0;\n',script=prelude+statements.join('\n'),ranges=[];
+    let offset=0;
+    for(const row of statements){ranges.push([offset,offset+row.length]);offset+=row.length+1;}
+    const lines=statements.map((text,i)=>({file:'sample.js',line:i+1,text}));
+    const {jobs}=mutantPlan({script,shift:prelude.length,lines,lineOffsets:(_,line)=>ranges[line-1],suitesFor:(_,line)=>line%2?['a','b']:['b']});
+    const key=m=>JSON.stringify([m.line,m.start,m.end,m.replacement,m.operator]);
+    const expected=lines.flatMap(({line})=>mutantsIn(script,[ranges[line-1].map(i=>i+prelude.length)]).map(m=>key({...m,line})));
+    assert.deepEqual(jobs.map(key).sort(),expected.sort(),'all parsable mutations including multiline anchors');
+    const sharesOfPlan=Array.from({length:count},(_,i)=>partJobs(jobs,i+1,count));
+    for(const profile of [j=>JSON.stringify(j.suites),j=>JSON.stringify([j.suites,j.operator])])for(const kind of new Set(jobs.map(profile))){
+      const sizes=sharesOfPlan.map(share=>share.filter(j=>profile(j)===kind).length);
+      assert.ok(Math.max(...sizes)-Math.min(...sizes)<=1,'balanced profile '+kind);
+    }
+    const empty=await changeGuard({repo,base,head:base,workDir:trees,part:'main'});
+    const noWork=(partsResult)=>mergeGuardParts({repo,base,head:base,parts:[empty],count,jobResults:{plan:'success',parts:partsResult}});
+    assert.equal(noWork('skipped').status,'PASS');
+    assert.equal(noWork('failure').status,'FAIL');
     const main=await changeGuard({repo,base,head:pinnedHead,workDir:trees,part:'main'});
     assert.deepEqual([main.status,main.mutation.mutants,whole.status],['PART',whole.mutation.mutants,'PASS'],'the main part plans the mutants it leaves to the parts');
     const shares=[];for(let index=1;index<=count;index++)shares.push(await guardMutantPart({repo,base,head:pinnedHead,index,count}));
     const merge=parts=>mergeGuardParts({repo,base,head:pinnedHead,parts,count});
+    assert.equal(mergeGuardParts({repo,base,head:pinnedHead,parts:[main],count,jobResults:{plan:'success',parts:'skipped'}}).status,'FAIL');
+    const active=shares.filter(part=>part.ran.length);
+    const ciResults={plan:'success',parts:'success'};
+    assert.deepEqual(mergeGuardParts({repo,base,head:pinnedHead,parts:[main,...active],count,jobResults:ciResults}),whole);
+    assert.equal(mergeGuardParts({repo,base,head:pinnedHead,parts:[main,...active.slice(1)],count,jobResults:ciResults}).status,'FAIL');
     assert.deepEqual(merge([main,...shares]),whole,'the merged parts give the whole guard report');pass('mutants/parts-merged-as-one-run');
     const refused=(id,parts,pattern)=>{const r=merge(parts);assert.equal(r.status,'FAIL',id);assert.ok(r.errors.some(m=>pattern.test(m)),id+': '+JSON.stringify(r.errors));pass('mutants/parts-'+id);};
     const changed=change=>[{...shares[0],...change(shares[0])},...shares.slice(1)];
