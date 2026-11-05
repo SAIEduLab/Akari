@@ -614,7 +614,8 @@
       return details;
     }
     function fieldControl(node, field, annotation = false, tool = false) {
-      if (field.type === 'actor-ref' && !tool && !viewVars.options.readOnly) return viewCalls.subjectFace(node, field);
+      // A block shown only to read (すべての本文) reads like its code too: the subject only where the code writes one.
+      if (field.type === 'actor-ref' && !tool) return viewCalls.subjectFace(node, field);
       const value = annotation ? node.annotations[field.key] : node.fields[field.key],
         wrap = viewCalls.E(['actor-ref', 'heading', 'argument-names'].includes(field.type) ? 'div' : 'label', 'blockui-field', null, { 'data-field-type': field.type }),
         title = viewCalls.E('span', 'blockui-field-label', field.label),
@@ -629,7 +630,7 @@
           const actorText = actor => actor?.kind === 'named' ? actor.name : actor?.kind === 'all' || (!actor && field.everyone) ? 'みんな' : '自分';
           const text = field.type === 'actor-ref' ? actorText(value)
             : field.type === 'argument-names' ? (value || []).join('、')
-              : value ? (eventText(value.event, value.filter) || value.event) + '、' + actorText(value.actorRef) +
+              : value ? (eventText(value.event, value.filter) || value.event) + (value.actorRef?.kind === 'named' ? '、' + value.actorRef.name : '') +
                 (value.filter?.key !== undefined ? '、キー「' + keySurface(value.filter.key) + '」'
                   : value.filter?.message !== undefined ? '、合図「' + value.filter.message + '」' : '') : '本文で決める';
           wrap.append(title, viewCalls.E('span', 'blockui-readonly-value', text, attrs));

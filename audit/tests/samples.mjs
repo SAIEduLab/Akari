@@ -105,6 +105,45 @@ try{await withBrowser(chrome,async browser=>{
    assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors.map(e=>e.message)),[]);await showMode(page,'code');assert.equal(await page.locator('#codeEditor').inputValue(),original);await showMode(page,'blocks');assert.equal(await source(page),original);
   }
  });
+ // Block faces read as their code (LANGUAGE.md ブロック表示): すべての本文 shows a subject only where the code writes one, a
+ // direction written 画面の〇を向く has its side to choose, and a procedure's body has neither いつ動く？ nor the offer of a
+ // continuing rule, in the list and in its own editor. The game's key body with 画面の右を向く taken off holds its two rules
+ // only, and it is not shown as a body with no blocks.
+ await test('SAMPLES-BLOCK-FACE',async page=>{
+  await page.locator('#uiLevel').selectOption('advanced');
+  const count=(text,pattern)=>(text.match(pattern)||[]).length,seen={directions:0,definitions:0};
+  for(const id of samplesFeature.ids){await open(page,id);await showMode(page,'blocks');await page.locator('#sourceOverviewBtn').click();
+   // A card after the first is drawn when it comes into view.
+   await page.waitForFunction(()=>{const cards=[...document.querySelectorAll('#sourceOverview .source-card')];for(const card of cards)card.scrollIntoView();return cards.length>0&&cards.every(card=>card.querySelector('.source-blocks'));});
+   const cards=await page.evaluate(()=>{
+    const p=Akari.app.project,source=key=>{const [kind,...rest]=key.split(':'),id=rest.join(':');return kind==='script'?p.scripts.find(s=>(s.id||s.targetId+':'+s.event)===id).source:p[kind==='action'?'actions':'functions'].find(d=>d.id===id).source;};
+    return [...document.querySelectorAll('#sourceOverview .source-card')].map(card=>({key:card.dataset.sourceKey,source:source(card.dataset.sourceKey),text:card.querySelector('.source-blocks').innerText,
+     when:card.querySelectorAll('.blockui-heading-editor').length,rules:card.querySelectorAll('.blockui-rules').length,subjects:[...card.querySelectorAll('.blockui-subject-text')].map(e=>e.textContent),
+     directions:[...card.querySelectorAll('.blockui-node[data-schema-id="MotionCommand:SET_DIRECTION"]')].map(n=>n.querySelector('[data-blockui-action="motion-side"]')?.value??null)}));
+   });
+   for(const card of cards){const what=id+' '+card.key,definition=!card.key.startsWith('script:');
+    assert.ok(count(card.text,/自分/g)<=count(card.source,/自分/g),what+' shows 自分 only where the code writes it');
+    for(const subject of card.subjects)assert.ok(card.source.includes(subject),what+' shows the subject '+subject+' as the code writes it');
+    const sides=[...card.source.matchAll(/画面の(右|上|左|下)を向く/g)].map(m=>String({右:0,上:90,左:180,下:270}[m[1]]));
+    assert.deepEqual(card.directions.filter(v=>v!==null),sides,what+' shows each 画面の〇を向く with its side');
+    assert.equal(card.directions.length,sides.length+count(card.source,/向きを.+?度にする/g),what+' shows each direction');
+    assert.equal(card.when,definition?0:1,what+(definition?' has no いつ動く？':' has いつ動く？'));if(definition)assert.equal(card.rules,0,what+' offers no continuing rule');
+    seen.directions+=card.directions.length;if(definition){seen.definitions++;
+     // The procedure's own editor reads the same.
+     await page.locator('#sourceOverview [data-source-edit="'+card.key+'"]').click();await page.locator('#procModal.show').waitFor();
+     await chooseView(page,'blocks',{prefix:'callable'});await page.locator('#callableBlocks .blockui-script').first().waitFor();
+     assert.equal(await page.locator('#callableBlocks .blockui-heading-editor').count(),0,what+' editor has no いつ動く？');assert.equal(await page.locator('#callableBlocks .blockui-rules').count(),0,what+' editor offers no continuing rule');
+     await page.locator('#procClose').click();if(await page.locator('#sourceOverviewBtn').isVisible())await page.locator('#sourceOverviewBtn').click();}
+   }
+   if(await page.locator('#sourceEditBtn').isVisible())await page.locator('#sourceEditBtn').click();
+  }
+  assert.ok(seen.directions>0&&seen.definitions>0,'the samples have directions and procedures to read');
+  await open(page,'game');await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');await showMode(page,'blocks');
+  const original=await source(page),first=page.locator('#blockEditor .blockui-script > .blockui-node-content > .blockui-body > .blockui-node').first();assert.match(original,/^画面の右を向く。\n「右」キー/);
+  await command(page,first,'remove');const rules=await source(page);assert.equal(rules,original.replace('画面の右を向く。\n',''));
+  assert.equal(await page.locator('#blockEditor .blockui-empty').count(),0,'a body of rules only is not shown as empty');assert.equal(await page.locator('#blockEditor .blockui-rules > summary').first().textContent(),'つづけて動くルール（2こ）');
+  await page.locator('#undoBtn').click();assert.equal(await source(page),original);
+ });
  await test('SAMPLES-SAVE-OFFLINE',async page=>{
   for(const id of samplesFeature.ids){await open(page,id);const initial=await page.evaluate(()=>JSON.stringify(Akari.app.project));await page.locator('#runBtn').click();
    if(id==='game'){for(let score=1;score<=5;score++){await page.locator('#formSurface .component[data-id="star"]').click();await page.waitForFunction(n=>document.querySelector('#formSurface .component[data-id="score"]')?.textContent.includes(String(n)),score);}await page.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="star"]').style.display==='none');}

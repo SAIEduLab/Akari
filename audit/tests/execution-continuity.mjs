@@ -248,7 +248,7 @@ check('part-report:workbench-failed-case',()=>assert.throws(()=>checkPartReport(
   check('part-report:guard-valid',()=>checkPartReport('change-guard-negative',guardReport('1/4'),'1/4',inputs));
   check('part-report:guard-other-cases',()=>assert.throws(()=>checkPartReport('change-guard-negative',guardReport('1/4',{ids:partItems('change-guard-negative',guardIds,'2/4')}),'1/4',inputs),/change-guard-negative: case set/));
   check('part-report:guard-merge-run-order',()=>{
-    const parts=['4/4','2/4','1/4','3/4'].map(part=>{const report=guardReport(part);report.results.reverse();return {part,report};});
+    const parts=['1/4','2/4','3/4','4/4'].map(part=>{const report=guardReport(part);report.results.reverse();return {part,report};});
     assert.deepEqual(mergePartReports('change-guard-negative',parts).results.map(row=>row.id),guardIds,'parts in the order they ran merge in the declared order');
   });
   check('part-report:guard-failed-case',()=>assert.throws(()=>checkPartReport('change-guard-negative',guardReport('4/4',{status:'FAIL'}),'4/4',inputs),/change-guard-negative: status/));

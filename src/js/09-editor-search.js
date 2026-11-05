@@ -890,7 +890,7 @@
     // The stage does not move, nor do the parts there: the sentences for the parts written together are looked for in the
     // body of one of them, and kept when they read in the stage's body.
     if(data.subjects&&ctx.targetId==='stage'){const part=project.components.find(c=>data.subjects.parts.includes(c.name));
-      return part?assistCandidates(project,basis,{...context,targetId:part.id,targetType:part.type},null).filter(c=>{try{return !!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{}}):[];}
+      return part?assistCandidates(project,basis,{...context,targetId:part.id,targetType:part.type},null).filter(c=>!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast):[];}
     if(/^(?:\d+(?:\.\d+)?秒ごとに|毎秒)、.+は$/.test(data.text)&&!new RegExp('、(?:自分|'+project.components.find(c=>c.id===ctx.targetId)?.name+')は$').test(data.text))return [];
     if(/^「([^「」]+)」が\d+回/.test(data.text)&&!project.components.some(c=>c.name===/^「([^「」]+)」/.exec(data.text)[1]))return [];
     if(/^もし/.test(data.text)&&/以上と|以下と/.test(data.text))return [];

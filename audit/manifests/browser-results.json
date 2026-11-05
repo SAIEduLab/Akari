@@ -223,6 +223,7 @@
         "UI-else-selection-follows-formatting",
         "UI-outside-drop-preserves-state",
         "UI-move-by-directions-legs-time-undo",
+        "UI-set-direction-sides-degrees-undo",
         "UI-press-move-release-in-place-keeps-source",
         "UI-when-button-refused-with-code-error",
         "UI-entry-places-offer-no-calculation",

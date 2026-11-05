@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {browserEnvironment} from './browser-environment.mjs';
 import {sha} from './product-test-host.mjs';
 export const samplesFeature={"id":"editable-samples","count":6,"ids":["dance","flower","game","maze","music","story"],"names":["たくどんとだんごのダンス","くるくる花もよう","星をつかまえよう","道をつくって めいろたんけん","おひさまの 曲づくり","ふたりの ふしぎな おさんぽ"],"openRequiresConfirmation":"unsaved-only","picker":"native-dialog","cardLoadsDirectly":true,"selectionOnlyPreservesWork":true,"confirmationButtons":["ほぞんせずに開く","やめる"],"cancelPreservesPendingEdits":true,"displayPreferencesPreserved":true,"originalDataIsolated":true,"offline":true,"editOperations":["parameter","replace","reorder","add","delete"]};
-export const sampleTestIds=["SAMPLES-CATALOG","SAMPLES-RUNTIME","SAMPLES-CHOICE-CONFIRM","SAMPLES-CANCEL-PENDING","SAMPLES-RESET-ISOLATION","SAMPLES-BLOCK-EDIT","SAMPLES-SAVE-OFFLINE","SAMPLES-LOCKS","SAMPLES-RESPONSIVE-PICKER"];
+export const sampleTestIds=["SAMPLES-CATALOG","SAMPLES-RUNTIME","SAMPLES-CHOICE-CONFIRM","SAMPLES-CANCEL-PENDING","SAMPLES-RESET-ISOLATION","SAMPLES-BLOCK-EDIT","SAMPLES-BLOCK-FACE","SAMPLES-SAVE-OFFLINE","SAMPLES-LOCKS","SAMPLES-RESPONSIVE-PICKER"];
 export const sampleExpected={
  'SAMPLES-CATALOG':{count:6,valid:true,isolated:true,assets:true,roundtrip:true},
  'SAMPLES-RUNTIME':{danceCycles:2,flowerLines:36,gameGoal:5,guard:true,restart:true,mazeGoal:true,mazeWall:true,musicEdit:true,musicSequence:16,musicStop:true,storyEndings:4},
@@ -12,6 +12,7 @@ export const sampleExpected={
  'SAMPLES-CANCEL-PENDING':{code:true,block:true,draft:true,escape:true},
  'SAMPLES-RESET-ISOLATION':{transitions:30,reopen:true,historyReset:true,autosaveClean:true},
  'SAMPLES-BLOCK-EDIT':{samples:6,parameter:true,replace:true,reorder:true,add:true,delete:true,undoRedo:true,roundtrip:true},
+ 'SAMPLES-BLOCK-FACE':{samples:6,subjects:true,directions:true,procedures:true,rulesOnly:true},
  'SAMPLES-SAVE-OFFLINE':{samples:6,nativeDownloads:true,reimport:true,players:true,noNetwork:true},
  'SAMPLES-LOCKS':{running:true,paused:true,stopped:true},
  'SAMPLES-RESPONSIVE-PICKER':{viewports:[[1280,720],[1920,1080],[390,844]],levels:2,modes:2,touch:true,cards:6,keyboard:true},
