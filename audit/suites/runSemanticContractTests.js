@@ -924,9 +924,9 @@ function runSemanticContractTests() {
         ['ねこを右へ10歩移す。','near-1','ねこは、いまのばしょから、右へ10歩動く。',[],['いまのばしょから、右へ10歩動く。','「ねこ」のコピーを作る。']],
         ['ねこを右に向ける。','near-1',null,[],['「ねこ」の方を向く。']],
         ['ねこをかくす。','near-1','ねこはすがたをかくす。',[],['すがたをかくす。']],
-        // Parts written together with を (ねこと犬を) are not one part, and the part made to do a clause (ねこを…させてから)
-        // is not carried on to the next clause: the body's owner says it.
-        ['ねこと犬を2秒で右へ40歩移動させる。','near-2',[]],
+        // Parts written together with を (ねこと犬を) are not one part: a sentence for each of them, in the order written. The
+        // part made to do a clause (ねこを…させてから) is not carried on to the next clause: the body's owner says it.
+        ['ねこと犬を2秒で右へ40歩移動させる。','near-2',['ねこは'+glide+'\n犬は'+glide]],
         ['ねこを右へ40歩移動させてから「やあ」と言う。','near-1','ねこは、'+move+'\n犬は「やあ」と言う。',[],['ねこは、'+move+'\nねこは「やあ」と言う。']],
         // A sentence that does another action than the one read keeps a way or a number written, not only a name or a
         // text; no number written is turned into another unit, and no text is added that was not written.
@@ -979,7 +979,7 @@ function runSemanticContractTests() {
         ['犬は止まる。','near-0','この動きを止める。',['犬は自分のほかの動きを止める。'],['自分のほかの動きを止める。']],
         ['10歩進む1秒待つ','near-0','前へ10歩進む。\n1秒待つ。',[],[]],
         ['前へ動き続ける。','near-0','ずっとくり返す。\n  前へ10歩進む。',[],[]],
-        ['ねこと犬と鳥は前へ10歩進む。','near-0','犬は前へ10歩進む。\n鳥は前へ10歩進む。\nねこは前へ10歩進む。',[],[]],
+        ['ねこと犬と鳥は前へ10歩進む。','near-0','ねこは前へ10歩進む。\n犬は前へ10歩進む。\n鳥は前へ10歩進む。',[],['前へ10歩進む。']],
         ['ジャンプを5秒で行う。','near-0','【ジャンプ】というてじゅんを行う。',[],[]],
         // A name is a name (回るねこ moves; ねこ inside 子ねこ is no other part), and the part to go to or to face is not
         // the one that goes. A sentence that does another action and keeps nothing written is not shown.
@@ -1068,11 +1068,11 @@ function runSemanticContractTests() {
       ])eq(applied(body,owner),after);
       // The button of the near sentence says so under it (its description).
       {const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start',args:[],level:'advanced'},body=written+'「やあ」と言う。';
-        eq(Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]).map(c=>c.description),['つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は 同じです）']);}
+        eq(Akari.assistCandidates(p,body,ctx,parseSyntax(body,ctx).syntaxDiagnostics[0]).map(c=>c.description),['つぎの 文の はじめに「自分は」を 書きます（つぎの 文は、これまでどおり 犬が します）']);}
       // The rewrite of a check keeps it too (assistProposalKeepsSubject).
       const ctx={symbols:buildSymbols(p),targetId:'next-1',targetType:'sprite',event:'start'},body='ねこを2秒かけて右へ40歩うごかす。「やあ」と言う。',[fix]=parseSyntax(body,ctx).syntaxDiagnostics[0].proposals,kept=Akari.assistProposalKeepsSubject(fix,body,ctx,p);
       eq(body.slice(0,kept.start)+kept.source+body.slice(kept.end),glide+'自分は「やあ」と言う。');
-      eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は 同じです）');
+      eq(kept.note,'つぎの 文の はじめに「自分は」を 書きます（つぎの 文は、これまでどおり 犬が します）');
       // In a loop too; a proposal that asks for a number, or whose place or text is not given, is as it is.
       const looped='2回くり返す。\n  ねこを2秒かけて右へ40歩うごかす。\n  「やあ」と言う。',[loopFix]=parseSyntax(looped,ctx).syntaxDiagnostics[0].proposals,loopKept=Akari.assistProposalKeepsSubject(loopFix,looped,ctx,p);
       eq(looped.slice(0,loopKept.start)+loopKept.source+looped.slice(loopKept.end),'2回くり返す。\n  '+glide+'\n  自分は「やあ」と言う。');
@@ -1104,10 +1104,50 @@ function runSemanticContractTests() {
         ["鳥は前へ10歩進む。ねこを2秒で右へ40歩移動させる。\n「やあ」と言う。","stage",[[["いまの ばしょから動く","鳥は前へ10歩進む。ねこは2秒かけて、いまのばしょから、右へ40歩動く。\n鳥は「やあ」と言う。"]],[]]],
         ["ねこを2秒で右へ40歩移動させる。\n  「やあ」と言う。","stage",[[],[]]],
         ["鳥は前へ10歩進む。ねこを2秒で右へ40歩移動させる。","stage",[[["いまの ばしょから動く","鳥は前へ10歩進む。ねこは2秒かけて、いまのばしょから、右へ40歩動く。"]],[]]],
-        ["ねこと犬は2秒で右へ40歩移動する。","next-0",[[["いまの ばしょから動く","2秒かけて、いまのばしょから、右へ40歩動く。"]],[]]],
+        // Parts written together (LANGUAGE.md 読めない文の近い書き方): a sentence for each, in the order written, kept whole;
+        // a time that may be either gives each meaning, and a wait before it is the body's, once. Nothing is shown when the
+        // sentence of a part cannot be made, and never the sentence of one of them.
+        ...[['ねこと犬は','next-0',['ねこ','犬']],['犬とねこは','next-0',['犬','ねこ']],['ねこも犬も','next-0',['ねこ','犬']],['ねこと犬が','next-0',['ねこ','犬']],['「ねこ」と「犬」は','next-0',['ねこ','犬']],
+          ['ねこと犬と鳥は','next-0',['ねこ','犬','鳥']],['ねこと犬を','next-1',['ねこ','犬']],['ねこと鳥を','next-1',['ねこ','鳥']],['ねこと犬は','stage',['ねこ','犬']],['ねこと自分は','next-0',['ねこ','自分']]]
+          .map(([who,owner,names])=>[who+'2秒で右へ40歩'+(who.endsWith('を')?'移動させる。':'移動する。'),owner,[[['文を 分ける（じゅんに 動く）',names.map(n=>n+'は2秒かけて、いまのばしょから、右へ40歩動く。').join('\n')]],[]]]),
+        ["犬と鳥は2秒で右へ40歩移動する。\n「やあ」と言う。","next-0",[[["文を 分ける（じゅんに 動く）","犬は2秒かけて、いまのばしょから、右へ40歩動く。\n鳥は2秒かけて、いまのばしょから、右へ40歩動く。\n自分は「やあ」と言う。"]],[]]],
+        ["2回くり返す。\n  ねこと犬は2秒で右へ40歩移動する。\n  「やあ」と言う。","next-0",[[["文を 分ける（じゅんに 動く）","2回くり返す。\n  ねこは2秒かけて、いまのばしょから、右へ40歩動く。\n  犬は2秒かけて、いまのばしょから、右へ40歩動く。\n  自分は「やあ」と言う。"]],[]]],
+        ["鳥は前へ10歩進む。\nねこと犬は2秒で右へ40歩移動する。","stage",[[["文を 分ける（じゅんに 動く）","鳥は前へ10歩進む。\nねこは2秒かけて、いまのばしょから、右へ40歩動く。\n犬は2秒かけて、いまのばしょから、右へ40歩動く。"]],[]]],
+        ["鳥は前へ10歩進む。ねこと犬は2秒で右へ40歩移動する。\n「やあ」と言う。","stage",[[["文を 分ける（じゅんに 動く）","鳥は前へ10歩進む。ねこは2秒かけて、いまのばしょから、右へ40歩動く。\n犬は2秒かけて、いまのばしょから、右へ40歩動く。\n鳥は「やあ」と言う。"]],[]]],
+        ["ねこと犬は右へ40歩移動する。","next-0",[[["文を 分ける","ねこは、いまのばしょから、右へ40歩動く。\n犬は、いまのばしょから、右へ40歩動く。"]],[]]],
+        ["ねこと犬は2秒右へ40歩移動する。","next-0",[[["文を 分ける（じゅんに 動く）","ねこは2秒かけて、いまのばしょから、右へ40歩動く。\n犬は2秒かけて、いまのばしょから、右へ40歩動く。"],["この 本文で 待つ","2秒待つ。\nねこは、いまのばしょから、右へ40歩動く。\n犬は、いまのばしょから、右へ40歩動く。"]],[]]],
+        ["ねこと犬は1秒待ってから、2秒で右へ40歩移動する。","next-0",[[["この 本文で 待つ（じゅんに 動く）","1秒待つ。\nねこは2秒かけて、いまのばしょから、右へ40歩動く。\n犬は2秒かけて、いまのばしょから、右へ40歩動く。"]],[]]],
+        ["ねこと犬は「やあ」と2秒しゃべる。","next-0",[[["文を 分ける（じゅんに 話す）","ねこは「やあ」と2秒話す。\n犬は「やあ」と2秒話す。"]],[]]],
+        ["ねこと犬と鳥は前へ10歩進む。","next-0",[[["文を 分ける","ねこは前へ10歩進む。\n犬は前へ10歩進む。\n鳥は前へ10歩進む。"]],[]]],
+        ["自分と犬は2秒で右へ40歩移動する。","next-0",[[["文を 分ける（じゅんに 動く）","2秒かけて、いまのばしょから、右へ40歩動く。\n犬は2秒かけて、いまのばしょから、右へ40歩動く。"]],[]]],
+        ["ねこと犬に「やあ」と言わせる。","next-0",[[["文を 分ける","ねこは「やあ」と言う。\n犬は「やあ」と言う。"]],[]]],
+        ["ねこと犬を右へ90度回す。","next-0",[[["文を 分ける","ねこは右に90度回る。\n犬は右に90度回る。"]],[]]],
+        ["ねこと犬を見せる。","next-0",[[["文を 分ける","ねこはすがたを見せる。\n犬はすがたを見せる。"]],[]]],
+        ["ねこと犬はすがたを見せてね。","next-0",[[["文を 分ける","ねこはすがたを見せる。\n犬はすがたを見せる。"]],[]]],
+        ["ねこと犬は2秒まつね。","next-0",[[["この 本文で 待つ","2秒待つ。"]],[]]],
+        // A part written twice is that part; parts written together after a clause do only that clause.
+        ["ねことねこは2秒で右へ40歩移動する。","next-1",[[["いまの ばしょから動く","ねこは2秒かけて、いまのばしょから、右へ40歩動く。"]],[]]],
+        ["前へ10歩進んで、犬と鳥は2秒で右へ40歩移動する。","next-0",[[],[]]],
+        ["前へ10歩進んで、犬と鳥が2秒で右へ40歩移動する。","next-0",[[],[]]],
+        ["前へ10歩進んでから犬と鳥は2秒で右へ40歩移動する。","next-0",[[],[]]],
+        ["ねこは前へ10歩進んで犬と鳥は右へ40歩移動する。","next-0",[[],[]]],
+        ["ねこと犬が点数が10になるまで右へ40歩移動する。","next-0",[[],[]]],
+        ["もし、ねこと犬がふれていれば、","next-0",[[],[]]],
+        ["ねこと犬は2秒で右へ40歩移動して、「やあ」と言う。","next-0",[[],[]]],
+        ["ねこと犬は点数が10になるまで右へ40歩移動する。","next-0",[[],[]]],
+        ["ねこと犬にすがたを見せる。","next-0",[[],[]]],
         ["ねこは「やあ」と言う。犬を2秒で右へ40歩移動させる。「やあ」と言う。","next-0",[[["いまの ばしょから動く","ねこは「やあ」と言う。犬は2秒かけて、いまのばしょから、右へ40歩動く。自分は「やあ」と言う。"]],[]]],
-        ["2回くり返す。\n  前へ10歩進む。\nねこを2秒かけて右へ40歩うごかす。\n「やあ」と言う。","next-1",[[],[["2回くり返す。\n  前へ10歩進む。\nねこは2秒かけて、いまのばしょから、右へ40歩動く。\n自分は「やあ」と言う。","つぎの 文の はじめに「自分は」を 書きます（つぎの 文を する 部品は 同じです）"]]]],
+        ["2回くり返す。\n  前へ10歩進む。\nねこを2秒かけて右へ40歩うごかす。\n「やあ」と言う。","next-1",[[],[["2回くり返す。\n  前へ10歩進む。\nねこは2秒かけて、いまのばしょから、右へ40歩動く。\n自分は「やあ」と言う。","つぎの 文の はじめに「自分は」を 書きます（つぎの 文は、これまでどおり 犬が します）"]]]],
       ])eq(all(body,owner),expected);
+      // The sentence after them keeps who does it, and the button says by name who does it; parts named in a heading, a
+      // part written twice, parts looked at or told something are not parts written together.
+      const described=(body,targetId)=>{const c={symbols:buildSymbols(p),targetId,targetType:targetId==='stage'?'stage':'sprite',event:'start',args:[],level:'advanced'};
+        return Akari.assistCandidates(p,body,c,parseSyntax(body,c).syntaxDiagnostics[0]).map(k=>k.description??null);};
+      eq(described('犬と鳥は2秒で右へ40歩移動する。\n「やあ」と言う。','next-0'),['つぎの 文の はじめに「自分は」を 書きます（つぎの 文は、これまでどおり ねこが します）']);
+      eq(described('鳥は前へ10歩進む。ねこと犬は2秒で右へ40歩移動する。\n「やあ」と言う。','stage'),['つぎの 文の はじめに「鳥は」を 書きます（つぎの 文は、これまでどおり 鳥が します）']);
+      eq(described('ねこと犬は2秒で右へ40歩移動する。','next-0'),[null]);
+      for(const body of ['ねこもねこも前へ10歩すすんだ。','ねこと犬を見る。','ねこと犬に「やあ」と言う。','ねこと犬がふれたとき、','犬と鳥に「出発」と知らせる。'])
+        ok(all(body,'next-0')[0].length&&all(body,'next-0')[0].every(([label])=>!label.startsWith('文を 分ける')),body);
     });
     // The same in the work of the assist examples (audit/fixtures/assist): ねこ (whose body it is), 犬 and 星, the
     // variable 点数, the list 持ち物, the sound ベル, the procedure ジャンプ, and with ui the parts 文字1, ボタン1 and

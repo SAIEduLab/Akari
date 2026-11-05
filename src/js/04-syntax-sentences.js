@@ -166,6 +166,14 @@
     return !sets && nodes.length === 1 && nodes[0].kind === 'Parallel' && inner.every(same) ? inner[0] : { kind: 'self', topicEnded: true };
   }
   function sentenceActorSource(actorRef) { return actorRef?.kind === 'named' ? nameSource(actorRef.name) : '自分'; }
+  // A sentence split into one sentence for each subject runs them one after the other (LANGUAGE.md 読めない書き方). What
+  // takes time in it, the first written: a move over a time (2秒かけて, 2秒で), a talk for a time, a sound to its end or a
+  // wait; said with the word for it (the word, its polite form, and the form for doing it together), or null.
+  const IN_TURN_PATTERN = /(?<move>秒(?:半)?(?:間)?(?:かけて|で(?![はもき])|ほどで|くらいで|ぐらいで))|(?<say>秒(?:半)?(?:間)?(?:話す|話し|はなす|はなし|言う|言って|いう|いって|しゃべ))|(?<sound>秒(?:半)?(?:間)?(?:鳴らす|鳴らし|ならす|ならし)|を(?:最後まで)?(?:鳴らす|鳴らし|ならす|ならし))|(?<wait>秒(?:半)?(?:間)?(?:待つ|まつ|待って|まって)|まで(?:待つ|まつ|待ちます|待って|まって)(?:から)?$)/;
+  const IN_TURN_WORDS = Object.freeze({ move: ['動く', '動きます', '動かす'], say: ['話す', '話します', '話す'], sound: ['鳴らす', '鳴らします', '鳴らす'], wait: ['待つ', '待ちます', '待つ'] });
+  function inTurnAction(text) { const m = IN_TURN_PATTERN.exec(surfaceMask(text)); return m ? IN_TURN_WORDS[Object.keys(m.groups).find(k => m.groups[k])] : null; }
+  function inTurnNote(words) { return '。分けると、書いた じゅんに 一人ずつ ' + words[1] + '。いっしょに ' + words[2] + ' ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます'; }
+  function inTurnLabel(label, words) { return words ? label + '（じゅんに ' + words[0] + '）' : label; }
   function sentenceTarget(text, code, line, symbols, ctx, start) {
     const t = parseTargetPrefix(text, symbols, ctx);
     if (!t || t.len !== text.length) throw new AkariError('P205','かえる へんすうや リストの 名前が 分かりません。作った へんすうや リストの 名前と 同じか たしかめて ください');
@@ -1170,15 +1178,14 @@
       const later=both&&new RegExp('、(?:'+names+')(?:は|が)').exec(surfaceMask(both[3])),own=later?both[3].slice(0,later.index):both?.[3],then=text=>later?text+both[3].slice(later.index):text;
       // What the two subjects do, a sentence for each subject (the clauses after it once).
       const split=text=>later?canonicalStatementSource(both[1]+'は'+text+'、'+both[2]+'は'+then(text),symbols):canonicalStatementSource(both[1]+'は'+text,symbols)+'。\n'+canonicalStatementSource(both[2]+'は'+text,symbols);
-      // A timed action (or a wait) split into sentences runs one subject after the other; say so before the child splits it.
-      const timedText=text=>/(?:秒(?:半)?(?:間)?かけて|秒(?:半)?(?:間)?(?:話す|はなす|言う|いう|鳴らす|ならす|待つ|まつ|待って|まって)|を(?:最後まで)?(?:鳴らす|ならす)|まで(?:待つ|まつ|待ちます|待って|まって)(?:から)?$)/.test(surfaceMask(text));
-      const inTurn='。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かす ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます';
+      // A timed action (or a wait) split into sentences runs one subject after the other; say so before the child splits it
+      // (inTurnAction).
       // A timed wait first (ねこと犬は1秒待ってから、10歩進む) is written once, and what comes after it is split.
-      const wait=both&&/^[^、。]*秒(?:半)?(?:間)?(?:待つ|まつ|待ちます|待って|まって)(?:から)?(?=、|$)/.exec(surfaceMask(own));
-      if(both&&both[1]!==both[2]&&wait){const half=text=>text.replace(/(\d+(?:\.\d+)?)秒半/g,(all,n)=>(Number(n)+0.5)+'秒'),rest=own.slice(wait[0].length+1),once=rest?canonicalStatementSource(half(own.slice(0,wait[0].length)).replace(/(?:待って|まって)(?:から)?$/,'待つ'),symbols)+'。\n'+split(rest):canonicalStatementSource(half(then(own)),symbols),timed=!!rest&&timedText(rest);
-        throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。待つ 文は、主語を 書かなくても、この 本文が 待ちます'+(timed?inTurn:''),line,parseSyntax(once+'。',{symbols}).ast?[{label:timed?'この 本文で 待つ（じゅんに 動く）':'この 本文で 待つ',source:once}]:[],{kind:'WaitTime'});}
-      if(both&&both[1]!==both[2]){const split2=split(own),timed=timedText(own);
-        throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?inTurn:''),line,parseSyntax(split2+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split2}]:[],{kind:'Sequence'});}}
+      const wait=both&&/^[^、。]*秒(?:半)?(?:間)?(?:待つ|まつ|待ちます|待って|まって)(?:から)?(?:ね|よ|ぞ)?(?=、|$)/.exec(surfaceMask(own));
+      if(both&&both[1]!==both[2]&&wait){const half=text=>text.replace(/(\d+(?:\.\d+)?)秒半/g,(all,n)=>(Number(n)+0.5)+'秒'),rest=own.slice(wait[0].length+1),once=rest?canonicalStatementSource(half(own.slice(0,wait[0].length)).replace(/(?:待って|まって)(?:から)?(?:ね|よ|ぞ)?$/,'待つ'),symbols)+'。\n'+split(rest):canonicalStatementSource(half(then(own)),symbols),timed=rest?inTurnAction(rest):null;
+        throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。待つ 文は、主語を 書かなくても、この 本文が 待ちます'+(timed?inTurnNote(timed):''),line,parseSyntax(once+'。',{symbols}).ast?[{label:inTurnLabel('この 本文で 待つ',timed),source:once}]:[],{kind:'WaitTime'});}
+      if(both&&both[1]!==both[2]){const split2=split(own),timed=inTurnAction(own);
+        throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?inTurnNote(timed):''),line,parseSyntax(split2+'。',{symbols}).ast?[{label:inTurnLabel('文を 分ける',timed),source:split2}]:[],{kind:'Sequence'});}}
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).
     const reads=source=>{

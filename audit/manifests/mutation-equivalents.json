@@ -228,6 +228,12 @@
       "source": ".map(c=>c.text.includes('\\n')||c.text.startsWith(named)?c:{...c,text:named+c.text,source:named+c.source,label:c.label===c.text?named+c.text:c.label})",
       "operator": "+->-",
       "reason": "Only the label one survives (named+c.text when the label is the text): a one-line near sentence takes its block's label (BLOCK_SCHEMA_BY_ID), so in the stage's fallback its label is never its text. The assist examples (1231 cases) and the stage sentences built from the three part-body candidates whose label is their text see no difference."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(data.subjects)for(const [text,label]of assistListedSplits(data.subjects,project,ctx))add(text,'S2',2,{label,listed:true});",
+      "operator": "n->n+1",
+      "reason": "A line of parts written together keeps only these sentences (the next line leaves only them in the pool), all of one layer: the layer orders them among themselves only, and 3 is below 6 as 2 is, so no other candidate is shown or left out. The assist examples, among them the parts written together (ASSIST-1082, ASSIST-1083), see no difference."
     }
   ]
 }

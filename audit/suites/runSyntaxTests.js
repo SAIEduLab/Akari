@@ -433,6 +433,35 @@ function runSyntaxTests() {
       ok(first('ねこと犬は1秒待ってから、2秒かけて、いまのばしょから、右へ40歩動く。').message.includes('書いた じゅんに'));
       eq(first('ねこと犬は1秒半待つ。').proposals.map((x) => x.source), ['1.5秒待つ']);
       eq(meijin('ねこと犬は1秒待ってから、10歩進む。'), []);
+      // What the subjects split into sentences do one after the other is said with its own word, in the guidance and on the
+      // button (LANGUAGE.md 読めない書き方): moving over a time (2秒かけて, 2秒で…), talking, a sound to its end, a wait;
+      // the first one written.
+      const split = '1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます', once = '1つの 文に 書ける 主語は 1つです。待つ 文は、主語を 書かなくても、この 本文が 待ちます',
+        inTurn = (polite, together) => '。分けると、書いた じゅんに 一人ずつ ' + polite + '。いっしょに ' + together + ' ときは、名人の本文か、同じ きっかけの 別の 本文で 書きます';
+      for (const [source, message, labels] of [
+        ['ねこと犬は2秒かけて、いまのばしょから、右へ40歩動く。', split + inTurn('動きます', '動かす'), ['文を 分ける（じゅんに 動く）']],
+        ['ねこと犬は2秒で右へ40歩移動する。', split + inTurn('動きます', '動かす'), []],
+        ['ねこと犬は2秒半ほどで右へ40歩移動する。', split + inTurn('動きます', '動かす'), []],
+        ['ねこと犬は2秒間くらいで右へ40歩移動する。', split + inTurn('動きます', '動かす'), []],
+        ['ねこと犬は2秒ぐらいで右へ40歩移動する。', split + inTurn('動きます', '動かす'), []],
+        ['ねこと犬は「やあ」と2秒話す。', split + inTurn('話します', '話す'), ['文を 分ける（じゅんに 話す）']],
+        ['ねこと犬は「やあ」と2秒言う。', split + inTurn('話します', '話す'), ['文を 分ける（じゅんに 話す）']],
+        ['ねこと犬は「やあ」と2秒しゃべる。', split + inTurn('話します', '話す'), null],
+        ['ねこと犬は「ベル」を最後まで鳴らす。', split + inTurn('鳴らします', '鳴らす'), []],
+        ['ねこと犬は「ベル」を2秒鳴らして、10歩進む。', split + inTurn('鳴らします', '鳴らす'), []],
+        ['ねこも犬も、画面のはしにふれるまで待つ。', split + inTurn('待ちます', '待つ'), null],
+        ['ねこと犬は10歩進んで、1秒待つ。', split + inTurn('待ちます', '待つ'), null],
+        ['ねこと犬は「やあ」と2秒話して、2秒かけて、いまのばしょから、右へ40歩動く。', split + inTurn('話します', '話す'), null],
+        ['ねこと犬は2秒かけて、いまのばしょから、右へ40歩動いて、「やあ」と2秒言って、10歩進む。', split + inTurn('動きます', '動かす'), null],
+        ['ねこと犬は前へ10歩進む。', split, ['文を 分ける']],
+        ['ねこと犬は1秒待ってから、2秒かけて、いまのばしょから、右へ40歩動く。', once + inTurn('動きます', '動かす'), ['この 本文で 待つ（じゅんに 動く）']],
+        ['ねこと犬は1秒待ってから、「やあ」と2秒話す。', once + inTurn('話します', '話す'), ['この 本文で 待つ（じゅんに 話す）']],
+        ['ねこと犬は1秒待ってから、10歩進む。', once, ['この 本文で 待つ']],
+        ['ねこも犬も1秒待つ。', once, ['この 本文で 待つ']],
+        // The end of a word said to someone (ね, よ, ぞ) is no other way of waiting.
+        ['ねこと犬は2秒まつね。', once, []],
+      ]) { const d = first(source); eq([source, d.message], [source, message]); if (labels) eq([source, (d.proposals || []).map((x) => x.label)], [source, labels]); }
+      eq(first('ねこと犬は1秒まってね、10歩進む。').proposals.map((x) => x.source), ['1秒待つ。\nねこは前へ10歩進む。\n犬は前へ10歩進む']);
     });
     return {
       passed: results.filter((x) => x.pass).length,

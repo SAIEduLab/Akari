@@ -116,6 +116,7 @@
     for(const c of components)if(c.id===ctx.targetId){addNames(c.costumes,'costume');addNames(c.localData?.variables,'variable');addNames(c.localData?.lists,'list');}
     addNames((ctx.args||[]).map(name=>({name})),'argument');addNames([...(ctx.localNames||[])].map(name=>({name})),'local');
     let text=assistNumberText(String(code).trim().replace(/[。、，．…〜♪]+$/u,'')), subject=null;
+    const listed=assistListedSubjects(text,project);
     for(const name of ['自分','体',...components.map(c=>c.name)].sort((a,b)=>b.length-a.length)){
       const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), m=new RegExp('^(?:「'+escaped+'」|'+escaped+')(?:[はが]、?|[、\\s]+|の(?=向き|大きさ|すがた|音|色|ばしょ|文字|中身|見た目|ペン))').exec(text);
       if(m){subject=name;text=text.slice(m[0].length);break;}
@@ -147,6 +148,8 @@
       else if(/[うくぐすつぬぶむる]$/.test(before)&&after.startsWith('そして'))clauseText+='、';
     }
     const clauses=assistSplit(clauseText,'、').map(x=>({...x,text:x.text.replace(/^(?:から|そして|それから|それで|つぎに|次に)/,'')}));
+    // Parts written together after a clause (…して、ねこと犬は…) do only that clause, which no sentence for each keeps.
+    const subjects=listed??(clauses.slice(1).some(c=>assistListedSubjects(c.text,project))?{parts:[],particle:'は',rest:null}:null);
     const seeds=[],seen=new Set(),add=(word,rank,fragment=false)=>{word=word.trim();if(!word||seen.has(word)||/^(?:する|なる|ある|いる|それ|これ|あれ|となり|少し)$/.test(word))return;seen.add(word);seeds.push({text:word,rank,fragment});};
     for(const [raw,rank]of [[text,0],...clauses.map((c,i)=>[c.text,i===clauses.length-1?1:i+2])]){
       const clean=raw.replace(/「[^「」]*」|『[^『』]*』|｢[^｢｣]*｣|"[^"]*"/g,'');
@@ -162,8 +165,6 @@
     for(const number of numbers)if(number.unit)add(String(number.value)+number.unit,0,true);
     for(const word of new Set(Object.values(BLOCK_SEARCH_SYNONYMS).flat()))if(word.length>2&&word.endsWith('も')&&searchReading(text).startsWith(searchReading(word))){add(word,0);add(text.slice(word.length),0,true);}
     const headerEvent=(!/^もし/.test(text)||/(?:おされた|おした)とき$/.test(text))&&/(?:とき(?:に)?|時|たびに|ごとに|たら)(?:、.*)?$/.test(text)?/合図/.test(text)?'message':/(?:はいけい|背景).*(?:かわ|変わ|かえ|切り)/.test(text)?'backdropChanged':/コピー|クローン/.test(text)?'cloneStart':/中身.*かわ|中身.*変わ|文字が入った/.test(text)?'valueChanged':/キー|矢印/.test(text)||keys.length?'keyDown':/タップ|クリック|タッチされ|おされた|おした/.test(text)?'click':/ふれ|触れ|タッチした/.test(text)?'touchStart':/スタート|始ま|はじま|開始|実行|はじめ|作品を動かした/.test(text)?'start':null:null;
-    const grouped=/^(.+?)(?:は|も、)(.+)$/.exec(text),subjectNames=grouped?.[1].split(/と|も/).filter(Boolean).map(name=>name.replace(/[「」]/g,''));
-    const subjects=subjectNames?.length>=3&&subjectNames.every(name=>components.some(c=>c.name===name))?{names:subjectNames,body:grouped[2]}:null;
     return {text,subject,strings,stringValues,names:extractedNames,numbers,keys,clauses,seeds,headerEvent,subjects};
   }
   function assistVerificationContext(ctx) {const {key,ownerKey,...rest}=ctx;return rest;}
@@ -465,9 +466,9 @@
         else if(/^(?:後|ご|あと|たって|経って|たった|待って|まって|待ち)/.test(after))before.push({action:'wait',subject,written,directions:[],quantities:[{unit,value,role:'wait'}],strings:[],objects:[]});
         else frame.quantities.push({unit,value,role:/^(?:間)?(?:かけて|かけ|で(?![はもき])|ほどで|くらいで|ぐらいで)/.test(after)?'during':'unknown'});
       }
-      // The longest names are read first: ねこ inside 子ねこ is not another part.
-      // Parts joined by と before は (ねこと犬は) are the ones that do it, not parts acted on.
-      let rest=names?outside.replace(new RegExp('^(?:「?(?:'+names+')」?と)+「?(?:'+names+')」?(?=[はがも])'),group=>'□'.repeat(group.length)):outside;
+      // The longest names are read first: ねこ inside 子ねこ is not another part. Parts written together as the subject
+      // (ねこと犬は) are read before the meaning is (assistListedSubjects).
+      let rest=outside;
       for(const name of parts)if(rest.includes(name)){if(name!==subject)frame.objects.push(name);rest=rest.split(name).join('□'.repeat(name.length));}
       // 自分 written as what is acted on (自分のコピー) is the part that does it.
       if(/自分(?![はがも])/.test(rest))frame.objects.push(subject||owner);
@@ -588,7 +589,7 @@
     if(!topic.before||!after||who(topic.before)===who(after))return null;
     // A heading (もし…、 3回くり返す。) takes its subject with 、 (自分は、3回くり返す。), as the code is written.
     const subject=sentenceActorSource(who(topic.before)===owner?{kind:'self'}:topic.before)+(/^もし|、$|(?:くり返す|繰り返す|くりかえす)。?$/.test(next)?'は、':'は');
-    return {at,between:basis.slice(end,at)+subject,note:`つぎの 文の はじめに「${subject}」を 書きます（つぎの 文を する 部品は 同じです）`};
+    return {at,between:basis.slice(end,at)+subject,note:`つぎの 文の はじめに「${subject}」を 書きます（つぎの 文は、これまでどおり ${who(topic.before)}が します）`};
   }
   // A proposal of a check (the rewrite buttons under a sentence that does not read) keeps who does the next sentence, as
   // a near sentence does.
@@ -612,6 +613,36 @@
       options=options.flatMap(prefix=>ways.map(way=>prefix+(i?'\n':'')+subject+(wait!=null&&!/待って/.test(way)?wait+'秒待ってから、':'')+way));
     }return options.filter(option=>option.replace(/[\s。]/g,'')!==String(text).replace(/[\s。]/g,''));
   }
+  // Parts written together as the subject (ねこと犬は…, ねこも犬も…, ねこと犬を…させる) are no one part, so no sentence of one
+  // part keeps them (LANGUAGE.md 読めない文の近い書き方): the parts in the order written, how each is written (は, or を／に
+  // for a part made to do it) and what they do; null when the subject is one part.
+  function assistListedSubjects(text,project) {
+    const names=[...(project?.components||[]).map(c=>c.name),'自分'].sort(assistLongestFirst).map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+    const m=new RegExp('^((?:「?(?:'+names+')」?(?:と|、|も|や))+「?(?:'+names+')」?)(は|が|も|を|に)、?(?:いっしょに|一緒に|ともに|みんなで|みんな|ふたりで|二人で)?、?(.+)$').exec(text);
+    // Parts named in a heading (ねこと犬がふれたとき、) are what happens, not who does it.
+    if(!m||/とき|たら|ごとに|たびに/.test(m[3]))return null;
+    // A part written twice (ねことねこは) is that one part.
+    const parts=[...new Set([...m[1].matchAll(new RegExp('「?('+names+')」?','g'))].map(x=>x[1]))],made=['を','に'].includes(m[2]);
+    if(made&&!/させ|せる|せて|かす|かして|かせ/.test(m[3])&&!(m[2]==='を'&&ASSIST_PART_VERBS.test(m[3]))||m[2]==='に'&&/知らせ|しらせ|見せ|みせ/.test(m[3]))return null;
+    return {parts,particle:made?m[2]:'は',rest:m[3]};
+  }
+  // A sentence for each of the parts, in the order written: the near sentences of a part that is not the body's owner (one
+  // for each meaning of a time that may be either), with each part's name in its place. A wait is the body's, written once,
+  // as the check writes ねこと犬は1秒待ってから、… and ねこも犬も1秒待つ (LANGUAGE.md 読めない書き方).
+  function assistListedSplits(listed,project,ctx) {
+    if(listed.rest===null)return [];
+    const owner=project.components.find(c=>c.id===ctx.targetId)?.name,first=listed.parts.find(name=>name!==owner&&name!=='自分')??owner;
+    const head=new RegExp('^「?'+first.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'」?は、?'),waitLine=/^(?:[^、。]+は、?)?(\d+(?:\.\d+)?)秒待つ。?$/,line=first+listed.particle+listed.rest+'。',splits=new Map();let found=[];
+    try{const d=parseSyntax(line,ctx).syntaxDiagnostics[0],fixes=(d?.proposals||[]).filter(f=>f.start===0),fixed=!d?line:fixes.length===1?fixes[0].source+line.slice(fixes[0].end):null,read=fixed&&assistCanonical(fixed,ctx);
+      found=read?[read.text]:d?assistCandidates(project,line,ctx,d).map(c=>c.text):[];}catch{}
+    for(const text of found){
+      const [one,two,...more]=text.trim().split('\n'),wait=waitLine.exec(one),act=wait?two:one;
+      if(more.length||two!==undefined&&!wait||act!==undefined&&!head.test(act))continue;
+      const sentences=act===undefined?[]:listed.parts.map(name=>sentenceActorSource(name==='自分'?{kind:'self'}:{kind:'named',name})+'は'+act.replace(head,'')),split=[...(wait?[wait[1]+'秒待つ。']:[]),...sentences].join('\n');
+      if(!splits.has(split))splits.set(split,listed.parts.length>1?inTurnLabel(wait?'この 本文で 待つ':'文を 分ける',inTurnAction(sentences.join(''))):undefined);
+    }
+    return [...splits].slice(0,ASSIST_MAX);
+  }
   function assistStructuredTransforms(text,data,project,ctx,basis,range) {
     const sources=[],add=(text,extra={})=>sources.push({text,...extra}),indent=body=>body.split('\n').map(line=>'  '+line).join('\n');
     const read=(source,wait=false)=>{
@@ -627,7 +658,6 @@
     if((m=/^(\d+(?:\.\d+)?)秒のあいだ待つ$/.exec(text)))add(m[1]+'秒待つ。');
     if((m=/^(.+?)(\d+(?:\.\d+)?秒(?:待つ|まつ))$/.exec(text))&&/[うくぐすつぬぶむるみ]$|(?:たあと|だあと)$/.test(m[1])){const before=read(m[1].replace(/あと$/,'')),after=read(m[2]);if(before&&after)add(before+'\n'+after);}
     if(/とばして(?:次|つぎ)へ$/.test(text)){const hint=hintCandidates(project,ctx.targetId,{...ctx,source:basis,start:range.lineStart+range.indent,end:range.lineEnd}).find(h=>h.id==='Continue'&&h.enabled);if(hint)add(hint.text);}
-    if(data.subjects){const body=read(data.subjects.body),owner=project.components.find(c=>c.id===ctx.targetId)?.name;if(body){const names=[...data.subjects.names.filter(name=>name!==owner),...data.subjects.names.filter(name=>name===owner)];add(names.map(name=>body.split('\n').map(line=>name+'は'+line).join('\n')).join('\n'));}}
     const own=project.components.find(c=>c.id===ctx.targetId)?.name;
     if(own&&new RegExp('^(?:自分|'+own.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?:の動きを|を)?(?:全部|だけ)?(?:止まる|止める|とまる|とめる)$').test(text)){add('自分のほかの動きを止める。\nこの動きを止める。');add('この動きを止める。');}
     if((m=/^(\d+(?:\.\d+)?)秒に(\d+(?:\.\d+)?)歩の速さで、?(.+)$/.exec(text))&&!/続ける|つづける/.test(m[3])){const motion=searchIntent(m[3],ctx),direction=({right:'右',left:'左',up:'上',down:'下'})[motion?.direction];if(direction)add(m[1]+'秒かけて、いまのばしょから、'+direction+'へ'+m[2]+'歩動く。');else if(motion?.direction==='forward')add('前へ'+m[2]+'歩進む。\n'+m[1]+'秒待つ。');}
@@ -857,7 +887,10 @@
     if(existing.length&&!existing.every(p=>/【([^】]+)】という(?:手順|てじゅん)を行う/.test(p.source)&&!range.text.includes(/【([^】]+)】/.exec(p.source)?.[1])))return [];
     const data=assistSeeds(range.text,ctx.symbols,ctx);if(!data.text||/^(?:※|\s*$)/.test(data.text)||!/(?:何|なに)も(?:しない|せず|ない|しなくてよい)$/.test(data.text)&&/(?:ません|ない|ず|[うくぐすつぬぶむる]な)$/.test(data.text))return [];
     if(data.headerEvent&&(ctx.definitionKind||ctx.targetId==='stage'||data.headerEvent!=='valueChanged'&&data.subject&&data.subject!==project.components.find(c=>c.id===ctx.targetId)?.name&&!['自分','体'].includes(data.subject)||data.headerEvent==='click'&&data.names.some(n=>n.kind==='part'&&project.components.some(c=>c.name===n.name&&c.id!==ctx.targetId))))return [];
-    if(data.subjects&&!data.subjects.names.includes(project.components.find(c=>c.id===ctx.targetId)?.name)&&basis.slice(range.lineEnd).trim())return [];
+    // The stage does not move, nor do the parts there: the sentences for the parts written together are looked for in the
+    // body of one of them, and kept when they read in the stage's body.
+    if(data.subjects&&ctx.targetId==='stage'){const part=project.components.find(c=>data.subjects.parts.includes(c.name));
+      return part?assistCandidates(project,basis,{...context,targetId:part.id,targetType:part.type},null).filter(c=>{try{return !!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{}}):[];}
     if(/^(?:\d+(?:\.\d+)?秒ごとに|毎秒)、.+は$/.test(data.text)&&!new RegExp('、(?:自分|'+project.components.find(c=>c.id===ctx.targetId)?.name+')は$').test(data.text))return [];
     if(/^「([^「」]+)」が\d+回/.test(data.text)&&!project.components.some(c=>c.name===/^「([^「」]+)」/.exec(data.text)[1]))return [];
     if(/^もし/.test(data.text)&&/以上と|以下と/.test(data.text))return [];
@@ -897,7 +930,10 @@
     const signalGroup=pool.some(p=>p.schemaId==='WaitBroadcastGroup');
     const signalHeading=pool.filter(p=>p.origin==='S4'&&p.schemaId==='Heading:message'),directedSignal=pool.some(p=>p.origin==='S4'&&p.schemaId==='Broadcast')&&!/と(?:言う|話す|いう)$/.test(data.text),ownStop=pool.some(p=>p.schemaId==='StopCommand:OWN_OTHERS'&&p.text.includes('\n')),otherStop=data.names.some(n=>n.kind==='part'&&project.components.some(c=>c.name===n.name&&c.id!==ctx.targetId))&&/止まる|止める|とまる|とめる/.test(data.text);
     pool.push(...searched.filter(h=>(!signalGroup||!['Broadcast','BroadcastAndWait'].includes(h.schemaId))&&(!signalHeading.length||h.schemaId!=='Heading:message'||signalHeading.some(p=>p.text===h.text))&&(!directedSignal||h.schemaId!=='Say')&&(!ownStop||h.schemaId!=='StopCommand:OWN_OTHERS')&&(!otherStop||!['StopCommand:THIS','StopCommand:OWN_OTHERS','SoundCommand:STOP_ALL'].includes(h.schemaId))).map(h=>({...h,start:range.start,end:range.end})));
+    // Parts written together are kept only by the sentences for each of them (assistListedSplits).
+    if(data.subjects)for(const [text,label]of assistListedSplits(data.subjects,project,ctx))add(text,'S2',2,{label,listed:true});
     pool.sort((a,b)=>assistCompare(a,b,ctx));
+    if(data.subjects)pool.splice(0,pool.length,...pool.filter(p=>p.listed));
     // The meaning written (assistMeaningFrames): a candidate that says something else is not shown, one that keeps every
     // role comes before one that leaves a role out (which is shown only when none keeps them all), and one that names
     // the subject as written comes first. Each candidate that leaves out the subject or the time also comes made whole.
