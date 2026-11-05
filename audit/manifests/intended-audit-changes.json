@@ -68,6 +68,62 @@
     {
       "change": "workflow-entry:akari-change-guard.yml/audit-change-guard/node audit/tests/change-guard.mjs \"$AKARI_BASE_SHA\" \"$AKARI_HEAD_SHA\" audit-evidence/change-guard/report.json",
       "reason": "The guard runs in parts: change-guard-part runs each part with --part, and audit-change-guard merges them with --merge."
+    },
+    {
+      "change": "workflow-job:akari-audit.yml/selftest",
+      "reason": "audit-lane runs every selftest shard with run-local-gate and seals each original selftest bundle."
+    },
+    {
+      "change": "workflow-job:akari-audit.yml/full-browser-gate",
+      "reason": "audit-lane runs each full-browser shard and seals its original bundle before the audit aggregate."
+    },
+    {
+      "change": "workflow-job:akari-audit.yml/audio-codecs",
+      "reason": "audit-lane runs audio-codecs and block-field-width on the codec browser and seals audio-codecs-win32."
+    },
+    {
+      "change": "workflow-job:akari-acceptance.yml/composition-acceptance",
+      "reason": "acceptance-lane runs and seals every composition shard; child-ux-aggregate verifies the merged composition evidence."
+    },
+    {
+      "change": "workflow-job:akari-acceptance.yml/ux-editing",
+      "reason": "acceptance-lane runs the complete editing suite and delivers its sealed editing bundle to child-ux-aggregate."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/selftest/node audit/run-local-gate.mjs --shard \"${{ matrix.shard }}\" \"$AKARI_BROWSER\" \"audit-evidence/selftest-${{ matrix.shard }}\"",
+      "reason": "audit-lane runs every selftest shard with run-local-gate and seals each original selftest bundle."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/selftest/node audit/verify-evidence.mjs seal \"selftest-${{ matrix.shard }}\" \"audit-evidence/selftest-${{ matrix.shard }}\"",
+      "reason": "audit-lane runs every selftest shard with run-local-gate and seals each original selftest bundle."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/full-browser-gate/node audit/browser/run-full-browser-audit.mjs --shard \"${{ matrix.shard }}\" --evidence \"audit-evidence/full-browser-${{ matrix.shard }}\"",
+      "reason": "audit-lane runs each full-browser shard and seals its original bundle before the audit aggregate."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/full-browser-gate/node audit/verify-evidence.mjs seal \"full-browser-${{ matrix.shard }}\" \"audit-evidence/full-browser-${{ matrix.shard }}\"",
+      "reason": "audit-lane runs each full-browser shard and seals its original bundle before the audit aggregate."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/audio-codecs/node audit/tests/audio-codecs.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/audio/report.json",
+      "reason": "audit-lane runs audio-codecs and block-field-width on the codec browser and seals audio-codecs-win32."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/audio-codecs/node audit/tests/block-field-width.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/audio/block-field-width.json",
+      "reason": "audit-lane runs audio-codecs and block-field-width on the codec browser and seals audio-codecs-win32."
+    },
+    {
+      "change": "workflow-entry:akari-audit.yml/audio-codecs/node audit/verify-evidence.mjs seal audio-codecs-win32 audit-evidence/audio",
+      "reason": "audit-lane runs audio-codecs and block-field-width on the codec browser and seals audio-codecs-win32."
+    },
+    {
+      "change": "workflow-entry:akari-acceptance.yml/composition-acceptance/node audit/run-acceptance.mjs composition --shard \"${{ matrix.shard }}\"",
+      "reason": "acceptance-lane runs and seals every composition shard; child-ux-aggregate verifies the merged composition evidence."
+    },
+    {
+      "change": "workflow-entry:akari-acceptance.yml/ux-editing/node audit/run-acceptance.mjs editing",
+      "reason": "acceptance-lane runs the complete editing suite and delivers its sealed editing bundle to child-ux-aggregate."
     }
   ]
 }

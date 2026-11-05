@@ -1,5 +1,7 @@
 // Static contract for .github/workflows/*.yml. The workflows are read as text with a
 // strict YAML subset; anything outside the subset is rejected instead of guessed.
+import {workForUnit} from '../run-ci-lane.mjs';
+import {laneUnits} from './ci-lanes.mjs';
 import {auditBundleKinds,acceptanceCommands,workflowContract} from './gate-contract.mjs';
 
 const yamlError=(line,message)=>new Error('line '+line+': '+message);
@@ -268,7 +270,16 @@ export function workflowIssues(files,contract=workflowContract,scriptPackages=nu
         if((step.if??null)!==(entries[index].if??null))issue('step-condition',file,at,'entry condition differs from the contract');
         if(!same(step.env,entries[index].env))issue('step-env',file,at,'entry environment differs from the contract');
         const args=tokens(run);
-        if(args[1]==='audit/verify-evidence.mjs'&&args[2]==='seal')for(const row of rows||[])sealed.push(args[3].replace(/\$\{\{ matrix\.([A-Za-z_-]+) \}\}/g,(_,k)=>row[k]??'<missing '+k+'>'));
+        if(args[1]==='audit/run-ci-lane.mjs')for(const row of rows||[]){
+          try{
+            for(const unit of laneUnits(args[2],row.shard)){
+              for(const [script,mode,kind] of workForUnit(unit,{}).commands){
+                if(script==='audit/verify-evidence.mjs'&&mode==='seal')sealed.push(kind);
+                if(script==='audit/run-acceptance.mjs'&&!accepted.includes(mode))accepted.push(mode);
+              }
+            }
+          }catch(error){issue('matrix',file,id,error.message);}
+        }
         if(args[1]==='audit/run-acceptance.mjs')accepted.push(args[2]);
       });
       entries.forEach((e,n)=>{if(!seen.has(n))issue('commands',file,id,'missing entry: '+e.run);});

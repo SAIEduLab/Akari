@@ -38,41 +38,33 @@ const splits={
 // Gate steps (audit/lib/gate-contract.mjs gateSteps), run in the listed order. Steps that read another
 // step's output stay with that producer and run after it. `selftestAfterMerge` steps read
 // a split step's merged output and run in the aggregate job, before the full validation.
-// Planned from the step times of runs 41476744043 and 41490181654, the slower of the two for each step (a split step's
-// part by its own time): s01 516 s, s02 537 s, s03 531 s, s04 536 s, s05 534 s, s06 522 s, s07 407 s, s08 420 s. save-name,
-// grown to 280 cases (pointers, 名人, Escape and the toolbar), took 413 s locally where its 108 cases took 92-131 s and
-// 106 s in CI (run 41510996137); with its verifier it is s09, which no other shard has room for. The four parts of change-guard-negative
-// (above) go to four shards, as two parts of a step in one shard would write one result file: at 2.0 times their local
-// time (run 41864291413) s04 holds about 420 s and designer's 109 s, s05 about 448 s and 201 s, s07 about 180 s and 383 s,
-// s08 about 120 s and 397 s, where s04 and s05 took 651 s and 801 s in that run.
+// Timed bundles are packed across workflows by audit/lib/ci-lanes.mjs. Keep each producer with its verifier.
 const selftestShards={
   s01:[unit('entry-browser','2/2'),'samples','samples-negative','entry-unit'],
-  s02:[unit('entry-browser','1/2'),'speech-display','speech-display-verify'],
-  s03:['spec-expectations-ui','spec-examples','spec-expectations-static','spec-expectations','integrity'],
+  s02:[unit('entry-browser','1/2'),'review-readable','export-open','ui-buttons'],
+  s03:['spec-expectations-ui','spec-examples','spec-expectations-static','spec-expectations'],
   s04:[unit('change-guard-negative','4/4'),'designer'],
   s05:[unit('change-guard-negative','3/4'),'toolbar-stage','toolbar-stage-verify','review-first-use','extension-foundation','extension-foundation-negative'],
-  s06:['static','audit-inventory','product-source','publication-inventory','publication-documents','release-distribution','workflow-contract'],
-  s07:[unit('change-guard-negative','1/4'),'japanese-intent-browser','review-readable','export-open','ui-buttons'],
-  s08:[unit('change-guard-negative','2/4'),'product','editor-browser-core','editor-gui','editor-assets','manual','language-boundaries','harness-negative','surface-negative','review-units',
+  s06:['static','audit-inventory','product-source','publication-inventory','publication-documents','release-distribution','workflow-contract','integrity'],
+  s07:[unit('change-guard-negative','1/4'),'japanese-intent-browser','speech-display','speech-display-verify'],
+  s08:[unit('change-guard-negative','2/4'),'product','manual','language-boundaries','harness-negative','review-units',
     'release-policy-negative','browser-environment','ci-regression','dom-regression','node-product','language-node','language-browser','editor-node','normal',
     'ownership','block-fields','format-compatibility','language-negative','japanese-contract-static','language-expectations-static','sentence-form-coverage',
     'runtime-boundary','japanese-gate-negative','review-actor','review-language','review-harness-negative','license-static','license-browser','license-verify'],
-  s09:['save-name','save-name-verify'],
+  s09:['save-name','save-name-verify','editor-browser-core','editor-gui','editor-assets','surface-negative'],
 };
 const selftestAfterMerge=['entry-verify'];
 
 // Browser tasks (audit/browser/browser-audit-manifest.json). A shard may hold tasks of several
 // groups; the aggregate merges every shard and runs verifyBrowserGroup over all groups.
-// Planned from the task times of runs 41424221208 and 41424226627, the slower of the two for each task (a split
-// task's part by its share of contexts): b01 470 s, b02 539 s, b03 470 s, b04 476 s, b05 511 s, b06 532 s, b07 446 s.
 const browserShards={
-  b01:[unit('workbench-matrix','1/2'),'ui-interactions','parent-qa'],
-  b02:[unit('schema-shards','1/2'),'browser-session'],
-  b03:[unit('schema-shards','2/2'),'browser-runtime-limits'],
-  b04:['browser-event-traces','browser-media-boundaries'],
+  b01:[unit('workbench-matrix','1/2'),'ui-interactions','parent-qa','browser-session'],
+  b02:[unit('schema-shards','1/2')],
+  b03:[unit('schema-shards','2/2')],
+  b04:['browser-event-traces','browser-media-boundaries','browser-runtime-limits','browser-events'],
   b05:[unit('modern-browser','1/2'),unit('workbench-matrix','2/2'),'browser-design-limits'],
-  b06:[unit('modern-browser','2/2'),'browser-boundaries','browser-runtime','browser-events'],
-  b07:['long-regression','perf-input:keyboard-insert','perf-input:clipboard-paste','browser-asset-limits','workbench-direct','browser-condition','browser-storage-media','browser-product','ui-stage-gesture','run-editor-regression','browser-owner-delete','ui-compact-menu','ui-shell'],
+  b06:[unit('modern-browser','2/2'),'browser-boundaries'],
+  b07:['long-regression','perf-input:keyboard-insert','perf-input:clipboard-paste','browser-asset-limits','workbench-direct','browser-condition','browser-storage-media','browser-product','ui-stage-gesture','run-editor-regression','browser-owner-delete','ui-compact-menu','ui-shell','browser-runtime'],
 };
 
 // Composition acceptance steps by acceptance ID (audit/lib/gate-contract.mjs acceptanceIds).
@@ -87,10 +79,7 @@ const acceptanceShards={
 // Reads the whole merged composition directory, so it runs in the aggregate job.
 const acceptanceAfterMerge={composition:['audit/tests/actions-transfer-verify.mjs']};
 
-// Run 41966888731 took 49m55s; its six mutation jobs took 27m17s to 40m41s. Twenty workers
-// share each suite/operator profile across the account's 20 slots. Every worker checks the same plan.
-// During planning, PRs can start seven selftests, six full-browser jobs, one codec job, three composition
-// jobs, one editing job, authorization and the guard planner (20). Other events use the full audit matrices.
+// Logical maximum. The CI planner assigns the actual worker count for each change.
 const changeGuardParts=['main',...Array.from({length:20},(_,i)=>'m'+(i+1))];
 // Files a step reads inside another step's output directory (exact output files are found from the commands).
 const acceptanceReads={composition:{'audit/tests/child-ux.mjs/matrix':['audit/run-ux-normal-gui.mjs']}};
