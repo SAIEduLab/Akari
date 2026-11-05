@@ -799,10 +799,6 @@
             return true;
           }
           this.selectSubject(task, step.node);
-          if (this.awaitHold(task, step)) {
-            this.recheckBlocked(force);
-            return true;
-          }
           task.currentNode = step.node;
           const frame = task.callFrames.at(-1);
           if (frame) frame.currentLine = step.node.sourceSpan?.startLine || 1;
@@ -828,7 +824,7 @@
       // its own part marks that part; any other sentence that is not still, everything.
       markMoved(task, node) {
         if (STILL_KINDS.has(node.kind)) return;
-        const own = OWN_PART_KINDS.has(node.kind) && !node.laneRef && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);
+        const own = OWN_PART_KINDS.has(node.kind) && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);
         if (own) this.movedParts.add(own.runtimeId); else this.geometryStamp++;
       }
       prepareCooperativeNode(task, node, loopFrame = null) {
@@ -997,8 +993,9 @@
             const sec = numberInUnit(evalExpression(n.seconds, ctx), '秒');
             if (sec < 0) throw valueError('R412', '待つ 時間は 0より 小さく できません', n.seconds);
             if (sec === 0) return;
+            // A wait stops this flow, whoever is its subject (ねこは1秒待つ is 1秒待つ): the sentences after it, of any
+            // part, come after the wait, in the order written. Other flows (other bodies, lanes) go on.
             const deadline = ensureFinite(this.runtime.now() + sec * 1000);
-            if (!everyoneStatement(n)) { this.hold(task, { kind: 'time', deadline }); return; }
             this.block(task, { kind: 'time', deadline });
             return { requeue: false };
           }
@@ -1006,7 +1003,6 @@
             // Counts (〜が10回【ジャンプ】するまで) are compared with those when the wait began.
             const condition = hasEventCount(originalNode.condition) ? this.runtime.bindEventCounts(originalNode.condition, ctx) : originalNode.condition;
             if (bool(evalExpression(condition === originalNode.condition ? n.condition : condition, ctx))) return;
-            if (!everyoneStatement(n)) { this.hold(task, { kind: 'condition', condition }); return; }
             this.block(task, { kind: 'condition', condition });
             return { requeue: false };
           }
@@ -1068,7 +1064,6 @@
             this.waitGroups.set(wg.id, wg);
             const ts = this.spawnDistributed('message', { message: msg }, wg.id, only);
             if (ts.length) {
-              if (!everyoneStatement(n)) { this.hold(task, { kind: 'waitGroup', waitGroupId: wg.id }); return; }
               this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
               return { requeue: false };
             }
@@ -1232,49 +1227,6 @@
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
       }
-      // A part's wait: the flow goes on; the part's next statement in this flow waits (awaitHold).
-      hold(task, reason) {
-        const runtimeId = task.subject?.runtimeId || task.runtimeId;
-        (task.holds ||= new Map()).set(runtimeId, { runtimeId, ...reason });
-        if (reason.kind === 'condition') this.conditionHolds = true;
-      }
-      holdOver(task, hold) {
-        if (hold.kind === 'time') return this.runtime.now() >= hold.deadline;
-        if (hold.kind === 'waitGroup') return !this.waitGroups.get(hold.waitGroupId)?.pending.size;
-        // A condition with the user's own calculations is stepped while blocked, like any wait.
-        if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(hold.condition)) return false;
-        return bool(evalExpression(hold.condition, this.context(task, { runtimeId: hold.runtimeId })));
-      }
-      // Before a statement of a held part runs, the flow waits for the rest of that part's wait.
-      // 名人: a sentence of the part carried on (laneRef) that acts on another part waits for the carried part's wait.
-      awaitHold(task, step) {
-        const lane = step.node?.laneRef && (step.node.laneRef.kind === 'value' ? this.runtime.partRuntimeId(evalExpression(step.node.laneRef.value, this.context(task))) : this.runtime.resolveActorRef(step.node.laneRef, task.callFrames.at(-1)?.runtimeId || task.runtimeId));
-        const runtimeId = lane && task.holds?.get(lane) ? lane : task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
-        if (!hold || step.kind === 'idle' || everyoneStatement(step.node)) return false;
-        task.holds.delete(runtimeId);
-        if (this.holdOver(task, hold)) return false;
-        if (step.kind === 'node') task.execStack[task.execStack.length - 1].index--;
-        task.currentNode = step.node;
-        const reason = { ...hold };
-        delete reason.runtimeId;
-        this.block(task, reason);
-        return true;
-      }
-      // A condition that comes true ends its hold then, even if it is false again when the part's statement comes.
-      // A part's wait for a condition ends when it holds; with no such wait (conditionHolds), nothing is looked at.
-      pollHolds() {
-        if (!this.conditionHolds) return;
-        let left = false;
-        for (const task of this.tasks.values()) {
-          if (!task.holds?.size || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) continue;
-          for (const [runtimeId, hold] of task.holds) {
-            if (hold.kind !== 'condition') continue;
-            try { if (this.holdOver(task, hold)) task.holds.delete(runtimeId); else left = true; }
-            catch (err) { this.taskError(task, err); left = true; break; }
-          }
-        }
-        this.conditionHolds = left;
-      }
       unblock(task) {
         if (!this.blocked.has(task) || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) return;
         this.blocked.delete(task);
@@ -1336,7 +1288,6 @@
         this.advanceContinuous();
         this.drainExternalUnblocks();
         this.pollWatches();
-        this.pollHolds();
         const now = this.runtime.now();
         // While every blocked flow waits for a time not yet reached (paced loops between こま), nothing is due; the
         // earliest such time is kept (dueAt) until a flow blocks again (block).
@@ -1428,13 +1379,6 @@
         if (['DONE', 'CANCELLED', 'ERROR'].includes(task.state) && task.state !== state) return;
         // 名人: copies made in a lane are the copies the flow made (できたコピー after the lanes).
         if (state === 'DONE' && task.laneParent && task.createdCopies?.length) task.laneParent.createdCopies = [...(task.laneParent.createdCopies || []), ...task.createdCopies];
-        // 名人: ねこと犬は1秒待つ — each lane's part waits; that wait goes on in the flow that started the lanes, so the
-        // part's next sentence there waits for it (as after ねこは1秒待つ in one flow).
-        if (state === 'DONE' && task.laneParent && task.holds?.size)
-          for (const [runtimeId, hold] of task.holds) {
-            const parent = (task.laneParent.holds ||= new Map()), held = parent.get(runtimeId);
-            if (!(held?.kind === 'time' && hold.kind === 'time' && held.deadline >= hold.deadline)) parent.set(runtimeId, hold);
-          }
         task.state = state;
         this.blocked.delete(task);
         for (const [key, control] of this.continuous) if (control.temporary && control.task === task) this.continuous.delete(key);

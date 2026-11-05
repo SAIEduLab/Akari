@@ -1,0 +1,239 @@
+{
+  "schema": "akari-mutation-equivalents-v1",
+  "equivalents": [
+    {
+      "file": "src/js/01-runtime-scheduler.js",
+      "source": "const own = OWN_PART_KINDS.has(node.kind) && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);",
+      "operator": "!==->===",
+      "reason": "actorRef が all（みんな）になるのは待つ文だけで、動き・見た目の文（OWN_PART_KINDS）は all を持たない。変異は own を常に偽にし、どの文でも geometryStamp を進めて見張りをすべて調べ直す側に倒れるので、ふれたときの結果は変わらない"
+    },
+    {
+      "file": "src/js/01-runtime-scheduler.js",
+      "source": "const own = OWN_PART_KINDS.has(node.kind) && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);",
+      "operator": "drop !",
+      "reason": "変異で own が真になるのは OTHER_PART_OPS（文字・入力らんの中身を変える文）だけで、そこでは部品の場所・大きさ・すがたが変わらず、ふれた判定に使う形（runtime-model の箱）は文字を見ない。主語の部品を動いたことにしても、ふれたときの結果は変わらない"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(!ast||ast.heading||ast.rules?.length)return null;",
+      "operator": "||->&&",
+      "reason": "候補の ast は assistCanonical が読めた文なので null にならない。見出しや決まりの候補は本文の文を ast.body に持たない（見出しだけの文、決まりの中の文）ので、変異でここを通っても frames は空になる。書いた意味（want）があるとき空の frames は assistMeaningMatch でどの書いた意味とも組めず、null と同じく外れる。want がないときは、どちらでも {missing:0} になる。見出しのあとに本文の文を続けた候補（「〜とき、〜」）を作るのは、もし・たら・とき などを書いた文だけで、その文の want は null である"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(n.kind==='CommentLine')continue;if(n.body||n.thenBody||n.lanes)return null;",
+      "operator": "||->&&",
+      "reason": "本文を持つ文（もし・くり返し・同時に始める）の候補を作るのは、もし・たら・まで・くり返し・ずっと・回・同時・ごとに などを書いた文で、その文は assistMeaningFrames が null を返し、意味を比べない。変異で本文を持つ文の役割を読んでも比べる書いた意味がない。近い書き方の事例1240件と、node の試験と照らし合わせの文のどれでも、書いた意味のある文に本文を持つ候補は出ず、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(!want||!got)return want&&!got?null:{missing:0,explicit:true};",
+      "operator": "true->false",
+      "reason": "この値になるのは書いた意味（want）がないときだけで（want があり got がないときは null）、want がないとき assistCandidates は explicit を読まずに候補を返す（if(!want)return out;）。足りない文を補う処理も want があるときだけ動くので、この explicit はどこでも読まれない"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const either=['move','turn'].includes(w.action)&&w.quantities.find(q=>q.unit==='秒'&&q.role==='unknown');let frame=w;",
+      "operator": "&&->||",
+      "reason": "role が unknown になる量は秒だけなので（歩・度・％の role は単位そのもの）、変異の q.unit==='秒'||q.role==='unknown' は「秒の量」になり、かける時間（during）の秒にも「前に同じ秒の待つ文があれば保つ」を許す。かける時間を書いた文の候補に、同じ秒の待つ文で始まる候補は作られない（待ってからの形を足すのは unknown の時間だけ）ので、示す文は変わらない。事例とすべての試験の文でも変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const lines=String(text).trim().replace(/。$/,'').split(/。?\\n/),merged=lines.length!==want.length,main=merged?want.filter((w,i)=>!(w.action==='wait'&&want[i+1]&&want[i+1].action!=='wait')):want;",
+      "operator": "&&->||",
+      "reason": "変異は、書いた意味の最後が待つ文のとき want[i+1].action を読んで止まる。この filter が動くのは候補の行の数と書いた意味の数がちがうとき（merged）で、待つ文で終わる文（〜して、…待つ）の候補は節ごとに組み立てるので行の数が書いた意味の数と同じになり、merged にならない。事例とすべての試験の文で、この形は起きず、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const head=/^([^、。「」]+?)(?:は|が)、?/.exec(line),named=head&&[...parts,'自分'].includes(head[1]),subject=named?head[0]:w.subject&&w.action!=='wait'?w.subject+'は':'',body=named?line.slice(head[0].length):line;",
+      "operator": "n->n+1",
+      "reason": "変異は、候補の行の先頭に書いた主語（「犬は」）があるときだけ、主語を補う読み方を変える（head[0]→head[1] は「は」を落とし、head[1]→head[2] は主語を読めず、head[0].length→head[1].length は本文を切りちがえる）。そうした行に時間を補ってしか作れない文は、事例とすべての試験の文に無く、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(time&&!/秒/.test(body)&&['move','turn'].includes(w.action)){ways.push(time.value+'秒かけて、'+body);if(time.role==='unknown'&&wait==null)ways.push(time.value+'秒待ってから、'+body);}else ways.push(body);",
+      "operator": "&&->||",
+      "reason": "変異は、かける時間（during）の秒にも「N秒待ってから」の形を足し、前に待つ文がある unknown の秒にも同じ形を足す。かける時間に待つ形を足した文は、待つ秒の役割が書いた意味とちがうので assistMeaningPair で必ず外れる。前に待つ文があるときに足した文は前の待つ文を落とすので、同じ行から作る「N秒かけて」の文（すべてを保つ文）があるかぎり示されない。事例とすべての試験の文で、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "let combos=[[]];for(const [i,part]of parts.entries())combos=combos.flatMap(combo=>(part.readable?[part.options[0]]:part.options.filter(o=>!o.defaultNumericSlots&&(framed||!parts.some((q,k)=>k!==i&&q.readable&&same(q.options[0],o))))).map(o=>[...combo,o]));",
+      "operator": "!==->===",
+      "reason": "変異は、意味を比べない文（want が null）で、読めない節の候補が読める節の文と同じでも使う。意味を比べない文で、読めない節の候補が読める節と同じ文になる組は、事例とすべての試験の文に無く、示す文は変わらなかった"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};",
+      "operator": ">=->>",
+      "reason": "変異で変わるのは、組み立てた候補の種類（schemaId）を差しかえの種類にするか文から読むかだけで、文と並びは変わらない。差しかえが最初の節のとき、文の最初の文がその差しかえなので文から読む種類も同じになる。事例とすべての試験の文で、候補の文・名前・種類は変わらなかった（照らし合わせは種類も比べた）"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};",
+      "operator": "n->n+1",
+      "reason": "変異で変わるのは、組み立てた候補の種類（schemaId）を差しかえの種類にするか文から読むかだけで、文と並びは変わらない。差しかえが最初の節のとき、文の最初の文がその差しかえなので文から読む種類も同じになる。事例とすべての試験の文で、候補の文・名前・種類は変わらなかった（照らし合わせは種類も比べた）"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const replacement=index>=0?combo[index]:null,texts=combo.map(o=>o.text),extra=index>=0&&!/^もし/.test(data.text)&&(index===0||conditional||parts[0].schemaId==='WaitTime')?{schemaId:replacement.schemaId}:{};",
+      "operator": "||->&&",
+      "reason": "変異で変わるのは、組み立てた候補の種類（schemaId）を差しかえの種類にするか文から読むかだけで、文と並びは変わらない。差しかえが最初の節のとき、文の最初の文がその差しかえなので文から読む種類も同じになる。事例とすべての試験の文で、候補の文・名前・種類は変わらなかった（照らし合わせは種類も比べた）"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const taken=out.length+partial.length;if(taken>=ASSIST_MAX||!hasHigher&&taken>=2||now()-started>ASSIST_BUDGET_MS)break;",
+      "operator": ">->>=",
+      "reason": "変わるのは、見る時間が上限（ASSIST_BUDGET_MS）のちょうど同じミリ秒のときにもう1つ見るかどうかだけで、どこで止まるかは機械の速さで決まる。示す文の決まりは変わらず、試験で決められる差ではない"
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const shown=(out.length?[...out.filter(c=>c.meaning.explicit),...out.filter(c=>!c.meaning.explicit)]:partial.sort((a,b)=>a.meaning.missing-b.meaning.missing)).slice(0,hasHigher?ASSIST_MAX:2);",
+      "operator": "n->n+1",
+      "reason": "上の候補（layer が6より小さい）がないとき、ループは見た数が2で止まる（!hasHigher&&taken>=2）ので、out も partial も2つまでで、slice(0,2) と slice(0,3) は同じになる"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1||read.nodes.length>1&&read.nodes.some(p=>MEIJIN_GROUP_SUBJECTS.has(p)))scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": "drop call",
+      "reason": "名人の本文で言い換えた行（line.meijinOwned：「ねこの大きさを150％にする。」のように相手を書く命令を、主語を書いた形に読みかえた行）は、言い換えたあとの文がふつうの文として読み直され、ふつうの文を読む枝で同じ印（STATEMENT_EXPLICIT_ACTORS）を消す。このため、readMeijinLine が読んだ行の枝でこの呼び出しを消しても、次の文の主語の読み方は変わらない。node の試験、仕様の世界、「ねこの大きさを150％にする。」「ねこの向きを90度にする。」のあとに主語のない文を書いた例で、結果が同じだった"
+    },
+    {
+      "file": "src/js/04-syntax-scripts.js",
+      "source": "if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1||read.nodes.length>1&&read.nodes.some(p=>MEIJIN_GROUP_SUBJECTS.has(p)))scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}",
+      "operator": ">->>=",
+      "reason": "主語を並べた並びの文が一つだけの行（ねこと犬は10歩進む。）は、主語を書いた文がないので、この条件より前に meijinTopicAfter が主語の引き継ぎを終える（並べた部品はちがう部品なので、並びの主語がみな同じになることはない）。このため、文の数の比べ方を > から >= にしても、主語の引き継ぎは同じように終わる"
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (k && named(after[0]) && lanes.every(lane => lane.length > k && named(lane[lane.length - k])))",
+      "operator": ">->>=",
+      "reason": "並べた部品の文ごとの並び（lanes）は、区切った前の部分の文と、区切った後ろの文 k 個からできている。前の部分に文がない形（「ねこと犬は、鳥は10歩進む。」）は読めない文（P201）なので、読める文の並びの文の数は k より必ず大きい。このため > を >= にしても、区切るかどうかは変わらない"
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }",
+      "operator": "||->&&",
+      "reason": "条件が作品の変数・数・文字・計算・比べる式だけでできているかを見るたどり方で、印（plain）が false になったあとも見続ける形にしても、終わりで plain が false なら空の一覧を返すので、知らせを出すかどうかは変わらない"
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "const visit = x => { if (!plain || !x || typeof x !== 'object') return; if (Array.isArray(x)) { x.forEach(visit); return; }",
+      "operator": "drop call",
+      "reason": "条件の木で配列を持つのは、手順や計算の呼び出しの引数だけで、その種類は配列の中を見る前に plain を false にして戻る（「かつ」「または」も left と right で持つ）。このため配列をたどる呼び出しを消しても、知らせを出すかどうかは変わらない"
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "if (at >= 0 && !elsewhere && here.length && here.every(k => k > at))",
+      "operator": ">->>=",
+      "reason": "here は、この流れの文のうち変数を変える文（target か variable を持つ文）の位置で、待つ文（WaitUntil）はそのどちらも持たないので、その位置が待つ文の位置 at と同じになることはない。このため > を >= にしても、知らせを出すかどうかは変わらない"
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "const after = readOr(body.slice(m.index)) || [], k = after.length, named = n => STATEMENT_EXPLICIT_ACTORS.has(n) && n.actorRef?.kind === 'named' && n.actorRef.name === m[1];",
+      "operator": "&&->||",
+      "reason": "after[0] is the first statement read from the written name followed by は or が, and a lane holds the statement read from the same words at that place; both name that part as their explicit actor, so a statement that names the part without being an explicit named actor never reaches named(), and (explicit and named) or (same name) gives the answer of all three."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (k && named(after[0]) && lanes.every(lane => lane.length > k && named(lane[lane.length - k])))",
+      "operator": "&&->||",
+      "reason": "after is read from the written name with は or が, so k > 0 and named(after[0]) hold exactly when the lanes have that part named at the same place (they read the same words), and every lane keeps the parts own statements before the cut, so it is always longer than k: either && turned into || splits the same lines."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (also.length >= 2 && also.at(-1).end < code.length) {",
+      "operator": "<-><=",
+      "reason": "The two conditions differ only for a line that ends with its last part written with も (ねこも犬も): there is no sentence for the parts, and read as the parts together or as another subject the line ends with the same diagnostic."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "if (also.length >= 2 && also.at(-1).end < code.length) {",
+      "operator": "n->n+1",
+      "reason": "also.at(-2).end < code.length differs from also.at(-1).end < code.length only for a line that ends with its last part written with も; there is no sentence for the parts, and the line ends with the same diagnostic either way."
+    },
+    {
+      "file": "src/js/04-meijin-syntax.js",
+      "source": "const lanes = meijinGroup(node('Parallel', { lanes: laneNodes }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''), split);",
+      "operator": "n->n+1",
+      "reason": "Only order[0] -> order[1] survives: the two differ only by the 、 that may follow みんな, それぞれ or 順番に, and the group subject text is used only by the I120 rewrite, which drops a trailing 、 (group.replace(/、$/, '')), so the rewrite is the same."
+    },
+    {
+      "file": "src/js/07-semantic-analysis-core.js",
+      "source": "for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])",
+      "operator": "+->-",
+      "reason": "compileProject gives each heading of a body an item of its own (script:document:...:unit:n), so a compiled item tree has no units and the flow name unit + i is never made for an item that changes a variable."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "while(basis[at]==='\\n'){const lineEnd=basis.indexOf('\\n',at+1),line=basis.slice(at+1,lineEnd<0?basis.length:lineEnd);",
+      "operator": "<-><=",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0, lineEnd<=0 and lineEnd<1 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "while(basis[at]==='\\n'){const lineEnd=basis.indexOf('\\n',at+1),line=basis.slice(at+1,lineEnd<0?basis.length:lineEnd);",
+      "operator": "n->n+1",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0 and lineEnd<1 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(line.trim()&&!line.trim().startsWith('※')){if(line.match(/^\\s*/)[0].length!==indent)return null;at=at+1+indent;break;}at=lineEnd<0?basis.length:lineEnd;}",
+      "operator": "<-><=",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0 and lineEnd<=0 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(line.trim()&&!line.trim().startsWith('※')){if(line.match(/^\\s*/)[0].length!==indent)return null;at=at+1+indent;break;}at=lineEnd<0?basis.length:lineEnd;}",
+      "operator": "n->n+1",
+      "reason": "lineEnd is basis.indexOf('\\n',at+1), so it is -1 or at least at+1 (1 or more): lineEnd<0 and lineEnd<1 give the same answer."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const indent=basis.slice(basis.lastIndexOf('\\n',proposal.start-1)+1).match(/^[ \\t]*/)[0].length,kept=assistNextSubject(basis,proposal.start,proposal.end,proposal.source,indent,ctx,project,{});",
+      "operator": "-->+",
+      "reason": "A proposal's sentence starts at proposal.start and is at least two characters long, so no line break stands at proposal.start or proposal.start+1: lastIndexOf from start-1 and from start+1 finds the same line break."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const text=shown?shown.text:p.text,source=shown?text.replace(/\\n/g,()=>'\\n'+' '.repeat(range.indent)):written,replacement=basis.slice(0,start)+source+basis.slice(end);let valid=false;",
+      "operator": "false->true",
+      "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, so the try always assigns valid and its first value is never read."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": ".filter(c=>{const sentence=c.sentence??c.text;if(seenText.has(sentence))return false;seenText.add(sentence);try{return sentence.split('\\n').every(line=>line.startsWith(named))&&!!parseSyntax(basis.slice(0,c.start)+c.source+basis.slice(c.end),context).ast;}catch{return false;}});",
+      "operator": "false->true",
+      "reason": "parseSyntax turns every AkariError into a diagnostic and throws only on a failure of the product itself, and the sentence or text of a candidate always has split; the catch is never reached."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(!shown.length&&ctx.targetId==='stage'&&want?.length&&want.every(w=>w.subject&&w.subject===want[0].subject)){",
+      "operator": "&&->||",
+      "reason": "With no subject written, the stage fallback looks for a part named null and finds none; with subjects that differ, the candidates made in the first part's body keep the other part's subject on its line, and the filter that keeps lines starting with the first part's name drops them: both give no candidate, as the original does."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "const frame={action,stated:!!ending,subject,written,directions:['move','turn',null].includes(action)?intent?.directions||(intent?.direction?[intent.direction]:way?[ASSIST_DIRECTIONS[way[1]]]:[]):[],quantities:[],strings:quotes.filter(q=>!(q.toward&&parts.includes(q.value))).map(q=>q.value),names:quotes.map(q=>q.value).filter(v=>words.includes(v)||data.keys.includes(keyWord(v))),raw,copy:/(?:コピー|こぴー|クローン|くろーん|複製|ふくせい|分身|ぶんしん|ふや|増や)/.test(masked),quoted:/[「」『』（）()【】［］〈〉《》｢｣\"]/.test(raw),objects:[],tell:action==='say'&&!!names&&new RegExp('(?:'+names+'|「(?:'+names+')」)に').test(raw.replace(/「([^「」]*)」(?!に)/g,quote=>'§'.repeat(quote.length)))},before=[];",
+      "operator": "&&->||",
+      "reason": "tell only lets a Broadcast candidate count as the written action (line 514: w.tell && other:Broadcast); for a sentence that does not say, a Broadcast candidate never matches its written action anyway. The assist examples (1231 cases) and twelve sentences written with 名前に and another action see no difference."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(named&&named===made)[subject,written]=[carried[0]??owner,carried[1]];",
+      "operator": "n->n+1",
+      "reason": "Only carried[1] -> carried[2] survives: after a clause that makes another part act, written is used only when the next clause takes the carried subject without writing one, and then its candidate is checked against the subject itself. The assist examples (1231 cases) and eight sentences that write a subject before such a clause see no difference."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": ".map(c=>c.text.includes('\\n')||c.text.startsWith(named)?c:{...c,text:named+c.text,source:named+c.source,label:c.label===c.text?named+c.text:c.label})",
+      "operator": "+->-",
+      "reason": "Only the label one survives (named+c.text when the label is the text): a one-line near sentence takes its block's label (BLOCK_SCHEMA_BY_ID), so in the stage's fallback its label is never its text. The assist examples (1231 cases) and the stage sentences built from the three part-body candidates whose label is their text see no difference."
+    },
+    {
+      "file": "src/js/09-editor-search.js",
+      "source": "if(data.subjects)for(const [text,label]of assistListedSplits(data.subjects,project,ctx))add(text,'S2',2,{label,listed:true});",
+      "operator": "n->n+1",
+      "reason": "A line of parts written together keeps only these sentences (the next line leaves only them in the pool), all of one layer: the layer orders them among themselves only, and 3 is below 6 as 2 is, so no other candidate is shown or left out. The assist examples, among them the parts written together (ASSIST-1082, ASSIST-1083), see no difference."
+    }
+  ]
+}

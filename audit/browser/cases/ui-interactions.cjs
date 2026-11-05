@@ -187,6 +187,27 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
     await undo(t1,word[d]+' untimed');await undo(t0,word[d]+' timed');times.push(word[d]);}
    assert.equal(changes.length,12);assert.equal(legs.length,16);assert.equal(times.length,4);
   });
+  // 向きを決める (LANGUAGE.md いまのばしょから動く): 0・90・180・270度 read 画面の右・上・左・下を向く with the side to choose. A
+  // choice writes that side, and なおす's 数で 決める writes 向きを45度にする, read with its number; each is one undo step.
+  await test('UI-set-direction-sides-degrees-undo',async()=>{
+   await (await reveal(page.locator('#objectSelect'))).selectOption('sprite-1');await (await reveal(page.locator('#eventSelect'))).selectOption('start');
+   const word={0:'右',90:'上',180:'左',270:'下'},block=()=>nodes('MotionCommand:SET_DIRECTION').first(),side=()=>block().locator('[data-blockui-action="motion-side"]');
+   const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+   const step=async(what,act,want)=>{const before=await state();await act();await settle();const after=await state();
+    assert.equal(after.source.trim(),want,what);assert.equal(after.pending,null,what+' leaves no pending edit');assert.equal(after.history,before.history+1,what+' is one undo step');return before;};
+   const undo=async(before,what)=>{await page.locator('#undoBtn').click();await settle();assert.equal((await state()).source,before.source,'one undo gives back the sentence before '+what);};
+   const changes=[];
+   for(const from of Object.keys(word))for(const to of Object.keys(word)){if(from===to)continue;
+    const what=word[from]+'→'+word[to];await fixture('画面の'+word[from]+'を向く。');assert.equal(await side().inputValue(),from,what);
+    const before=await step(what,()=>side().selectOption(to),'画面の'+word[to]+'を向く。');assert.equal(await side().inputValue(),to,what+' shows the new side');
+    await undo(before,what);assert.equal(await side().inputValue(),from,what+' undone shows the old side');changes.push(what);}
+   for(const from of Object.keys(word)){const what=word[from]+' 数で 決める';await fixture('画面の'+word[from]+'を向く。');
+    if(!await block().evaluate(e=>e.classList.contains('blockui-selected')))await U.clickNode(block());
+    const before=await step(what,async()=>(await reveal(block().locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="motion-side-degrees"]'))).click(),'向きを45度にする。');
+    assert.equal(await side().count(),0,what+' has no side to choose');assert.equal(await block().locator(':is(.blockui-node[data-schema-id="NumberLiteral"], .blockui-flat-value) input[data-blockui-field="value"]').first().inputValue(),'45');
+    await undo(before,what);assert.equal(await side().inputValue(),from,what+' undone');changes.push(what);}
+   assert.equal(changes.length,16);
+  });
   // E1-R1-01 (E-04, E-07, E-09): a short press, move and release on a placed block, where nothing else moves under the
   // pointer, leaves the work as it was: no new order and no history step. Every block in view, the workspace scrolled and
   // not, with the mouse (8 steps, past the 5-step slop) and a finger moving sideways (18 steps).

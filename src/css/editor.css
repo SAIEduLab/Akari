@@ -6451,7 +6451,7 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-notice) { flex-directio
    rewrite button (■ 止める brings them back, and the status line then points to them). */
 body.runtime :is(#blockEditor, #callableBlocks) [data-blockui-action="notices"],
 body.runtime .blockui-node-notices,
-body.runtime :is(#editorPending, #callablePending) :is(.intent-choices,.assist-choices,.assist-lead,.assist-none,.assist-note) { display: none !important; }
+body.runtime :is(#editorPending, #callablePending) :is(.intent-choices,.assist-choices,.assist-lead,.assist-none) { display: none !important; }
 body.runtime .blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 0; }
 /* A subject carried over from another part's sentence (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is shown on the
    block as a pale chip in （ ）: it is not written in the code (lead decision 30). */

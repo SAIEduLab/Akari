@@ -279,7 +279,8 @@
         more.classList.add('blockui-body-more');
         box.append(more);
       }
-      if (!children.length) box.append(viewCalls.E('p', 'blockui-empty', parent.schemaId === 'Script'
+      // A body of continuing rules only is a body of blocks (LANGUAGE.md レベル): it is not empty.
+      if (!children.length && !(parent.schemaId === 'Script' && parent.inputs.rules?.length)) box.append(viewCalls.E('p', 'blockui-empty', parent.schemaId === 'Script'
         ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね。' + (viewVars.doc.body.dataset.uiLevel === 'entry' ? '' : '動く お手本は「お手本を開く」で 見られるよ。')
         : 'ここに ブロックを 入れられるよ'));
       return box;
@@ -508,7 +509,7 @@
       if (node.inputs.seconds) {
         quantity('seconds', '秒'); main.append(text('かけて、'));
         extraControls.append(viewCalls.button('時間を外す', 'motion-untimed', () => viewCalls.operate({ type: 'optional-input-remove', parentId: node.id, input: 'seconds' })));
-      } else if (viewVars.doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE', 'GOTO_PART'].includes(value))
+      } else if (timeLabel && (viewVars.doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE', 'GOTO_PART'].includes(value)))
         extraControls.append(viewCalls.button(timeLabel, 'motion-timed', () => { const seconds = createBlock('NumberLiteral', { idPrefix: viewVars.viewId }); seconds.fields.value = 1; return viewCalls.operate({ type: 'expression', parentId: node.id, input: 'seconds', node: seconds }); }));
       const steps = n => { const literal = createBlock('NumberLiteral', { idPrefix: viewVars.viewId }); literal.fields.value = n; return literal; };
       if (value === 'GOTO' || value === 'MOVE_BY') {
@@ -568,6 +569,20 @@
           main.append(select);
         } else main.append(renderInput(node, schema.inputs.find(s => s.key === 'args'), 0));
         main.append(text('のところへ行く'));
+      } else if (value === 'SET_DIRECTION') {
+        // The four screen directions read as the code writes them (画面の右を向く is 0度, 上 90, 左 180, 下 270), with the
+        // side to choose; any other direction is 向きを〇度にする. なおす has 数で 決める (45度, a new block's direction).
+        const arg = node.inputs.args?.[0], literal = arg?.schemaId === 'QuantityLiteral' && arg.inputs.value?.schemaId === 'NumberLiteral' ? arg.inputs.value : null;
+        const sides = [['右', 0], ['上', 90], ['左', 180], ['下', 270]], side = literal && sides.find(([, degrees]) => degrees === literal.fields.value);
+        const facing = degrees => { const replacement = structuredClone(node); replacement.inputs.args[0].inputs.value.fields.value = degrees; return viewCalls.operate({ type: 'replace', id: node.id, node: replacement }); };
+        if (side) {
+          const select = viewCalls.E('select', 'blockui-motion-side', null, { 'aria-label': schema.label + 'の 向き', 'data-block-id': node.id, 'data-blockui-action': 'motion-side' });
+          for (const [word, degrees] of sides) select.append(viewCalls.E('option', '', word, { value: String(degrees) }));
+          select.value = String(side[1]); select.disabled = viewVars.isLocked() || !!viewVars.options.readOnly;
+          viewCalls.listen(select, 'change', () => { if (!facing(Number(select.value)).ok) select.value = String(side[1]); });
+          main.append(text('画面の'), select, text('を向く'));
+          extraControls.append(viewCalls.button('数で 決める', 'motion-side-degrees', () => facing(45)));
+        } else { main.append(text('向きを')); quantity('args', '度', 0); main.append(text('にする')); }
       } else {
         main.append(text(value === 'TURN_RIGHT' ? '右に' : '左に')); quantity('args', '度', 0); main.append(text('回る'));
       }
@@ -708,13 +723,16 @@
         main = viewCalls.E('div', 'blockui-node-main');
       content.hidden = viewVars.collapsed.has(node.id);
       if (schema.category === 'script') {
-        for (const field of schema.fields) {
+        // The body of a block made by the child has no trigger, and no continuing rule is written there (S305): neither
+        // いつ動く？ nor the offer of a rule, and only rules written there anyway are shown.
+        const definition = !!viewCalls.context().definitionKind;
+        for (const field of definition ? [] : schema.fields) {
           const edit = viewCalls.E('details', 'blockui-heading-editor');
           edit.append(viewCalls.E('summary', '', 'いつ動く？'), viewCalls.fieldControl(node, field));
           main.append(edit);
         }
         const ruleSlot = schema.inputs.find(slot => slot.key === 'rules');
-        if (ruleSlot) {
+        if (ruleSlot && !(definition && !node.inputs.rules?.length)) {
           const rules = node.inputs.rules || [], list = viewCalls.E('details', 'blockui-rules');
           list.open = rules.length > 0;
           list.append(viewCalls.E('summary', '', rules.length ? 'つづけて動くルール（' + rules.length + 'こ）' : '＋ キーを おす間など、つづけて動かす'));
@@ -833,7 +851,7 @@
         }
         // The move blocks and the turns read like their code (LANGUAGE.md 動きの文). 歩・秒・度 are text, with no unit to
         // choose. なおす adds or removes the time (〇秒かけて、) and, on いまのばしょから動く, the second direction.
-        else if (schema.kind === 'MotionCommand' && ['GOTO', 'MOVE_BY', 'MOVE', 'GOTO_PART', 'TURN_RIGHT', 'TURN_LEFT'].includes(schema.discriminator?.value))
+        else if (schema.kind === 'MotionCommand' && ['GOTO', 'MOVE_BY', 'MOVE', 'GOTO_PART', 'TURN_RIGHT', 'TURN_LEFT', 'SET_DIRECTION'].includes(schema.discriminator?.value))
           renderMotionBlock(node, schema, main);
         else if (schema.draftOnly) {
           box.classList.add('blockui-draft-hole');

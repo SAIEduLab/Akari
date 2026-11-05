@@ -124,6 +124,10 @@
     {
       "change": "workflow-entry:akari-acceptance.yml/ux-editing/node audit/run-acceptance.mjs editing",
       "reason": "acceptance-lane runs the complete editing suite and delivers its sealed editing bundle to child-ux-aggregate."
+    },
+    {
+      "change": "pin:0453f26f6f2b920ff604aac5b9445bf1c93a035e0d632a9a7f0c976dbce16d91",
+      "reason": "fixedIdSha256 of audit/manifests/product-tests.json is the digest of the product test IDs; the 1.0.1 tests add eight IDs (six TEST-CONTRACT, one CORE and one LANG case) and remove none."
     }
   ]
 }

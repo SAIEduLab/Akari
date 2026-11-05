@@ -138,7 +138,7 @@ export function domReferenceIssues(text, html) {
 // Diagnostic codes: every code the product can raise (a string such as 'S310' in the product) is named by some audit
 // file, so a new error path comes with the test that reaches it. UNNAMED_CODES holds the codes no audit file named when
 // this check began; it can only shrink: a listed code that a test now names, or that the product no longer has, is refused.
-export const UNNAMED_CODES = Object.freeze(['E702', 'E704', 'F506', 'F507', 'F510', 'I101', 'I102', 'I103', 'I121', 'I122',
+export const UNNAMED_CODES = Object.freeze(['E702', 'E704', 'F506', 'F507', 'F510', 'I102', 'I103', 'I122',
   'I125', 'I126', 'I127', 'I128', 'I129', 'I132', 'N101', 'N102', 'N103', 'N104', 'P203', 'P206', 'X600', 'X603', 'X604', 'X605']);
 const codeShape = /^[A-Z][0-9]{3}$/;
 export function productCodes(text) {

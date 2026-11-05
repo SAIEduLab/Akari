@@ -100,6 +100,7 @@
     searchIntent,
     assistSeeds,
     assistCandidates,
+    assistProposalKeepsSubject,
     collectSignalNames,
     insertionContext,
     insertSource,

@@ -39,8 +39,8 @@ await check('N22/nested-binder-scope',()=>{const source='持ち物の各要素�
   // 2/60, 7 at 3/60, 9 at 4/60 and 10 at 5/60.
   assert.deepEqual(r.states.map(s=>s.speech.length),[2,4,5,7,9,10]);assert.deepEqual(r.states.at(-1).speech,['本','1','本','2','本','ぼうし','1','ぼうし','2','ぼうし']);return r;});
 await check('N25/semantic-drafts-save-and-refuse-execution',async()=>{const out=[];for(const kind of ['unit','function']){const p=project(kind==='unit'?'1歩＋1秒を言う。':'何もしない。');if(kind==='function')p.functions=[{id:'pair-bad-function',ownerId:'stage',name:'計算',args:[],source:'いまのばしょから、右へ20歩動く。1を返す。'}];const expected=plain(A.compileProject(p).errors);assert.ok(expected.length);const text=A.serializeProject(p,new A.AssetStore()),loaded=await A.parseProjectFile(text);assert.deepEqual(plain(loaded.project),plain(p));assert.deepEqual(plain(loaded.diagnostics),expected);assert.throws(()=>A.packExecutable(p));out.push({kind,diagnostics:expected,sourcePreserved:true,exportRejected:true});}return out;});
-// N26 (LANGUAGE.md 役割と語順): だんごは0.5秒待つ holds only だんご — the flow goes on, and だんご's next statement
-// waits; 0.5秒待つ (or みんなは…) stops the whole flow; 自分は0.5秒待つ holds 自分 as a part.
+// N26 (LANGUAGE.md 役割と語順「待つ」): a wait stops the flow, whatever its subject — だんごは0.5秒待つ, 0.5秒待つ, 自分は0.5秒待つ
+// and みんなは0.5秒待つ give the same times: nothing after the wait moves before it ends, then the sentences run in order.
 await check('N26/part-wait-and-flow-wait',()=>{
  const two=source=>{const p=project(source),b=structuredClone(p.components[0]);Object.assign(b,{id:'pair-dango',name:'だんご',x:300});b.costumes=[{id:'pair-dango-costume',name:'文字',kind:'text',value:'o'}];b.costumeId='pair-dango-costume';p.components.push(b);return p;};
  const trace=(source,times)=>{const h=harness(two(source)),at=()=>[h.runtime.actor('sprite-1').x,h.runtime.actor('pair-dango').x];try{const xs=[at()];for(const t of times){h.at(t);xs.push(at());}assert.deepEqual(h.errors,[]);return xs;}finally{h.stop();}};
@@ -48,11 +48,11 @@ await check('N26/part-wait-and-flow-wait',()=>{
  const flow=trace('0.5秒待つ。\nあかりはいまのばしょから、右へ20歩動く。\nだんごはいまのばしょから、右へ20歩動く。',[499,500]);
  const self=trace('自分は0.5秒待つ。\nだんごはいまのばしょから、右へ20歩動く。\n自分はいまのばしょから、右へ20歩動く。',[499,500]);
  const everyone=trace('みんなは0.5秒待つ。\nあかりはいまのばしょから、右へ20歩動く。',[499,500]);
- assert.deepEqual(part,[[120,300],[120,300],[120,320]]);assert.deepEqual(flow,[[100,300],[100,300],[120,320]]);
- assert.deepEqual(self,[[100,320],[100,320],[120,320]]);assert.deepEqual(everyone,[[100,300],[100,300],[120,300]]);
- // Two subjects in one sentence are not read; the fix is one sentence for each, and both parts then wait together.
+ assert.deepEqual(part,[[100,300],[100,300],[120,320]]);assert.deepEqual(flow,[[100,300],[100,300],[120,320]]);
+ assert.deepEqual(self,[[100,300],[100,300],[120,320]]);assert.deepEqual(everyone,[[100,300],[100,300],[120,300]]);
+ // Two subjects on a timed wait are not read; the fix is one wait without a subject (two waits would wait twice as long).
  const both=A.parseSyntax('あかりもだんごも0.5秒待つ。',{symbols:A.buildSymbols(two(''))}),fix=both.syntaxDiagnostics?.[0]?.proposals?.[0]?.source;
- assert.ok(!both.ast&&/主語ごとに/.test(both.syntaxDiagnostics[0].message));assert.equal(fix,'あかりは0.5秒待つ。\nだんごは0.5秒待つ');
+ assert.ok(!both.ast&&/待つ 文は、主語を 書かなくても、この 本文が 待ちます/.test(both.syntaxDiagnostics[0].message));assert.equal(fix,'0.5秒待つ');
  const together=trace(fix+'。\nあかりはいまのばしょから、右へ20歩動く。\nだんごはいまのばしょから、右へ20歩動く。',[499,500]);assert.deepEqual(together,[[100,300],[100,300],[120,320]]);
  return {part,flow,self,everyone,twoSubjects:{fix,together}};});
 const report={schema:'akari-semantic-negative-pairs-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),uxAcceptance:false,environment:'node / actual product; logical clock',results,externalObligations:['N13 same-scope ambiguity: existing scope contract','N22 concurrent notification groups and callable actor scope: existing semantic contract','N23 all38 boundary families: full limits and selftest gates','N24 invalid file with unsaved work: format-malformed-state-protection browser gate','N21 UI draft save/readback and N25 semantic draft file UI: fixed composition acceptance']};const output=path.resolve(process.argv[2]||'audit-evidence/semantic-negative-pairs.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.id+': '+r.error.split('\n').slice(0,4).join(' '));console.log('Semantic minimum pairs: '+results.filter(r=>r.status==='PASS').length+'/'+results.length);if(report.status!=='PASS')process.exitCode=1;
