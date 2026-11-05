@@ -79,10 +79,11 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-RPC-NEGATIVE-LIFECYCLE': { malformed: true, unknown: true, duplicate: true, cancel: true, timeout: true, error: true, impostor: true, oldSession: true, reconnect: true },
   'EXTENSION-EVENT-LANGUAGE': { value: '9', compiled: true, saved: true, restored: true, eventLifetime: { registeredKeepsRunning: true, registeredValues: [['sprite-1',17],['stage',19]], eventContextsFrozen: true, sameSession: true, stageFirstStatus: true, noBodyFinishes: true, unknownEventFinishes: true, unknownExtensionFinishes: true, unknownCommandRejected: true, unknownCalculationRejected: true, unregisteredEventValueRejected: true, unknownEmissionRejected: true } },
 });
-export function verifyExtensionFoundation(report, inputs, evidenceDirectory) {
+export function verifyExtensionFoundation(report, inputs, evidenceDirectory,
+  expectedProvenance = { run: process.env.GITHUB_RUN_ID || 'local', attempt: process.env.GITHUB_RUN_ATTEMPT || '1' }) {
   assert.equal(report.schema, 'akari-extension-foundation-v1');
   assert.equal(report.status, 'PASS'); assert.deepEqual(report.snapshot, inputs);
-  assert.deepEqual(report.provenance, { run: process.env.GITHUB_RUN_ID || 'local', attempt: process.env.GITHUB_RUN_ATTEMPT || '1' });
+  assert.deepEqual(report.provenance, expectedProvenance);
   assert.deepEqual(report.environment, { platform: report.environment.platform, browser: browserEnvironment.version, playwright: browserEnvironment.playwright });
   assert.ok(['linux', 'win32'].includes(report.environment.platform));
   assert.deepEqual(report.results.map(r => r.id), [...extensionFoundationIds]);

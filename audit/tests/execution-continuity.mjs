@@ -6,6 +6,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import {verifyExtensionFoundation,extensionFoundationIds,extensionExpectedObservations} from '../lib/extension-foundation-contract.mjs';
+import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {audioIds,codecBrowser} from '../lib/feature-contract.mjs';
 import {gateSteps,auditBundleKinds,auditJobIds,integrityControlIds,acceptanceIds,acceptanceCommands,verifyAcceptanceExecution} from '../lib/gate-contract.mjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
@@ -67,11 +69,23 @@ for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-jo
       assert.deepEqual(clone(inputs),{fixture:true});assert.deepEqual(clone(provenance),{...aggregateProvenance,attempt:selectedAttempts[kind],platform:'win32'});
       if(kind===scenario)throw Error('invalid evidence');return {result:{status:'PASS'}};
     },
-    verifyMergedEvidence(verified,inputs,root){
+    verifyMergedEvidence(verified,inputs,root,provenances){
       merges.push(Object.keys(verified));assert.deepEqual(clone(inputs),{fixture:true});assert.equal(root,'/aggregate/merged');
       for(const kind of kinds)assert.equal(verified[kind],kind===scenario?undefined:path.join(downloads,'akari-'+kind+'-123-'+selectedAttempts[kind]),'only verified bundles are merged');
+      assert.ok(provenances,'verified source provenance is required');
+      assert.deepEqual(clone(provenances),Object.fromEntries(kinds.filter(kind=>kind!==scenario).map(kind=>[kind,{...aggregateProvenance,attempt:selectedAttempts[kind]}])),'merged validation uses the sealed source attempt');
       return mergedKinds.map(kind=>scenario==='merged-'+kind?{kind,status:'FAIL',reason:'invalid merge'}:{kind,status:'PASS'});
     }});
+  if(scenario==='pass'){
+    const oldProvenance={run:'123',attempt:'1'},oldInputs={productSha256:'c'.repeat(64)};
+    const oldReport={schema:'akari-extension-foundation-v1',status:'PASS',snapshot:oldInputs,provenance:oldProvenance,
+      environment:{platform:'win32',browser:browserEnvironment.version,playwright:browserEnvironment.playwright},
+      results:extensionFoundationIds.map(id=>({id,status:'PASS',observed:extensionExpectedObservations[id]})),networkErrors:[],pageErrors:[],
+      artifacts:['candidate.html','derived.html','player.html','external-player.html'].map(path=>({path,sha256:oldInputs.productSha256}))};
+    verifyExtensionFoundation(oldReport,oldInputs,undefined,oldProvenance);
+    for(const bad of [{run:'999',attempt:'1'},{run:'123',attempt:'2'}])
+      assert.throws(()=>verifyExtensionFoundation({...oldReport,provenance:bad},oldInputs,undefined,oldProvenance),'sealed source provenance must match');
+  }
   assert.equal(merges.length,1,'the merged validators run after every bundle check');
   assert.deepEqual(selections,kinds,'every kind selected after a failure');
   assert.deepEqual(calls,kinds,'every bundle inspected after a failure');

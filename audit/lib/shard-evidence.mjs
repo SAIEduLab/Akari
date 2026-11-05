@@ -301,9 +301,17 @@ export function mergeAcceptanceShards(kind,dirs,out,inputs,commands,ids){
 // verified: {bundle kind: directory} of the bundles that passed. A family with a missing or failed
 // shard is reported FAIL without merging.
 export const mergedKinds=Object.freeze(['selftest','full-browser']);
-export function verifyMergedEvidence(verified,inputs,root){
+export function verifyMergedEvidence(verified,inputs,root,provenances={}){
   const families=[
-    ['selftest',selftestShards,dirs=>{const out=path.join(root,'selftest');mergeGateShards(dirs,out,inputs);return verifyGateResults(out,inputs);}],
+    ['selftest',selftestShards,dirs=>{
+      const out=path.join(root,'selftest');
+      mergeGateShards(dirs,out,inputs);
+      // Keep the attempt of the already verified source bundle when a partial rerun reuses it.
+      const owner=Object.entries(selftestShards).find(([,steps])=>steps.includes('extension-foundation'))[0];
+      const source=provenances['selftest-'+owner];
+      const extensionProvenance=source?{run:source.run,attempt:source.attempt}:undefined;
+      return verifyGateResults(out,inputs,{extensionProvenance});
+    }],
     ['full-browser',browserShards,dirs=>{const out=path.join(root,'full-browser');mergeBrowserShards(dirs,out,inputs);return verifyBrowserGroup(out,'all',inputs);}],
   ];
   return families.map(([family,plan,merge])=>{

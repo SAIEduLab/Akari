@@ -14,13 +14,13 @@ if(mode==='seal')sealBundle(kindOrDirectory,directoryOrOutput,provenance);
 else {
   assert.equal(mode,'aggregate');const inputs=snapshot(currentProductFile());
   const kinds=auditBundleKinds;
-  const results=[],verified={};
+  const results=[],verified={},provenances={};
   for(const kind of kinds){
-    try{const expected={...provenance,platform:'win32'};const selected=selectBundleDirectory(kind,kindOrDirectory,expected);const result=verifyBundle(kind,selected.directory,inputs,selected.provenance);results.push({kind,status:'PASS',provenance:selected.provenance,result:result.result});verified[kind]=selected.directory;}
+    try{const expected={...provenance,platform:'win32'};const selected=selectBundleDirectory(kind,kindOrDirectory,expected);const result=verifyBundle(kind,selected.directory,inputs,selected.provenance);results.push({kind,status:'PASS',provenance:selected.provenance,result:result.result});verified[kind]=selected.directory;provenances[kind]=selected.provenance;}
     catch(e){results.push({kind,status:'FAIL',reason:e.message.slice(0,3000)});}
   }
   // The shards merged into one selftest tree and one browser tree, checked by the unchanged full validators.
-  results.push(...verifyMergedEvidence(verified,inputs,path.join(path.dirname(directoryOrOutput),'merged')));
+  results.push(...verifyMergedEvidence(verified,inputs,path.join(path.dirname(directoryOrOutput),'merged'),provenances));
   let jobsPassed=false;
   try {
     const needs=JSON.parse(process.env.AKARI_NEEDS||'null');
