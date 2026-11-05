@@ -161,6 +161,7 @@
     "audit/lib/block-field-contract.mjs",
     "audit/lib/block-schema-contract.cjs",
     "audit/lib/browser-environment.mjs",
+    "audit/lib/browser-input-evidence.cjs",
     "audit/lib/browser-processes.mjs",
     "audit/lib/browser-warmup.mjs",
     "audit/lib/capability-contract.mjs",

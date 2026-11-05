@@ -1,3 +1,4 @@
+const {startInputEvidence,captureInputFailure}=require('../lib/browser-input-evidence.cjs');
 const {confirmSave}=require('../lib/product-dialogs.cjs');
 const {projectAction}=require('../lib/project-actions.cjs');
 const {pressStop,DOUBLE_PRESS_MS}=require('../lib/stop-press.cjs');
@@ -18,7 +19,7 @@ const report={schema:'akari-export-open-v1',status:'RUNNING',productSha256:crypt
 function make(source,extra={}){const p=makeRegressionProject(api);p.name='検証用の作品';p.scripts=[{targetId:'stage',event:'start',source}];p.actions=[];p.functions=[];Object.assign(p,extra);return p;}
 function generate(name,source,extra={},presentation='artwork'){const p=make(source,extra),file=path.join(out,name+'.html');fs.writeFileSync(file,presentation==='default'?api.generateStandaloneHtml(p,api.makeDefaultAssetStore()):api.generateStandaloneHtml(p,api.makeDefaultAssetStore(),{presentation}));return file;}
 const marker='「冒頭」と言う。\n10秒待つ。',tone='440Hzの音を0.2秒鳴らし始める。\n'+marker;
-async function page(b,file=product,width=1180){const c=await b.newContext({offline:true,viewport:{width,height:848}});
+async function page(b,file=product,width=1180){const c=await b.newContext({offline:true,viewport:{width,height:848}});await startInputEvidence(c);
  // These editor checks use the normal basic toolbar, as product-test-host does.
  // Entry first-start behavior is covered independently by entry-workshop.
  if(file===product)await c.addInitScript(()=>localStorage.setItem('akari.uiLevel.v1','basic'));
@@ -37,7 +38,7 @@ async function save(p){const wait=p.waitForEvent('download');await p.locator('#s
 async function chooser(p){const wait=p.waitForEvent('filechooser');await projectAction(p, 'openBtn');return wait;}
 async function acceptedChooser(p){await projectAction(p, 'openBtn');await p.locator('#loseConfirmModal.show').waitFor();const wait=p.waitForEvent('filechooser');await p.locator('#loseConfirmProceed').click();return wait;}
 async function run(id,fn){try{const evidence=await fn();report.results.push({id,status:'PASS',evidence});console.log(id+': PASS');}catch(e){report.results.push({id,status:'FAIL',error:e.stack,evidence:e.evidence||null});console.error(id+': FAIL '+e.message);}fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));}
-async function withPage(b,fn,file=product,width=1180){const p=await page(b,file,width);try{return await fn(p);}finally{await p.context().close();}}
+async function withPage(b,fn,file=product,width=1180){const p=await page(b,file,width);try{return await fn(p);}catch(e){e.evidence={...e.evidence,input:await captureInputFailure(p,e,out,'failure-'+report.results.length)};throw e;}finally{await p.context().close();}}
 // The product asks about unsaved work in its own dialog. Answer it by pressing the visible
 // 「やめる」 button and report the question that was shown.
 // It names the work it is about (I5a).

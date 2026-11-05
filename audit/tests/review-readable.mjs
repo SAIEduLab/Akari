@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,snapshot} from '../lib/product-test-host.mjs';
 import {verifyReviewReport} from '../lib/review-regression-contract.mjs';
+import inputEvidence from '../lib/browser-input-evidence.cjs';
 import {pressStop} from '../lib/stop-press.cjs';
 import {chooseView} from '../browser/cases/view-toggle.cjs';
 
@@ -23,6 +24,7 @@ const levels=['basic','advanced'];
 
 async function openPage(browser,viewport,level='basic'){
   const context=await browser.newContext({offline:true,viewport});
+  await inputEvidence.startInputEvidence(context);
   await context.route(/^https?:/,route=>{networkRequests.push(route.request().url());return route.abort();});
   const page=await context.newPage();
   page.on('pageerror',error=>pageErrors.push(error.message));
@@ -101,7 +103,7 @@ async function stageSpeechReview(browser){
         assert.notEqual(await page.locator('.codewin').evaluate(e=>getComputedStyle(e).display),'none','advanced editor/monitor returns after stop');
       observations.push({...info,stopReturnsToEditor:true,pauseResume:level==='advanced'});
       await context.close();
-    }catch(error){await context.close();throw Error(`${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
+    }catch(error){await inputEvidence.captureInputFailure(page,error,evidenceDir,'stage-'+level+'-'+viewport.width);await context.close();throw Error(`${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
   }
   const {page,context}=await openPage(browser,{width:1440,height:900},'basic');
   let transition;
@@ -127,7 +129,7 @@ async function stageSpeechReview(browser){
     assert.ok(await page.locator('#codeEditor').isVisible());
     transition={basicBlocksRun:true,basicCodeViewVisible:true,levelOnEditScreenOnly:true,advancedModeSwitch:true,pauseResume:true,stopReturnsToCodeEditor:true};
     await context.close();
-  }catch(error){await context.close();throw Error(`basic runtime mode transition: ${error.message}`);}
+  }catch(error){await inputEvidence.captureInputFailure(page,error,evidenceDir,'mode-transition');await context.close();throw Error(`basic runtime mode transition: ${error.message}`);}
   return {observations,transition,coverage:{viewports,levels},checks:['stage-visible','speech-rendered-size','stop-editor-return','advanced-code-monitor-retained','advanced-pause-resume','basic-code-view-and-advanced-switch']};
 }
 
@@ -155,7 +157,7 @@ async function questionInputReview(browser){
       await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
       observations.push({viewport,level,source,prompt,focused,modal,answerAccepted:true,stopReturnsToEditor:true});
       await context.close();
-    }catch(error){await context.close();throw Error(`question ${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
+    }catch(error){await inputEvidence.captureInputFailure(page,error,evidenceDir,'question-'+level+'-'+viewport.width);await context.close();throw Error(`question ${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
   }
   return {observations,coverage:{viewports,levels},checks:['canonical-question-parses','answer-field-focus','answer-accepted','stop-editor-return']};
 }
@@ -238,6 +240,9 @@ async function fullTextEditorReview(browser) {
         buttonAccess.push({action,characters:385,geometry,coordinateClick:true});
       }
       observations.push({width,level,focused,surface,buttonAccess,shortCharacters:64,longCharacters:385,cancelExact:true,commitExact:true,undoRedoExact:true,escapeExact:true,roundtripExact:true});
+    } catch(error) {
+      await inputEvidence.captureInputFailure(page,error,evidenceDir,'full-text-'+level+'-'+width);
+      throw error;
     } finally { await context.close(); }
   }
   return observations;
@@ -314,7 +319,7 @@ async function longTextReview(browser){
       assert.equal(after.blockZoom,before.blockZoom,'focus and roundtrip leave editor zoom unchanged');
       observations.push({viewport,level,targetZoom,before,focusStyle,longCharacterCount:[...long].length,inputScroll:{endScroll,homeScroll},escaped:{draftCancelled:true,zoom:escaped.zoom,world:escaped.world},committed:{sourceLength:[...committed].length,undo:true,redo:true,codeBlocksRoundtrip:true,zoom:after.blockZoom,world:after.world}});
       await context.close();
-    }catch(error){await context.close();throw Error(`long text ${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
+    }catch(error){await inputEvidence.captureInputFailure(page,error,evidenceDir,'long-text-'+level+'-'+viewport.width);await context.close();throw Error(`long text ${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
   }
   const fullTextEditor=await fullTextEditorReview(browser);
   return {observations,fullTextEditor,coverage:{viewports,levels,workspaceZooms:[100,55]},checks:['focus-field-visible','18px-rendered-input','40px-rendered-height','keyboard-home-end-scroll','escape-cancels-draft','undo-redo-exact','code-block-roundtrip','stage-and-workspace-zoom-pan-preserved']};
