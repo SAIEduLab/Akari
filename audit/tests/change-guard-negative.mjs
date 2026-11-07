@@ -79,8 +79,9 @@ try {
   const productLine=(anchor,insert)=>{assert.equal(productText.split(anchor).length,2,'one anchor in the product: '+anchor.trim());return productText.replace(anchor,()=>anchor+insert);};
   // A function the syntax suite runs, and a no-op sum to put at its start.
   const runFn='  function replaceUnprotectedWord(text, from, to) {\n',noOpLine='    void (1 + 1);\n';
-  // A CI part (AKARI_PART) runs its planned group (audit/lib/shard-plan.cjs): the behaviour, limit and mutant rules
-  // and the test map, or the rest.
+  // A CI part (AKARI_PART) runs its planned group (audit/lib/shard-plan.cjs): the tree and record rules; the behaviour and
+  // limit rules; the assertion and coverage rules; the mutant rules; or the worlds' lines, the test map and the record
+  // without a change.
   if(mine.has('real-tree/identity-extracted')){
   // The identity of the candidate tree, read through git and the tree's own contracts.
   const identity=await treeIdentity(repo,base,trees);
@@ -376,6 +377,8 @@ try {
     assert.ok(busy.errors.some(m=>/runs only for a plan without one/.test(m)),JSON.stringify(busy.errors));
     refused('none-with-mutants',[main,...shares,busy],/an undeclared part none is reported/);
   }
+  }
+  if(mine.has('mutants/worlds-judge-their-lines')){
   // A changed line only the worlds run is judged by the worlds' record: an early return they notice whenever it is taken.
   {
     const worldsLine="      const sprites = project.components.filter(c => c.type === 'sprite'), arg = n.arg;";

@@ -24,13 +24,14 @@ const splits={
   // 706.8 s over 6 viewport/mode contexts of about 118 s; two parts of three contexts (about 354 s).
   'modern-browser':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
   // Its two halves took 315 s and 270 s locally (69 cases, 685b2f9) and up to 525 s each in CI; in run 41864291413 the
-  // first passed the 600 s child limit and the second took 542 s, about 2.0 times its local time. Four parts, one for each
-  // group the test runs together (gated by its first case), measured locally: the tree, record, version and language
-  // rules (90 s); behaviour and limits (60 s); assertions and the extension lines (about 165 s: 224 s with the two move
-  // cases it had, which on a second machine took 414 s with them and 302 s without); mutants, the test map and the record
-  // without a change (about 230 s: 210 s, and on that machine 433 s before the guard read the products and 470 s after).
-  // At 2.0 times the largest takes about 460 s, inside the child limit.
-  'change-guard-negative':{parts:indexed(4),assign:id=>/^(?:assertions|coverage)\//.test(id)?'3/4':/^(?:mutants|test-map)\//.test(id)||id==='behaviour/record-without-change'?'4/4':/^(?:behaviour|limits)\//.test(id)?'2/4':'1/4'},
+  // first passed the 600 s child limit and the second took 542 s, about 2.0 times its local time. Five parts, one for each
+  // group the test runs together (gated by its first case), measured on a second machine (4 CPUs, which ran the mutant
+  // group of four parts in 433 s where run 42027123430 took 372 s): the tree, record, version and language rules (63 s);
+  // behaviour and limits (68 s); assertions and coverage (346 s; the same group with the move cases took 414 s there); the
+  // mutant rules, the survivor record and the parts that share its head (283 s); the worlds' lines, the test map and the
+  // record without a change (212 s). In run 42374045117 the mutant rules, with the worlds' lines in one part, passed the
+  // 600 s child limit.
+  'change-guard-negative':{parts:indexed(5),assign:id=>/^(?:assertions|coverage)\//.test(id)?'3/5':['mutants/worlds-judge-their-lines','test-map/names-the-suites','behaviour/record-without-change'].includes(id)?'5/5':/^mutants\//.test(id)?'4/5':/^(?:behaviour|limits)\//.test(id)?'2/5':'1/5'},
   // 347-574 s (runs 41424226627 and 41424221208) over 9 viewport/zoom contexts of about 55-78 s (runs 41420498555 and
   // 41420493498, whose 598 s reached the 600 s child limit); two parts of five and four contexts (about 319 s and 255 s
   // at the slower run).
@@ -45,15 +46,16 @@ const selftestShards={
   s01:[unit('entry-browser','2/2'),'samples','samples-negative','entry-unit'],
   s02:[unit('entry-browser','1/2'),'review-readable','export-open','ui-buttons'],
   s03:['spec-expectations-ui','spec-examples','spec-expectations-static','spec-expectations'],
-  s04:[unit('change-guard-negative','4/4'),'designer'],
-  s05:[unit('change-guard-negative','3/4'),'toolbar-stage','toolbar-stage-verify','review-first-use','extension-foundation','extension-foundation-negative'],
+  s04:[unit('change-guard-negative','4/5'),'designer'],
+  s05:[unit('change-guard-negative','3/5'),'toolbar-stage','toolbar-stage-verify','review-first-use','extension-foundation','extension-foundation-negative'],
   s06:['static','audit-inventory','product-source','publication-inventory','publication-documents','release-distribution','workflow-contract','integrity'],
-  s07:[unit('change-guard-negative','1/4'),'japanese-intent-browser','speech-display','speech-display-verify'],
-  s08:[unit('change-guard-negative','2/4'),'product','manual','language-boundaries','harness-negative','review-units',
+  s07:[unit('change-guard-negative','1/5'),'japanese-intent-browser','speech-display','speech-display-verify'],
+  s08:[unit('change-guard-negative','2/5'),'product','manual','language-boundaries','harness-negative','review-units',
     'release-policy-negative','browser-environment','ci-regression','dom-regression','node-product','language-node','language-browser','editor-node','normal',
     'ownership','block-fields','format-compatibility','language-negative','japanese-contract-static','language-expectations-static','sentence-form-coverage',
     'runtime-boundary','japanese-gate-negative','review-actor','review-language','review-harness-negative','license-static','license-browser','license-verify'],
   s09:['save-name','save-name-verify','editor-browser-core','editor-gui','editor-assets','surface-negative'],
+  s10:[unit('change-guard-negative','5/5')],
 };
 const selftestAfterMerge=['entry-verify'];
 

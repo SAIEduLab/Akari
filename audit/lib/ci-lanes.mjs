@@ -4,9 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-// Windows seconds per indivisible bundle, from the receipts of runs 42003097192 and 42003096921.
+// Windows seconds per indivisible bundle, from the receipts of runs 42003097192 and 42003096921. s04 and s10 are the
+// change guard's mutant rules split in two (audit/lib/shard-plan.cjs): s04 is its receipt less the 372 s the whole group
+// ran in run 42027123430, plus its first part at 0.86 of the 283 s it took on a second machine (the ratio of that run to
+// the whole group there, 372 s to 433 s); s10 is the second part, 0.86 of 212 s, and the warm-up.
 // Setup is paid once for all bundles on a worker. Bundle IDs also name the sealed output directories.
-export const auditSeconds={s01:467,s02:480,s03:426,s04:410,s05:514,s06:387,s07:478,s08:392,s09:417,
+export const auditSeconds={s01:467,s02:480,s03:426,s04:281,s05:514,s06:387,s07:478,s08:392,s09:417,s10:187,
   b01:477,b02:536,b03:518,b04:484,b05:499,b06:484,b07:521,audio:48};
 export const acceptanceSeconds={c01:519,c02:510,c03:322,editing:310};
 export const runnerSlots=20;

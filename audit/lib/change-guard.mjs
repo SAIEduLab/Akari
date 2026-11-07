@@ -14,7 +14,7 @@ import {boundedSnapshot,snapshotCases,behaviourDifferences,behaviourIssues,inten
 import {assertionCounts,weakenedFiles} from './assertion-counts.mjs';
 import {boundedCoverage,lineOffsets,productLines} from './node-coverage.mjs';
 import {mutantPlan,mutantsIn,partJobs,runMutants,sortSurvivors,mutationIssues,equivalentsFile,equivalentKey,assistDifferences,assistFixtureFile} from './mutation.mjs';
-const assistInvarianceCache=new Map(),behaviourCache=new Map(),countCache=new Map(),coverageCache=new Map(),planCache=new Map(),mutationCache=new Map(),assistCache=new Map();
+const assistInvarianceCache=new Map(),behaviourCache=new Map(),countCache=new Map(),coverageCache=new Map(),linesCache=new Map(),planCache=new Map(),mutationCache=new Map(),assistCache=new Map();
 export const guardReportSchema='akari-change-guard-v1';
 export const identityCategories=Object.freeze(['gate-step','gate-case','integrity-control','acceptance-suite','browser-group','browser-task','browser-case','product-suite','product-test','language-test','workflow-job','workflow-entry','pin']);
 const releasePattern=/^audit\/manifests\/release-[^/]*\.json$/;
@@ -188,7 +188,11 @@ async function changedLineMutants(repo,mergeBase,headCommit,limitMs){
   if(before.oid===after.oid)return null;
   const blobs=readBlobs(repo,[before.oid,after.oid]),html=blobs.get(after.oid).toString('utf8'),open=html.indexOf('<script>'),close=html.lastIndexOf('</script>');
   if(open<0||close<open)throw new Error('the head product '+after.file+' has no script');
-  const candidates=changedScriptLines(blobs.get(before.oid).toString('utf8'),html);
+  // The same two products give the same lines: they are compared once per process (the parts of the guard and the
+  // synthetic cases guard one head many times).
+  const pair=before.oid+':'+after.oid;
+  if(!linesCache.has(pair))linesCache.set(pair,changedScriptLines(blobs.get(before.oid).toString('utf8'),html));
+  const candidates=linesCache.get(pair);
   // Lines that give no mutant (a changed release label, a string) need no run of the product.
   const ranges=lineOffsets(html,after.file),spans=candidates.map(([line])=>ranges(after.file,line)).filter(Boolean);
   if(!candidates.length||!mutantsIn(html.slice(open+'<script>'.length,close),spans).length)return null;
