@@ -8,17 +8,13 @@ import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 import {verifyAssistLanguageInvariance} from './assist-language-invariance.mjs';
 import {boundedSnapshot,snapshotCases,behaviourDifferences,behaviourIssues,intendedChangesFile} from './behaviour-snapshot.mjs';
-import {unitsByName,sourceMoves} from './source-moves.mjs';
 import {assertionCounts,weakenedFiles} from './assertion-counts.mjs';
-import {boundedCoverage} from './node-coverage.mjs';
-import {mutantPlan,partJobs,runMutants,sortSurvivors,mutationIssues,equivalentsFile,equivalentKey,assistDifferences,assistFixtureFile} from './mutation.mjs';
-import {buildProduct} from '../../src/build.mjs';
-const assistInvarianceCache=new Map(),behaviourCache=new Map(),unitCache=new Map(),countCache=new Map(),coverageCache=new Map(),planCache=new Map(),mutationCache=new Map(),assistCache=new Map();
-// The src files the node suites and the specification worlds run; the screens (10-12) run only in the browser.
-export const coveredSourceFiles=/^src\/js\/0[1-9]-[^/]+\.js$/;
-
+import {boundedCoverage,lineOffsets,productLines} from './node-coverage.mjs';
+import {mutantPlan,mutantsIn,partJobs,runMutants,sortSurvivors,mutationIssues,equivalentsFile,equivalentKey,assistDifferences,assistFixtureFile} from './mutation.mjs';
+const assistInvarianceCache=new Map(),behaviourCache=new Map(),countCache=new Map(),coverageCache=new Map(),linesCache=new Map(),planCache=new Map(),mutationCache=new Map(),assistCache=new Map();
 export const guardReportSchema='akari-change-guard-v1';
 export const identityCategories=Object.freeze(['gate-step','gate-case','integrity-control','acceptance-suite','browser-group','browser-task','browser-case','product-suite','product-test','language-test','workflow-job','workflow-entry','pin']);
 const releasePattern=/^audit\/manifests\/release-[^/]*\.json$/;
@@ -120,44 +116,93 @@ function resolveCommits(repo,base,head){
 }
 const equivalentsAt=(repo,commit)=>{const oid=optionalObject(repo,commit+':'+equivalentsFile);return oid?JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')):null;};
 
-// The mutants of the changed code lines of 01-09, and of an extension file the product embeds, that the node suites or
-// the worlds run (AUDIT.md「変えた行の変異」), in the order every part of the guard computes alike; null when the change
-// has no such changed line to look at. A changed line none of them runs needs nothing.
+// The product file of a commit (audit/public-files.json) and its object.
+function productAt(repo,commit){
+  const meta=optionalObject(repo,commit+':audit/public-files.json');if(!meta)throw new Error(commit+' has no audit/public-files.json');
+  const file=JSON.parse(readBlobs(repo,[meta]).get(meta).toString('utf8')).productFile,oid=typeof file==='string'?optionalObject(repo,commit+':'+file):null;
+  if(!oid)throw new Error(commit+' lacks its product file '+file);
+  return {file,oid};
+}
+const require=createRequire(import.meta.url);
+let babel;
+// The lines of a script as its tokens read them: on each line, the tokens that start on it with their exact text (a
+// string, a template or a regular expression keeps its spacing). Comments and the spacing
+// between tokens are left out, so a line changed only in them reads the same; a token over several lines (a template)
+// belongs to the line it starts on.
+export function scriptTokenLines(script){
+  const ast=(babel??=require('@babel/parser')).parse(script,{sourceType:'script',tokens:true,errorRecovery:false,allowReturnOutsideFunction:true});
+  // A line is what ends with \n (the parser counts other line terminators too).
+  const lines=script.split('\n').map(()=>[]),starts=[0];
+  for(let i=0;i<script.length;i++)if(script.charCodeAt(i)===10)starts.push(i+1);
+  const lineAt=offset=>{let lo=0,hi=starts.length-1;while(lo<hi){const mid=(lo+hi+1)>>1;if(starts[mid]<=offset)lo=mid;else hi=mid-1;}return lo;};
+  for(const t of ast.tokens){
+    if(t.type==='CommentLine'||t.type==='CommentBlock'||t.end===t.start)continue;
+    lines[lineAt(t.start)].push(script.slice(t.start,t.end));
+  }
+  // One line of text each: the tokens as JSON (a template's newlines stay inside it); a line with no token is empty.
+  return lines.map(tokens=>tokens.length?JSON.stringify(tokens):'');
+}
+// The changed lines of the head product's script against the base product's (AUDIT.md「変えた行の実行」), as lines of the
+// head product file: [line, text]. Lines are compared as their tokens read them (scriptTokenLines), so spacing and
+// comments alone change no line, and a line with no token is no changed line. A line moved as it is (its tokens removed
+// elsewhere in the change) is not a changed line when every line of the base that reads the same was removed: a common
+// line (return false;) taken out in one place and put in another is a changed line.
+export function changedScriptLines(beforeHtml,afterHtml){
+  const before=productLines(beforeHtml),after=productLines(afterHtml),a=scriptTokenLines(before.script),b=scriptTokenLines(after.script);
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-lines-'));
+  let out;
+  try{
+    const fa=path.join(dir,'base.txt'),fb=path.join(dir,'head.txt');
+    fs.writeFileSync(fa,a.join('\n')+'\n');fs.writeFileSync(fb,b.join('\n')+'\n');
+    const r=cp.spawnSync('git',['diff','--no-index','--no-color','--no-ext-diff','-U0','--',fa,fb],{encoding:'utf8',maxBuffer:512*1024*1024,timeout:guardLimitMs});
+    if(r.status!==0&&r.status!==1)throw new Error('the comparison of the products failed: '+(r.error?.message||r.stderr));
+    out=r.stdout;
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+  const added=[],removed=new Map(),count=(map,key)=>map.set(key,(map.get(key)??0)+1);
+  let at=0,inHunk=false;
+  for(const row of out.split('\n')){
+    const hunk=row.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);if(hunk){at=Number(hunk[1]);inHunk=true;continue;}
+    if(!inHunk)continue; // the header of the diff
+    if(row.startsWith('-'))count(removed,row.slice(1));
+    else if(row.startsWith('+')){added.push([at,row.slice(1)]);at++;}
+  }
+  const inBase=new Map();for(const text of a)count(inBase,text);
+  const allowance=new Map([...removed].filter(([text,n])=>inBase.get(text)===n));
+  const afterLines=afterHtml.split('\n'),changed=[];
+  for(const [scriptLine,tokens] of added){
+    if(!tokens)continue;
+    const left=allowance.get(tokens)??0;
+    if(left>0){allowance.set(tokens,left-1);continue;}
+    const line=after.firstLine+scriptLine-1;
+    changed.push([line,afterLines[line-1]]);
+  }
+  return changed;
+}
+// The mutants of the changed code lines of the product's script that the node suites or the worlds run (AUDIT.md「変えた
+// 行の変異」), in the order every part of the guard computes alike; null when the change has no such changed line to look
+// at. The committed base and head products are compared (changedScriptLines), so the check needs no build and reads no
+// source file: a change of the sources that leaves the product's tokens as they were changes no line. A line none of
+// them runs is not mutated.
 async function changedLineMutants(repo,mergeBase,headCommit,limitMs){
-  const diff=gitText(repo,['diff','-U0','--no-color',mergeBase,headCommit,'--','src/js','extensions']),candidates=[],removedText=new Set();
-  // The product's own files are those with a boundary record (audit/boundaries); a synthetic tree's files have none.
-  const declared=new Set((optionalObject(repo,headCommit+':audit/boundaries')?gitText(repo,['ls-tree','--name-only',headCommit+':audit/boundaries']).split('\n'):[])
-    .filter(Boolean).map(name=>'src/js/'+name.replace(/\.json$/,'.js')));
-  // The extension files a src file embeds whole (its `// @portable extensions/<file>` lines).
-  const portable=new Set(gitText(repo,['ls-tree','-r','--name-only',headCommit,'src/js']).split('\n').filter(f=>/\.js$/.test(f))
-    .flatMap(f=>[...gitText(repo,['show',headCommit+':'+f]).matchAll(/^\/\/ @portable (extensions\/[a-z0-9._-]+\.js)$/gm)].map(m=>m[1])));
-  const covered=f=>coveredSourceFiles.test(f)&&declared.has(f)||portable.has(f);
-  let file=null,from=null,at=0;
-  for(const line of diff.split('\n')){
-    // A line counts as moved only when its text left one of the files this check covers (not 10-12).
-    const origin=line.match(/^--- (?:a\/(.+)|\/dev\/null)$/);if(origin){from=origin[1]&&(coveredSourceFiles.test(origin[1])||portable.has(origin[1]))?origin[1]:null;continue;}
-    const target=line.match(/^\+\+\+ (?:b\/(.+)|\/dev\/null)$/);if(target){file=target[1]&&covered(target[1])?target[1]:null;continue;}
-    const hunk=line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);if(hunk){at=Number(hunk[1]);continue;}
-    if(line.startsWith('-')){if(from)removedText.add(line.slice(1).trim());continue;}
-    if(!line.startsWith('+')||line.startsWith('+++'))continue;
-    const here=at++;
-    if(file&&!/^\s*(?:\/\/.*|\/\*.*|\*.*)?$/.test(line.slice(1)))candidates.push([file,here]);
-  }
-  if(!candidates.length)return null;
-  const key=gitText(repo,['rev-parse',headCommit+':src'])+':'+optionalObject(repo,headCommit+':extensions');
-  if(!coverageCache.has(key)){
-    const files=gitText(repo,['ls-tree','-r','--name-only',headCommit,'src','extensions']).split('\n').filter(Boolean),text=new Map();
-    const read=file=>{if(!text.has(file)){const oid=optionalObject(repo,headCommit+':'+file);if(!oid)throw new Error(headCommit+' has no '+file);text.set(file,readBlobs(repo,[oid]).get(oid).toString('utf8'));}return text.get(file);};
-    const list=dir=>files.filter(file=>file.startsWith(dir+'/')&&!file.slice(dir.length+1).includes('/')).sort();
-    coverageCache.set(key,boundedCoverage(buildProduct({read,list}).html,read,files,limitMs));
-  }
-  const coverage=coverageCache.get(key),ran=coverage.all;
-  const executed=candidates.filter(([file,here])=>ran.get(file)?.has(here)).map(([file,here])=>file+':'+here);
-  const headText=new Map(),lineText=(f,l)=>{if(!headText.has(f)){const oid=optionalObject(repo,headCommit+':'+f);headText.set(f,readBlobs(repo,[oid]).get(oid).toString('utf8').split('\n'));}return headText.get(f)[l-1]??'';};
-  const lines=executed.map(at=>{const i=at.lastIndexOf(':'),f=at.slice(0,i),l=Number(at.slice(i+1));return {file:f,line:l,text:lineText(f,l)};}).filter(row=>!removedText.has(row.text.trim())); // a line moved as it is (removed elsewhere in this change) is not mutated
+  const before=productAt(repo,mergeBase),after=productAt(repo,headCommit);
+  if(before.oid===after.oid)return null;
+  const blobs=readBlobs(repo,[before.oid,after.oid]),html=blobs.get(after.oid).toString('utf8'),open=html.indexOf('<script>'),close=html.lastIndexOf('</script>');
+  if(open<0||close<open)throw new Error('the head product '+after.file+' has no script');
+  // The same two products give the same lines: they are compared once per process (the parts of the guard and the
+  // synthetic cases guard one head many times).
+  const pair=before.oid+':'+after.oid;
+  if(!linesCache.has(pair))linesCache.set(pair,changedScriptLines(blobs.get(before.oid).toString('utf8'),html));
+  const candidates=linesCache.get(pair);
+  // Lines that give no mutant (a changed release label, a string) need no run of the product.
+  const ranges=lineOffsets(html,after.file),spans=candidates.map(([line])=>ranges(after.file,line)).filter(Boolean);
+  if(!candidates.length||!mutantsIn(html.slice(open+'<script>'.length,close),spans).length)return null;
+  const key=after.oid;
+  if(!coverageCache.has(key))coverageCache.set(key,boundedCoverage(html,after.file,limitMs));
+  const coverage=coverageCache.get(key),ran=coverage.all.get(after.file)??new Set();
+  const lines=candidates.filter(([line])=>ran.has(line)).map(([line,text])=>({file:after.file,line,text}));
   // The worlds judge a mutant by their record against the unmutated product's (audit/lib/mutation.mjs).
   const suitesFor=(f,l)=>[...coverage.bySuite].filter(([,map])=>map.get(f)?.has(l)).map(([name])=>name);
-  // The same head src and the same lines give the same mutants (one process may guard a head more than once, as the
+  // The same head product and the same lines give the same mutants (one process may guard a head more than once, as the
   // synthetic cases do with and without a record).
   const planKey=key+'\u0000'+JSON.stringify(lines);
   if(!planCache.has(planKey))planCache.set(planKey,{key:planKey,lines,...mutantPlan({script:coverage.script,shift:coverage.shift,lineOffsets:coverage.lineOffsets,lines,suitesFor})});
@@ -193,8 +238,8 @@ function guardCode(repo,commits){
   return {base:same(commits.base),head:same(commits.head)};
 }
 
-// What a change does to the audit itself (a removed check or pin, a file that checks less, a statement moved and changed,
-// a version raised past the next patch) passes only when the change records each one with a reason; a record that
+// What a change does to the audit itself (a removed check or pin, a file that checks less, a version raised past the
+// next patch) passes only when the change records each one with a reason; a record that
 // matches nothing this change does fails too. As for behaviour changes and equivalent mutants, an entry kept from the
 // base covers nothing: each change gives its own reasons, which the report lists for the owner to read before the merge.
 export const auditChangesFile='audit/manifests/intended-audit-changes.json',auditChangesSchema='akari-intended-audit-changes-v1';
@@ -217,7 +262,7 @@ export function guardStatus(report){
 }
 
 const emptyReport=(base,head)=>({schema:guardReportSchema,status:'FAIL',base,head,mergeBase:null,
-  guardCode:null,identitySizes:null,removed:{},pinFiles:{},version:null,versionIssues:[],releaseIssues:[],behaviour:null,behaviourIssues:[],moves:null,weakened:[],mutation:null,mutationIssues:[],auditChanges:[],auditChangeIssues:[],errors:[]});
+  guardCode:null,identitySizes:null,removed:{},pinFiles:{},version:null,versionIssues:[],releaseIssues:[],behaviour:null,behaviourIssues:[],weakened:[],mutation:null,mutationIssues:[],auditChanges:[],auditChangeIssues:[],errors:[]});
 // limitMs: how long one run of the product (the worlds of one product, the coverage run) may take before the guard
 // stops it with an error (guardLimitMs). part 'main' does every check but run the mutants: its report holds the mutants'
 // plan and waits for the parts that run them (guardMutantPart, mergeGuardParts).
@@ -259,10 +304,8 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs,p
       const {issues,intended}=behaviourIssues(differences,record(mergeBase),record(headCommit));
       report.behaviour={cases:cases.length,differences,intended:intended.map(c=>({case:c.case,reason:c.reason}))};report.behaviourIssues=issues;
     }
-    // A statement that moves to another src file keeps its text (AUDIT.md「移動だけの変更」); one moved and changed is an audit change.
-    if(before.source!==after.source||before.extensions!==after.extensions){
-      const units=commit=>{const key=gitText(repo,['rev-parse',commit+':src']);if(!unitCache.has(key))unitCache.set(key,unitsByName(file=>{const oid=optionalObject(repo,commit+':'+file);if(!oid)throw new Error(commit+' has no '+file);return readBlobs(repo,[oid]).get(oid).toString('utf8');}));return unitCache.get(key);};
-      report.moves=sourceMoves(units(mergeBase),units(headCommit));
+    // The changed lines of the product (AUDIT.md「変えた行の実行」).
+    if(before.product!==after.product){
       const plan=await changedLineMutants(repo,mergeBase,headCommit,limitMs);
       // Mutants on the changed lines that ran (AUDIT.md「変えた行の変異」): each survivor is a listed equivalent or the check
       // fails. The main part leaves them to the parts and keeps the plan they must agree on.
@@ -288,11 +331,10 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs,p
     else if(productChanged&&!versionAfter(after.version,before.version))report.versionIssues.push('the product or src/ changed: the head product version must be '+expected+' (one patch after '+before.version+'), found '+after.version);
     else if(productChanged&&after.version!==expected)report.version.beyondPatch=true;
     const auditRecord=commit=>{const oid=optionalObject(repo,commit+':'+auditChangesFile);return oid?JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')):null;};
-    // A removed check or a file with fewer checks checks less; a changed pin, a statement moved and changed, a version
-    // raised further do not by themselves.
+    // A removed check or a file with fewer checks checks less; a changed pin or a version raised further does not by
+    // itself.
     const less=[...Object.entries(report.removed).filter(([category])=>category!=='pin').flatMap(([category,ids])=>ids.map(id=>category+':'+id)),...report.weakened.map(w=>'fewer-checks:'+w.slice(0,w.indexOf(': ')))];
-    const items=[...less,...(report.removed.pin||[]).map(id=>'pin:'+id),
-      ...(report.moves?.movedAndChanged||[]).map(m=>'moved-and-changed:'+m.slice(0,m.indexOf(': '))),...(report.version.beyondPatch?['version:'+after.version]:[])];
+    const items=[...less,...(report.removed.pin||[]).map(id=>'pin:'+id),...(report.version.beyondPatch?['version:'+after.version]:[])];
     const audited=auditChangeIssues(items,auditRecord(mergeBase),auditRecord(headCommit));report.auditChanges=audited.recorded;report.auditChangeIssues=audited.issues;
     // A change that checks less is recorded only in a change of the audit alone: with src/, extensions/ or the product
     // changed as well, the owner would read the weaker audit and the code it lets through in one merge.
@@ -314,9 +356,8 @@ export async function guardMutantPart({repo,base,head,index,count,limitMs=guardL
   try{
     if(!(Number.isInteger(index)&&Number.isInteger(count)&&index>=1&&index<=count))throw new Error('part '+index+' of '+count+' is no part');
     const {mergeBase,head:headCommit}=Object.assign(report,resolveCommits(repo,base,head));
-    const changed=commit=>[optionalObject(repo,commit+':src'),optionalObject(repo,commit+':extensions')].join(':');
-    // The main part makes a plan only for a change of src/ or extensions/ (changeGuard), and so does a part.
-    const plan=changed(mergeBase)!==changed(headCommit)?await changedLineMutants(repo,mergeBase,headCommit,limitMs):null;
+    // The main part makes a plan only for a change of the product (changeGuard), and so does a part.
+    const plan=productAt(repo,mergeBase).oid!==productAt(repo,headCommit).oid?await changedLineMutants(repo,mergeBase,headCommit,limitMs):null;
     if(plan){
       const jobs=partJobs(plan.jobs,index,count);
       Object.assign(report,{plan:plan.digest,mutants:plan.jobs.length,ran:jobs.map(job=>job.index),survivors:await planSurvivors(plan,jobs,repo,headCommit)});
@@ -325,7 +366,22 @@ export async function guardMutantPart({repo,base,head,index,count,limitMs=guardL
   return report;
 }
 
-// The verdict of the parts: the main part and the mutant parts m1..m<count>, each reported once. They guard the same base
+// The part that runs when the plan has no mutant: it makes the plan again and finds no mutant in it, so a change the
+// main part plans no mutant for is still checked by a second job, and no job of the guard is left out.
+export const emptyGuardPart='none';
+export async function guardEmptyPart({repo,base,head,limitMs=guardLimitMs}){
+  const report={schema:guardPartSchema,part:emptyGuardPart,index:0,count:0,base,head,mergeBase:null,plan:null,mutants:0,ran:[],survivors:[],errors:[]};
+  try{
+    const {mergeBase,head:headCommit}=Object.assign(report,resolveCommits(repo,base,head));
+    const plan=productAt(repo,mergeBase).oid!==productAt(repo,headCommit).oid?await changedLineMutants(repo,mergeBase,headCommit,limitMs):null;
+    if(plan){report.plan=plan.digest;report.mutants=plan.jobs.length;}
+    if(report.mutants)report.errors.push('the plan has '+report.mutants+' mutants; the part '+emptyGuardPart+' runs only for a plan without one');
+  }catch(error){report.errors.push(error.message);}
+  return report;
+}
+
+// The verdict of the parts: the main part and the mutant parts m1..m<count>, each reported once (with no mutant planned,
+// the part none, once). They guard the same base
 // and head, a part ran exactly its share of the main part's plan, and the survivors of all parts are judged as one run of
 // every mutant would judge them. Anything else is an error of the merged report.
 export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
@@ -339,10 +395,11 @@ export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
     for(const field of ['base','head','mergeBase'])if(main[field]!==commits[field])fail('the main part guards '+field+' '+main[field]+', not '+commits[field]);
     const plan=main.mutation?.plan??null,mutants=main.mutation?.mutants??0,survivors=[];
     if(!Number.isSafeInteger(mutants)||mutants<0||(main.mutation!==null&&(!plan||main.status!=='PART')))throw new Error('invalid main mutation plan');
-    if(jobResults && (jobResults.plan!=='success'||jobResults.parts!==(mutants?'success':'skipped')))fail('guard job results disagree with the plan: '+JSON.stringify(jobResults));
-    // Actions starts only nonempty workers. Local runs may also supply all workers, including empty ones.
+    if(jobResults && (jobResults.plan!=='success'||jobResults.parts!=='success'))fail('guard job results disagree with the plan: '+JSON.stringify(jobResults));
+    // Actions starts only nonempty workers, or the part none when no mutant is planned. Local runs may also supply all
+    // workers, including empty ones.
     const allNames=Array.from({length:count},(_,i)=>'m'+(i+1));
-    const names=!jobResults&&parts.length===1+count?allNames:allNames.slice(0,mutants);
+    const names=!mutants?[emptyGuardPart]:!jobResults&&parts.length===1+count?allNames:allNames.slice(0,mutants);
     const seen=parts.filter(p=>p!==main).map(p=>p?.part);
     for(const name of names)if(seen.filter(n=>n===name).length!==1)fail('mutant part '+name+' is reported '+seen.filter(n=>n===name).length+' times');
     for(const name of seen)if(!names.includes(name))fail('an undeclared part '+name+' is reported');
@@ -351,9 +408,9 @@ export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
       if(part.schema!==guardPartSchema||!Array.isArray(part.errors)||!Array.isArray(part.ran)||!Array.isArray(part.survivors)){fail(part.part+' is not a report of a mutant part');continue;}
       for(const message of part.errors)fail(part.part+': '+message);
       for(const field of ['base','head','mergeBase'])if(part[field]!==commits[field])fail(part.part+' guards '+field+' '+part[field]+', not '+commits[field]);
-      if(part.count!==count||part.part!=='m'+part.index)fail(part.part+' is part '+part.index+' of '+part.count+', not of '+count);
+      if(part.part!==emptyGuardPart&&(part.count!==count||part.part!=='m'+part.index))fail(part.part+' is part '+part.index+' of '+part.count+', not of '+count);
       if(part.plan!==plan||part.mutants!==mutants)fail(part.part+' ran a share of another plan of mutants than the main part');
-      const share=Array.from({length:mutants},(_,i)=>i).filter(i=>i%count===part.index-1);
+      const share=part.part===emptyGuardPart?[]:Array.from({length:mutants},(_,i)=>i).filter(i=>i%count===part.index-1);
       if(JSON.stringify(part.ran)!==JSON.stringify(share))fail(part.part+' ran mutants '+JSON.stringify(part.ran)+', not its share '+JSON.stringify(share));
       survivors.push(...part.survivors);
     }
@@ -374,16 +431,14 @@ export function formatGuardReport(report){
   if(report.behaviour)lines.push('Behaviour: '+report.behaviour.differences.length+' of '+report.behaviour.cases+' specification worlds differ from the base product');
   if(report.mutation)lines.push('Mutants: '+report.mutation.mutants+' on '+report.mutation.lines+' changed lines that ran, '+report.mutation.survivors.length+' survive');
   for(const message of [...report.errors,...report.versionIssues,...report.releaseIssues,...report.behaviourIssues,...report.mutationIssues,...report.auditChangeIssues])lines.push('- '+message);
-  if(report.moves)lines.push('Moves: '+report.moves.moved.length+' statements moved to another src file, '+report.moves.movedAndChanged.length+' of them changed');
-  const removed=Object.entries(report.removed),intended=report.behaviour?.intended??[],movedAndChanged=report.moves?.movedAndChanged??[];
+  const removed=Object.entries(report.removed),intended=report.behaviour?.intended??[];
   const equivalents=report.mutation?.equivalents??[];
-  if(removed.length||intended.length||movedAndChanged.length||report.weakened.length||equivalents.length||report.version?.beyondPatch){
+  if(removed.length||intended.length||report.weakened.length||equivalents.length||report.version?.beyondPatch){
     lines.push('','For the owner to read before the merge:');
     const why=change=>{const r=report.auditChanges.find(c=>c.change===change);return r?': '+r.reason:'';};
     if(report.version?.beyondPatch)lines.push('- the product version '+report.version.head+' is raised past the next patch '+report.version.expected+why('version:'+report.version.head));
     for(const [category,ids] of removed)for(const id of ids)lines.push('- '+(category==='pin'?'changed or removed pin '+id+' ('+report.pinFiles[id].join(', ')+')':'removed '+category+' '+id)+why(category+':'+id));
     for(const change of intended)lines.push('- changed behaviour of '+change.case+': '+change.reason);
-    for(const move of movedAndChanged)lines.push('- moved and changed in one change: '+move+why('moved-and-changed:'+move.slice(0,move.indexOf(': '))));
     for(const file of report.weakened)lines.push('- fewer checks in '+file+why('fewer-checks:'+file.slice(0,file.indexOf(': '))));
     for(const e of equivalents)lines.push('- an equivalent mutant in '+e.file+' ('+e.operator+' on "'+e.source+'"): '+e.reason);
   }

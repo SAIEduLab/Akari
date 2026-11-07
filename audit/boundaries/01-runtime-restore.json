@@ -1,9 +1,0 @@
-{
-  "schema": "akari-source-boundary-v1",
-  "file": "src/js/01-runtime-restore.js",
-  "uses": [
-    "src/js/01-runtime-base.js",
-    "src/js/01-runtime-model.js",
-    "src/js/01-runtime-scheduler.js"
-  ]
-}

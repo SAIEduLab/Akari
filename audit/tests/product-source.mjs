@@ -5,15 +5,13 @@ import {buildProduct,repositoryRoot,sourceDirectories} from '../../src/build.mjs
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIssues,CHILD_SPACING_RUN} from '../lib/product-source-contract.mjs';
-import {readBoundaries,sourceUses,closureReferences,boundaryIssues,embeddedSources,productScript} from '../lib/source-boundaries.mjs';
-import {sourceSizes,splitSource,sourceUnits,SOURCE_SPLIT_LINES} from '../lib/source-split.mjs';
+import {productScript,embeddedSources,sourceSizes,SOURCE_SIZE_LINES} from '../lib/product-script.mjs';
 import {dispatchValueIssues,DISPATCH_ALLOWED,domReferenceIssues,productCodes,namedCodes,diagnosticCodeIssues,UNNAMED_CODES,shownTextReads,shownTextIssues,SHOWN_TEXT_BASELINE,platformNames,unwrittenReads,unwrittenIssues,UNWRITTEN_ALLOWED} from '../lib/source-consistency.mjs';
 import {trackedFiles} from '../lib/publication-contract.mjs';
 import {lintText,lintFindings,LINT_PROBES,LINT_RULES} from '../lib/source-lint.mjs';
 import {sourceClones,cloneIssues,CLONE_BASELINE} from '../lib/source-clones.mjs';
 import {timeWaitIssues,WAIT_BASELINE,sourceReadIssues,SOURCE_READ_BASELINE,auditLintCounts,auditLintIssues,LINT_BASELINE} from '../lib/audit-code.mjs';
 import vm from 'node:vm';
-import {spawnSync} from 'node:child_process';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
 assert.ok(!fs.existsSync(output),'fresh result required: '+output);
@@ -44,348 +42,27 @@ check('REJECT-INCLUDE-OUTSIDE-SOURCE',()=>{for(const target of ['js/../../extens
 // The only spelling of a file through another source directory is still refused.
 check('REJECT-INCLUDE-ALIAS',()=>{for(const alias of ['css/../js/12-public-api.js','js/./12-public-api.js','js//12-public-api.js'])assert.throws(()=>variant(withInclude(alias)),/include alias/,alias);});
 check('REJECT-UNLISTED-PORTABLE',()=>{const other='extensions/other.js',text="const other = 1;\nif (typeof module !== 'undefined') module.exports = {other};\n";assert.throws(()=>variant({[core]:coreText.replace('// @portable extensions/profiles.js','// @portable '+other),[other]:text}),/not an allowed portable extension: extensions\/other\.js/);});
-// Source boundaries (AUDIT.md「ソースの境界」): each src/js file uses only the files its declaration names.
-// Reading and analysis happen inside the checks, so a broken declaration or source fails its check by ID.
-let loaded;const state=()=>loaded??={boundaries:readBoundaries(repositoryRoot),uses:sourceUses(read)};
-const usesWith=changes=>sourceUses(file=>file in changes?changes[file]:read(file));
-check('SOURCE-BOUNDARIES-RESOLVER',()=>{
-  // Shadowed names are local; member and key names, labels and declarations are not references; defaults and
-  // computed keys are. A default sees the parameters, not the body; a static block keeps its var.
-  const text=['(() => {','  const a = 1, b = 2;','  function f(a, {x = b} = {}) { return a + x; }',
-    '  const g = () => { let a = 3; label: for (const b of [a]) break label; return {a, b: a}.b; };',
-    '  class C { a() { return this.a; } static b = a; [b]() {} }','  const h = () => a;','  try { h(); } catch (a) { a; }',
-    '  const k = (y = a) => { const a = 0; return y + a; };','  const m = ({[b]: v} = {}) => v?.[a] ?? {[a]: b}[b];',
-    '  class D { static { var a = 0; a; } }','})();',''].join('\n');
-  const found=closureReferences({text,pieces:[{label:'x',start:0,end:text.length}]}).refs.map(r=>r.name+'@'+text.slice(0,r.at).split('\n').length).sort();
-  assert.deepEqual(found,['a@5','a@6','a@8','a@9','a@9','b@3','b@5','b@9','b@9','b@9','h@7']);
-});
-check('SOURCE-BOUNDARIES-DECLARED',()=>{
-  // The analysed script is the product's script, character for character.
-  const html=built.html,open=html.indexOf('<script>\n')+'<script>\n'.length;
-  assert.equal(productScript(read).text,html.slice(open,html.lastIndexOf('</script>')));
-  const {boundaries,uses}=state();assert.deepEqual(boundaryIssues(uses,boundaries),[]);assert.ok(uses.refs>0);
+// The product script as the checks below read it (audit/lib/product-script.mjs), character for character, and made of
+// the files the build took.
+check('PRODUCT-SCRIPT-PIECES',()=>{
+  const html=built.html,open=html.indexOf('<script>\n')+'<script>\n'.length,script=productScript(read);
+  assert.equal(script.text,html.slice(open,html.lastIndexOf('</script>')));
+  assert.deepEqual([...new Set(script.pieces.map(p=>p.label))].sort(),built.sources.filter(file=>!file.endsWith('.html')&&!file.endsWith('.css')).sort());
 });
 // The exported player embeds these functions alone; they must run without the editor's closure.
-check('SOURCE-BOUNDARIES-EMBEDDED-RUN',()=>{
+check('PORTABLE-EMBEDDED-RUN',()=>{
   const sources=embeddedSources(read),context=vm.createContext({});
   vm.runInContext("'use strict';\n"+Object.values(sources).join('\n')+'\nglobalThis.runtime=createAkariRuntime();',context);
   assert.equal(context.runtime.eventText('keyDown',{key:'空白'}),'「スペース」キーを おした とき');
 });
-const without=(file,use)=>{const {boundaries}=state();return {...boundaries,[file]:{...boundaries[file],uses:boundaries[file].uses.filter(u=>u!==use)}};};
-check('REJECT-UNDECLARED-SOURCE-USE',()=>{const {boundaries,uses}=state(),file='src/js/11-application.js',use=boundaries[file].uses[0];assert.ok(boundaryIssues(uses,without(file,use)).some(i=>i.startsWith(file+' uses '+use+' without declaring')));});
-// The cases name files that parse on their own (10, 11); src/js/00 and 12 open and close the product's closure.
-check('REJECT-STALE-SOURCE-USE',()=>{const {boundaries,uses}=state(),file='src/js/10-block-view.js',extra='src/js/11-application.js';assert.ok(!boundaries[file].uses.includes(extra));assert.ok(boundaryIssues(uses,{...boundaries,[file]:{...boundaries[file],uses:[...boundaries[file].uses,extra]}}).includes(file+' declares '+extra+' but uses none of its names'));});
-check('REJECT-MISSING-SOURCE-BOUNDARY',()=>{const {boundaries,uses}=state(),{['src/js/10-block-view.js']:_,...rest}=boundaries;assert.ok(boundaryIssues(uses,rest).includes('src/js/10-block-view.js: no boundary declaration'));});
-// An embedded function using a closure name, reading what the product puts on the global object, or a toString()
-// embedding the list does not name.
-check('REJECT-EMBEDDED-CLOSURE-USE',()=>{
-  // The line lies in a part of createAkariRuntime, whose body is cut across the 01-runtime files.
-  const {boundaries}=state(),line="KEY_SURFACES[key] : key;",keyFile=Object.keys(boundaries).find(file=>read(file).includes(line)),keyText=keyFile&&read(keyFile);assert.ok(keyFile);
-  const issues=boundaryIssues(usesWith({[keyFile]:keyText.replace(line,'KEY_SURFACES[key] : keyName(key);')}),boundaries);
-  assert.ok(issues.includes('createAkariRuntime is embedded through toString() but uses closure names: keyName'),JSON.stringify(issues));
-  const keyNameFile=Object.keys(boundaries).find(file=>read(file).includes('  function keyName('));assert.ok(keyNameFile);
-  assert.ok(issues.some(i=>i.startsWith(keyFile+' uses '+keyNameFile+' without declaring')),JSON.stringify(issues));
-  const global=boundaryIssues(usesWith({[keyFile]:keyText.replace(line,'KEY_SURFACES[key] : globalThis.Akari && key;')}),boundaries);
-  assert.ok(global.includes('createAkariRuntime is embedded through toString() but reads what the product puts on the global object: Akari'),JSON.stringify(global));
-  const destructured=boundaryIssues(usesWith({[keyFile]:keyText.replace(line,'KEY_SURFACES[key] : (({Akari: q} = globalThis), key);')}),boundaries);
-  assert.ok(destructured.includes('createAkariRuntime is embedded through toString() but reads what the product puts on the global object: Akari'),JSON.stringify(destructured));
-  const exporter='src/js/08-stage-and-export.js',exportText=read(exporter),call='${createAkariStageView.toString()}';assert.ok(exportText.includes(call));
-  for(const form of ['${keyName.toString()}','${String(keyName)}','${keyName}']){
-    const listed=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+form)}),boundaries);
-    assert.ok(listed.some(i=>i.startsWith('the product embeds ')&&i.includes('keyName')),form+' '+JSON.stringify(listed));
-  }
-  // A local of the same name is not the top-level function; a top-level const arrow function is one.
-  const local=boundaryIssues(usesWith({[exporter]:exportText.replace(call,call+'${((keyName) => `${keyName}`)(1)}')}),boundaries);
-  assert.ok(!local.some(i=>i.startsWith('the product embeds ')),JSON.stringify(local));
-  const anchor='  const KEY_WORDS=',parser=Object.keys(boundaries).find(file=>read(file).includes(anchor));assert.ok(parser);
-  const arrow=boundaryIssues(usesWith({[parser]:read(parser).replace(anchor,'  const KEY_ALIASES_ARROW=()=>keyName;\n'+anchor),[exporter]:exportText.replace(call,call+'${KEY_ALIASES_ARROW.toString()}')}),boundaries);
-  assert.ok(arrow.some(i=>i.startsWith('the product embeds ')&&i.includes('KEY_ALIASES_ARROW')),JSON.stringify(arrow));
-});
-// The application's shared state and calls (AUDIT.md「ソースの境界」): an undeclared call or state, a name registered
-// twice or under another name, a call nothing registers, a registration nothing calls, a computed key, a write to
-// appCalls, a state nothing assigns, a factory of another shape, and a factory holding other statements are each refused.
-const variantIssues=(changes,expected)=>{const issues=boundaryIssues(usesWith(changes),state().boundaries);assert.ok(issues.some(i=>i.startsWith(expected)),expected+' '+JSON.stringify(issues.slice(0,4)));};
-const services='src/js/11-app-services.js',servicesHead='  function createAppServices(appVars, appCalls, appRedraw) {\n',register='    Object.assign(appCalls, {\n';
-check('REJECT-APP-INTERFACE-MISMATCH',()=>{
-  const {boundaries,uses}=state(),file=services,call=boundaries[file].appCalls.uses[0],shared=boundaries[file].appVars[0];
-  const drop=(field,name)=>({...boundaries,[file]:{...boundaries[file],...(field==='appVars'?{appVars:boundaries[file].appVars.filter(n=>n!==name)}:{appCalls:{...boundaries[file].appCalls,uses:boundaries[file].appCalls.uses.filter(n=>n!==name)}})}});
-  assert.ok(boundaryIssues(uses,drop('appCalls',call)).some(i=>i.startsWith(file+' calls appCalls ["'+call+'"] undeclared')));
-  assert.ok(boundaryIssues(uses,drop('appVars',shared)).some(i=>i.startsWith(file+' uses appVars ["'+shared+'"] undeclared')));
-  const text=read(file);assert.ok(text.includes(servicesHead)&&text.includes(register));
-  const own=boundaries[file].appCalls.provides[0],other=Object.keys(boundaries).find(f=>f!==file&&boundaries[f].appCalls?.provides?.length),theirs=boundaries[other].appCalls.provides[0];
-  const variants=[
-    [text.replace(register,register+'      '+theirs+',\n'),file+': a registration that is not one of the factory\'s own functions under its own name'],
-    [text.replace(register,register+'      alias: '+own+',\n'),file+': a registration that is not one of the factory\'s own functions under its own name'],
-    [text.replace(servicesHead,servicesHead+'    function neverCalledFromElsewhere() {}\n').replace(register,register+'      neverCalledFromElsewhere,\n'),file+' registers appCalls.neverCalledFromElsewhere but nothing calls it'],
-    [text.replace(servicesHead,servicesHead+'    function noSuchUse() { return appCalls.noSuchApplicationCall; }\n'),file+' calls appCalls.noSuchApplicationCall that no file registers'],
-    [text.replace(servicesHead,servicesHead+"    function dynamicUse() { return appCalls['dynamic']; }\n"),file+': appCalls used other than by a plain property name'],
-    [text.replace(servicesHead,servicesHead+'    function aliasUse() { const calls = appCalls; return calls; }\n'),file+': appCalls used other than by a plain property name'],
-    [text.replace(servicesHead,servicesHead+'    function writeCalls() { appCalls.'+own+' = null; }\n'),file+': appCalls.'+own+' written outside the registration'],
-    [text.replace(servicesHead,servicesHead+'    function readUnset() { return appVars.noSuchState; }\n'),'appVars.noSuchState is read but no file assigns it'],
-    [text.replace(servicesHead,'  function createAppServices(appCalls, appVars, appRedraw) {\n'),file+': createAppServices takes other than (appVars, appCalls, appRedraw)'],
-    [text.replace(servicesHead,servicesHead+'    appVars.loose = 1;\n'),file+': createAppServices holds a statement that is neither a function declaration nor a registration'],
-  ];
-  for(const [changed,expected]of variants)variantIssues({[file]:changed},expected);
-  const shell='src/js/11-application.js',call0='createAppServices(appVars, appCalls, appRedraw);';assert.ok(read(shell).includes(call0));
-  variantIssues({[shell]:read(shell).replace(call0,'createAppServices(appCalls, appVars, appRedraw);')},shell+': createAppServices called with other than (appVars, appCalls, appRedraw)');
-  variantIssues({[shell]:read(shell).replace(call0,call0+'\n    '+call0)},'createAppServices is declared 1 and called 2 times');
-  variantIssues({[file]:text+'  function outsideTheFactory() {}\n'},file+': an application part holds something besides its one factory');
-});
-// One way (AUDIT.md「ソースの境界」): an application file reaching a file after it, other than by a redraw request, is
-// refused: an appCalls name a later file registers, a top-level name of a later file, and the result of a function a
-// later file keeps in appVars.
-check('REJECT-APP-AGAINST-ORDER',()=>{
-  const {boundaries}=state(),tools='src/js/11-app-tools-core.js',toolsText=read(tools),head='  function createAppToolsCore(appVars, appCalls, appRedraw) {\n';assert.ok(toolsText.includes(head));
-  const later=boundaries[services].appCalls.provides[0];
-  variantIssues({[tools]:toolsText.replace(head,head+'    function upward() { return appCalls.'+later+'(); }\n')},tools+' calls appCalls.'+later+' of '+services+', which comes after it');
-  variantIssues({[tools]:toolsText.replace(head,head+'    function upwardName() { return createAppDrawing; }\n')},tools+' uses src/js/11-app-drawing.js, which comes after it');
-  const kept='appVars.activeDragCleanup?.();';assert.ok(read(services).includes(kept));
-  assert.ok((boundaries['src/js/11-app-commands.js'].appVars??[]).includes('activeDragCleanup'));
-  variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.();')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
-  variantIssues({[services]:read(services).replace(kept,'const kept = appVars.activeDragCleanup?.call(null);')},services+' uses the result of appVars.activeDragCleanup(), which src/js/11-app-commands.js (a later file) assigns');
-  variantIssues({[services]:read(services).replace(kept,'const cleanup = appVars.activeDragCleanup; cleanup?.();')},services+' hands on appVars.activeDragCleanup as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  // A function only ever called through a name, and one initApp assigns later than its first values, count too.
-  const commands='src/js/11-app-commands.js',commandsHead='  function createAppCommands(appVars, appCalls, appRedraw) {\n';assert.ok(read(commands).includes(commandsHead));
-  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  const shellText=read('src/js/11-application.js'),setup='    createAppDrawing(appVars, appCalls, appRedraw);\n';assert.ok(shellText.includes(setup));
-  variantIssues({'src/js/11-application.js':shellText.replace(setup,setup+'    const setLater = () => { appVars.laterFn = () => 42; };\n'),[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
-  // initApp's first values count when they put in a function.
-  const direct=shellText.replace(setup,setup+'    appVars.laterFn = () => 42;\n');
-  variantIssues({'src/js/11-application.js':direct,[services]:read(services).replace(kept,'const answer = appVars.laterFn();')},services+' uses the result of appVars.laterFn(), which src/js/11-application.js (a later file) assigns');
-  variantIssues({'src/js/11-application.js':direct,[services]:read(services).replace(kept,'const later = appVars.laterFn; later?.();')},services+' hands on appVars.laterFn as a value, a function src/js/11-application.js (a later file) assigns');
-  // A function put in through ?:, &&, .bind, appCalls or another field is still one.
-  for(const value of ['flag ? () => 1 : null','flag && (() => 1)','(() => 1).bind(null)','appCalls.setStatus','appVars.activeDragCleanup'])
-    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { appVars.extraKept = '+value+'; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  // So is one kept first in a local const, and a field whose local copy is called, however the function was put in;
-  // a file that also assigns the field gets no exception.
-  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(flag) { const h = flag ? () => 1 : null; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  for(const put of ['appVars.extraKept = obj.handler;','({ handler: appVars.extraKept } = obj);','appVars.extraKept = obj.make();'])
-    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra(obj) { '+put+' }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; const kept = extra.call(null);')},services+' uses the result of appVars.extraKept(), which src/js/11-app-commands.js (a later file) assigns');
-  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = () => 1; }\n'),[services]:read(services).replace(kept,'appVars.extraKept = null; const extra = appVars.extraKept; extra?.();')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  // A let assigned a function after its first value, and a field copied through a local, count; a later file that only
-  // clears the field supplies no function.
-  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { let h = null; h = () => 1; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { const h = appVars.activeDragCleanup; appVars.extraKept = h; }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  for(const put of ['let h = null; appVars.extraKept = (h ||= () => 1);','let h = null; h ??= () => 1; appVars.extraKept = h;'])
-    variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { '+put+' }\n'),[services]:read(services).replace(kept,'const extra = appVars.extraKept; setTimeout(extra);')},services+' hands on appVars.extraKept as a value, a function src/js/11-app-commands.js (a later file) assigns');
-  // A new instance may be a function (new Function(…)); it supplies one.
-  variantIssues({[commands]:read(commands).replace(commandsHead,commandsHead+'    function keepExtra() { appVars.extraKept = new Function(\'return 1\'); }\n'),[services]:read(services).replace(kept,'const kept = appVars.extraKept();')},services+' uses the result of appVars.extraKept(), which src/js/11-app-commands.js (a later file) assigns');
-  const cleared=boundaryIssues(usesWith({[commands]:read(commands).replace(commandsHead,commandsHead+'    function clearExtra() { appVars.extraKept = null; }\n'),[services]:read(services).replace(kept,'appVars.extraKept = () => 1; setTimeout(appVars.extraKept);')}),state().boundaries);
-  assert.ok(!cleared.some(i=>/appVars\.extraKept(?: as a value|\(\))/.test(i)),'a field a later file only clears: '+JSON.stringify(cleared.filter(i=>i.includes('extraKept'))));
-  // The language processing is one group: its files may use each other, but not a group after it; its files come together.
-  const language='src/js/05-command-presentation.js',languageText=read(language),blockView='src/js/10-block-view.js';assert.ok(read(blockView).includes('  function createBlockEditorView('));
-  variantIssues({[language]:languageText+'  function reachesBlockView() { return createBlockEditorView; }\n'},language+' uses '+blockView+', which comes after it');
-  const tpl='src/akari.html',tplText=read(tpl),line='<!-- @include js/10-block-view.js -->\n',second='<!-- @include js/03-default-assets.js -->\n';assert.ok(tplText.includes(line)&&tplText.includes(second));
-  variantIssues({[tpl]:tplText.replace(line,'').replace(second,line+second)},'the files of the language processing (src/js/02-09) do not come together in src/akari.html');
-});
-// Redraw requests (AUDIT.md「ソースの境界」): a request used for its result or as a value, an undeclared request, a slot
-// nothing fills, filled by an earlier file, filled twice or with another function, written outside the registration, and
-// a filled slot nothing calls are each refused.
-check('REJECT-APP-REDRAW-MISUSE',()=>{
-  const {boundaries,uses}=state(),drawing='src/js/11-app-drawing.js',drawingText=read(drawing),fills='    Object.assign(appRedraw, {\n',request='appRedraw.tree();';
-  assert.ok(drawingText.includes(fills)&&read(services).includes(request)&&boundaries[drawing].appRedraw.fills.tree==='renderTree');
-  variantIssues({[services]:read(services).replace(request,'const drawn = appRedraw.tree();')},services+': appRedraw.tree used other than as a call whose result nothing uses');
-  variantIssues({[services]:read(services).replace(request,'setTimeout(appRedraw.tree);')},services+': appRedraw.tree used other than as a call whose result nothing uses');
-  variantIssues({[services]:read(services).replace(request,request+' appRedraw.noSuchSlot();')},'appRedraw.noSuchSlot is called by '+services+' but no file fills it');
-  const requests=boundaries[services].appRedraw.requests;
-  assert.ok(boundaryIssues(uses,{...boundaries,[services]:{...boundaries[services],appRedraw:{requests:requests.filter(s=>s!=='tree')}}}).some(i=>i.startsWith(services+' calls appRedraw ["tree"] undeclared')));
-  variantIssues({[drawing]:drawingText.replace('      tree: renderTree,\n','      tree: renderProperties,\n')},drawing+': an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');
-  variantIssues({[drawing]:drawingText.replace('      tree: renderTree,\n','      tree: renderTree,\n      tree: renderTree,\n')},drawing+': an appRedraw slot not filled with the factory\'s own render, refresh, repaint or paint function of that name');
-  variantIssues({[services]:read(services).replace(servicesHead,servicesHead+'    function renderLocal() {}\n').replace(register,'    Object.assign(appRedraw, {\n      local: renderLocal,\n    });\n'+register).replace(request,request+' appRedraw.local();')},services+' calls appRedraw.local, which '+services+' fills; the filling file must come after it');
-  variantIssues({[services]:read(services).replace(request,request+' appRedraw.tree = null;')},services+': appRedraw.tree used other than as a call whose result nothing uses');
-  const unasked=drawingText.replace(fills,fills+'      monitorSection: renderMonitorSection,\n');assert.ok(drawingText.includes('    function renderMonitorSection('));
-  variantIssues({[drawing]:unasked},drawing+' fills appRedraw.monitorSection but nothing calls it');
-});
-// The block view is the second family (AUDIT.md「ソースの境界」): its parts follow the same rules with viewVars, viewCalls
-// and viewRedraw, its three objects are declared once, in createBlockEditorView, and only what that function takes from
-// its parameter (the caller's value, with defaults that use no name) may be called for its result by the parts before it.
-check('REJECT-VIEW-FAMILY',()=>{
-  const {boundaries,uses}=state(),tools='src/js/10-view-base.js',ops='src/js/10-view-editing.js',drawing='src/js/10-view-drawing.js',shell='src/js/10-block-view.js';
-  const toolsText=read(tools),opsText=read(ops),shellText=read(shell),head='  function createViewBase(viewVars, viewCalls, viewRedraw) {\n',setup='    viewVars.options = options;\n';
-  assert.ok(toolsText.includes(head)&&shellText.includes(setup)&&opsText.includes('viewRedraw.render('));
-  const later=boundaries[drawing].viewCalls.provides[0];
-  variantIssues({[tools]:toolsText.replace(head,head+'    function upward() { return viewCalls.'+later+'(); }\n')},tools+' calls viewCalls.'+later+' of '+drawing+', which comes after it');
-  variantIssues({[ops]:opsText.replace('viewRedraw.render(','void viewRedraw.render(')},ops+': viewRedraw.render used other than as a call whose result nothing uses');
-  // After the parameter is taken, a function the view itself puts into the state is a later file's.
-  const after='    } = options);\n';assert.ok(shellText.includes(after));
-  const put=s=>shellText.replace(after,after+'    '+s+'\n');
-  variantIssues({[shell]:put('viewVars.laterFn = () => 42;'),[tools]:toolsText.replace(head,head+'    function early() { return viewVars.laterFn(); }\n')},tools+' uses the result of viewVars.laterFn(), which '+shell+' (a later file) assigns');
-  // The parameter is taken at once, and only what is allowed reaches it: the parts may call what it holds for the result,
-  // and the fields taken and the members read of the whole parameter are declared. Each of these is refused: a default
-  // that is not a plain value (also one hiding a write), a key every object has (also as a string), a second parameter,
-  // the parameter's name declared again, the parameter used outside the statements that take it, arguments, a field
-  // taken twice or written again, the whole parameter used other than by reading or calling a member by a plain name (also
-  // a write deeper down), a member every object has, this in the families' files, members that reach a prototype or
-  // accessors, eval, and code that is not strict.
-  const locked='isLocked: viewVars.isLocked = () => false,';assert.ok(shellText.includes(locked));
-  assert.ok(boundaryIssues(uses,boundaries).length===0&&(uses.interfaces.viewVars[tools].varCalls??[]).some(c=>c.name==='getSession'&&!c.statement),'the parts call getSession for its result');
-  assert.deepEqual(boundaries[shell].viewVarsTaken,['getContext','getProject','getSession','isLocked','onCancel','onOperation','onPending','options','options.controlsSpace','options.lessonCandidate','options.onData','options.onDestinationSelected','options.onExpand','options.onNoteProposal','options.onPresentation','options.readOnly','options.tutorialActive','root']);
-  {const issues=boundaryIssues(usesWith({[tools]:toolsText.replace(head,head+'    function probeMember() { return viewVars.options.newMember; }\n')}),boundaries);
-    assert.ok(issues.some(i=>i.startsWith(shell+' takes viewVars [')),'a new member of the parameter is declared');
-    assert.ok(issues.includes(tools+' reads viewVars.options.newMember, which the boundary record of '+shell+' does not declare in viewVarsTaken'),'the file reading it is named');}
-  assert.ok(boundaryIssues(uses,{...boundaries,[shell]:{...boundaries[shell],viewVarsTaken:boundaries[shell].viewVarsTaken.filter(n=>n!=='root')}}).some(i=>i.startsWith(shell+' takes viewVars [')),'what is taken is declared');
-  for(const fallback of ['() => viewVars.destroyed','[(viewVars.getSession = viewCalls.render)]'])
-    variantIssues({[shell]:shellText.replace(locked,'isLocked: viewVars.isLocked = '+fallback+',')},shell+': createBlockEditorView takes isLocked from its parameter with a default that is not a plain value');
-  for(const key of ['valueOf',"'__defineGetter__'"])
-    variantIssues({[shell]:shellText.replace(locked,locked+'\n      '+key+': viewVars.probeKey,')},shell+': createBlockEditorView takes '+key.replace(/'/g,'')+' from its parameter, a name every object has');
-  const signature='  function createBlockEditorView(options) {\n';assert.ok(shellText.includes(signature));
-  variantIssues({[shell]:shellText.replace(signature,'  function createBlockEditorView(options, extra = 1) {\n')},shell+': createBlockEditorView takes other than one plain parameter');
-  for(const form of ['var options;','function options() {}','[].map((options) => options);'])
-    variantIssues({[shell]:put(form)},shell+': createBlockEditorView declares the name of its parameter options again');
-  variantIssues({[shell]:shellText.replace(after,'    } = Object.assign({}, options));\n')},shell+': createBlockEditorView uses its parameter options outside the statements that take it');
-  for(const form of ['options = {...options};','options.getContext = () => viewVars.root;','const opts = options;','if (typeof options) {}'])
-    variantIssues({[shell]:put(form)},shell+': createBlockEditorView uses its parameter options outside the statements that take it');
-  variantIssues({[shell]:put('arguments[0].x = 1;')},shell+': createBlockEditorView uses arguments');
-  variantIssues({[shell]:shellText.replace(setup,setup+setup)},shell+': createBlockEditorView takes options from its parameter twice');
-  variantIssues({[tools]:toolsText.replace(head,head+'    function replace() { viewVars.getSession = () => null; }\n')},tools+' writes viewVars.getSession, which createBlockEditorView takes from its parameter; it is written only there');
-  for(const form of ['viewVars.options.extra = () => 1;','const o = viewVars.options; o.extra = 1;','Object.assign(viewVars.options, {});',"viewVars.options['onData']();",'viewVars.options.onExpand.call = () => null;'])
-    variantIssues({[tools]:toolsText.replace(head,head+'    function rewire() { '+form+' }\n')},tools+' uses viewVars.options other than by reading or calling its members by plain names; it holds the parameter of createBlockEditorView');
-  variantIssues({[tools]:toolsText.replace(head,head+"    function probeOwn() { return viewVars.options.hasOwnProperty('readOnly'); }\n")},tools+' reads viewVars.options.hasOwnProperty, a name every object has, from the parameter of createBlockEditorView');
-  variantIssues({[tools]:toolsText.replace(head,head+'    function probeThis() { return this; }\n')},tools+': this, which a function called through viewVars, viewCalls, viewRedraw would get as one of them');
-  variantIssues({[tools]:toolsText.replace(head,head+'    function probeSuper() { return { m() { return super.toString; } }; }\n')},tools+': super, which a function called through viewVars, viewCalls, viewRedraw would get as one of them');
-  const appTools='src/js/11-app-tools-core.js',appHead='  function createAppToolsCore(appVars, appCalls, appRedraw) {\n';assert.ok(read(appTools).includes(appHead));
-  variantIssues({[appTools]:read(appTools).replace(appHead,appHead+"    function probeHandler(el) { el.addEventListener('click', function () { this.hidden = true; }); }\n")},appTools+': this, which a function called through appVars, appCalls, appRedraw would get as one of them');
-  // The views are made by their callers: the family neither calls the shell function nor hands it on.
-  for(const [file,text,form]of [[shell,shellText,"viewVars.child = () => createBlockEditorView({ root: viewVars.root });"],[shell,shellText,'viewVars.child = () => createBlockEditorView.call(null, { root: viewVars.root });'],[tools,toolsText,'function probeView() { return createBlockEditorView; }']])
-    variantIssues({[file]:file===shell?put(form):text.replace(head,head+'    '+form+'\n')},file+': createBlockEditorView used other than through its members; its callers are outside the family');
-  // A part's functions are reachable by name only inside it; another part uses viewCalls.
-  variantIssues({[ops]:opsText.replace(/(  function createViewEditing\(viewVars, viewCalls, viewRedraw\) \{\n)/,'$1    function probeMoved() { return edgeSlot(1, 2); }\n')},ops+': edgeSlot used by name, a function of '+tools+', which is reachable by name only inside that part (the files of the family reach it through viewCalls)');
-  // A binding of that name in a switch case (seen from every case), a class expression's name (also in its body), a
-  // static block's declaration and a #name are not that function; the switch's own expression is outside them.
-  const probeIn=body=>usesWith({[ops]:opsText.replace(/(  function createViewEditing\(viewVars, viewCalls, viewRedraw\) \{\n)/,'$1    '+body+'\n')});
-  assert.deepEqual(boundaryIssues(probeIn('function probeLocal(k) { switch (k) { case 1: const edgeSlot = 2; return edgeSlot; case 2: return edgeSlot; default: return class edgeSlot { #edgeSlot = 1; m() { return edgeSlot; } static { const keySlot = 1; void keySlot; } }; } }'),boundaries),[]);
-  assert.ok(boundaryIssues(probeIn('function probeSwitch(k) { switch (edgeSlot(k, 1)) { case 1: const edgeSlot = 2; return edgeSlot; default: return 0; } }'),boundaries).some(i=>i.startsWith(ops+': edgeSlot used by name')),'the switch expression is outside its cases');
-  // A var nested in a static block binds in the whole block; a let there binds only in its own block.
-  assert.deepEqual(boundaryIssues(probeIn('function probeStatic(k) { class P { static { if (k) { var edgeSlot = 1; } void edgeSlot; } } return P; }'),boundaries),[]);
-  assert.ok(boundaryIssues(probeIn('function probeStaticLet(k) { class P { static { if (k) { let edgeSlot = 1; } void edgeSlot; } } return P; }'),boundaries).some(i=>i.startsWith(ops+': edgeSlot used by name')),'a let binds only in its block');
-  // The check is for the families' files: elsewhere a name nothing binds is a global, and a family file writes
-  // window.name for a global of a part's function's name.
-  const diag='src/js/10-diagnostic-text.js';
-  assert.ok(!boundaryIssues(usesWith({[diag]:read(diag)+'  function probeGlobal() { return typeof edgeSlot; }\n'}),boundaries).some(i=>i.includes('used by name')),'outside the families');
-  assert.ok(!boundaryIssues(probeIn('function probeWindow() { return window.edgeSlot; }'),boundaries).some(i=>i.includes('used by name')),'window.name');
-  // A binding in a switch case is followed like any other (its value, through a local copy, is still a function).
-  const probeHead='  function createViewDrawing(viewVars, viewCalls, viewRedraw) {\n',drawingProbe=read(drawing).replace(probeHead,probeHead+'    function probeW(k) { switch (k) { case 1: const inner = () => 1; const g = inner; viewVars.probeField = g; break; default: } }\n');
-  variantIssues({[drawing]:drawingProbe,[ops]:opsText.replace(/(  function createViewEditing\(viewVars, viewCalls, viewRedraw\) \{\n)/,'$1    function probeR() { const v = viewVars.probeField; return v; }\n')},ops+' hands on viewVars.probeField as a value, a function '+drawing+' (a later file) assigns');
-  // undefined is the value only where no name undefined is bound.
-  variantIssues({[shell]:put('function undefined() { return 1; }').replace(locked,'isLocked: viewVars.isLocked = undefined,')},shell+': createBlockEditorView takes isLocked from its parameter with a default that is not a plain value');
-  const drawingText=read(drawing),drawingHead='  function createViewDrawing(viewVars, viewCalls, viewRedraw) {\n';assert.ok(drawingText.includes(drawingHead));
-  variantIssues({[drawing]:drawingText.replace(drawingHead,drawingHead+'    function undefined() { return 42; }\n    function probeSet() { viewVars.laterFn = undefined; }\n'),[tools]:toolsText.replace(head,head+'    function early() { return viewVars.laterFn(); }\n')},tools+' uses the result of viewVars.laterFn(), which '+drawing+' (a later file) assigns');
-  // Plain defaults pass: a function whose parameters it does not use, an empty array, undefined.
-  for(const fallback of ['(reason) => {}','[]','undefined','(...args) => {}','void 0','() => { return false; }'])
-    assert.deepEqual(boundaryIssues(usesWith({[shell]:shellText.replace(locked,'isLocked: viewVars.isLocked = '+fallback+',')}),boundaries),[],fallback);
-  for(const [form,expected]of [["({}).__defineGetter__('x', () => 1);",': __defineGetter__, which reaches or rewrites a prototype or accessors'],["({})['__proto__'];",': __proto__, which reaches or rewrites a prototype or accessors'],["eval('1');",': eval, which runs text whose names cannot be followed']])
-    variantIssues({[tools]:toolsText.replace(head,head+'    function probeReach() { '+form+' }\n')},tools+expected);
-  const prelude=productScript(read).pieces.map(p=>p.label).find(f=>/^src\/js\/[^/]*-prelude\.js$/.test(f)),preludeText=read(prelude);assert.ok(preludeText.includes("  'use strict';\n"));
-  variantIssues({[prelude]:preludeText.replace("  'use strict';\n",'')},'the product script is not strict code');
-  // A function declared after the registrations is not there yet when they run.
-  const registration='    Object.assign(viewCalls, {\n';assert.ok(toolsText.includes(registration));
-  variantIssues({[tools]:toolsText.replace(registration,'    Object.assign(viewCalls, {\n      lateTool,\n').replace(/\n  \}\n$/,'\n    const lateTool = () => 1;\n  }\n')},tools+': createViewBase declares lateTool after its registration');
-  // The objects: declared once, in createBlockEditorView; a factory of another shape; a part holding more than its factory.
-  variantIssues({[shell]:put('{ const viewVars = {}; }')},'viewVars is declared 2 times ('+shell+', '+shell+'); it is declared once, in createBlockEditorView ('+shell+')');
-  variantIssues({[shell]:shellText+'  function strayView() { const viewRedraw = {}; return viewRedraw.x; }\n'},shell+': viewRedraw declared outside createBlockEditorView');
-  variantIssues({[tools]:toolsText.replace(head,'  function createViewBase(viewCalls, viewVars, viewRedraw) {\n')},tools+': createViewBase takes other than (viewVars, viewCalls, viewRedraw)');
-  variantIssues({[tools]:toolsText+'  function outsideTheFactory() {}\n'},tools+': a block view part holds something besides its one factory');
-  const shared=boundaries[tools].viewVars[0];
-  assert.ok(boundaryIssues(uses,{...boundaries,[tools]:{...boundaries[tools],viewVars:boundaries[tools].viewVars.filter(n=>n!==shared)}}).some(i=>i.startsWith(tools+' uses viewVars ["'+shared+'"] undeclared')));
-});
-// What the reading cannot follow (AUDIT.md「ソースの境界」): the global object as a value, Reflect other than reading,
-// an on helper that does more with its target, and a function's text taken through toString.apply are each refused.
-check('REJECT-OPAQUE-GLOBAL-USE',()=>{
-  const stage='src/js/08-stage-and-export.js',text=read(stage),line="on(window, 'resize', fitStage);",helper='      target.addEventListener(type, fn, opts);\n';assert.ok(text.includes(line)&&text.includes(helper));
-  for(const [form,expected]of [['const g = globalThis;',stage+': the global object used as a value (globalThis)'],['Object.assign(globalThis, {});',stage+': the global object used as a value (globalThis)'],
-    ["Reflect.get(window, 'Akari');",stage+': Reflect used other than to read'],['globalThis[String(1)];',stage+': the global object used as a value (globalThis)'],['((g) => g)(self);',stage+': the global object used as a value (self)']])
-    variantIssues({[stage]:text.replace(line,line+' '+form)},expected);
-  for(const form of ['((on) => on(window, {}))(Object.assign);','{ const {assign: on} = Object; on(window, {}); }','try { throw 0; } catch (on) { on(window, {}); }',
-    'for (const on of [Object.assign]) on(window, {});','({m(on) { on(window, {}); }}).m(Object.assign);'])variantIssues({[stage]:text.replace(line,line+' '+form)},stage+': the global object used as a value (window)');
-  variantIssues({[stage]:text.replace(line,line+' Object.assign(window.window, {});')},stage+': the global object used as a value (window.window)');
-  assert.ok(!boundaryIssues(usesWith({[stage]:text.replace(line,line+' if (globalThis === window) {}')}),state().boundaries).some(i=>i.includes('global object')),'a comparison with the global object is allowed');
-  variantIssues({[stage]:text.replace(helper,helper+'      target.flag = 1;\n')},stage+': an on helper that does more with its target than add and remove event listeners');
-  const call='${createAkariStageView.toString()}';assert.ok(text.includes(call));
-  variantIssues({[stage]:text.replace(call,call+'${Function.prototype.toString.apply(keyName)}')},'the product embeds ');
-});
-// A function cut across files (AUDIT.md「ソースの置き場所・向き・大きさ」): createAkariRuntime's body lies in the 01-runtime
-// files, which use each other through its own names, one way. A file using a name of the body that a later file
-// declares, an undeclared use between them, a statement of the body cut across files, a head outside the first file, a
-// file of the function holding another statement, any other statement cut across files, a var inside a statement of
-// its body, a backward use between its files inside one group, and a statement besides the embedding in the file that
-// embeds the portable extensions are each refused; new.target in its body and a stray semicolon after it are not.
-check('REJECT-SPLIT-FUNCTION',()=>{
-  const {uses}=state(),parts=uses.splitFiles.createAkariRuntime;assert.ok(parts?.length>=3,JSON.stringify(uses.splitFiles));
-  const [first,second,third]=parts,last=parts.at(-1),firstText=read(first),secondText=read(second),thirdText=read(third);
-  const opening='  function createAkariRuntime(options) {\n',head=opening+"    'use strict';\n",model='    class RuntimeModel ',scheduler='    class EventScheduler {\n';
-  assert.ok(firstText.includes(head)&&secondText.includes(model)&&thirdText.includes(scheduler));
-  variantIssues({[first]:firstText.replace(head,head+'    function zzLater() { return RuntimeModel; }\n')},first+' uses '+second+', which comes after it');
-  assert.ok(boundaryIssues(uses,without(second,first)).some(i=>i.startsWith(second+' uses '+first+' without declaring')));
-  variantIssues({[second]:secondText+scheduler,[third]:thirdText.replace(scheduler,'')},'createAkariRuntime: EventScheduler lies in '+second+', '+third+'; a statement of a cut function lies in one file');
-  variantIssues({[core]:coreText+opening,[first]:firstText.replace(opening,'')},'createAkariRuntime: its head lies in '+core+', '+first+'; it lies in its first file');
-  variantIssues({[last]:read(last)+'  const zzAfter = 1;\n'},last+' holds zzAfter besides a part of createAkariRuntime');
-  const before='src/js/05-command-presentation.js',after='src/js/06-source-formatting.js';
-  variantIssues({[before]:read(before)+'  const zzCut = [\n',[after]:'  1];\n'+read(after)},'zzCut lies in '+before+', '+after+': only a function declaration is cut across files');
-  // The cause comes first: until it is fixed, the files' declared uses of each other look stale.
-  const withVar=boundaryIssues(usesWith({[first]:firstText.replace(head,head+'    for (var zzI = 0; zzI < 1; zzI++) {}\n')}),state().boundaries);
-  assert.ok(withVar[0]?.startsWith('createAkariRuntime: a var inside a statement of its body (zzI) is not followed by the analysis'),JSON.stringify(withVar.slice(0,2)));
-  // Inside one group the one-way rule between files is off; a cut function's own files still use each other one way.
-  variantIssues({[before]:read(before)+'  function zzCutHere() {\n    return zzLater;\n',[after]:'    const zzLater = 1;\n  }\n'+read(after)},before+' uses '+after+', which comes after it (zzLater)');
-  variantIssues({[core]:coreText+'  const zzCore = 1;\n'},core+' embeds a portable extension and holds zzCore; such a file holds only the embedding');
-  // The embedding file is the one whose line embeds the extension, also when that line is the file's first.
-  const bare=boundaryIssues(usesWith({[core]:'// @portable extensions/profiles.js\n// @portable extensions/foundation.js\n  const zzBare = 1;\n'}),state().boundaries);
-  assert.ok(bare.some(i=>i.startsWith(core+' embeds a portable extension and holds zzBare'))&&!bare.some(i=>i.includes('embeds a portable extension')&&!i.startsWith(core)),JSON.stringify(bare.slice(0,3)));
-  for(const [what,changes]of [['new.target in the body',{[first]:firstText.replace(head,head+"    if (new.target) throw new TypeError('not a constructor');\n")}],['a semicolon after the function',{[last]:read(last).replace(/\n  \}\n(\s*)$/,'\n  };\n$1')}]]){
-    assert.notEqual(Object.values(changes)[0],read(Object.keys(changes)[0]),what);assert.deepEqual(boundaryIssues(usesWith(changes),state().boundaries),[],what);}
-});
-// Sizes (AUDIT.md「ソースの境界」): a file over the size whose units all fit in it is due to be split and fails;
-// every file over the size is listed, with its largest unit (a unit over the size alone is not split by the rule).
+// Sizes (AUDIT.md「ソースの境界」): no file of the product script is longer than SOURCE_SIZE_LINES.
 let sizes=[];
 const productFiles=reader=>[...new Set(productScript(reader).pieces.map(p=>p.label))];
 check('SOURCE-SIZE',()=>{
   sizes=sourceSizes(read,productFiles(read));
-  assert.deepEqual(sizes.filter(s=>s.due).map(s=>s.file),[],'split them by node audit/split-source.mjs <file>');
-  const padded=file=>({...Object.fromEntries([[file,read(file)+'  //\n'.repeat(SOURCE_SPLIT_LINES)]])}),grown='src/js/11-app-drawing.js',over=padded(grown);
-  const reader=f=>f in over?over[f]:read(f);assert.ok(sourceSizes(reader,productFiles(reader)).some(s=>s.file===grown&&s.due),'a file over the size is due');
-  // A part of a function cut across files is sized by its body's statements: over the size it is due, and a part whose
-  // one statement alone is over the size is listed as one unit.
-  const parts=state().uses.splitFiles.createAkariRuntime,part=parts[1],grownPart=padded(part),partReader=f=>f in grownPart?grownPart[f]:read(f);
-  assert.ok(sourceSizes(partReader,productFiles(partReader)).some(s=>s.file===part&&s.due),'a part of a cut function over the size is due');
-  const one=sizes.find(s=>s.units===1&&parts.includes(s.file)),scheduler='    class EventScheduler {\n';assert.ok(one&&read(one.file).includes(scheduler),JSON.stringify(one));
-  const longer={[one.file]:read(one.file).replace(scheduler,scheduler+'      //\n'.repeat(SOURCE_SPLIT_LINES))},longReader=f=>f in longer?longer[f]:read(f);
-  assert.ok(sourceSizes(longReader,productFiles(longReader)).some(s=>s.file===one.file&&!s.due&&s.largest>SOURCE_SPLIT_LINES&&s.blocked==='it is one unit'),'one unit over the size is listed');
-  // A file the rule should read but cannot is an error, never a quiet exemption.
-  const broken={[grown]:read(grown)+'  function outsideTheFactory() {}\n'};assert.throws(()=>sourceSizes(f=>f in broken?broken[f]:read(f),[grown]),/holds one application factory/);
-});
-// The split rule (AUDIT.md「ソースの境界」): splitting a plain file, an application part, a block view part and the part
-// of createAkariRuntime that opens it keeps every boundary, the product's free names and every unit; the new file comes
-// just before (and opens the function); neither part is larger than the file; and what the rule cannot split is refused.
-check('SOURCE-SPLIT-RULE',()=>{
-  const free=reader=>[...new Set(closureReferences(productScript(reader)).free.map(x=>x.name))].sort();
-  const runtimeFirst=state().uses.splitFiles.createAkariRuntime[0],runtimeOpening='  function createAkariRuntime(options) {\n';
-  for(const file of ['src/js/07-semantic-analysis.js',services,'src/js/10-view-base.js',runtimeFirst]){
-    const s=splitSource(read,file,f=>fs.existsSync(path.join(repositoryRoot,f))),after=p=>p in s.changes?s.changes[p]:read(p);
-    const records={...state().boundaries};for(const [p,t]of Object.entries(s.changes))if(p.startsWith('audit/boundaries/'))records[JSON.parse(t).file]=JSON.parse(t);
-    assert.deepEqual(boundaryIssues(sourceUses(after),records),[],file);
-    assert.deepEqual(free(after),free(read),file+' free names');
-    const tpl=after('src/akari.html');assert.ok(tpl.includes('<!-- @include '+s.created.slice(4)+' -->\n<!-- @include '+file.slice(4)+' -->\n'),file+' comes right after the new file');
-    if(file===runtimeFirst)assert.ok(after(s.created).includes(runtimeOpening)&&!after(file).includes(runtimeOpening),'the new file opens createAkariRuntime');
-    const lines=t=>t.split('\n').length;assert.ok(lines(after(s.created))<lines(read(file))&&lines(after(file))<lines(read(file)),file+' parts');
-    const moved=new Set(s.moved),restore=t=>t.replace(/\b(\w+): (?:appCalls|viewCalls)\.\1\b/g,(m,n)=>moved.has(n)?n:m).replace(/\b(?:appCalls|viewCalls)\.(\w+)\b/g,(m,n)=>moved.has(n)?n:m);
-    const now=[...sourceUnits(after,s.created),...sourceUnits(after,file)],key=u=>u.names.join(',')||u.text;
-    const was=sourceUnits(read,file);assert.equal(now.length,was.length,file+' units');
-    for(const u of was){const v=now.find(x=>key(x)===key(u));assert.ok(v&&(v.text===u.text||restore(v.text)===u.text),file+' keeps '+key(u).slice(0,40));}
-  }
-  const opening=productFiles(read).find(f=>f.endsWith('-prelude.js'));assert.ok(opening);assert.throws(()=>splitSource(read,opening),/opens or closes the closure/);
-  // A destructuring declaration's names are its unit's names, so the units that use them come after it.
-  const destructuring={'src/js/05-command-presentation.js':read('src/js/05-command-presentation.js')+'  const {zzA, zzB: [zzC]} = {zzA: 1, zzB: [2]};\n'};
-  assert.ok(sourceUnits(f=>f in destructuring?destructuring[f]:read(f),'src/js/05-command-presentation.js').some(u=>JSON.stringify(u.names)==='["zzA","zzC"]'));
-  // The command refuses a call without one src/js file and changes nothing.
-  const cli=spawnSync(process.execPath,[path.join(repositoryRoot,'audit/split-source.mjs')],{cwd:repositoryRoot,encoding:'utf8'});
-  assert.notEqual(cli.status,0);assert.match(cli.stderr,/usage: node audit\/split-source\.mjs/);
-  assert.throws(()=>splitSource(read,'src/js/01-execution-core.js'),/portable extension/);
-  const cyclic='src/js/05-command-presentation.js',loop={[cyclic]:'  function loopA() { return loopB(); }\n  function loopB() { return loopA(); }\n'};
-  assert.throws(()=>splitSource(f=>f in loop?loop[f]:read(f),cyclic),/form one cycle/);
-  // A const, even one bound to a function, is ready only when the file reaches it, and another file of the group may read
-  // it while loading (zzV's initializer calls into another file, which may call zzA): the middle cut would move zzV before
-  // zzA, so the split is refused.
-  const ordered={[cyclic]:'  const zzA = () => zzH();\n  const zzV = otherFileFunction();\n  function zzH() {\n'+'    void 0;\n'.repeat(50)+'  }\n'};
-  assert.throws(()=>splitSource(f=>f in ordered?ordered[f]:read(f),cyclic),/zzV would move before zzA/);
+  assert.deepEqual(sizes.filter(s=>s.lines>SOURCE_SIZE_LINES).map(s=>s.file),[],'split the files over the size');
+  const grown=productFiles(read).filter(f=>/^src\//.test(f)).at(-1),over={[grown]:read(grown)+'//\n'.repeat(SOURCE_SIZE_LINES)};
+  const reader=f=>f in over?over[f]:read(f);assert.ok(sourceSizes(reader,productFiles(reader)).some(s=>s.file===grown&&s.lines>SOURCE_SIZE_LINES),'a file over the size is found');
 });
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
 // F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
@@ -545,7 +222,7 @@ check('REJECT-AUDIT-LINT',()=>{
   const [file]=Object.keys(LINT_BASELINE);
   assert.ok(auditLintIssues({...auditLintRun.counts,[file]:{}},auditCode).some(i=>i.startsWith(file+' has 0 ')&&i.includes('lower its LINT_BASELINE entry to 0')),'a count that went down');
 });
-const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results,sourceSizes:sizes.filter(s=>s.lines>SOURCE_SPLIT_LINES)};
+const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results,sourceSizes:sizes.filter(s=>s.lines>SOURCE_SIZE_LINES)};
 assert.deepEqual(results.map(r=>r.id),productSourceIds);
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 if(report.status!=='PASS'){console.error(JSON.stringify(results.filter(r=>r.status!=='PASS'),null,2));process.exitCode=1;}

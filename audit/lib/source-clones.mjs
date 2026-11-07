@@ -4,7 +4,7 @@
 // check began, each with what it repeats; it can only shrink. A new clone, or a listed one that is gone, is refused.
 import crypto from 'node:crypto';
 import {createRequire} from 'node:module';
-import {lineMap} from './node-coverage.mjs';
+import {lineMap} from './product-script.mjs';
 const require = createRequire(import.meta.url);
 const {parse} = require('@babel/parser');
 

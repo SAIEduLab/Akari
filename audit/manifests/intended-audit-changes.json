@@ -128,6 +128,42 @@
     {
       "change": "pin:0453f26f6f2b920ff604aac5b9445bf1c93a035e0d632a9a7f0c976dbce16d91",
       "reason": "fixedIdSha256 of audit/manifests/product-tests.json is the digest of the product test IDs; the 1.0.1 tests add eight IDs (six TEST-CONTRACT, one CORE and one LANG case) and remove none."
+    },
+    {
+      "change": "gate-case:change-guard-negative/moves/moved-unchanged-accepted",
+      "reason": "The move check is removed: the guard reads the committed products, not the source files, and a statement moved between files needs no record. A line moved as it is is not mutated when every line of the base that reads the same was moved (coverage/moved-line-unmutated); one of several lines that read the same, moved, is a changed line (coverage/common-line-not-moved)."
+    },
+    {
+      "change": "gate-case:change-guard-negative/moves/moved-and-changed-needs-record",
+      "reason": "Removed with the move check: a moved and changed statement is a changed line of the product, mutated when the node suites or the worlds run it (mutants/survivor-needs-record). A moved and changed statement that only the browser runs is neither recorded nor mutated."
+    },
+    {
+      "change": "workflow-entry:akari-change-guard.yml/guard-plan/git checkout \"$AKARI_BASE_SHA\" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs",
+      "reason": "The guard no longer builds the head product from its sources (it compares the committed products), so the base's src/build.mjs is no longer checked out with the guard code (guardCodePaths)."
+    },
+    {
+      "change": "workflow-entry:akari-change-guard.yml/change-guard-part/git checkout \"$AKARI_BASE_SHA\" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs",
+      "reason": "The guard no longer builds the head product from its sources (it compares the committed products), so the base's src/build.mjs is no longer checked out with the guard code (guardCodePaths)."
+    },
+    {
+      "change": "workflow-entry:akari-change-guard.yml/audit-change-guard/git checkout \"$AKARI_BASE_SHA\" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs",
+      "reason": "The guard no longer builds the head product from its sources (it compares the committed products), so the base's src/build.mjs is no longer checked out with the guard code (guardCodePaths)."
+    },
+    {
+      "change": "fewer-checks:audit/lib/source-boundaries.mjs",
+      "reason": "The boundary declarations (audit/boundaries) and their scope analysis are removed, and with them the static checks that the five functions the exported player embeds use no other closure name and read no global the product sets, and that the list of embedded functions matches where the product turns functions into text. What remains is the read-back of the script (PRODUCT-SCRIPT-PIECES) and a run of the embedded functions alone that makes a runtime and names a key event (PORTABLE-EMBEDDED-RUN), which does not reach every path of them."
+    },
+    {
+      "change": "fewer-checks:audit/lib/source-split.mjs",
+      "reason": "The split rule and its sizing of units inside a file are removed; SOURCE-SIZE keeps the limit of 2000 lines for each file of the product script."
+    },
+    {
+      "change": "fewer-checks:audit/split-source.mjs",
+      "reason": "The split command goes with the split rule (audit/lib/source-split.mjs)."
+    },
+    {
+      "change": "fewer-checks:audit/tests/product-source.mjs",
+      "reason": "The checks of the boundary declarations and their direction, the application and block view families, the function cut across files, the static checks of the embedded functions and the split rule are removed with them. PRODUCT-SCRIPT-PIECES, PORTABLE-EMBEDDED-RUN and SOURCE-SIZE remain, and the build checks are unchanged."
     }
   ]
 }

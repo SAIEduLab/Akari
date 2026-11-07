@@ -4,9 +4,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-// Windows seconds per indivisible bundle, from the receipts of runs 42003097192 and 42003096921.
+// Windows seconds per indivisible bundle, from the receipts of runs 42003097192 and 42003096921. s04 and s10 are the
+// change guard's mutant rules split in two (audit/lib/shard-plan.cjs): s04 is its receipt less the 372 s the whole group
+// ran in run 42027123430, plus its first part at 0.86 of the 283 s it took on a second machine (the ratio of that run to
+// the whole group there, 372 s to 433 s); s10 is the second part, 0.86 of 212 s, and the warm-up.
 // Setup is paid once for all bundles on a worker. Bundle IDs also name the sealed output directories.
-export const auditSeconds={s01:467,s02:480,s03:426,s04:410,s05:514,s06:387,s07:478,s08:392,s09:417,
+export const auditSeconds={s01:467,s02:480,s03:426,s04:281,s05:514,s06:387,s07:478,s08:392,s09:417,s10:187,
   b01:477,b02:536,b03:518,b04:484,b05:499,b06:484,b07:521,audio:48};
 export const acceptanceSeconds={c01:519,c02:510,c03:322,editing:310};
 export const runnerSlots=20;
@@ -47,13 +50,25 @@ export function planLanes(lines,guardCopies=1){
 
 export function planForCommits(repo,base,head){
   const git=args=>cp.execFileSync('git',['-C',repo,...args],{encoding:'utf8',maxBuffer:128*1024*1024});
-  const range=base+'...'+head;
-  const diff=git(['diff','--no-color','--no-ext-diff','--no-renames','-U0',range,'--','src/js/0[1-9]-*.js','extensions/*.js']);
-  const rows=diff.split('\n'),removed=new Set(rows.filter(s=>s.startsWith('-')&&!s.startsWith('--- ')).map(s=>s.slice(1).trim()));
-  const added=rows.filter(s=>s.startsWith('+')&&!s.startsWith('+++ ')).map(s=>s.slice(1).trim());
+  const range=base+'...'+head,mergeBase=git(['merge-base',base,head]).trim();
+  // The changed lines of the product's script apart from spacing, as the change guard reads them
+  // (audit/lib/change-guard.mjs changedScriptLines reads them by their tokens; this estimate needs no parser).
+  const product=commit=>git(['rev-parse','--verify','--quiet',commit+':'+JSON.parse(git(['show',commit+':audit/public-files.json'])).productFile]).trim();
+  const before=product(mergeBase),after=product(head);
+  const diff=before===after?'':git(['diff','--no-color','--no-ext-diff','--ignore-all-space','-U0',before,after]);
+  const html=before===after?'':git(['cat-file','-p',after]),lineAt=offset=>html.slice(0,offset).split('\n').length;
+  const first=lineAt(html.indexOf('<script>')+'<script>'.length),last=lineAt(html.lastIndexOf('</script>'));
+  const removed=new Set(),added=[];
+  let at=0,inHunk=false;
+  for(const row of diff.split('\n')){
+    const hunk=row.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);if(hunk){at=Number(hunk[1]);inHunk=true;continue;}
+    if(!inHunk)continue;
+    if(row.startsWith('-'))removed.add(row.slice(1).trim());
+    else if(row.startsWith('+')){const here=at++;if(here>=first&&here<=last)added.push(row.slice(1).trim());}
+  }
   const code=added.filter(s=>s&&!/^(?:\/\/|\/\*|\*)/.test(s)&&!removed.has(s));
   const copies=git(['diff','--name-only',range,'--','.github/workflows/akari-change-guard.yml']).trim()?2:1;
-  return planLanes(Math.max(code.length,diff?1:0),copies);
+  return planLanes(Math.max(code.length,added.length?1:0),copies);
 }
 
 export function laneUnits(group,lane){

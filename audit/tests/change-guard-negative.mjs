@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,guardMutantPart,mergeGuardParts,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema} from '../lib/change-guard.mjs';
+import {changeGuard,guardMutantPart,guardEmptyPart,mergeGuardParts,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
 import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract} from '../lib/gate-contract.mjs';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
 import {currentPart,partItems,changeGuardParts} from '../lib/shard-plan.cjs';
@@ -64,18 +64,24 @@ try {
   };
 
   // Releases the version and behaviour cases build: the product renamed to its next version, src changed or not.
-  const version=currentProductVersion(),product=currentProductFile(),sourceChange={'src/akari.html':text('src/akari.html')+'\n<!-- changed -->\n'};
+  const version=currentProductVersion(),product=currentProductFile(),templateText=text('src/akari.html'),sourceChange={'src/akari.html':templateText+'\n<!-- changed -->\n'};
   function release(next,{changeSource=false,productBytes=text(product)}={}){
     const file='Akari_'+next.replaceAll('.','_')+'.html';
     return {'audit/public-files.json':json('audit/public-files.json',m=>{m.productVersion=next;m.productFile=file;m.files=m.files.map(f=>f===product?file:f);}),
       [product]:null,[file]:productBytes,[currentReleaseFile()]:null,['audit/manifests/release-'+next+'.json']:text(currentReleaseFile()),...(changeSource?sourceChange:{})};
   }
-  // Shared by the groups: the next patch release, a record of intended behaviour changes, and the expression file.
-  const bumped=release(nextPatch(version),{productBytes:text(product)+'\n'});
-  const intended=cases=>({'audit/manifests/intended-behaviour-changes.json':JSON.stringify({schema:'akari-intended-behaviour-changes-v1',changes:cases.map(c=>({case:c,reason:'a left turn turns right in this audit fixture'}))},null,2)+'\n'});
-  const exprFile='src/js/04-syntax-expressions.js',exprText=text(exprFile),assistFile='audit/fixtures/assist/code-assist-cases.json';
-  // A CI part (AKARI_PART) runs its planned group (audit/lib/shard-plan.cjs): the behaviour, limit and mutant rules
-  // and the test map, or the rest.
+  // Shared by the groups: a record of intended behaviour changes, the assist fixtures, and the product to change.
+  const intended=cases=>({'audit/manifests/intended-behaviour-changes.json':JSON.stringify({schema:'akari-intended-behaviour-changes-v1',changes:cases.map(c=>({case:c,reason:'a check message reworded in this audit fixture'}))},null,2)+'\n'});
+  const assistFile='audit/fixtures/assist/code-assist-cases.json';
+  // The guard reads the product, not the sources it is built from: the cases that change a line change the product's
+  // script (one anchor, which must be in it once), and the head product is the next patch.
+  const productText=text(product),nextFile='Akari_'+nextPatch(version).replaceAll('.','_')+'.html';
+  const productLine=(anchor,insert)=>{assert.equal(productText.split(anchor).length,2,'one anchor in the product: '+anchor.trim());return productText.replace(anchor,()=>anchor+insert);};
+  // A function the syntax suite runs, and a no-op sum to put at its start.
+  const runFn='  function replaceUnprotectedWord(text, from, to) {\n',noOpLine='    void (1 + 1);\n';
+  // A CI part (AKARI_PART) runs its planned group (audit/lib/shard-plan.cjs): the tree and record rules; the behaviour and
+  // limit rules; the assertion and coverage rules; the mutant rules; or the worlds' lines, the test map and the record
+  // without a change.
   if(mine.has('real-tree/identity-extracted')){
   // The identity of the candidate tree, read through git and the tree's own contracts.
   const identity=await treeIdentity(repo,base,trees);
@@ -195,70 +201,105 @@ try {
   failed('language/candidate-not-base-canonical',await guard(derive({'audit/fixtures/assist/code-assist-cases.json':json('audit/fixtures/assist/code-assist-cases.json',data=>{data.cases[0].expect.first.text='存在しない書き方。';})})),'errors',/not a base canonical sentence/);
   }
   if(mine.has('behaviour/unrecorded-change')){
-  // Behaviour against the base product (AUDIT.md「前の版との振る舞いの差分」): a left turn made a right turn changes the
-  // worlds that turn left; unrecorded it fails, recorded with a reason it passes with the reason listed, and a record without a change fails.
-  const turned=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : -1);");
-  const unrecorded=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:turned})));
+  // Behaviour against the base product (AUDIT.md「前の版との振る舞いの差分」): a check message the 名人 worlds show, worded
+  // otherwise, changes those worlds; unrecorded it fails, recorded with a reason it passes with the reason listed, and a
+  // record without a change fails. The changed line is a changed line of the product that gives no mutant, and the node
+  // suites still pass on it.
+  const message='かを 書きます。れい：${part}の${messageExpression(n)}`;';
+  const reworded=replaced(product,message,message.replace('書きます','書いてね'));
+  const unrecorded=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:reworded})));
   failed('behaviour/unrecorded-change',unrecorded,'behaviourIssues',/changed, and audit\/manifests\/intended-behaviour-changes\.json does not record it/);
   const changedCases=unrecorded.behaviour.differences;assert.ok(changedCases.length>0,'the turn changes at least one world');
-  const recordedHead=derive({...release(nextPatch(version),{changeSource:true,productBytes:turned}),...intended(changedCases)});
+  const recordedHead=derive({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
   const recorded=await guard(recordedHead);
-  assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes');
+  assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes: '+JSON.stringify([recorded.errors,recorded.mutationIssues]));
   assert.ok(formatGuardReport(recorded).includes('- changed behaviour of '+changedCases[0]+': '),'the recorded change is listed for the owner');pass('behaviour/recorded-change-listed');
   // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job.
   const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
   failed('limits/worlds-never-finish',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless})),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
   }
-  if(mine.has('moves/moved-unchanged-accepted')){
-  // A statement moved to another src file keeps its text (AUDIT.md「移動だけの変更」): moved as it is it passes,
-  // moved and changed in the same change it is an audit change to record.
-  const coreFile='src/js/07-semantic-analysis-core.js',otherFile='src/js/07-semantic-analysis.js',coreText=text(coreFile);
-  const from=coreText.indexOf('  function validKeyName(key) {'),to=coreText.indexOf('\n  }\n',from)+5;assert.ok(from>0&&to>from,'the moved function');
-  const unit=coreText.slice(from,to),withUnit=extra=>({[coreFile]:coreText.slice(0,from)+coreText.slice(to),[otherFile]:text(otherFile)+extra});
-  const moved=await guard(derive({...bumped,...withUnit(unit)}));
-  assert.deepEqual([moved.status,moved.moves.moved,moved.moves.movedAndChanged],['PASS',['validKeyName: '+coreFile+' -> '+otherFile],[]],'moved as it is');pass('moves/moved-unchanged-accepted');
-  const changedMove=await guard(derive({...bumped,...withUnit(unit.replace('(key) {','(key) {\n    void key;'))}));
-  assert.deepEqual([changedMove.status,changedMove.moves.movedAndChanged,changedMove.auditChangeIssues.length],['FAIL',['validKeyName: '+coreFile+' -> '+otherFile],1],'moved and changed');
-  assert.deepEqual([changedMove.errors,changedMove.versionIssues,changedMove.releaseIssues,changedMove.behaviourIssues],[[],[],[],[]],'it fails only for the move');
-  assert.equal((await guard(derive({...bumped,...withUnit(unit.replace('(key) {','(key) {\n    void key;')),...record('moved-and-changed:validKeyName')}))).status,'PASS','a recorded move passes');pass('moves/moved-and-changed-needs-record');
+  if(mine.has('assertions/fewer-checks-needs-record')){
   // A file that checks less is an audit change to record: one assertion fewer in static-contract.
   const weakenedHead=derive({'audit/tests/static-contract.mjs':replaced('audit/tests/static-contract.mjs',"assert.ok(!publicationPathAllowed('AGENTS.md'));assert.ok(!publicationPathAllowed('audit/AGENTS.md'));","assert.ok(!publicationPathAllowed('AGENTS.md'));")});
   const weakened=await guard(weakenedHead);
   assert.equal(weakened.status,'FAIL','fewer checks without a record');assert.ok(weakened.weakened.some(w=>w.startsWith('audit/tests/static-contract.mjs: ')),JSON.stringify(weakened.weakened));
   const weakenedRecorded=await guard(derive({'audit/tests/static-contract.mjs':replaced('audit/tests/static-contract.mjs',"assert.ok(!publicationPathAllowed('AGENTS.md'));assert.ok(!publicationPathAllowed('audit/AGENTS.md'));","assert.ok(!publicationPathAllowed('AGENTS.md'));"),...record('fewer-checks:audit/tests/static-contract.mjs')}));
   assert.equal(weakenedRecorded.status,'PASS','a recorded file with fewer checks passes');pass('assertions/fewer-checks-needs-record');
-  // An extension file the product embeds whole is covered like 01-09, also when no src file changes: a no-op sum at the
-  // start of the extension host, which every product start runs, is mutated and its mutants survive.
+  // A changed line of the extension code the product embeds is mutated like any other line the suites run: a no-op sum at
+  // the start of the extension host, which every product start runs, is mutated and its mutants survive.
+  const extOpening='function createAkariExtensionHost(options) {\n';
   {
-    const extFile='extensions/foundation.js',extText=text(extFile),extOpening='function createAkariExtensionHost(options) {\n';
-    assert.ok(extText.includes(extOpening),'the anchor for the run extension line');
-    const ext=await guard(derive({...bumped,[extFile]:extText.replace(extOpening,()=>extOpening+'  void (1 + 1);\n')}));
+    const ext=await guard(derive(release(nextPatch(version),{productBytes:productLine(extOpening,'  void (1 + 1);\n')})));
     assert.equal(ext.status,'FAIL','surviving mutants on an extension line without a record');
-    assert.ok(ext.mutationIssues.some(m=>m.startsWith('a mutant survives on '+extFile)),JSON.stringify(ext.mutationIssues));
+    assert.ok(ext.mutationIssues.some(m=>m.startsWith('a mutant survives on '+nextFile+':')),JSON.stringify(ext.mutationIssues));
     pass('coverage/extension-line-mutated');
+  }
+  // Spacing alone changes no line: the same run line, indented further, changes the product and mutates nothing.
+  {
+    const spaced=await guard(derive(release(nextPatch(version),{productBytes:productText.replace(extOpening,()=>'    '+extOpening)})));
+    assert.deepEqual([spaced.status,spaced.mutation,spaced.mutationIssues],['PASS',null,[]],'spacing is no changed line: '+JSON.stringify(spaced.mutation));
+    pass('coverage/spacing-only-unmutated');
+  }
+  // A change of the sources that leaves the product as it was mutates nothing, and the guard builds nothing: the head's
+  // template holds a directive no build accepts.
+  {
+    const unbuilt={'src/akari.html':templateText+'<!-- @include  unbuildable -->\n'};
+    const same=await guard(derive({...release(nextPatch(version),{productBytes:productText}),...unbuilt}));
+    assert.deepEqual([same.status,same.mutation,same.errors],['PASS',null,[]],'the product as it was: '+JSON.stringify(same.errors));
+    pass('coverage/source-only-unmutated');
+  }
+  // Changed lines are read by their tokens (changedScriptLines): a space taken out of a string changes its line, and the
+  // lines after an added line that starts with ++ keep their numbers.
+  const lineOf=(text,anchor)=>text.slice(0,text.indexOf(anchor)).split('\n').length;
+  {
+    const spaceLine="    void (' ' + 1);\n",withSpace=productLine(runFn,spaceLine),spaceAt=lineOf(withSpace,spaceLine);
+    assert.deepEqual(changedScriptLines(withSpace,withSpace.replace(spaceLine,"    void ('' + 1);\n")),[[spaceAt,"    void ('' + 1);"]],'a space taken out of a string');
+    const counted=productLine(runFn,'++ zz;\nzz = zz + 1;\n'),at=lineOf(counted,runFn)+1;
+    assert.deepEqual(changedScriptLines(productText,counted),[[at,'++ zz;'],[at+1,'zz = zz + 1;']],'the lines after a line that starts with ++');
+    pass('coverage/spacing-in-a-string-changes-a-line');
+  }
+  // A function moved as it is to another place of the same scope changes no line but its closing brace (a line many
+  // lines read the same as, which gives no mutant); the guard passes it and mutates nothing.
+  {
+    const from=productText.indexOf('  function isConditionValue(v) {\n'),to=productText.indexOf('\n  }\n',from)+5,fn=productText.slice(from,to);
+    assert.ok(from>0&&to>from,'the moved function');
+    const parseStart='  function parseSyntax(source, context = {}) {\n',cut=productText.slice(0,from)+productText.slice(to);
+    const moved=cut.replace(parseStart,()=>fn+parseStart);
+    assert.deepEqual(changedScriptLines(productText,moved).map(([,text])=>text),['  }'],'only the closing brace is a changed line');
+    const judged=await guard(derive(release(nextPatch(version),{productBytes:moved})));
+    assert.deepEqual([judged.status,judged.mutation,judged.behaviour.differences],['PASS',null,[]],'moved as it is');
+    pass('coverage/moved-line-unmutated');
+  }
+  // A common line taken out in one place and put in another is a changed line: of two lines that read the same in the
+  // base, one moved is mutated.
+  {
+    const parseStart='  function parseSyntax(source, context = {}) {\n',twice=productLine(runFn,noOpLine).replace(parseStart,()=>parseStart+noOpLine);
+    const worldsLine="      const sprites = project.components.filter(c => c.type === 'sprite'), arg = n.arg;";
+    const movedOne=twice.replace(runFn+noOpLine,()=>runFn).replace(worldsLine,()=>'    void (1 + 1);\n'+worldsLine);
+    assert.deepEqual(changedScriptLines(twice,movedOne),[[lineOf(movedOne,worldsLine)-1,'    void (1 + 1);']],'the moved common line');
+    pass('coverage/common-line-not-moved');
   }
   }
   if(mine.has('mutants/survivor-needs-record')){
   // A changed line that runs but whose mutants no suite notices fails, unless this change records them as equivalent with a
   // reason, which the report lists for the owner: a no-op sum at the start of a function the syntax suite runs.
-  const noOp='    void (1 + 1);\n',runFn='  function replaceUnprotectedWord(text, from, to) {\n';assert.ok(exprText.includes(runFn),'the anchor for the run line');
-  const noOpChange={...bumped,[exprFile]:exprText.replace(runFn,()=>runFn+noOp)};
+  const noOpChange=release(nextPatch(version),{productBytes:productLine(runFn,noOpLine)});
   const unpinned=await guard(derive(noOpChange));
-  assert.equal(unpinned.status,'FAIL','surviving mutants without a record');assert.ok(unpinned.mutationIssues.some(m=>m.startsWith('a mutant survives on '+exprFile)),JSON.stringify(unpinned.mutationIssues));
+  assert.equal(unpinned.status,'FAIL','surviving mutants without a record');assert.ok(unpinned.mutationIssues.some(m=>m.startsWith('a mutant survives on '+nextFile+':')),JSON.stringify(unpinned.mutationIssues));
   const equivalents={'audit/manifests/mutation-equivalents.json':JSON.stringify({schema:'akari-mutation-equivalents-v1',equivalents:unpinned.mutation.survivors.map(s=>({file:s.file,source:s.source,operator:s.operator,reason:'a sum nothing reads, written for this guard case'}))},null,2)+'\n'};
   // The recorded equivalents run the head's assist fixtures as well; the first ten cases keep these runs short (the
   // guard of a real change runs them all).
   const fewAssist=extra=>({[assistFile]:json(assistFile,data=>{data.cases=[...data.cases.slice(0,10),...extra];})});
   const pinnedHead=derive({...noOpChange,...equivalents,...fewAssist([])}),pinned=await guard(pinnedHead);
   assert.deepEqual([pinned.status,pinned.mutationIssues],['PASS',[]],'recorded equivalents pass');
-  assert.ok(formatGuardReport(pinned).includes('- an equivalent mutant in '+exprFile),'the recorded equivalents are listed for the owner');pass('mutants/survivor-needs-record');
+  assert.ok(formatGuardReport(pinned).includes('- an equivalent mutant in '+nextFile),'the recorded equivalents are listed for the owner');pass('mutants/survivor-needs-record');
   // A survivor recorded as equivalent that an assist fixture case tells apart fails (audit/lib/mutation.mjs
   // assistDifferences, mutationIssues): a line at the start of parseSyntax that answers one input only, with the index
   // that picks its diagnostic code mutated. The fixture case that gives that input sees the other code and the cases
   // before it see nothing; the survivor so told apart fails its record and is not listed as an equivalent. The product
   // script is probed directly, so no guard run and no suite run is added to this part.
   {
-    const html=text(product),script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
+    const html=productText,script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
     const parseStart='  function parseSyntax(source, context = {}) {\n',probe='あかりの変異のためし',probeLine="    if (source === '"+probe+"') return { ast: null, syntaxDiagnostics: [{ code: ['P900', 'P901'][0] }] };\n";
     assert.equal(script.split(parseStart).length,2,'one parseSyntax in the product script');
     const probed=script.replace(parseStart,()=>parseStart+probeLine),at=probed.indexOf("['P900', 'P901'][0]")+"['P900', 'P901'][".length;
@@ -266,10 +307,10 @@ try {
     const fixture=JSON.parse(text(assistFile)),probeCase={...fixture.cases[0],id:'ASSIST-MUTANT-PROBE',input:{source:probe,line:1},expect:{}};
     const told=await assistDifferences(probed,[{index:0,start:at,end:at+1,replacement:'(0+1)'}],JSON.stringify({...fixture,cases:[...fixture.cases.slice(0,10),probeCase]}));
     assert.equal(told.get(0),'ASSIST-MUTANT-PROBE','the probe case tells the index apart, and no case before it does');
-    const line=exprText.slice(0,exprText.indexOf(parseStart)).split('\n').length+1,source=probeLine.trim();
-    const {issues,used}=mutationIssues([{file:exprFile,line,operator:'n->n+1',source,toldApart:told.get(0)}],null,
-      {schema:equivalentsSchema,equivalents:[{file:exprFile,source,operator:'n->n+1',reason:'claimed equivalent for this guard case'}]});
-    assert.ok(issues.some(m=>m.startsWith(equivalentsFile+' calls the mutant on '+exprFile+':'+line+' (n->n+1) equivalent, but the assist fixture case ASSIST-MUTANT-PROBE tells it apart')),JSON.stringify(issues));
+    const line=productText.slice(0,productText.indexOf(parseStart)).split('\n').length+1,source=probeLine.trim();
+    const {issues,used}=mutationIssues([{file:nextFile,line,operator:'n->n+1',source,toldApart:told.get(0)}],null,
+      {schema:equivalentsSchema,equivalents:[{file:nextFile,source,operator:'n->n+1',reason:'claimed equivalent for this guard case'}]});
+    assert.ok(issues.some(m=>m.startsWith(equivalentsFile+' calls the mutant on '+nextFile+':'+line+' (n->n+1) equivalent, but the assist fixture case ASSIST-MUTANT-PROBE tells it apart')),JSON.stringify(issues));
     assert.deepEqual(used,[],'a told-apart entry is not listed as an equivalent');
     pass('mutants/equivalent-told-apart-by-assist');
   }
@@ -301,10 +342,15 @@ try {
       const sizes=sharesOfPlan.map(share=>share.filter(j=>profile(j)===kind).length);
       assert.ok(Math.max(...sizes)-Math.min(...sizes)<=1,'balanced profile '+kind);
     }
-    const empty=await changeGuard({repo,base,head:base,workDir:trees,part:'main'});
-    const noWork=(partsResult)=>mergeGuardParts({repo,base,head:base,parts:[empty],count,jobResults:{plan:'success',parts:partsResult}});
-    assert.equal(noWork('skipped').status,'PASS');
-    assert.equal(noWork('failure').status,'FAIL');
+    // With no mutant planned, the part none runs and finds no mutant either: the merge needs it once, and its job done.
+    const empty=await changeGuard({repo,base,head:base,workDir:trees,part:'main'}),none=await guardEmptyPart({repo,base,head:base});
+    const noWork=(parts,partsResult)=>mergeGuardParts({repo,base,head:base,parts,count,jobResults:{plan:'success',parts:partsResult}});
+    assert.deepEqual([none.part,none.mutants,none.errors],['none',0,[]],'the part none finds no mutant');
+    assert.equal(noWork([empty,none],'success').status,'PASS');
+    assert.ok(noWork([empty],'success').errors.some(m=>/mutant part none is reported 0 times/.test(m)),'the part none is missing');
+    assert.ok(noWork([empty,none],'skipped').errors.some(m=>/guard job results disagree/.test(m)),'a skipped part job');
+    assert.equal(noWork([empty,none],'failure').status,'FAIL');
+    pass('mutants/parts-none-without-mutants');
     const main=await changeGuard({repo,base,head:pinnedHead,workDir:trees,part:'main'});
     assert.deepEqual([main.status,main.mutation.mutants,whole.status],['PART',whole.mutation.mutants,'PASS'],'the main part plans the mutants it leaves to the parts');
     const shares=[];for(let index=1;index<=count;index++)shares.push(await guardMutantPart({repo,base,head:pinnedHead,index,count}));
@@ -326,12 +372,18 @@ try {
     refused('other-head',[main,...changed(()=>({head:base}))],/m1 guards head/);
     refused('failed-part',[main,...changed(()=>({errors:['the coverage run did not finish']}))],/m1: the coverage run did not finish/);
     refused('no-main',shares,/the main part is reported 0 times/);
+    // The part none refuses a plan that has mutants, and the merge of a plan with mutants refuses it.
+    const busy=await guardEmptyPart({repo,base,head:pinnedHead});
+    assert.ok(busy.errors.some(m=>/runs only for a plan without one/.test(m)),JSON.stringify(busy.errors));
+    refused('none-with-mutants',[main,...shares,busy],/an undeclared part none is reported/);
   }
+  }
+  if(mine.has('mutants/worlds-judge-their-lines')){
   // A changed line only the worlds run is judged by the worlds' record: an early return they notice whenever it is taken.
   {
-    const worldsFile='src/js/07-semantic-analysis-core.js',worldsText=text(worldsFile),worldsLine="      const sprites = project.components.filter(c => c.type === 'sprite'), arg = n.arg;";
-    assert.ok(worldsText.includes(worldsLine),'the anchor for the line only the worlds run');
-    const judged=await guard(derive({...bumped,[worldsFile]:worldsText.replace(worldsLine,()=>'    if (true !== true) return null;\n'+worldsLine)}));
+    const worldsLine="      const sprites = project.components.filter(c => c.type === 'sprite'), arg = n.arg;";
+    assert.equal(productText.split(worldsLine).length,2,'the anchor for the line only the worlds run');
+    const judged=await guard(derive(release(nextPatch(version),{productBytes:productText.replace(worldsLine,()=>'    if (true !== true) return null;\n'+worldsLine)})));
     assert.ok(judged.mutation?.mutants>=4,'the early return is mutated: '+JSON.stringify(judged.mutation));
     assert.deepEqual([judged.status,judged.mutationIssues,judged.mutation.survivors],['PASS',[],[]],'the worlds kill every mutant of the early return');
     pass('mutants/worlds-judge-their-lines');
