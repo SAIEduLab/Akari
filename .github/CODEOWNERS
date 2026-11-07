@@ -7,7 +7,6 @@
 /audit/tests/change-guard.mjs @SAIEduLab
 /audit/tests/change-guard-negative.mjs @SAIEduLab
 /audit/lib/behaviour-snapshot.mjs @SAIEduLab
-/audit/lib/source-moves.mjs @SAIEduLab
 /audit/lib/assertion-counts.mjs @SAIEduLab
 /audit/lib/node-coverage.mjs @SAIEduLab
 /audit/lib/mutation.mjs @SAIEduLab

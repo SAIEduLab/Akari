@@ -149,7 +149,7 @@ const guardShas={AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKAR
 // The change guard checks out the head and, run for pull_request_target, puts back the base's guard: its code (the
 // modules audit/tests/change-guard.mjs loads, under these paths) judges the change, and the change's own tests, fixtures and
 // records are the data it judges. Run for pull_request (only for a change to the guard workflow), the head's own guard runs.
-export const guardCodePaths=['audit/lib','audit/tests','audit/browser/cases/audit-lib.cjs','src/build.mjs'];
+export const guardCodePaths=['audit/lib','audit/tests','audit/browser/cases/audit-lib.cjs'];
 const sameRepositoryPr="${{ github.event.pull_request.head.repo.full_name == github.repository }}";
 const baseGuard={run:'git checkout "$AKARI_BASE_SHA" -- '+guardCodePaths.join(' '),if:"${{ github.event_name == 'pull_request_target' }}",env:{AKARI_BASE_SHA:guardShas.AKARI_BASE_SHA}};
 const lanePlan=group=>({if:sameRepository,needs:[],fullHistory:true,outputs:{lanes:'${{ steps.plan.outputs.lanes }}'},entries:[

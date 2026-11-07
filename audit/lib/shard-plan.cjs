@@ -26,9 +26,11 @@ const splits={
   // Its two halves took 315 s and 270 s locally (69 cases, 685b2f9) and up to 525 s each in CI; in run 41864291413 the
   // first passed the 600 s child limit and the second took 542 s, about 2.0 times its local time. Four parts, one for each
   // group the test runs together (gated by its first case), measured locally: the tree, record, version and language
-  // rules (90 s); behaviour and limits (60 s); moves, assertions and the extension line (224 s); mutants, the test map and
-  // the record without a change (210 s). At 2.0 times the largest takes about 450 s, inside the child limit.
-  'change-guard-negative':{parts:indexed(4),assign:id=>/^(?:moves|assertions|coverage)\//.test(id)?'3/4':/^(?:mutants|test-map)\//.test(id)||id==='behaviour/record-without-change'?'4/4':/^(?:behaviour|limits)\//.test(id)?'2/4':'1/4'},
+  // rules (90 s); behaviour and limits (60 s); assertions and the extension lines (about 165 s: 224 s with the two move
+  // cases it had, which on a second machine took 414 s with them and 302 s without); mutants, the test map and the record
+  // without a change (about 230 s: 210 s, and on that machine 433 s before the guard read the products and 470 s after).
+  // At 2.0 times the largest takes about 460 s, inside the child limit.
+  'change-guard-negative':{parts:indexed(4),assign:id=>/^(?:assertions|coverage)\//.test(id)?'3/4':/^(?:mutants|test-map)\//.test(id)||id==='behaviour/record-without-change'?'4/4':/^(?:behaviour|limits)\//.test(id)?'2/4':'1/4'},
   // 347-574 s (runs 41424226627 and 41424221208) over 9 viewport/zoom contexts of about 55-78 s (runs 41420498555 and
   // 41420493498, whose 598 s reached the 600 s child limit); two parts of five and four contexts (about 319 s and 255 s
   // at the slower run).

@@ -47,13 +47,25 @@ export function planLanes(lines,guardCopies=1){
 
 export function planForCommits(repo,base,head){
   const git=args=>cp.execFileSync('git',['-C',repo,...args],{encoding:'utf8',maxBuffer:128*1024*1024});
-  const range=base+'...'+head;
-  const diff=git(['diff','--no-color','--no-ext-diff','--no-renames','-U0',range,'--','src/js/0[1-9]-*.js','extensions/*.js']);
-  const rows=diff.split('\n'),removed=new Set(rows.filter(s=>s.startsWith('-')&&!s.startsWith('--- ')).map(s=>s.slice(1).trim()));
-  const added=rows.filter(s=>s.startsWith('+')&&!s.startsWith('+++ ')).map(s=>s.slice(1).trim());
+  const range=base+'...'+head,mergeBase=git(['merge-base',base,head]).trim();
+  // The changed lines of the product's script apart from spacing, as the change guard reads them
+  // (audit/lib/change-guard.mjs changedScriptLines reads them by their tokens; this estimate needs no parser).
+  const product=commit=>git(['rev-parse','--verify','--quiet',commit+':'+JSON.parse(git(['show',commit+':audit/public-files.json'])).productFile]).trim();
+  const before=product(mergeBase),after=product(head);
+  const diff=before===after?'':git(['diff','--no-color','--no-ext-diff','--ignore-all-space','-U0',before,after]);
+  const html=before===after?'':git(['cat-file','-p',after]),lineAt=offset=>html.slice(0,offset).split('\n').length;
+  const first=lineAt(html.indexOf('<script>')+'<script>'.length),last=lineAt(html.lastIndexOf('</script>'));
+  const removed=new Set(),added=[];
+  let at=0,inHunk=false;
+  for(const row of diff.split('\n')){
+    const hunk=row.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);if(hunk){at=Number(hunk[1]);inHunk=true;continue;}
+    if(!inHunk)continue;
+    if(row.startsWith('-'))removed.add(row.slice(1).trim());
+    else if(row.startsWith('+')){const here=at++;if(here>=first&&here<=last)added.push(row.slice(1).trim());}
+  }
   const code=added.filter(s=>s&&!/^(?:\/\/|\/\*|\*)/.test(s)&&!removed.has(s));
   const copies=git(['diff','--name-only',range,'--','.github/workflows/akari-change-guard.yml']).trim()?2:1;
-  return planLanes(Math.max(code.length,diff?1:0),copies);
+  return planLanes(Math.max(code.length,added.length?1:0),copies);
 }
 
 export function laneUnits(group,lane){

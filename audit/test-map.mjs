@@ -11,7 +11,7 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import inspector from 'node:inspector/promises';
 import {fileURLToPath} from 'node:url';
-import {productScript} from './lib/source-boundaries.mjs';
+import {productScript} from './lib/product-script.mjs';
 import {suiteExpression} from './lib/product-test-host.mjs';
 import {nodeProductSuites} from './lib/gate-case-contract.mjs';
 import {snapshotCases, caseBehaviour} from './lib/behaviour-snapshot.mjs';

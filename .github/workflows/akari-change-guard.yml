@@ -38,7 +38,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request_target' }}
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
+        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs
       - name: Check the change and assign mutation workers from the shared pool
         id: plan
         env:
@@ -80,7 +80,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request_target' }}
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
+        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs
       - name: Run the assigned share of the mutation plan
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -122,7 +122,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request_target' }}
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs src/build.mjs
+        run: git checkout "$AKARI_BASE_SHA" -- audit/lib audit/tests audit/browser/cases/audit-lib.cjs
       - name: Merge the parts and list what the owner reads before the merge
         env:
           AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}

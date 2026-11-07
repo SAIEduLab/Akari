@@ -45,7 +45,7 @@ export const changeGuardCaseIds=Object.freeze([
   'release/two-manifests','release/wrong-name','release/missing',
   'identity/head-evaluation-failure','identity/no-merge-base',
   'language/reader-table-changed','language/verbs-changed','language/reader-change-recorded','language/candidate-not-base-canonical',
-  'behaviour/unrecorded-change','behaviour/recorded-change-listed','moves/moved-unchanged-accepted','moves/moved-and-changed-needs-record','assertions/fewer-checks-needs-record','coverage/extension-line-mutated','test-map/names-the-suites','mutants/survivor-needs-record','mutants/equivalent-told-apart-by-assist','mutants/record-without-survivor','mutants/worlds-judge-their-lines','behaviour/record-without-change','limits/worlds-never-finish',
+  'behaviour/unrecorded-change','behaviour/recorded-change-listed','assertions/fewer-checks-needs-record','coverage/extension-line-mutated','coverage/spacing-only-unmutated','coverage/source-only-unmutated','coverage/spacing-in-a-string-changes-a-line','coverage/moved-line-unmutated','coverage/common-line-not-moved','test-map/names-the-suites','mutants/survivor-needs-record','mutants/equivalent-told-apart-by-assist','mutants/record-without-survivor','mutants/worlds-judge-their-lines','behaviour/record-without-change','limits/worlds-never-finish',
   ...['merged-as-one-run','missing-part','repeated-part','undeclared-part','other-plan','other-share','other-head','failed-part','no-main'].map(n=>'mutants/parts-'+n)]);
 
 // Past work-process names that audit callables must not use (release-policy-negative).
