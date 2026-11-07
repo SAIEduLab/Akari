@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,guardMutantPart,mergeGuardParts,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
+import {changeGuard,guardMutantPart,guardEmptyPart,mergeGuardParts,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
 import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract} from '../lib/gate-contract.mjs';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
 import {currentPart,partItems,changeGuardParts} from '../lib/shard-plan.cjs';
@@ -341,10 +341,15 @@ try {
       const sizes=sharesOfPlan.map(share=>share.filter(j=>profile(j)===kind).length);
       assert.ok(Math.max(...sizes)-Math.min(...sizes)<=1,'balanced profile '+kind);
     }
-    const empty=await changeGuard({repo,base,head:base,workDir:trees,part:'main'});
-    const noWork=(partsResult)=>mergeGuardParts({repo,base,head:base,parts:[empty],count,jobResults:{plan:'success',parts:partsResult}});
-    assert.equal(noWork('skipped').status,'PASS');
-    assert.equal(noWork('failure').status,'FAIL');
+    // With no mutant planned, the part none runs and finds no mutant either: the merge needs it once, and its job done.
+    const empty=await changeGuard({repo,base,head:base,workDir:trees,part:'main'}),none=await guardEmptyPart({repo,base,head:base});
+    const noWork=(parts,partsResult)=>mergeGuardParts({repo,base,head:base,parts,count,jobResults:{plan:'success',parts:partsResult}});
+    assert.deepEqual([none.part,none.mutants,none.errors],['none',0,[]],'the part none finds no mutant');
+    assert.equal(noWork([empty,none],'success').status,'PASS');
+    assert.ok(noWork([empty],'success').errors.some(m=>/mutant part none is reported 0 times/.test(m)),'the part none is missing');
+    assert.ok(noWork([empty,none],'skipped').errors.some(m=>/guard job results disagree/.test(m)),'a skipped part job');
+    assert.equal(noWork([empty,none],'failure').status,'FAIL');
+    pass('mutants/parts-none-without-mutants');
     const main=await changeGuard({repo,base,head:pinnedHead,workDir:trees,part:'main'});
     assert.deepEqual([main.status,main.mutation.mutants,whole.status],['PART',whole.mutation.mutants,'PASS'],'the main part plans the mutants it leaves to the parts');
     const shares=[];for(let index=1;index<=count;index++)shares.push(await guardMutantPart({repo,base,head:pinnedHead,index,count}));
@@ -366,6 +371,10 @@ try {
     refused('other-head',[main,...changed(()=>({head:base}))],/m1 guards head/);
     refused('failed-part',[main,...changed(()=>({errors:['the coverage run did not finish']}))],/m1: the coverage run did not finish/);
     refused('no-main',shares,/the main part is reported 0 times/);
+    // The part none refuses a plan that has mutants, and the merge of a plan with mutants refuses it.
+    const busy=await guardEmptyPart({repo,base,head:pinnedHead});
+    assert.ok(busy.errors.some(m=>/runs only for a plan without one/.test(m)),JSON.stringify(busy.errors));
+    refused('none-with-mutants',[main,...shares,busy],/an undeclared part none is reported/);
   }
   // A changed line only the worlds run is judged by the worlds' record: an early return they notice whenever it is taken.
   {

@@ -54,7 +54,7 @@ jobs:
           retention-days: 3
   change-guard-part:
     needs: [guard-plan]
-    if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository && needs.guard-plan.result == 'success' && needs.guard-plan.outputs.shards != '[]' }}
+    if: ${{ always() && github.event.pull_request.head.repo.full_name == github.repository && needs.guard-plan.result == 'success' }}
     runs-on: windows-latest
     timeout-minutes: 360
     strategy:

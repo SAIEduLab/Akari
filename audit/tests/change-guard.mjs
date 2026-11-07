@@ -1,12 +1,13 @@
 // Pull-request entry: node audit/tests/change-guard.mjs <baseSha> <headSha> <report.json> runs the whole guard. In CI the
 // guard runs in parts side by side (audit/lib/shard-plan.cjs changeGuardParts):
-//   --part <main|m1..> <baseSha> <headSha> <part.json>   the main part (every check but the mutants) or one share of the mutants
+//   --part <main|m1..|none> <baseSha> <headSha> <part.json>   the main part (every check but the mutants), one share of the
+//                                                          mutants, or, with no mutant planned, the part that finds none
 //   --merge <parts dir> <baseSha> <headSha> <report.json> the verdict of the parts, the same as the whole guard's
 // What fails nothing but the owner reads before the merge is listed in the report (formatGuardReport).
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {changeGuard,guardMutantPart,mergeGuardParts,formatGuardReport} from '../lib/change-guard.mjs';
+import {changeGuard,guardMutantPart,guardEmptyPart,emptyGuardPart,mergeGuardParts,formatGuardReport} from '../lib/change-guard.mjs';
 import {planForCommits} from '../lib/ci-lanes.mjs';
 import {changeGuardParts} from '../lib/shard-plan.cjs';
 const mode=process.argv[2]?.startsWith('--')?process.argv[2]:null,[name,base,head,output]=mode?process.argv.slice(3):[null,...process.argv.slice(2)];
@@ -17,11 +18,11 @@ const repo=path.resolve(import.meta.dirname,'../..'),attempt=Number(process.env.
 const count=mode&&process.env.GITHUB_ACTIONS==='true'?Math.max(1,planForCommits(repo,base,head).guard):changeGuardParts.length-1;
 const write=report=>{fs.mkdirSync(path.dirname(path.resolve(output)),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');};
 if(mode==='--part'){
-  assert.ok(changeGuardParts.includes(name),'the change guard has no part '+name+' (parts: '+changeGuardParts.join(', ')+')');
-  const report=name==='main'?await changeGuard({repo,base,head,part:'main'}):await guardMutantPart({repo,base,head,index:Number(name.slice(1)),count});
+  assert.ok(changeGuardParts.includes(name)||name===emptyGuardPart,'the change guard has no part '+name+' (parts: '+[...changeGuardParts,emptyGuardPart].join(', ')+')');
+  const report=name==='main'?await changeGuard({repo,base,head,part:'main'}):name===emptyGuardPart?await guardEmptyPart({repo,base,head}):await guardMutantPart({repo,base,head,index:Number(name.slice(1)),count});
   write({...report,attempt});
   if(name==='main'&&process.env.GITHUB_OUTPUT){
-    const shards=changeGuardParts.slice(1,1+Math.min(count,report.mutation?.mutants??0));
+    const planned=changeGuardParts.slice(1,1+Math.min(count,report.mutation?.mutants??0)),shards=planned.length?planned:[emptyGuardPart];
     fs.appendFileSync(process.env.GITHUB_OUTPUT,'shards='+JSON.stringify(shards)+'\n');
   }
   console.log('Change guard part '+name+': '+(report.errors.length?report.errors.join('; '):name==='main'?'checked, '+(report.mutation?.mutants??0)+' mutants planned':report.ran.length+' of '+report.mutants+' mutants run, '+report.survivors.length+' survive'));

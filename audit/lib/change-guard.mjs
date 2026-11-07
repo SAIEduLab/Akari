@@ -362,7 +362,22 @@ export async function guardMutantPart({repo,base,head,index,count,limitMs=guardL
   return report;
 }
 
-// The verdict of the parts: the main part and the mutant parts m1..m<count>, each reported once. They guard the same base
+// The part that runs when the plan has no mutant: it makes the plan again and finds no mutant in it, so a change the
+// main part plans no mutant for is still checked by a second job, and no job of the guard is left out.
+export const emptyGuardPart='none';
+export async function guardEmptyPart({repo,base,head,limitMs=guardLimitMs}){
+  const report={schema:guardPartSchema,part:emptyGuardPart,index:0,count:0,base,head,mergeBase:null,plan:null,mutants:0,ran:[],survivors:[],errors:[]};
+  try{
+    const {mergeBase,head:headCommit}=Object.assign(report,resolveCommits(repo,base,head));
+    const plan=productAt(repo,mergeBase).oid!==productAt(repo,headCommit).oid?await changedLineMutants(repo,mergeBase,headCommit,limitMs):null;
+    if(plan){report.plan=plan.digest;report.mutants=plan.jobs.length;}
+    if(report.mutants)report.errors.push('the plan has '+report.mutants+' mutants; the part '+emptyGuardPart+' runs only for a plan without one');
+  }catch(error){report.errors.push(error.message);}
+  return report;
+}
+
+// The verdict of the parts: the main part and the mutant parts m1..m<count>, each reported once (with no mutant planned,
+// the part none, once). They guard the same base
 // and head, a part ran exactly its share of the main part's plan, and the survivors of all parts are judged as one run of
 // every mutant would judge them. Anything else is an error of the merged report.
 export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
@@ -376,10 +391,11 @@ export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
     for(const field of ['base','head','mergeBase'])if(main[field]!==commits[field])fail('the main part guards '+field+' '+main[field]+', not '+commits[field]);
     const plan=main.mutation?.plan??null,mutants=main.mutation?.mutants??0,survivors=[];
     if(!Number.isSafeInteger(mutants)||mutants<0||(main.mutation!==null&&(!plan||main.status!=='PART')))throw new Error('invalid main mutation plan');
-    if(jobResults && (jobResults.plan!=='success'||jobResults.parts!==(mutants?'success':'skipped')))fail('guard job results disagree with the plan: '+JSON.stringify(jobResults));
-    // Actions starts only nonempty workers. Local runs may also supply all workers, including empty ones.
+    if(jobResults && (jobResults.plan!=='success'||jobResults.parts!=='success'))fail('guard job results disagree with the plan: '+JSON.stringify(jobResults));
+    // Actions starts only nonempty workers, or the part none when no mutant is planned. Local runs may also supply all
+    // workers, including empty ones.
     const allNames=Array.from({length:count},(_,i)=>'m'+(i+1));
-    const names=!jobResults&&parts.length===1+count?allNames:allNames.slice(0,mutants);
+    const names=!mutants?[emptyGuardPart]:!jobResults&&parts.length===1+count?allNames:allNames.slice(0,mutants);
     const seen=parts.filter(p=>p!==main).map(p=>p?.part);
     for(const name of names)if(seen.filter(n=>n===name).length!==1)fail('mutant part '+name+' is reported '+seen.filter(n=>n===name).length+' times');
     for(const name of seen)if(!names.includes(name))fail('an undeclared part '+name+' is reported');
@@ -388,9 +404,9 @@ export function mergeGuardParts({repo,base,head,parts,count,jobResults}){
       if(part.schema!==guardPartSchema||!Array.isArray(part.errors)||!Array.isArray(part.ran)||!Array.isArray(part.survivors)){fail(part.part+' is not a report of a mutant part');continue;}
       for(const message of part.errors)fail(part.part+': '+message);
       for(const field of ['base','head','mergeBase'])if(part[field]!==commits[field])fail(part.part+' guards '+field+' '+part[field]+', not '+commits[field]);
-      if(part.count!==count||part.part!=='m'+part.index)fail(part.part+' is part '+part.index+' of '+part.count+', not of '+count);
+      if(part.part!==emptyGuardPart&&(part.count!==count||part.part!=='m'+part.index))fail(part.part+' is part '+part.index+' of '+part.count+', not of '+count);
       if(part.plan!==plan||part.mutants!==mutants)fail(part.part+' ran a share of another plan of mutants than the main part');
-      const share=Array.from({length:mutants},(_,i)=>i).filter(i=>i%count===part.index-1);
+      const share=part.part===emptyGuardPart?[]:Array.from({length:mutants},(_,i)=>i).filter(i=>i%count===part.index-1);
       if(JSON.stringify(part.ran)!==JSON.stringify(share))fail(part.part+' ran mutants '+JSON.stringify(part.ran)+', not its share '+JSON.stringify(share));
       survivors.push(...part.survivors);
     }
