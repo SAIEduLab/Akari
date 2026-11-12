@@ -1,0 +1,126 @@
+name: Akari fixed acceptance
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: akari-acceptance-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+env:
+  AKARI_REQUESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+jobs:
+  lane-plan:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: windows-latest
+    timeout-minutes: 5
+    outputs:
+      lanes: ${{ steps.plan.outputs.lanes }}
+      browser: ${{ steps.plan.outputs.browser }}
+      playwright: ${{ steps.plan.outputs.playwright }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.2'
+      - id: plan
+        run: node audit/lib/ci-lanes.mjs plan acceptance
+  acceptance-lane:
+    needs: [lane-plan]
+    if: ${{ always() && needs.lane-plan.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.lane-plan.outputs.lanes) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Install the newest Stable browser in runner temporary storage
+        run: |
+          cp -r audit/deps/full "$RUNNER_TEMP/audit-deps"
+          npm ci --prefix "$RUNNER_TEMP/audit-deps" --no-audit --ignore-scripts --no-fund
+          npm install --prefix "$RUNNER_TEMP/playwright-deps" --no-package-lock --no-audit --ignore-scripts --no-fund "playwright@${{ needs.lane-plan.outputs.playwright }}"
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+["audit-deps","playwright-deps"].map(d=>require("path").join(process.env.RUNNER_TEMP,d,"node_modules")).join(require("path").delimiter)+"\n")'
+          python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser" "${{ needs.lane-plan.outputs.browser }}"
+      - run: node audit/run-ci-lane.mjs acceptance "${{ matrix.shard }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: akari-acceptance-lane-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/ci-lane/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+  child-ux-aggregate:
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    needs: [lane-plan, acceptance-lane]
+    runs-on: windows-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.2'
+      - name: Install the audit packages in runner temporary storage
+        run: |
+          cp -r audit/deps/browser "$RUNNER_TEMP/audit-deps"
+          npm ci --prefix "$RUNNER_TEMP/audit-deps" --no-audit --ignore-scripts --no-fund
+          npm install --prefix "$RUNNER_TEMP/playwright-deps" --no-package-lock --no-audit --ignore-scripts --no-fund "playwright@${{ needs.lane-plan.outputs.playwright }}"
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+["audit-deps","playwright-deps"].map(d=>require("path").join(process.env.RUNNER_TEMP,d,"node_modules")).join(require("path").delimiter)+"\n")'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: akari-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/child-ux/downloaded
+      - run: node audit/lib/ci-lanes.mjs unpack acceptance audit-evidence/child-ux/downloaded
+      - name: Preserve prior attempts and their original conclusions
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json
+      - name: Merge the composition shards and require complete current-attempt evidence and successful required jobs
+        if: always()
+        env:
+          AKARI_CHILD_UX_NEEDS: ${{ toJSON(needs) }}
+        run: node audit/tests/child-ux.mjs aggregate audit-evidence/child-ux/downloaded audit-evidence/child-ux/child-ux-aggregate.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: akari-child-ux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            audit-evidence/child-ux/*.json
+            audit-evidence/acceptance/execution.json
+            audit-evidence/acceptance/aggregate.json
+            audit-evidence/acceptance/step-38.log
+            audit-evidence/acceptance/child-ux-bundle.json
+            audit-evidence/acceptance/shards/
+          if-no-files-found: error
+          retention-days: 3

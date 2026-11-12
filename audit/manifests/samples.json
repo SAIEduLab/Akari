@@ -1,0 +1,76 @@
+{
+  "schema": "akari-samples-contract-v1",
+  "feature": {
+    "id": "editable-samples",
+    "count": 6,
+    "ids": [
+      "dance",
+      "flower",
+      "game",
+      "maze",
+      "music",
+      "story"
+    ],
+    "names": [
+      "たくどんとだんごのダンス",
+      "くるくる花もよう",
+      "星をつかまえよう",
+      "道をつくって めいろたんけん",
+      "おひさまの 曲づくり",
+      "ふたりの ふしぎな おさんぽ"
+    ],
+    "openRequiresConfirmation": "unsaved-only",
+    "picker": "native-dialog",
+    "cardLoadsDirectly": true,
+    "selectionOnlyPreservesWork": true,
+    "confirmationButtons": [
+      "ほぞんせずに開く",
+      "やめる"
+    ],
+    "cancelPreservesPendingEdits": true,
+    "displayPreferencesPreserved": true,
+    "originalDataIsolated": true,
+    "offline": true,
+    "editOperations": [
+      "parameter",
+      "replace",
+      "reorder",
+      "add",
+      "delete"
+    ]
+  },
+  "testIds": [
+    "SAMPLES-CATALOG",
+    "SAMPLES-RUNTIME",
+    "SAMPLES-CHOICE-CONFIRM",
+    "SAMPLES-CANCEL-PENDING",
+    "SAMPLES-RESET-ISOLATION",
+    "SAMPLES-BLOCK-EDIT",
+    "SAMPLES-BLOCK-FACE",
+    "SAMPLES-SAVE-OFFLINE",
+    "SAMPLES-LOCKS",
+    "SAMPLES-RESPONSIVE-PICKER"
+  ],
+  "classes": {
+    "GA-STATIC": [
+      "SAMPLES-CATALOG"
+    ],
+    "GA-EXEC": [
+      "SAMPLES-RUNTIME",
+      "SAMPLES-CHOICE-CONFIRM",
+      "SAMPLES-CANCEL-PENDING",
+      "SAMPLES-RESET-ISOLATION",
+      "SAMPLES-BLOCK-EDIT",
+      "SAMPLES-BLOCK-FACE",
+      "SAMPLES-SAVE-OFFLINE",
+      "SAMPLES-LOCKS",
+      "SAMPLES-RESPONSIVE-PICKER"
+    ],
+    "SEMANTIC": [
+      "学習課題と作品の対応",
+      "既存保証を維持するfixture変更"
+    ]
+  },
+  "verifier": "audit/lib/samples-contract.mjs",
+  "runner": "audit/tests/samples.mjs"
+}

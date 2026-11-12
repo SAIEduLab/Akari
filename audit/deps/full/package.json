@@ -1,0 +1,16 @@
+{
+  "name": "akari-audit-tools-full",
+  "description": "The audit tools a full audit job installs (Playwright is installed apart, at the release the run plans).",
+  "dependencies": {
+    "@babel/parser": "7.28.4",
+    "eslint": "10.13.0",
+    "eslint-plugin-sonarjs": "4.2.2",
+    "eslint-plugin-unicorn": "79.0.0",
+    "globals": "17.14.0",
+    "jsdom": "26.1.0",
+    "mdast-util-from-markdown": "2.0.2",
+    "micromark": "4.0.3",
+    "parse5": "7.3.0",
+    "typescript": "6.0.3"
+  }
+}

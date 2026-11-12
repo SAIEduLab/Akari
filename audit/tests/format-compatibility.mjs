@@ -1,0 +1,320 @@
+import {chooseView} from '../browser/cases/view-toggle.cjs';
+import { currentProductFile } from "./../lib/product-path.cjs";
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
+import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
+import {formatCompatibilityIds,verifyFormatCompatibility,checkFormatValidatorNegatives} from '../lib/format-compatibility-contract.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+
+const require=createRequire(import.meta.url);
+const {loadApi}=require('../browser/cases/audit-lib.cjs');
+const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
+const {answerProductConfirms,confirmSave}=require('../lib/product-dialogs.cjs');
+const [browserPath,output]=process.argv.slice(2);
+assert.ok(output && !fs.existsSync(output),'fresh format evidence path required');
+fs.mkdirSync(path.dirname(output),{recursive:true});
+checkFormatValidatorNegatives();
+const product=currentProductFile(),before=snapshot(product),source=fs.readFileSync(product,'utf8');
+const producerPattern=/(const PRODUCT_RELEASE\s*=\s*['"])([^'"]+)(['"])/g;
+const found=[...source.matchAll(producerPattern)];
+assert.equal(found.length,1,'one product release declaration required');
+const currentRelease=found[0][2],priorRelease=currentRelease==='1.0.0'?'0.9.9':'1.0.0';
+assert.notEqual(currentRelease,priorRelease);
+const priorSource=source.replace(producerPattern,(_all,a,_value,b)=>a+priorRelease+b);
+assert.notEqual(priorSource,source,'prior producer fixture must be a different product build');
+const api=loadApi(source),priorApi=loadApi(priorSource),plain=x=>JSON.parse(JSON.stringify(x));
+// The contract numbers are the release record's (features.json), not copies in this test.
+const contracts=JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT;
+// Incompatible contract values: the previous number, the current number as text, and null.
+const incompatible=current=>[current-1,String(current),null];
+const autosaveDatabase='akari-workspace-f'+contracts.projectFormatVersion;
+assert.deepEqual(plain(api.EXECUTABLE_CONTRACT),contracts);
+assert.equal(api.PRODUCT_RELEASE,currentRelease);
+assert.equal(priorApi.PRODUCT_RELEASE,priorRelease);
+const fixture=()=>{
+  const p=makeRegressionProject(priorApi);p.name='形式互換の作品';
+  // Keep this fixture asset-free so Node-side file parsing tests the data contract,
+  // while media decoding stays in its dedicated browser coverage.
+  p.components=p.components.filter(component=>component.id!=='sprite-1');
+  p.scripts=[
+    {targetId:'stage',event:'start',source:'※ 先頭  \n「形式互換」と言う ※ 末尾  \n'},
+    {targetId:'button-1',event:'click',source:'表示（二倍（3））を実行する'},
+  ];
+  p.actions=[{id:'action-format',ownerId:'stage',name:'表示',args:['値'],source:'値を言う'}];
+  p.functions=[{id:'function-format',ownerId:'stage',name:'二倍',args:['値'],source:'値 * 2を答えとして返す'}];
+  return p;
+};
+const priorProject=fixture(),savedPrior=priorApi.serializeProject(priorProject);
+const unfinishedSources=[['LF','\n'],['CRLF','\r\n'],['CR','\r'],['LS','\u2028'],['PS','\u2029']].map(([separator,nl])=>({separator,source:'右に曲がる。'+nl+'4回くり返す。'}));
+const unfinishedProject=({separator,source})=>{const project=fixture();project.name='未完成の作品-'+separator;project.scripts=[{id:'unfinished',targetId:'button-1',event:'start',source}];return project;};
+const results=[],pageErrors=[],networkRequests=[];
+async function run(id,fn){
+  try{const evidence=await fn();results.push({id,status:'PASS',pass:true,evidence});}
+  catch(e){results.push({id,status:'FAIL',pass:false,detail:e.stack});console.error(id,e.message);}
+  console.log(id+': '+results.at(-1).status);
+}
+const reject=fn=>{let error;try{fn();}catch(e){error=e;}assert.ok(error,'incompatible contract accepted');assert.ok(error.code,'rejection must have a product error code');return error.code;};
+const editSaved=(text,key,value)=>{
+  const needle=`"${key}": ${priorProject[key]}`;
+  assert.equal(text.split(needle).length-1,1,'expected one serialized '+key);
+  return text.replace(needle,`"${key}": ${JSON.stringify(value)}`);
+};
+
+await run('FORMAT-PROJECT-PRODUCER-INDEPENDENT',async()=>{
+  const loaded=await api.parseProjectFile(savedPrior);
+  assert.equal(loaded.project.appVersion,priorRelease);
+  assert.equal(loaded.project.languageContractId,contracts.languageContractId);
+  assert.equal(loaded.project.formatVersion,contracts.projectFormatVersion);
+  assert.equal('languageVersion' in loaded.project,false);
+  assert.deepEqual(plain(loaded.project.scripts),plain(priorProject.scripts),'exact source and ownership survive load');
+  assert.deepEqual(plain(loaded.project.actions),plain(priorProject.actions));
+  assert.deepEqual(plain(loaded.project.functions),plain(priorProject.functions));
+  assert.deepEqual(plain(api.compileProject(loaded.project).errors),[]);
+  const currentFile=api.serializeProject(loaded.project,loaded.assetStore);
+  assert.ok(currentFile.startsWith(`# あかり ${currentRelease} の作品`));
+  assert.equal((await api.parseProjectFile(currentFile)).project.appVersion,currentRelease);
+  assert.deepEqual(plain((await api.parseProjectFile(currentFile)).project.scripts),plain(priorProject.scripts));
+  const unfinished=[];
+  for(const c of unfinishedSources){
+    const loaded=await api.parseProjectFile(api.serializeProject(unfinishedProject(c),api.makeDefaultAssetStore()));
+    assert.equal(loaded.project.scripts[0].source,c.source);
+    assert.equal(api.compileProject(loaded.project).errors[0].code,'P205');
+    assert.equal(reject(()=>api.packExecutable(loaded.project)),'X601');
+    unfinished.push({separator:c.separator,sourceExact:true,diagnostic:'P205',exportCode:'X601'});
+  }
+  return {priorProducer:priorRelease,currentProducer:currentRelease,priorFileSha256:sha(savedPrior),savedFileSha256:sha(currentFile),sourceExact:true,unfinished};
+});
+await run('FORMAT-PROJECT-CONTRACT-REJECTION',async()=>{
+  const codes=[];
+  for(const key of ['formatVersion','languageContractId'])for(const value of incompatible(priorProject[key])){
+    const p=plain(priorProject);p[key]=value;
+    codes.push({key,value,code:reject(()=>api.validateProject(p))});
+    codes.push({key,value,fileCode:(await api.parseProjectFile(editSaved(savedPrior,key,value)).then(()=>null,e=>e.code))});
+    assert.ok(codes.at(-1).fileCode);
+  }
+  for(const key of ['formatVersion','languageContractId']){
+    const p=plain(priorProject);delete p[key];
+    codes.push({key,missing:true,code:reject(()=>api.validateProject(p))});
+  }
+  for(const label of [null,'','bad\nlabel','<tag>','x'.repeat(81)]){
+    const p=plain(priorProject);p.appVersion=label;
+    codes.push({producerLabel:label,code:reject(()=>api.validateProject(p))});
+  }
+  return {rejected:codes};
+});
+await run('FORMAT-RUNTIME-PRODUCER-INDEPENDENT',async()=>{
+  const payload=plain(priorApi.packExecutable(priorProject));
+  assert.equal(payload.appVersion,priorRelease);
+  for(const [key,value] of Object.entries(contracts))assert.equal(payload[key],value);
+  assert.equal('runtimeVersion' in payload,false);
+  assert.equal('languageVersion' in payload,false);
+  const restored=api.restoreExecutable(payload);
+  assert.deepEqual(plain(restored.compiled.items.map(i=>[i.key,i.ownerId])),plain(api.sourceRegistry(priorProject).map(i=>[i.key,i.ownerId])));
+  const output=[],runtime=new api.RuntimeModel(restored.project,{});
+  const scheduler=new api.EventScheduler(restored.project,restored.compiled,runtime,{say:(id,value)=>output.push([id,value])});
+  runtime.reset(42);scheduler.running=true;scheduler.paused=true;scheduler.spawnForRuntime('button-1','click');
+  for(let i=0;i<100&&scheduler.ready.length;i++)scheduler.runTurn(true);
+  assert.deepEqual(output,[['button-1','6']],'caller and function evaluation survive producer change');
+  return {priorProducer:payload.appVersion,programItems:payload.program.length,output};
+});
+await run('FORMAT-RUNTIME-CONTRACT-REJECTION',async()=>{
+  const payload=plain(priorApi.packExecutable(priorProject)),rejected=[];
+  for(const key of Object.keys(contracts))for(const value of incompatible(contracts[key])){
+    const copy=plain(payload);copy[key]=value;
+    rejected.push({key,value,code:reject(()=>api.restoreExecutable(copy))});
+  }
+  for(const key of Object.keys(contracts)){
+    const copy=plain(payload);delete copy[key];rejected.push({key,missing:true,code:reject(()=>api.restoreExecutable(copy))});
+  }
+  for(const label of [null,'','bad\nlabel','<tag>','x'.repeat(81)]){
+    const copy=plain(payload);copy.appVersion=label;
+    rejected.push({producerLabel:label,code:reject(()=>api.restoreExecutable(copy))});
+  }
+  const extra=plain(payload);extra.unexpected=true;
+  rejected.push({extraField:true,code:reject(()=>api.restoreExecutable(extra))});
+  // A value of a sentence written null (not left out) is a broken part: the run would read it as one (X602, not R411).
+  const said=api.makeEmptyProject();said.scripts=[{id:'null-part',targetId:said.components[0].id,event:'start',source:'「やあ」と2秒言う。'}];
+  const packed=plain(api.packExecutable(said)),walk=node=>node&&typeof node==='object'?(node.kind==='Say'&&node.seconds?node:Object.values(node).map(walk).find(Boolean)):null;
+  api.restoreExecutable(plain(packed));walk(packed.program).seconds=null;rejected.push({nullPart:'Say.seconds',code:reject(()=>api.restoreExecutable(packed))});
+  // A character with no look, and a part's id twice (its bodies would run twice), are broken too.
+  for(const [part,change] of [['no costume',x=>{x.project.components.find(c=>c.type==='sprite').costumes=[];}],['id twice',x=>{x.project.components.push(plain(x.project.components.find(c=>c.type==='sprite')));}]]){
+    const bad=plain(api.packExecutable(said));change(bad);rejected.push({brokenPart:part,code:reject(()=>api.restoreExecutable(bad))});}
+  return {rejected};
+});
+await run('FORMAT-FINGERPRINT-METADATA-EXCLUSION',async()=>{
+  const fingerprint=api.diagnostics.assetStateFingerprint;
+  assert.equal(typeof fingerprint,'function');
+  const p=plain(priorProject),store=api.makeDefaultAssetStore(),base=fingerprint(p,store);
+  p.appVersion=currentRelease;assert.equal(fingerprint(p,store),base,'producer label must not make project dirty');
+  p.name+=' 改';assert.notEqual(fingerprint(p,store),base,'content change must make project dirty');
+  p.name=priorProject.name;p.languageContractId=1;assert.notEqual(fingerprint(p,store),base,'language contract must affect fingerprint');
+  p.languageContractId=contracts.languageContractId;p.formatVersion=contracts.projectFormatVersion-1;assert.notEqual(fingerprint(p,store),base,'project format must affect fingerprint');
+  p.formatVersion=contracts.projectFormatVersion;p.scripts[0].source+='\n';assert.notEqual(fingerprint(p,store),base,'source change must affect fingerprint');
+  return {producerIgnored:true,contentAndContractsTracked:true};
+});
+
+function editorState(p){return p.evaluate(()=>{
+  const s=Akari.app.editorState;
+  return {project:JSON.stringify(Akari.app.project),source:s.main.sourceText,dirty:s.dirty,
+    owner:s.main.ownerKey,history:s.history,redo:s.redo,
+    selected:document.querySelector('#objectSelect').value,event:document.querySelector('#eventSelect').value};
+});}
+async function reveal(locator){
+  if(!await locator.isVisible())for(const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())
+    await panel.locator('.blockui-side-toggle').click();
+  for(const details of await locator.locator('xpath=ancestor::details[not(@open)]').all())await details.locator(':scope > summary').click();
+  return locator;
+}
+async function editSource(p,sourceText){
+  await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
+  await chooseView(p,'code',{reveal});await (await reveal(p.locator('#codeEditor'))).fill(sourceText);
+  await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s&&Akari.app.editorState.dirty===true&&
+    Akari.app.project.scripts.some(row=>row.targetId==='stage'&&row.event==='start'&&row.source===s),sourceText);
+}
+// The product asks before replacing unsaved work; the handler registered by answerProductConfirms
+// answers it during the next locator action, so wait for the question and let that action happen.
+async function productQuestionAnswered(p){
+  await p.waitForFunction(()=>document.querySelector('#loseConfirmModal.show')!==null);
+  await p.locator('#loseConfirmModal').waitFor({state:'hidden'});
+}
+async function seedAutosave(p,record){
+  await p.evaluate(async ([rec,database])=>{
+    await new Promise((resolve,reject)=>{
+      const q=indexedDB.open(database,1);
+      q.onupgradeneeded=()=>q.result.createObjectStore('workspace',{keyPath:'id'});
+      q.onerror=()=>reject(q.error);
+      q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite');tx.objectStore('workspace').put(rec);
+        tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();reject(tx.error);};};
+    });
+  },[record,autosaveDatabase]);
+}
+let browserVersion;
+await withBrowser(browserPath,async browser=>{
+  browserVersion=browser.version();
+  const browserPage=(id,fn)=>pageFor(browser,product,async p=>{
+    p.on('dialog',d=>d.accept());
+    await answerProductConfirms(p,true);
+    p.on('pageerror',e=>pageErrors.push(id+': '+e.message));
+    p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
+    return fn(p);
+  });
+  const browserCase=(id,fn)=>run(id,()=>browserPage(id,fn));
+  await browserCase('FORMAT-BROWSER-FILE-ROUNDTRIP',async p=>{
+    await p.locator('#fileInput').setInputFiles({name:'prior.akari.md',mimeType:'text/markdown',buffer:Buffer.from(savedPrior)});
+    // The model changes before asynchronous import cleanup has unlocked editing.
+    // Check the existing editable assertion after the input handler has completed.
+    await p.waitForFunction(v=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN'&&Akari.app.project.appVersion===v,priorRelease);
+    assert.equal((await editorState(p)).source,priorProject.scripts[0].source);
+    assert.deepEqual(await p.evaluate(()=>Akari.app.project.actions),plain(priorProject.actions));
+    const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();await confirmSave(p);
+    const file=path.join(path.dirname(output),'format-resaved.akari.md');await (await pending).saveAs(file);
+    const saved=fs.readFileSync(file,'utf8'),loaded=await api.parseProjectFile(saved);
+    assert.equal(loaded.project.appVersion,currentRelease);
+    assert.equal(loaded.project.scripts[0].source,priorProject.scripts[0].source);
+    const unfinished=[];
+    for(const c of unfinishedSources){
+      const project=unfinishedProject(c),text=api.serializeProject(project,api.makeDefaultAssetStore());
+      await p.locator('#fileInput').setInputFiles({name:'unfinished-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(text)});
+      await p.waitForFunction(name=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN'&&Akari.app.project.name===name,project.name);
+      assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),c.source);
+      await chooseView(p,'code');assert.equal(await p.locator('#codeEditor').isEditable(),true);
+      const download=p.waitForEvent('download');await p.locator('#saveBtn').click();await confirmSave(p);
+      const target=path.join(path.dirname(output),'unfinished-'+c.separator+'.akari.md');await(await download).saveAs(target);
+      const saved=fs.readFileSync(target,'utf8'),reopened=await api.parseProjectFile(saved),expected=c.source;
+      assert.equal(reopened.project.scripts[0].source,expected,'saving an unchanged unfinished body preserves its source');
+      assert.equal(api.compileProject(reopened.project).errors[0].code,'P205');assert.equal(reject(()=>api.packExecutable(reopened.project)),'X601');
+      await p.locator('#fileInput').setInputFiles({name:'resaved-'+c.separator+'.akari.md',mimeType:'text/markdown',buffer:Buffer.from(saved)});
+      await p.waitForFunction(()=>!document.querySelector('#fileInput').value&&Akari.app.editorState.state==='DESIGN');
+      assert.equal(await p.evaluate(()=>Akari.app.project.scripts[0].source),expected);
+      unfinished.push({separator:c.separator,importedSource:c.source,savedSource:expected,reopened:true,editable:true,diagnostic:'P205',exportCode:'X601'});
+    }
+    return {importedProducer:priorRelease,savedProducer:currentRelease,savedSha256:sha(saved),unfinished};
+  });
+  await browserCase('FORMAT-BROWSER-IMPORT-ATOMICITY',async p=>{
+    const unsaved='「未保存のまま」と言う ※ 保持  ';
+    await editSource(p,unsaved);const beforeState=await editorState(p);assert.equal(beforeState.dirty,true);
+    const badFiles=[editSaved(savedPrior,'formatVersion',contracts.projectFormatVersion-1),editSaved(savedPrior,'languageContractId','2'),savedPrior.slice(0,-25)];
+    for(let i=0;i<badFiles.length;i++){
+      const previousLog=await p.locator('#console').textContent();
+      await p.locator('#fileInput').setInputFiles({name:`bad-${i}.akari.md`,mimeType:'text/markdown',buffer:Buffer.from(badFiles[i])});
+      await productQuestionAnswered(p);
+      await p.waitForFunction(previous=>{const now=document.querySelector('#console').textContent;
+        return now!==previous&&now.length>previous.length&&now.slice(previous.length).includes('読みこめませんでした')&&Akari.app.editorState.state==='DESIGN';},previousLog);
+      const afterState=await editorState(p);
+      const {history:beforeHistory,...beforeWork}=beforeState;
+      const {history:afterHistory,...afterWork}=afterState;
+      assert.deepEqual(afterWork,beforeWork,'rejected import changed current unsaved work');
+      assert.ok(afterHistory>=beforeHistory,'rejected import discarded undo history');
+    }
+    return {rejected:badFiles.length,unsavedSourcePreserved:true};
+  });
+  await run('FORMAT-BROWSER-AUTOSAVE-RECOVERY',async()=>{
+    const fingerprint=priorApi.diagnostics.assetStateFingerprint(priorProject,priorApi.makeDefaultAssetStore());
+    // Use a real current autosave envelope; producer independence remains
+    // about the project label, not retired internal storage compatibility.
+    const validRecord=await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/current-fixture',async p=>{
+      await p.locator('#fileInput').setInputFiles({name:'prior.akari.md',mimeType:'text/markdown',buffer:Buffer.from(savedPrior)});
+      await p.waitForFunction(name=>Akari.app.project.name===name,priorProject.name);
+      const download=p.waitForEvent('download');await p.locator('#saveBtn').click();await confirmSave(p);
+      await (await download).saveAs(path.join(path.dirname(output),'format-current-autosave.akari.md'));
+      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));
+      return p.evaluate(database=>new Promise((resolve,reject)=>{const q=indexedDB.open(database,1);q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);tx.oncomplete=()=>db.close();};}),autosaveDatabase);
+    });
+    assert.equal(validRecord.workspace.base.project.appVersion,priorRelease);
+    assert.equal(validRecord.lastSavedFingerprint,fingerprint,'current clean baseline must retain producer-independent fingerprint');
+    const makeRecord=(lastSavedFingerprint,mutate=()=>{})=>{const record=plain(validRecord);record.lastSavedFingerprint=lastSavedFingerprint;mutate(record.workspace.base.project);return record;};
+    for(const [label,savedFingerprint,expectedDirty] of [['clean',fingerprint,false],['dirty','',true]]){
+      await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
+        await seedAutosave(p,makeRecord(savedFingerprint));await p.reload();
+        await p.locator('#recoveryModal.show').waitFor();
+        assert.notEqual(await p.evaluate(()=>Akari.app.project.name),priorProject.name,'offer must not install record');
+        await p.locator('#recoveryRestore').click();
+        assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),priorRelease);
+        assert.equal((await editorState(p)).source,priorProject.scripts[0].source);
+        assert.equal((await editorState(p)).dirty,expectedDirty,label+' recovery dirty state');
+      });
+    }
+    for(const [label,changed] of [['format',p=>{p.formatVersion=contracts.projectFormatVersion-1;}],['language',p=>{p.languageContractId='2';}],['malformed',p=>{p.components.push(plain(p.components[0]));}]]){
+      await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
+        await seedAutosave(p,makeRecord('',changed));await p.reload();
+        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('もどせるか、たしかめられなかったよ'));
+        assert.equal(await p.locator('#recoveryModal.show').count(),0);
+        assert.notEqual(await p.evaluate(()=>Akari.app.project.name),priorProject.name,'invalid recovery changed current project');
+      });
+    }
+    return {crossReleaseClean:true,crossReleaseDirty:true,rejectedMalformedAndContractMismatch:true,storageKey:autosaveDatabase};
+  });
+  await run('FORMAT-BROWSER-STANDALONE-OFFLINE',async()=>{
+    const loaded=await api.parseProjectFile(savedPrior);
+    const html=api.generateStandaloneHtml(loaded.project,loaded.assetStore);
+    const currentToken=`"appVersion":"${currentRelease}"`,priorToken=`"appVersion":"${priorRelease}"`;
+    assert.equal(html.split(currentToken).length-1,1,'one embedded payload producer label');
+    const crossReleaseHtml=html.replace(currentToken,priorToken);
+    assert.ok(crossReleaseHtml.includes(priorToken));
+    const file=path.join(path.dirname(output),'format-player.html');fs.writeFileSync(file,crossReleaseHtml);
+    const context=await browser.newContext({offline:true}),errors=[],network=[];
+    try{
+      await context.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});
+      const p=await context.newPage();p.on('pageerror',e=>errors.push(e.message));
+      await p.goto(pathToFileURL(path.resolve(file)).href);
+      await p.locator('#playerStart:not([disabled])').click();
+      await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('形式互換')||
+        document.querySelector('#formSurface').textContent.includes('形式互換'));
+      // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+      await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
+    }finally{await context.close();}
+    pageErrors.push(...errors);networkRequests.push(...network);
+    assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
+    return {embeddedProducer:priorRelease,generatedBy:currentRelease,generatedSha256:sha(crossReleaseHtml),offline:true};
+  });
+},360000);
+assert.deepEqual(snapshot(product),before,'candidate changed during format audit');
+assert.deepEqual(results.map(r=>r.id),formatCompatibilityIds);
+const report={schema:'akari-format-compatibility-v1',status:results.every(r=>r.pass)&&!pageErrors.length&&!networkRequests.length?'PASS':'FAIL',snapshot:before,
+  environment:'chromium',browser:browserVersion,total:results.length,fixture:{priorRelease,currentRelease,priorProductSha256:sha(priorSource),priorFileSha256:sha(savedPrior)},results,pageErrors,networkRequests};
+fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
+verifyFormatCompatibility(report,before);

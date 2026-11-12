@@ -1,0 +1,87 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {root,withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
+import {currentProductFile} from '../lib/product-path.cjs';
+import {checkBrowserVersion,checkPlaywrightVersion} from '../lib/browser-environment.mjs';
+import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
+import {confirmSave} from '../lib/product-dialogs.cjs';
+const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.slice(2),output=path.resolve(outputArg),product=path.join(root,currentProductFile()),dir=output.replace(/\.json$/,'')+'.artifacts';
+const report={schema:'akari-resource-references-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]};
+fs.mkdirSync(dir,{recursive:true});const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
+// Failure evidence must not consume the host deadline or hide the original error.
+const diagnosticDeadline=async(promise,ms)=>{let timer;try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Failure evidence timeout')),ms);})]);}finally{clearTimeout(timer);}};
+const openFixture=async(page,file,name,answerQuestion=null)=>{
+ await page.locator('#fileInput').setInputFiles(file);
+ if(answerQuestion)await answerQuestion();
+ // Import is asynchronous model work, not a paint assertion. Also wait for the
+ // change handler's cleanup, including when reopening the same named project.
+ await page.waitForFunction(name=>Akari.app.project.name===name&&Akari.app.editorState.state==='DESIGN'&&document.querySelector('#fileInput').value==='',name,{polling:50});
+};
+try{await withBrowser(chrome,async browser=>{
+ report.environment.browser=browser.version();assert.ok(checkBrowserVersion(browser.version()));assert.ok(checkPlaywrightVersion(report.environment.playwright));
+ const run=async(id,fn)=>{const row={id,status:'RUNNING'};report.results.push(row);save();try{row.observed=await pageFor(browser,product,async page=>{page.setDefaultTimeout(8000);await page.setViewportSize({width:1366,height:768});page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});try{return await fn(page);}catch(error){
+  row.status='FAIL';row.error=error.stack;save();
+  try{row.failureState=await diagnosticDeadline(page.evaluate(()=>({projectName:Akari.app.project.name,state:Akari.app.editorState.state,filePending:document.querySelector('#fileInput').value!=='',console:document.querySelector('#console').textContent})),2000);}catch(e){row.failureStateError=e.message;}save();
+  try{await diagnosticDeadline(page.screenshot({path:path.join(dir,id.replaceAll('/','-')+'.png'),timeout:8000}),8000);}catch(e){row.screenshotError=e.message;}save();throw error;
+ }});row.status='PASS';}catch(error){row.status='FAIL';row.error??=error.stack;}save();console.log(row.status+' '+id);};
+ const install=async(page,source)=>{
+  const file=await page.evaluate(source=>{const p=Akari.makeDefaultProject();p.name='参照の保護';p.scripts=[{id:'reference-body',targetId:'sprite-1',event:'start',source}];p.actions=[];p.functions=[];p.projectData={variables:[{id:'reference-score',name:'点数',initialValue:0}],lists:[]};return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},source);
+  await openFixture(page,{name:'references.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)},'参照の保護');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#objectSelect').selectOption('sprite-1');
+ };
+ const state=page=>page.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,dirty:Akari.app.editorState.dirty,assets:Array.from(Akari.app.assetStore.snapshotRefs().values(),a=>({id:a.id,sha256:a.sha256}))}));
+ const costume=(page,name)=>page.locator('#assetBody .extension-row').filter({has:page.locator('b',{hasText:new RegExp('^'+name+'$')})});
+ await run('references/browser-costume-delete-rename-undo',async page=>{
+  const source='衣装を「たくどん」にする。 ※ 名前の参照\n「たくどん🐈」と言う。';await install(page,source);await page.locator('#assetBtn').click();const before=await state(page);assert.equal(before.assets.length,1);assert.match(before.assets[0].sha256,/^[a-f0-9]{64}$/);await costume(page,'たくどん').getByRole('button',{name:'けす',exact:true}).click();assert.deepEqual(await state(page),before);assert.match(await page.locator('#assetBody .reference-issue').textContent(),/1行目/);
+  page.once('dialog',d=>d.dismiss());await costume(page,'たくどん').getByRole('button',{name:'名前を かえる',exact:true}).click();assert.deepEqual(await state(page),before);
+  page.once('dialog',d=>d.accept('夜空'));await costume(page,'たくどん').getByRole('button',{name:'名前を かえる',exact:true}).click();const renamed=await state(page),p=JSON.parse(renamed.project);assert.equal(p.scripts[0].source,source.replace('衣装を「たくどん」','衣装を「夜空」'));assert.equal(p.components[0].costumes[0].id,'costume-1');assert.equal(renamed.history,before.history+1);assert.deepEqual(renamed.assets,before.assets);
+  await page.locator('#assetClose').click();await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,renamed.project);
+  const pending=page.waitForEvent('download');await page.locator('#saveBtn').click();await confirmSave(page);const download=await pending,file=path.join(dir,'renamed.akari.md');await download.saveAs(file);const read=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>({project:JSON.stringify(r.project),assets:Array.from(r.assetStore.snapshotRefs().values(),a=>({id:a.id,sha256:a.sha256}))})),fs.readFileSync(file,'utf8'));assert.equal(read.project,renamed.project);assert.deepEqual(read.assets,before.assets);
+  return{deleteRefused:true,cancelUnchanged:true,referenceOnlyRename:true,undoRedo:true,saveExact:true,assetsPreserved:true};
+ });
+ await run('references/browser-uncertain-source-refuses-delete',async page=>{
+  await install(page,'衣装を「まだ途中');await page.locator('#assetBtn').click();const before=await state(page);await costume(page,'たくどん').getByRole('button',{name:'けす',exact:true}).click();assert.deepEqual(await state(page),before);const message=await page.locator('#assetBody .reference-issue').textContent();assert.match(message,/書きかけ.*しらべられません/);return{uncertaintyShown:true,projectHistoryAssetsUnchanged:true};
+ });
+ await run('references/browser-unused-delete-undo',async page=>{
+  await install(page,'「たくどん」と言う。');await page.locator('#assetBtn').click();const before=await state(page);await costume(page,'丸').getByRole('button',{name:'けす',exact:true}).click();await page.waitForFunction(()=>Akari.app.project.components[0].costumes.length===1);await page.waitForFunction(n=>Akari.app.editorState.history===n,before.history+1);await page.locator('#assetClose').click();await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);assert.deepEqual((await state(page)).assets,before.assets);return{unusedDeletionAllowed:true,undoRestoresProjectAndAssets:true};
+ });
+ await run('references/browser-data-delete-refused',async page=>{
+  await install(page,'点数を言う。');await page.locator('#dataBtn').click();const before=await state(page),row=page.locator('#dataBody .extension-row').filter({has:page.locator('b',{hasText:'へんすう 点数'})});await row.getByRole('button',{name:'けす',exact:true}).click();assert.deepEqual(await state(page),before);assert.match(await page.locator('#dataBody .reference-issue').textContent(),/点数.*けす ことが できません/);return{referenceShown:true,projectHistoryAssetsUnchanged:true};
+ });
+  await run('references/browser-component-rename',async page=>{
+   const source='あかりはいまのばしょから、右へ30歩動く。\n「あかり🐈」と言う。';await install(page,source);await chooseView(page,'code');const before=await state(page);
+   const name=page.locator('#properties input[aria-label="名前"]');await name.fill('灯り');await name.press('Tab');await page.waitForFunction(()=>Akari.app.project.components[0].name==='灯り');await page.waitForFunction(n=>Akari.app.editorState.history===n,before.history+1);
+   const renamed=await state(page);assert.equal(JSON.parse(renamed.project).scripts[0].source,source.replace('あかりは','灯りは'));await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,renamed.project);
+   await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===260);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'あかり🐈');
+   await pressStop(page.locator('#stopBtn'));
+   const prefixSource='灯は画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く。\n【灯合図】という手順を行う。\n「灯合図🐈」と言う。';
+   const prefixFile=await page.evaluate(source=>{const p=Akari.makeDefaultProject();p.name='主語と手順の保護';p.components[0].name='灯';p.scripts=[{id:'prefix-body',targetId:'sprite-1',event:'start',source}];p.actions=[{id:'prefix-action',ownerId:'stage',name:'灯合図',args:[],source:'何もしない。'}];p.functions=[];return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},prefixSource);
+   const askedLoseQuestion=[];
+   await openFixture(page,{name:'actor-prefix.akari.md',mimeType:'text/plain',buffer:Buffer.from(prefixFile)},'主語と手順の保護',async()=>{await page.locator('#loseConfirmModal.show').waitFor();askedLoseQuestion.push(await page.locator('#loseConfirmMessage').innerText());await page.locator('#loseConfirmProceed').click();});assert.deepEqual(askedLoseQuestion,['「参照の保護」には まだ ほぞんして いない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);await page.locator('#objectSelect').selectOption('sprite-1');await chooseView(page,'code');
+   const prefixBefore=await state(page),referenceIds=()=>page.evaluate(()=>Akari.buildProjectReferenceGraph(Akari.app.project).references.map(r=>JSON.stringify([r.sourceKey,r.resourceKey,r.binding,r.nodePath])).sort()),beforeIds=await referenceIds();
+   await page.locator('#properties input[aria-label="名前"]').fill('灯新');await page.locator('#properties input[aria-label="名前"]').press('Tab');await page.waitForFunction(()=>Akari.app.project.components[0].name==='灯新');await page.waitForFunction(n=>Akari.app.editorState.history===n,prefixBefore.history+1);
+   const prefixRenamed=await state(page),expectedPrefix=prefixSource.replace('灯は','灯新は');assert.equal(JSON.parse(prefixRenamed.project).scripts[0].source,expectedPrefix);assert.equal(JSON.parse(prefixRenamed.project).actions[0].name,'灯合図');assert.deepEqual(await referenceIds(),beforeIds);
+   await chooseView(page,'blocks');await chooseView(page,'code');assert.equal((await state(page)).project,prefixRenamed.project);assert.equal((await state(page)).history,prefixRenamed.history);
+   await page.locator('#undoBtn').click();assert.equal((await state(page)).project,prefixBefore.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,prefixRenamed.project);
+   const prefixPending=page.waitForEvent('download');await page.locator('#saveBtn').click();await confirmSave(page);const prefixDownload=await prefixPending,prefixPath=path.join(dir,'renamed-actor-prefix.akari.md');await prefixDownload.saveAs(prefixPath);
+   const savedPrefix=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>JSON.stringify(r.project)),fs.readFileSync(prefixPath,'utf8'));assert.equal(savedPrefix,prefixRenamed.project);
+   await openFixture(page,prefixPath,'主語と手順の保護');assert.equal(JSON.parse((await state(page)).project).components[0].name,'灯新');assert.equal((await state(page)).project,prefixRenamed.project);assert.deepEqual(await referenceIds(),beforeIds);
+   await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===10);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'灯合図🐈');await pressStop(page.locator('#stopBtn'));assert.equal((await state(page)).project,prefixRenamed.project);
+return{referenceOnly:true,undoRedo:true,runtimeX:260,proseUnchanged:true};
+  });
+  await run('references/browser-data-rename',async page=>{
+   const source='作品の点数を3にする。\n作品の点数を言う。';await install(page,source);await page.locator('#dataBtn').click();const before=await state(page),row=page.locator('#dataBody .extension-row').filter({has:page.locator('b',{hasText:'へんすう 点数'})});
+   page.once('dialog',d=>d.dismiss());await row.getByRole('button',{name:'名前を かえる',exact:true}).click();assert.deepEqual(await state(page),before);
+   page.once('dialog',d=>d.accept('記録'));await row.getByRole('button',{name:'名前を かえる',exact:true}).click();const renamed=await state(page);assert.equal(JSON.parse(renamed.project).scripts[0].source,source.replaceAll('点数','記録'));assert.equal(renamed.history,before.history+1);await page.locator('#dataClose').click();await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,renamed.project);
+   const pending=page.waitForEvent('download');await page.locator('#saveBtn').click();await confirmSave(page);const download=await pending,file=path.join(dir,'renamed-data.akari.md');await download.saveAs(file);const read=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>JSON.stringify(r.project)),fs.readFileSync(file,'utf8'));assert.equal(read,renamed.project);await page.locator('#runBtn').click();await page.locator('.sprite-bubble').waitFor();assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'3');return{cancelUnchanged:true,referenceOnly:true,undoRedo:true,saveExact:true,runtimeValue:'3'};
+  });
+  for(const kind of ['action','function'])await run('references/browser-'+kind+'-rename',async page=>{
+   const file=await page.evaluate(()=>{const p=Akari.makeDefaultProject();p.name='定義名の保護';p.actions=[{id:'rename-action',ownerId:'stage',name:'おじぎ',args:[],source:'右へ15度回る。'}];p.functions=[{id:'rename-function',ownerId:'stage',name:'代金',args:['個数','ねだん'],source:'個数とねだんをかけた数を答えとして返す。'}];p.scripts=[{id:'rename-body',targetId:'sprite-1',event:'start',source:'「おじぎ」という手順を2回行う。\n個数を3、ねだんを80として、「代金」で求めた答えに10を足して言う。'}];return Akari.serializeProject(p,Akari.makeDefaultAssetStore());});
+   await openFixture(page,{name:'definitions.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)},'定義名の保護');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#procBtn').click();await page.locator('#callableSelect').selectOption(kind+':rename-'+kind);
+   const before=await state(page),oldName=kind==='action'?'おじぎ':'代金',newName=kind==='action'?'礼':'会計';await page.locator('#callableName').fill(newName);await page.locator('#callableSave').click();await page.waitForFunction(({kind,name})=>Akari.app.project[kind==='action'?'actions':'functions'][0].name===name,{kind,name:newName});const renamed=await state(page);assert.equal(JSON.parse(renamed.project).scripts[0].source,JSON.parse(before.project).scripts[0].source.replace('「'+oldName+'」','「'+newName+'」'));await page.locator('#procClose').click();
+   await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);assert.equal(await page.locator('#procModal').isVisible(),true);await page.keyboard.press('Control+y');assert.equal((await state(page)).project,renamed.project);if(await page.locator('#procModal').isVisible())await page.locator('#procClose').click();await page.locator('#runBtn').click();await page.locator('.sprite-bubble').waitFor();assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'250');const p=JSON.parse((await state(page)).project);assert.equal(p.components[0].direction,0);return{kind,referenceOnly:true,undoRedo:true,runtimeValue:'250',designUnchanged:true};
+  });
+},180000);}catch(error){report.hostFailure=error.stack;}
+report.status=!report.hostFailure&&!report.pageErrors.length&&!report.networkRequests.length&&report.results.length===8&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';save();if(report.status!=='PASS')process.exitCode=1;

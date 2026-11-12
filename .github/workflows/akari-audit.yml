@@ -1,0 +1,116 @@
+name: Akari audit
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  AKARI_REQUESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+concurrency:
+  group: akari-audit-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  lane-plan:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: windows-latest
+    timeout-minutes: 5
+    outputs:
+      lanes: ${{ steps.plan.outputs.lanes }}
+      browser: ${{ steps.plan.outputs.browser }}
+      playwright: ${{ steps.plan.outputs.playwright }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.2'
+      - id: plan
+        run: node audit/lib/ci-lanes.mjs plan audit
+  audit-lane:
+    needs: [lane-plan]
+    if: ${{ always() && needs.lane-plan.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: windows-latest
+    timeout-minutes: 360
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.lane-plan.outputs.lanes) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - run: |
+          cp -r audit/deps/full "$RUNNER_TEMP/audit-deps"
+          npm ci --prefix "$RUNNER_TEMP/audit-deps" --no-audit --ignore-scripts --no-fund
+          npm install --prefix "$RUNNER_TEMP/playwright-deps" --no-package-lock --no-audit --ignore-scripts --no-fund "playwright@${{ needs.lane-plan.outputs.playwright }}"
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+["audit-deps","playwright-deps"].map(d=>require("path").join(process.env.RUNNER_TEMP,d,"node_modules")).join(require("path").delimiter)+"\n")'
+          python -m pip install Pillow==12.3.0 imageio-ffmpeg==0.6.0
+          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser" "${{ needs.lane-plan.outputs.browser }}" --media
+          echo "AKARI_PYTHON=python" >> "$GITHUB_ENV"
+      - run: node audit/run-ci-lane.mjs audit "${{ matrix.shard }}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: akari-audit-lane-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/ci-lane/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+  aggregate:
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    needs: [lane-plan, audit-lane]
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.22.2'
+      - name: Install the audit packages in runner temporary storage
+        run: |
+          cp -r audit/deps/browser "$RUNNER_TEMP/audit-deps"
+          npm ci --prefix "$RUNNER_TEMP/audit-deps" --no-audit --ignore-scripts --no-fund
+          npm install --prefix "$RUNNER_TEMP/playwright-deps" --no-package-lock --no-audit --ignore-scripts --no-fund "playwright@${{ needs.lane-plan.outputs.playwright }}"
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+["audit-deps","playwright-deps"].map(d=>require("path").join(process.env.RUNNER_TEMP,d,"node_modules")).join(require("path").delimiter)+"\n")'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          # Partial reruns retain earlier jobs; validate each kind's newest attempt.
+          pattern: akari-*-${{ github.run_id }}-*
+          path: downloaded-evidence
+      - run: node audit/lib/ci-lanes.mjs unpack audit downloaded-evidence
+      - run: node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json
+        env:
+          AKARI_NEEDS: ${{ toJSON(needs) }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: akari-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            audit-evidence/aggregate.json
+            audit-evidence/merged/selftest/gate.json
+            audit-evidence/merged/selftest/entry-browser.json
+            audit-evidence/merged/selftest/entry-verify.json
+            audit-evidence/merged/selftest/entry-verify.log
+            audit-evidence/merged/full-browser/summary.json
+            audit-evidence/merged/full-browser/candidate/browser-schemas.json
+            audit-evidence/merged/full-browser/candidate/modern-browser.json
+          if-no-files-found: error
+          retention-days: 3

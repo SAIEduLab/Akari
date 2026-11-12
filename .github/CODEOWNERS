@@ -1,0 +1,45 @@
+# Changes to the audit guard need the owner: the guard workflows, every file the scripts they run load or start, and
+# this list (the workflow contract finds a guard file missing here: audit/lib/workflow-contract.mjs unownedGuardFiles).
+/.github/CODEOWNERS @SAIEduLab
+/.github/workflows/akari-change-guard.yml @SAIEduLab
+/.github/workflows/akari-audit.yml @SAIEduLab
+/.github/workflows/akari-acceptance.yml @SAIEduLab
+/audit/lib/change-guard.mjs @SAIEduLab
+/audit/tests/change-guard.mjs @SAIEduLab
+/audit/tests/change-guard-negative.mjs @SAIEduLab
+/audit/lib/behaviour-snapshot.mjs @SAIEduLab
+/audit/lib/assertion-counts.mjs @SAIEduLab
+/audit/lib/node-coverage.mjs @SAIEduLab
+/audit/lib/language-suite.mjs @SAIEduLab
+/audit/lib/script-packages.mjs @SAIEduLab
+/audit/manifests/intended-behaviour-changes.json @SAIEduLab
+/audit/manifests/intended-audit-changes.json @SAIEduLab
+/audit/lib/code-assist-host.mjs @SAIEduLab
+/audit/lib/gate-contract.mjs @SAIEduLab
+/audit/lib/workflow-contract.mjs @SAIEduLab
+/audit/tests/workflow-contract.mjs @SAIEduLab
+/audit/lib/verify-gate-results.mjs @SAIEduLab
+/audit/lib/verify-language-results.mjs @SAIEduLab
+/audit/browser/cases/audit-lib.cjs @SAIEduLab
+/audit/fixtures/language/inline.mjs @SAIEduLab
+/audit/fixtures/refusal-reasons.json @SAIEduLab
+/audit/fixtures/regression-project.cjs @SAIEduLab
+/audit/lib/assist-language-invariance.mjs @SAIEduLab
+/audit/lib/browser-environment.mjs @SAIEduLab
+/audit/lib/ci-lanes.mjs @SAIEduLab
+/audit/lib/gate-case-contract.mjs @SAIEduLab
+/audit/lib/input-snapshot.cjs @SAIEduLab
+/audit/lib/language-boundaries-contract.mjs @SAIEduLab
+/audit/lib/product-path.cjs @SAIEduLab
+/audit/lib/product-test-host.mjs @SAIEduLab
+/audit/lib/refusal.cjs @SAIEduLab
+/audit/lib/save-name-contract.mjs @SAIEduLab
+/audit/lib/shard-plan.cjs @SAIEduLab
+/audit/lib/spec-expectations-host.mjs @SAIEduLab
+/audit/lib/spec-expectations.mjs @SAIEduLab
+/audit/lib/toolbar-stage-contract.mjs @SAIEduLab
+
+/audit/WORK_AUTHORIZATION.md @SAIEduLab
+/.github/workflows/akari-work-authorization.yml @SAIEduLab
+/audit/lib/work-authorization.mjs @SAIEduLab
+/audit/tests/work-authorization.mjs @SAIEduLab

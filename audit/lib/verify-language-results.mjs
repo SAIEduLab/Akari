@@ -1,0 +1,37 @@
+import { currentProductFile } from "./product-path.cjs";
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {pathToFileURL} from 'node:url';
+import {snapshot} from './product-test-host.mjs';
+import {inlineCases,inlineNegative} from '../fixtures/language/inline.mjs';
+import {checkBrowserVersion} from './browser-environment.mjs';
+export function expectedLanguageIds(manifest) {
+  return [...manifest.cases.map(c=>'LANG-SURFACE-'+c.id+'/'+c.key),
+    ...Array.from({length:37},(_,i)=>([31,32].includes(i)?'RELEASE-INLINE-REPLACES-':'')+'LANG-SURFACE-NEG-'+String(i+1).padStart(3,'0')),
+    ...inlineCases.map(c=>c.id),...inlineNegative.map(([id])=>'RELEASE-INLINE-NEG/'+id),
+    ...['003','004','005','006','007','009','012','015'].map(n=>'LANG-ORDER-'+n),'LANG-SURFACE-INDEPENDENT-VALUES','LANG-BUILTIN-INDEPENDENT-VALUES','LANG-SUBJECT-STATEMENTS'];
+}
+export function verifyLanguageResults(report,manifest,currentSnapshot) {
+  const expected=expectedLanguageIds(manifest);
+  assert.equal(new Set(expected).size,607,'authority incomplete/duplicate');
+  assert.equal(report.total,expected.length);
+  assert.deepEqual([...report.results].map(r=>r.id).sort(),expected.sort());
+  const byId=new Map(report.results.map(r=>[r.id,r]));
+  assert.equal(byId.size,report.total,'duplicate result');
+  for(const id of expected) {
+    assert.equal(byId.get(id).status,'PASS',id);
+    if('pass' in byId.get(id))assert.equal(byId.get(id).pass,true,id);
+  }
+  assert.equal(report.failed,0);
+  assert.equal(report.status,'PASS');
+  assert.ok(['node','chromium'].includes(report.environment),'missing required environment');
+  if(report.environment==='chromium')assert.ok(checkBrowserVersion(report.browser));
+  assert.equal(report.browserLanguageComplete,report.environment==='chromium');
+  assert.deepEqual(report.snapshot,currentSnapshot,'unbound/stale snapshot');
+  return {status:report.status,browserLanguageComplete:report.browserLanguageComplete};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href) {
+  const report=JSON.parse(fs.readFileSync(process.argv[2]));
+  console.log(verifyLanguageResults(report,JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json')),snapshot(currentProductFile())));
+  process.exitCode=report.browserLanguageComplete?0:2;
+}

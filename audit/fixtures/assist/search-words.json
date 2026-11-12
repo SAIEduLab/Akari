@@ -1,0 +1,1526 @@
+{
+  "schema": "akari-code-assist-search-words-v1",
+  "synonyms": {
+    "MotionCommand:MOVE_BY": [
+      "動く",
+      "うごく",
+      "移動",
+      "ばしょ",
+      "いまのばしょ",
+      "右へ",
+      "左へ",
+      "上へ",
+      "下へ",
+      "みぎ",
+      "ひだり",
+      "うえ",
+      "した",
+      "歩く",
+      "ずらす",
+      "なめらかに動く",
+      "時間をかける",
+      "おちる",
+      "落ちる",
+      "さがる",
+      "のぼる",
+      "ゆっくり",
+      "ジャンプ",
+      "とぶ",
+      "とびはねる",
+      "ずれる"
+    ],
+    "ListInsert": [
+      "挿入",
+      "そうにゅう",
+      "途中に入れる",
+      "番号の前に入れる",
+      "わりこませる",
+      "わりこむ",
+      "割り込む",
+      "つっこむ",
+      "突っ込む",
+      "おく",
+      "置く"
+    ],
+    "MotionCommand:MOVE": [
+      "進む",
+      "すすむ",
+      "前へ",
+      "後ろへ",
+      "まっすぐ",
+      "歩く",
+      "あるく",
+      "動く",
+      "うごく",
+      "移動",
+      "走る",
+      "はしる",
+      "前進",
+      "ぜんしん",
+      "ダッシュ",
+      "すすめる",
+      "進める"
+    ],
+    "MotionCommand:GOTO": [
+      "行く",
+      "いく",
+      "ばしょ",
+      "場所へ行く",
+      "決めたばしょ",
+      "座標",
+      "移動",
+      "左下のはし",
+      "もどる",
+      "戻る"
+    ],
+    "MotionCommand:GOTO_PART": [
+      "ところへ行く",
+      "行く",
+      "いく",
+      "マウス",
+      "追いかける",
+      "ついていく",
+      "近づく",
+      "ばしょ",
+      "移動",
+      "ワープ",
+      "近よる",
+      "近寄る",
+      "ちかよる",
+      "くっつく",
+      "めざす",
+      "目指す",
+      "おいつく",
+      "追いつく"
+    ],
+    "MotionCommand:TURN_RIGHT": [
+      "右回り",
+      "右へ回る",
+      "回る",
+      "まわる",
+      "回す",
+      "まわす",
+      "向きを変える",
+      "回転",
+      "曲がる",
+      "まがる",
+      "ターン",
+      "ひねる"
+    ],
+    "MotionCommand:TURN_LEFT": [
+      "左回り",
+      "左へ回る",
+      "回る",
+      "まわる",
+      "回す",
+      "まわす",
+      "向きを変える",
+      "回転",
+      "曲がる",
+      "まがる",
+      "ターン",
+      "ひねる"
+    ],
+    "MotionCommand:BOUNCE": [
+      "はね返る",
+      "はねかえる",
+      "はねる",
+      "かべ",
+      "ぶつかる",
+      "反対に動く",
+      "はね返す",
+      "はねかえす",
+      "はずむ",
+      "バウンド"
+    ],
+    "CompareExpression": [
+      "くらべる",
+      "比べる"
+    ],
+    "CompareExpression:GTE": [
+      "くらべる",
+      "比べる",
+      "いじょう",
+      "と同じか より大きい",
+      "と同じかより大きい"
+    ],
+    "CompareExpression:LTE": [
+      "くらべる",
+      "比べる",
+      "いか",
+      "と同じか より小さい",
+      "と同じかより小さい"
+    ],
+    "BuiltinCall:乱数": [
+      "ランダム",
+      "でたらめ",
+      "さいころ"
+    ],
+    "LooksCommand:SHOW": [
+      "見せる",
+      "表示",
+      "出す",
+      "でてくる",
+      "出てくる",
+      "あらわれる",
+      "みえる",
+      "登場",
+      "出現",
+      "あらわす",
+      "現す"
+    ],
+    "LooksCommand:HIDE": [
+      "隠す",
+      "かくす",
+      "非表示",
+      "きえる",
+      "消える",
+      "かくれる",
+      "みえなくする",
+      "消す",
+      "けす",
+      "見えないように",
+      "表示しない",
+      "退場",
+      "透明",
+      "みえなくなる"
+    ],
+    "LooksCommand:SET_COSTUME": [
+      "きがえる",
+      "みため",
+      "見た目",
+      "変身",
+      "へんしん",
+      "コスチューム",
+      "ポーズ",
+      "衣装"
+    ],
+    "LooksCommand:SET_TARGET_TEXT": [
+      "出す",
+      "書く",
+      "表示",
+      "文字",
+      "点数",
+      "テキスト",
+      "ラベル"
+    ],
+    "StopCommand:ALL": [
+      "とめる",
+      "止める",
+      "とまる",
+      "止まる",
+      "やめる",
+      "ストップ",
+      "おわる",
+      "おわり",
+      "おしまい",
+      "ゲームオーバー",
+      "終了",
+      "終わらせる",
+      "おわらせる",
+      "ゲームストップ",
+      "みんな",
+      "全員",
+      "ぜんぶやめる",
+      "しゅうりょう"
+    ],
+    "StopCommand:THIS": [
+      "とめる",
+      "止める",
+      "とまる",
+      "止まる",
+      "やめる",
+      "ストップ",
+      "スクリプト",
+      "プログラム",
+      "本文"
+    ],
+    "StopCommand:OTHERS": [
+      "とめる",
+      "止める",
+      "とまる",
+      "止まる",
+      "やめる",
+      "ストップ",
+      "ほかの部品",
+      "ほかの部品の動き",
+      "自分以外",
+      "じぶんいがい"
+    ],
+    "Break": [
+      "やめる",
+      "ぬける",
+      "おわる",
+      "くり返しをやめる",
+      "くり返しを止める",
+      "くり返しを終わる",
+      "くり返しから出る",
+      "ループから出る",
+      "ループを止める",
+      "ループをやめる",
+      "ループを終える",
+      "ぬけ出す",
+      "抜ける",
+      "ブレイク"
+    ],
+    "PenCommand:DOWN": [
+      "せん",
+      "線",
+      "かく",
+      "えがく",
+      "ペンを下げる",
+      "ペンをさげる",
+      "ペンをつける",
+      "ペンをおく",
+      "ペンを置く",
+      "ペンを下におく",
+      "ペンを紙につける",
+      "線を描く",
+      "線をひく",
+      "線を引く",
+      "線をかく",
+      "線を書く",
+      "かきはじめる",
+      "書き始める",
+      "書きはじめる",
+      "絵をかく",
+      "お絵かき",
+      "ペンダウン",
+      "ペンおろす",
+      "ペン下ろす",
+      "ペンON",
+      "ペンオン",
+      "描き始める",
+      "描きはじめる",
+      "ペンをおとす",
+      "ペンを落とす",
+      "引き始める",
+      "ひきはじめる"
+    ],
+    "PenCommand:SET_SIZE": [
+      "太く",
+      "ふとく",
+      "細く",
+      "ほそく",
+      "太い",
+      "ふとい",
+      "細い",
+      "ほそい",
+      "ペンを太く",
+      "ペンを細く",
+      "線を太く",
+      "線を細く",
+      "線の太さ",
+      "ペンのサイズ",
+      "ペンの大きさ",
+      "太い線",
+      "細い線",
+      "ふとい線"
+    ],
+    "LooksCommand:SET_SCALE": [
+      "大きさ",
+      "おおきさ",
+      "サイズ"
+    ],
+    "Say": [
+      "話す",
+      "言う",
+      "いう",
+      "はなす",
+      "しゃべる",
+      "発言",
+      "こんにちは",
+      "秒",
+      "ひょうじ",
+      "発表",
+      "はっぴょう",
+      "せりふ",
+      "ふきだし",
+      "こえ",
+      "考える",
+      "かんがえる",
+      "思う",
+      "おもう",
+      "さけぶ",
+      "叫ぶ",
+      "つぶやく",
+      "語る",
+      "あいさつ",
+      "話しかける",
+      "おしゃべり",
+      "返事",
+      "声を出す",
+      "声に出す",
+      "メッセージを出す",
+      "つたえる",
+      "伝える",
+      "見せる",
+      "文字を出す",
+      "どなる",
+      "怒鳴る",
+      "答える",
+      "こたえる",
+      "歌う",
+      "うたう",
+      "つげる",
+      "告げる",
+      "口に出す",
+      "口にだす"
+    ],
+    "Ask": [
+      "質問",
+      "たずねる",
+      "答え",
+      "きく",
+      "聞く",
+      "しつもん",
+      "もんだい",
+      "問題",
+      "クイズ",
+      "問いかける"
+    ],
+    "WaitTime": [
+      "待つ",
+      "まつ",
+      "時間",
+      "秒"
+    ],
+    "WaitUntil": [
+      "スペース",
+      "スペースキー",
+      "エンター",
+      "エンターキー",
+      "キー",
+      "おすまで待つ",
+      "おすまでまつ",
+      "キーを待つ",
+      "キーをまつ"
+    ],
+    "RepeatUntil": [
+      "スペース",
+      "スペースキー",
+      "エンター",
+      "エンターキー",
+      "キー"
+    ],
+    "IfStatement": [
+      "もし",
+      "条件",
+      "なら",
+      "分かれ道"
+    ],
+    "RepeatCount": [
+      "くり返す",
+      "繰り返す",
+      "何度も",
+      "回数",
+      "ループ",
+      "リピート",
+      "何回も"
+    ],
+    "UserActionCall": [
+      "動作",
+      "手順",
+      "呼び出す",
+      "実行"
+    ],
+    "UserFunctionCall": [
+      "計算",
+      "答え",
+      "関数",
+      "値を求める"
+    ],
+    "Assignment": [
+      "変数",
+      "記録",
+      "代入",
+      "値を入れる",
+      "もどす",
+      "戻す",
+      "セット",
+      "設定",
+      "変更",
+      "決める",
+      "きめる",
+      "リセット",
+      "初期化",
+      "クリア",
+      "保存"
+    ],
+    "NumericUpdate:ADD": [
+      "増やす",
+      "ふやす",
+      "増える",
+      "ふえる",
+      "足す",
+      "たす",
+      "プラス",
+      "数える",
+      "かぞえる",
+      "点数",
+      "スコア",
+      "あげる",
+      "上げる",
+      "アップ",
+      "加える",
+      "くわえる",
+      "加算",
+      "増し",
+      "多くする",
+      "おおくする",
+      "カウント",
+      "追加",
+      "増加",
+      "ぞうか",
+      "増す"
+    ],
+    "NumericUpdate:SUB": [
+      "減らす",
+      "へらす",
+      "減る",
+      "へる",
+      "引く",
+      "ひく",
+      "マイナス",
+      "点数",
+      "スコア",
+      "少なくする",
+      "すくなくする",
+      "さげる",
+      "下げる",
+      "ダウン",
+      "減少",
+      "げんしょう",
+      "けずる",
+      "削る"
+    ],
+    "VariableRead": [
+      "変数",
+      "値",
+      "読む",
+      "スコア"
+    ],
+    "Broadcast": [
+      "合図",
+      "メッセージ",
+      "知らせる",
+      "しらせる",
+      "つたえる",
+      "サイン"
+    ],
+    "BroadcastAndWait": [
+      "合図",
+      "メッセージ",
+      "知らせる",
+      "しらせる",
+      "つたえる"
+    ],
+    "SoundCommand:TONE_WAIT": [
+      "ドレミ",
+      "ド",
+      "レ",
+      "ミ",
+      "ファ",
+      "ソ",
+      "ラ",
+      "シ",
+      "メロディー",
+      "ピアノ",
+      "音の高さ",
+      "鳴る",
+      "音楽",
+      "ヘルツ",
+      "流す",
+      "再生",
+      "音を出す",
+      "ピー",
+      "ピッ",
+      "ビープ"
+    ],
+    "SoundCommand:TONE": [
+      "ドレミ",
+      "ド",
+      "レ",
+      "ミ",
+      "ファ",
+      "ソ",
+      "ラ",
+      "シ",
+      "メロディー",
+      "ピアノ",
+      "音の高さ",
+      "鳴る",
+      "音楽"
+    ],
+    "SoundCommand:SAMPLE_WAIT": [
+      "鳴る",
+      "音楽",
+      "流す",
+      "ながす",
+      "再生",
+      "プレイ",
+      "音を出す",
+      "音がする",
+      "聞かせる",
+      "きかせる"
+    ],
+    "SoundCommand:SAMPLE": [
+      "鳴る",
+      "音楽",
+      "スタート",
+      "鳴り始める",
+      "流し始める"
+    ],
+    "SensorRead:マウスが押されている": [
+      "クリック",
+      "タッチ",
+      "おす",
+      "押す"
+    ],
+    "EventCount:click": [
+      "クリック",
+      "タッチ",
+      "おす",
+      "押す"
+    ],
+    "SensorRead:KEY_DOWN": [
+      "おす",
+      "押す",
+      "キー",
+      "スペース",
+      "スペースキー",
+      "エンター",
+      "エンターキー",
+      "やじるし"
+    ],
+    "SensorRead:押されたキー": [
+      "キー"
+    ],
+    "ContinuousRule": [
+      "おしているあいだ",
+      "おしている間",
+      "おしっぱなし",
+      "おしつづける",
+      "キーをおしているあいだ",
+      "つづけて動く",
+      "動き続ける",
+      "はやく",
+      "はやい",
+      "進み続ける",
+      "すすみつづける"
+    ],
+    "RepeatWhile": [
+      "おしているあいだ",
+      "おしっぱなし",
+      "あいだ",
+      "間"
+    ],
+    "SensorRead:TOUCHING": [
+      "ふれる",
+      "ふれたら",
+      "ふれたとき",
+      "さわる",
+      "さわったら",
+      "あたる",
+      "当たる",
+      "ぶつかる",
+      "かさなる",
+      "はし",
+      "タッチ",
+      "かべ"
+    ],
+    "StopCommand:OWN_OTHERS": [
+      "止める",
+      "とめる",
+      "とまる",
+      "止まる",
+      "やめる",
+      "自分だけ",
+      "ほかの動き",
+      "ストップ"
+    ],
+    "MotionCommand:POINT_TO": [
+      "向きをかえる",
+      "向きを変える",
+      "向かう",
+      "見る",
+      "見つめる",
+      "みつめる"
+    ],
+    "LooksCommand:SET_COLOR": [
+      "色をかえる",
+      "色を変える",
+      "そめる",
+      "染める",
+      "ぬる",
+      "塗る",
+      "色の効果",
+      "ぬりかえる",
+      "塗り替える"
+    ],
+    "LooksCommand:FRONT": [
+      "最前面",
+      "前面",
+      "前に出る",
+      "前に出す",
+      "前に来る",
+      "前にくる",
+      "最前列",
+      "さいぜんれつ"
+    ],
+    "LooksCommand:BACK": [
+      "最背面",
+      "背面"
+    ],
+    "LooksCommand:SET_BACKDROP": [
+      "うしろの絵",
+      "背景を変更"
+    ],
+    "LooksCommand:PREV_BACKDROP": [
+      "もどす",
+      "戻す"
+    ],
+    "LooksCommand:NEXT_COSTUME": [
+      "コスチューム",
+      "次の見た目",
+      "次の絵",
+      "ポーズ",
+      "衣装"
+    ],
+    "LooksCommand:PREV_COSTUME": [
+      "コスチューム",
+      "前の見た目",
+      "前の絵",
+      "もどす",
+      "戻す",
+      "ポーズ",
+      "衣装"
+    ],
+    "LooksCommand:SET_INPUT": [
+      "入力する",
+      "セット"
+    ],
+    "SoundCommand:PITCH_UP": [
+      "半音上げる",
+      "ピッチを上げる"
+    ],
+    "SoundCommand:PITCH_DOWN": [
+      "半音下げる",
+      "ピッチを下げる"
+    ],
+    "SoundCommand:STOP_ALL": [
+      "音を消す",
+      "すべての音を消す",
+      "全部の音を消す",
+      "音を全部消す",
+      "音をストップ",
+      "音楽をストップ"
+    ],
+    "PenCommand:UP": [
+      "ペンを離す",
+      "ペンをはなす",
+      "ペンを紙から離す",
+      "ペンを紙からはなす",
+      "持ち上げる",
+      "もち上げる",
+      "うかせる",
+      "浮かせる",
+      "ペンをはずす",
+      "ペンをしまう",
+      "ペンをもどす",
+      "かくのをやめる",
+      "書くのをやめる",
+      "かき終わる",
+      "書き終わる",
+      "線を止める",
+      "線をとめる",
+      "ペンを止める",
+      "ペンをとめる",
+      "ペンアップ",
+      "ペンあげる",
+      "ペン上げる",
+      "引くのをやめる",
+      "ひくのをやめる",
+      "ペンを片づける",
+      "ペンを片付ける",
+      "ペンをかたづける"
+    ],
+    "PenCommand:SET_COLOR": [
+      "線の色",
+      "ペンのカラー"
+    ],
+    "PenCommand:STAMP": [
+      "はんこ",
+      "判子",
+      "すがたをのこす",
+      "スタンプおす",
+      "スタンプ押す"
+    ],
+    "PenCommand:CLEAR": [
+      "かいた線を消す",
+      "描いた線を消す",
+      "すべての線を消す",
+      "線を全部消す",
+      "作品の線とスタンプを消す",
+      "作品の線とスタンプをみんな消す",
+      "画面の線とスタンプを全部消す",
+      "画面を消す",
+      "ステージを消す",
+      "画面をクリア",
+      "消しゴム",
+      "かいたものを消す",
+      "描いたものを消す",
+      "作品の絵を消す",
+      "お絵かきを消す",
+      "らくがきを消す",
+      "えをけす"
+    ],
+    "Forever": [
+      "ループ",
+      "リピート",
+      "永遠",
+      "えいえん",
+      "無限",
+      "むげん",
+      "永久",
+      "いつまでも",
+      "つねに",
+      "ずーっと",
+      "ずうっと",
+      "えんえん",
+      "つづける",
+      "続ける",
+      "何回も",
+      "なんかいも",
+      "何度も",
+      "なんども"
+    ],
+    "NoOperation": [
+      "何も起きない",
+      "何もない",
+      "そのまま",
+      "ほうっておく",
+      "からっぽ"
+    ],
+    "Continue": [
+      "とばす",
+      "スキップ",
+      "コンティニュー",
+      "次へ進む",
+      "次のループ",
+      "次にいく",
+      "つぎにいく",
+      "次に行く"
+    ],
+    "ListAppend": [
+      "追加",
+      "ついか",
+      "プッシュ",
+      "保存",
+      "記録",
+      "おぼえる",
+      "覚える",
+      "しまう",
+      "メモ",
+      "くわえる",
+      "加える"
+    ],
+    "ListReplace": [
+      "とりかえる",
+      "取り替える",
+      "取りかえる",
+      "おきかえる",
+      "置き換える",
+      "置きかえる",
+      "入れかえる",
+      "入れ替える",
+      "いれかえる",
+      "書きかえる",
+      "書き換える",
+      "変更",
+      "上書き",
+      "セット",
+      "交換",
+      "こうかん",
+      "チェンジ"
+    ],
+    "ListDelete": [
+      "さくじょ",
+      "取りのぞく",
+      "取り除く",
+      "とりのぞく",
+      "捨てる",
+      "すてる",
+      "なくす",
+      "消去"
+    ],
+    "ListClear": [
+      "リセット",
+      "クリア",
+      "初期化",
+      "からにする",
+      "からっぽ",
+      "空っぽ",
+      "空にする",
+      "すてる",
+      "捨てる",
+      "なくす"
+    ],
+    "TimerReset": [
+      "タイマーを始める",
+      "タイマーをはじめる",
+      "タイマーをスタート",
+      "クリア",
+      "初期化",
+      "リスタート",
+      "はじめから数える"
+    ],
+    "Heading:start": [
+      "スタート",
+      "始まった",
+      "はじまった",
+      "始めた",
+      "はじめた",
+      "ゲーム",
+      "プログラム",
+      "実行",
+      "動き出した",
+      "開いた",
+      "動かす",
+      "ボタン"
+    ],
+    "Heading:click": [
+      "タップ",
+      "タッチ",
+      "さわる",
+      "さわった",
+      "さわられた",
+      "押す",
+      "押した",
+      "押された",
+      "マウス",
+      "ダブルクリック",
+      "長おし",
+      "長くおした"
+    ],
+    "Heading:keyDown": [
+      "ごとに",
+      "おされる",
+      "押される",
+      "タップ",
+      "タッチ",
+      "クリック",
+      "打つ",
+      "たたく",
+      "どれか",
+      "なにか"
+    ],
+    "Heading:message": [
+      "どの合図でも",
+      "どんな合図でも"
+    ],
+    "Heading:backdropChanged": [
+      "切りかわる",
+      "変化",
+      "新しい",
+      "かえた",
+      "変えた",
+      "ちがう",
+      "後"
+    ],
+    "Heading:valueChanged": [
+      "文字",
+      "入力",
+      "書いた",
+      "書きこんだ",
+      "内容",
+      "変化",
+      "かえた",
+      "変えた"
+    ],
+    "Heading:cloneStart": [
+      "クローン",
+      "分身",
+      "コピーされた",
+      "生まれた",
+      "出来た",
+      "作成",
+      "スタート",
+      "始まった",
+      "コピーを作った"
+    ],
+    "Heading:touchStart": [
+      "タッチ",
+      "接触",
+      "重なった",
+      "触った",
+      "くっついた",
+      "ふれあった",
+      "来た"
+    ],
+    "CloneCommand:CREATE_SELF": [
+      "クローン",
+      "ぶんしん",
+      "自分の分身を作る",
+      "分身をつくる",
+      "複製する",
+      "作成する",
+      "クローンする",
+      "コピーする",
+      "分身する",
+      "自分をふやす",
+      "自分を増やす",
+      "もう1人作る",
+      "もう一人作る",
+      "コピー作る",
+      "コピーつくる"
+    ],
+    "CloneCommand:CREATE_TARGET": [
+      "クローン",
+      "ぶんしん",
+      "コピーする",
+      "複製する",
+      "クローンする",
+      "コピー作る",
+      "コピーつくる"
+    ],
+    "CloneCommand:DELETE_SELF": [
+      "自分を消す",
+      "自分をけす",
+      "自分だけ",
+      "自分自身",
+      "自分をなくす",
+      "このコピーをなくす",
+      "コピーを消す",
+      "コピーをけす",
+      "自分のコピーを消す",
+      "自分のコピーだけを消す",
+      "このクローンを消す",
+      "この分身を消す",
+      "コピーを削除",
+      "このクローンを削除",
+      "コピーを消去",
+      "消える",
+      "きえる",
+      "いなくなる",
+      "このコピーを終わらせる",
+      "このコピーをおわらせる",
+      "このコピーをおしまいにする",
+      "すぐ消す",
+      "すぐけす",
+      "コピー消す",
+      "コピーけす"
+    ],
+    "ReturnStatement": [
+      "リターンする"
+    ],
+    "LocalVariableDeclaration": [
+      "という変数",
+      "というへんすう"
+    ],
+    "LocalListDeclaration": [
+      "リスト",
+      "リストを作る"
+    ]
+  },
+  "duplicateAllowlist": {
+    "動く": [
+      "MotionCommand:MOVE",
+      "MotionCommand:MOVE_BY"
+    ],
+    "うごく": [
+      "MotionCommand:MOVE",
+      "MotionCommand:MOVE_BY"
+    ],
+    "移動": [
+      "MotionCommand:GOTO",
+      "MotionCommand:GOTO_PART",
+      "MotionCommand:MOVE",
+      "MotionCommand:MOVE_BY"
+    ],
+    "ばしょ": [
+      "MotionCommand:GOTO",
+      "MotionCommand:GOTO_PART",
+      "MotionCommand:MOVE_BY"
+    ],
+    "歩く": [
+      "MotionCommand:MOVE",
+      "MotionCommand:MOVE_BY"
+    ],
+    "行く": [
+      "MotionCommand:GOTO",
+      "MotionCommand:GOTO_PART"
+    ],
+    "いく": [
+      "MotionCommand:GOTO",
+      "MotionCommand:GOTO_PART"
+    ],
+    "マウス": [
+      "Heading:click",
+      "MotionCommand:GOTO_PART"
+    ],
+    "回る": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "まわる": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "回す": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "まわす": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "向きを変える": [
+      "MotionCommand:POINT_TO",
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "回転": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "曲がる": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "まがる": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "ターン": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "ひねる": [
+      "MotionCommand:TURN_LEFT",
+      "MotionCommand:TURN_RIGHT"
+    ],
+    "かべ": [
+      "MotionCommand:BOUNCE",
+      "SensorRead:TOUCHING"
+    ],
+    "ぶつかる": [
+      "MotionCommand:BOUNCE",
+      "SensorRead:TOUCHING"
+    ],
+    "くらべる": [
+      "CompareExpression",
+      "CompareExpression:GTE",
+      "CompareExpression:LTE"
+    ],
+    "比べる": [
+      "CompareExpression",
+      "CompareExpression:GTE",
+      "CompareExpression:LTE"
+    ],
+    "見せる": [
+      "LooksCommand:SHOW",
+      "Say"
+    ],
+    "表示": [
+      "LooksCommand:SET_TARGET_TEXT",
+      "LooksCommand:SHOW"
+    ],
+    "出す": [
+      "LooksCommand:SET_TARGET_TEXT",
+      "LooksCommand:SHOW"
+    ],
+    "きえる": [
+      "CloneCommand:DELETE_SELF",
+      "LooksCommand:HIDE"
+    ],
+    "消える": [
+      "CloneCommand:DELETE_SELF",
+      "LooksCommand:HIDE"
+    ],
+    "コスチューム": [
+      "LooksCommand:NEXT_COSTUME",
+      "LooksCommand:PREV_COSTUME",
+      "LooksCommand:SET_COSTUME"
+    ],
+    "ポーズ": [
+      "LooksCommand:NEXT_COSTUME",
+      "LooksCommand:PREV_COSTUME",
+      "LooksCommand:SET_COSTUME"
+    ],
+    "衣装": [
+      "LooksCommand:NEXT_COSTUME",
+      "LooksCommand:PREV_COSTUME",
+      "LooksCommand:SET_COSTUME"
+    ],
+    "文字": [
+      "Heading:valueChanged",
+      "LooksCommand:SET_TARGET_TEXT"
+    ],
+    "点数": [
+      "LooksCommand:SET_TARGET_TEXT",
+      "NumericUpdate:ADD",
+      "NumericUpdate:SUB"
+    ],
+    "とめる": [
+      "StopCommand:ALL",
+      "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
+      "StopCommand:THIS"
+    ],
+    "止める": [
+      "StopCommand:ALL",
+      "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
+      "StopCommand:THIS"
+    ],
+    "とまる": [
+      "StopCommand:ALL",
+      "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
+      "StopCommand:THIS"
+    ],
+    "止まる": [
+      "StopCommand:ALL",
+      "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
+      "StopCommand:THIS"
+    ],
+    "やめる": [
+      "Break",
+      "StopCommand:ALL",
+      "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
+      "StopCommand:THIS"
+    ],
+    "ストップ": [
+      "StopCommand:ALL",
+      "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
+      "StopCommand:THIS"
+    ],
+    "おわる": [
+      "Break",
+      "StopCommand:ALL"
+    ],
+    "プログラム": [
+      "Heading:start",
+      "StopCommand:THIS"
+    ],
+    "秒": [
+      "Say",
+      "WaitTime"
+    ],
+    "つたえる": [
+      "Broadcast",
+      "BroadcastAndWait",
+      "Say"
+    ],
+    "答え": [
+      "Ask",
+      "UserFunctionCall"
+    ],
+    "スペース": [
+      "RepeatUntil",
+      "SensorRead:KEY_DOWN",
+      "WaitUntil"
+    ],
+    "スペースキー": [
+      "RepeatUntil",
+      "SensorRead:KEY_DOWN",
+      "WaitUntil"
+    ],
+    "エンター": [
+      "RepeatUntil",
+      "SensorRead:KEY_DOWN",
+      "WaitUntil"
+    ],
+    "エンターキー": [
+      "RepeatUntil",
+      "SensorRead:KEY_DOWN",
+      "WaitUntil"
+    ],
+    "キー": [
+      "RepeatUntil",
+      "SensorRead:KEY_DOWN",
+      "SensorRead:押されたキー",
+      "WaitUntil"
+    ],
+    "何度も": [
+      "Forever",
+      "RepeatCount"
+    ],
+    "ループ": [
+      "Forever",
+      "RepeatCount"
+    ],
+    "リピート": [
+      "Forever",
+      "RepeatCount"
+    ],
+    "何回も": [
+      "Forever",
+      "RepeatCount"
+    ],
+    "実行": [
+      "Heading:start",
+      "UserActionCall"
+    ],
+    "変数": [
+      "Assignment",
+      "VariableRead"
+    ],
+    "記録": [
+      "Assignment",
+      "ListAppend"
+    ],
+    "もどす": [
+      "Assignment",
+      "LooksCommand:PREV_BACKDROP",
+      "LooksCommand:PREV_COSTUME"
+    ],
+    "戻す": [
+      "Assignment",
+      "LooksCommand:PREV_BACKDROP",
+      "LooksCommand:PREV_COSTUME"
+    ],
+    "セット": [
+      "Assignment",
+      "ListReplace",
+      "LooksCommand:SET_INPUT"
+    ],
+    "変更": [
+      "Assignment",
+      "ListReplace"
+    ],
+    "リセット": [
+      "Assignment",
+      "ListClear"
+    ],
+    "初期化": [
+      "Assignment",
+      "ListClear",
+      "TimerReset"
+    ],
+    "クリア": [
+      "Assignment",
+      "ListClear",
+      "TimerReset"
+    ],
+    "保存": [
+      "Assignment",
+      "ListAppend"
+    ],
+    "スコア": [
+      "NumericUpdate:ADD",
+      "NumericUpdate:SUB",
+      "VariableRead"
+    ],
+    "加える": [
+      "ListAppend",
+      "NumericUpdate:ADD"
+    ],
+    "くわえる": [
+      "ListAppend",
+      "NumericUpdate:ADD"
+    ],
+    "追加": [
+      "ListAppend",
+      "NumericUpdate:ADD"
+    ],
+    "合図": [
+      "Broadcast",
+      "BroadcastAndWait"
+    ],
+    "メッセージ": [
+      "Broadcast",
+      "BroadcastAndWait"
+    ],
+    "知らせる": [
+      "Broadcast",
+      "BroadcastAndWait"
+    ],
+    "しらせる": [
+      "Broadcast",
+      "BroadcastAndWait"
+    ],
+    "ドレミ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "ド": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "レ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "ミ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "ファ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "ソ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "ラ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "シ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "メロディー": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "ピアノ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "音の高さ": [
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "鳴る": [
+      "SoundCommand:SAMPLE",
+      "SoundCommand:SAMPLE_WAIT",
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "音楽": [
+      "SoundCommand:SAMPLE",
+      "SoundCommand:SAMPLE_WAIT",
+      "SoundCommand:TONE",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "流す": [
+      "SoundCommand:SAMPLE_WAIT",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "再生": [
+      "SoundCommand:SAMPLE_WAIT",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "音を出す": [
+      "SoundCommand:SAMPLE_WAIT",
+      "SoundCommand:TONE_WAIT"
+    ],
+    "スタート": [
+      "Heading:cloneStart",
+      "Heading:start",
+      "SoundCommand:SAMPLE"
+    ],
+    "クリック": [
+      "EventCount:click",
+      "Heading:keyDown",
+      "SensorRead:マウスが押されている"
+    ],
+    "タッチ": [
+      "EventCount:click",
+      "Heading:click",
+      "Heading:keyDown",
+      "Heading:touchStart",
+      "SensorRead:TOUCHING",
+      "SensorRead:マウスが押されている"
+    ],
+    "おす": [
+      "EventCount:click",
+      "SensorRead:KEY_DOWN",
+      "SensorRead:マウスが押されている"
+    ],
+    "押す": [
+      "EventCount:click",
+      "Heading:click",
+      "SensorRead:KEY_DOWN",
+      "SensorRead:マウスが押されている"
+    ],
+    "おしているあいだ": [
+      "ContinuousRule",
+      "RepeatWhile"
+    ],
+    "おしっぱなし": [
+      "ContinuousRule",
+      "RepeatWhile"
+    ],
+    "さわる": [
+      "Heading:click",
+      "SensorRead:TOUCHING"
+    ],
+    "自分だけ": [
+      "CloneCommand:DELETE_SELF",
+      "StopCommand:OWN_OTHERS"
+    ],
+    "からっぽ": [
+      "ListClear",
+      "NoOperation"
+    ],
+    "捨てる": [
+      "ListClear",
+      "ListDelete"
+    ],
+    "すてる": [
+      "ListClear",
+      "ListDelete"
+    ],
+    "なくす": [
+      "ListClear",
+      "ListDelete"
+    ],
+    "始まった": [
+      "Heading:cloneStart",
+      "Heading:start"
+    ],
+    "タップ": [
+      "Heading:click",
+      "Heading:keyDown"
+    ],
+    "変化": [
+      "Heading:backdropChanged",
+      "Heading:valueChanged"
+    ],
+    "かえた": [
+      "Heading:backdropChanged",
+      "Heading:valueChanged"
+    ],
+    "変えた": [
+      "Heading:backdropChanged",
+      "Heading:valueChanged"
+    ],
+    "クローン": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET",
+      "Heading:cloneStart"
+    ],
+    "ぶんしん": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET"
+    ],
+    "複製する": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET"
+    ],
+    "クローンする": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET"
+    ],
+    "コピーする": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET"
+    ],
+    "コピー作る": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET"
+    ],
+    "コピーつくる": [
+      "CloneCommand:CREATE_SELF",
+      "CloneCommand:CREATE_TARGET"
+    ]
+  }
+}

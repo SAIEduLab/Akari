@@ -1,0 +1,71 @@
+// Made by audit/lib/syntax-types.mjs from the block schemas (Akari.BLOCK_SCHEMAS): do not edit, run
+// `node audit/lib/syntax-types.mjs --write`. A form whose discriminator differs and whose members are the same is
+// one form with a union of discriminator values.
+import type { ActorRef, BlockHeading, ExtensionCalculation, ExtensionCommand, Heading, NodeBase, Qualifier, Readable, ScriptBase, ScriptUnit, StatementBase, SyntaxExtraExpression, SyntaxExtraStatement, Unit } from './syntax-base.d.ts';
+import type { BlockTree } from './blocks.d.ts';
+export type ActorQualifiedRead = NodeBase & { kind: "ActorQualifiedRead"; actorRef: ActorRef; value: Expression };
+export type Ask = StatementBase & { kind: "Ask"; actorRef?: ActorRef; question: Expression; inlineComment: string };
+export type Assignment = StatementBase & { kind: "Assignment"; actorRef?: ActorRef; target: Target; value: Expression; inlineComment: string };
+export type BinaryExpression = NodeBase & { kind: "BinaryExpression"; op: "ADD" | "SUB" | "MUL" | "DIV" | "POW"; left: Expression; right: Expression };
+export type BooleanLiteral = NodeBase & { kind: "BooleanLiteral"; value: boolean };
+export type Break = StatementBase & { kind: "Break"; actorRef?: ActorRef; inlineComment: string };
+export type Broadcast = StatementBase & { kind: "Broadcast"; broadcastRef?: string; actorRef?: ActorRef; message: Expression; inlineComment: string };
+export type BroadcastAndWait = StatementBase & { kind: "BroadcastAndWait"; actorRef?: ActorRef; message: Expression; inlineComment: string };
+export type BuiltinCall = NodeBase & { kind: "BuiltinCall"; name: "乱数" | "余り" | "四捨五入" | "切り上げ" | "切り捨て" | "絶対値" | "平方根" | "正弦" | "余弦" | "正接" | "逆正弦" | "逆余弦" | "逆正接" | "自然対数" | "常用対数" | "指数" | "数" | "文字" | "最小" | "最大" | "つなぐ" | "CONTAINS" | "INDEX_OF" | "LENGTH" | "STRING_LENGTH" | "STRING_CHAR"; args: Expression[] };
+export type CloneCommand = StatementBase & ({ kind: "CloneCommand"; op: "CREATE_SELF" | "CREATE_TARGET"; actorRef?: ActorRef; args: Expression[]; count?: Expression; inlineComment: string } | { kind: "CloneCommand"; op: "DELETE_SELF"; actorRef?: ActorRef; args: Expression[]; inlineComment: string });
+export type CommentLine = StatementBase & { kind: "CommentLine"; text: string; actorRef?: ActorRef; inlineComment: string };
+export type CompareExpression = NodeBase & { kind: "CompareExpression"; op: "GTE" | "LTE" | "GT" | "LT" | "EQ" | "NEQ"; left: Expression; right: Expression };
+export type Continue = StatementBase & { kind: "Continue"; actorRef?: ActorRef; inlineComment: string };
+export type ContinuousRule = StatementBase & { kind: "ContinuousRule"; actorRef: ActorRef; direction: string; condition: Expression; seconds: Expression; distance: Expression; inlineComment?: string };
+export type EventCount = NodeBase & ({ kind: "EventCount"; event: "action"; actorRef: ActorRef; name: string; count: Expression } | { kind: "EventCount"; event: "click"; actorRef: ActorRef; count: Expression });
+export type ForEach = StatementBase & { kind: "ForEach"; binder: string; actorRef?: ActorRef; list: Expression; body: Statement[]; inlineComment: string; binderComment?: string };
+export type Forever = StatementBase & { kind: "Forever"; actorRef?: ActorRef; body: Statement[]; inlineComment: string };
+export type Hole = NodeBase & ({ kind: "Hole"; role: "expression"; label: string } | { kind: "Hole"; role: "statement"; label: string; actorRef?: ActorRef; inlineComment: string } | { kind: "Hole"; role: "target"; label: string } | { kind: "Hole"; role: "rule"; label: string; inlineComment?: string });
+export type IfStatement = StatementBase & { kind: "IfStatement"; hasElse: boolean; actorRef?: ActorRef; condition: Expression; thenBody: Statement[]; elseBody: Statement[]; inlineComment: string; elseComment: string };
+export type ListAppend = StatementBase & { kind: "ListAppend"; actorRef?: ActorRef; target: Target; value: Expression; inlineComment: string };
+export type ListClear = StatementBase & { kind: "ListClear"; actorRef?: ActorRef; target: Target; inlineComment: string };
+export type ListDelete = StatementBase & { kind: "ListDelete"; actorRef?: ActorRef; target: Target; index: Expression; inlineComment: string };
+export type ListInsert = StatementBase & { kind: "ListInsert"; actorRef?: ActorRef; target: Target; index: Expression; value: Expression; inlineComment: string };
+export type ListLiteral = NodeBase & { kind: "ListLiteral"; items: Expression[] };
+export type ListRead = NodeBase & { kind: "ListRead"; list: Expression; index: Expression };
+export type ListReplace = StatementBase & { kind: "ListReplace"; actorRef?: ActorRef; target: Target; index: Expression; value: Expression; inlineComment: string };
+export type LocalListDeclaration = StatementBase & { kind: "LocalListDeclaration"; name: string; actorRef?: ActorRef; inlineComment: string };
+export type LocalVariableDeclaration = StatementBase & { kind: "LocalVariableDeclaration"; name: string; actorRef?: ActorRef; initial: Expression; inlineComment: string };
+export type LogicalExpression = NodeBase & { kind: "LogicalExpression"; op: "AND" | "OR"; left: Expression; right: Expression };
+export type LooksCommand = StatementBase & { kind: "LooksCommand"; op: "FRONT" | "BACK" | "HIDE" | "SHOW" | "NEXT_COSTUME" | "PREV_COSTUME" | "NEXT_BACKDROP" | "PREV_BACKDROP" | "SET_SCALE" | "FORWARD_LAYERS" | "BACKWARD_LAYERS" | "SET_COLOR" | "SET_COSTUME" | "SET_BACKDROP" | "SET_SELF_TEXT" | "SET_TARGET_TEXT" | "SET_INPUT"; actorRef?: ActorRef; args: Expression[]; inlineComment: string };
+export type MotionCommand = StatementBase & ({ kind: "MotionCommand"; op: "GOTO"; xDir: "right" | "left"; yDir: "up" | "down"; actorRef?: ActorRef; x: Expression; y: Expression; seconds?: Expression; inlineComment: string } | { kind: "MotionCommand"; op: "MOVE_BY"; xDir: "right" | "left"; yDir: "up" | "down"; actorRef?: ActorRef; x?: Expression; y?: Expression; seconds?: Expression; inlineComment: string } | { kind: "MotionCommand"; op: "MOVE"; direction: "forward" | "backward"; actorRef?: ActorRef; args: Expression[]; seconds?: Expression; inlineComment: string } | { kind: "MotionCommand"; op: "GOTO_PART" | "TURN_RIGHT" | "TURN_LEFT"; actorRef?: ActorRef; args: Expression[]; seconds?: Expression; inlineComment: string } | { kind: "MotionCommand"; op: "SET_DIRECTION" | "POINT_TO" | "BOUNCE"; actorRef?: ActorRef; args: Expression[]; inlineComment: string });
+export type NoOperation = StatementBase & { kind: "NoOperation"; actorRef?: ActorRef; inlineComment: string };
+export type NumberLiteral = NodeBase & { kind: "NumberLiteral"; value: number };
+export type NumericUpdate = StatementBase & { kind: "NumericUpdate"; op: "ADD" | "SUB"; actorRef?: ActorRef; target: Target; value: Expression; inlineComment: string };
+export type PenCommand = StatementBase & { kind: "PenCommand"; op: "DOWN" | "UP" | "CLEAR" | "STAMP" | "SET_COLOR" | "SET_SIZE"; actorRef?: ActorRef; args: Expression[]; inlineComment: string };
+export type QuantityLiteral = NodeBase & { kind: "QuantityLiteral"; unit: Unit; value: Expression };
+export type RepeatCount = StatementBase & { kind: "RepeatCount"; actorRef?: ActorRef; count: Expression; body: Statement[]; inlineComment: string };
+export type RepeatUntil = StatementBase & { kind: "RepeatUntil"; actorRef?: ActorRef; condition: Expression; body: Statement[]; inlineComment: string };
+export type RepeatWhile = StatementBase & { kind: "RepeatWhile"; actorRef?: ActorRef; condition: Expression; body: Statement[]; inlineComment: string };
+export type ReturnStatement = StatementBase & { kind: "ReturnStatement"; actorRef?: ActorRef; value: Expression; inlineComment: string };
+export type Say = StatementBase & { kind: "Say"; actorRef?: ActorRef; value: Expression; seconds?: Expression; inlineComment: string };
+export type Script = ScriptBase & { kind: "Script"; heading?: Heading; rules?: Rule[]; units?: ScriptUnit[]; body: Statement[]; headingComment?: string };
+export type SensorRead = NodeBase & ({ kind: "SensorRead"; sensor: "マウスが押されている" | "マウスの横位置" | "マウスの縦位置" | "以前の背景名" | "新しい背景名" | "受け取った知らせ" | "押されたキー" | "クローンである" | "背景番号" | "背景名" | "衣装番号" | "衣装名" | "横位置" | "縦位置" | "方向" | "大きさ" | "タイマー" | "答え" | "音量" | "音程" | "以前の値" | "新しい値" } | { kind: "SensorRead"; sensor: "INPUT_VALUE" | "DISTANCE_TO" | "KEY_DOWN" | "TOUCHING_COLOR" | "TOUCHING"; arg: Expression });
+export type SoundCommand = StatementBase & { kind: "SoundCommand"; op: "STOP_ALL" | "TONE_WAIT" | "TONE" | "SAMPLE_WAIT" | "SAMPLE" | "SET_VOLUME" | "PITCH_UP" | "PITCH_DOWN"; actorRef?: ActorRef; args: Expression[]; inlineComment: string };
+export type StopCommand = StatementBase & { kind: "StopCommand"; op: "THIS" | "OTHERS" | "OWN_OTHERS" | "ALL"; actorRef?: ActorRef; inlineComment: string };
+export type StringLiteral = NodeBase & { kind: "StringLiteral"; value: string };
+export type TargetReference = { name: string; qualifier: Qualifier };
+export type TimerReset = StatementBase & { kind: "TimerReset"; actorRef?: ActorRef; inlineComment: string };
+export type UnaryExpression = NodeBase & { kind: "UnaryExpression"; op: "POS" | "NEG" | "NOT"; value: Expression };
+export type UnitlessRead = NodeBase & { kind: "UnitlessRead"; value: Expression };
+export type UserActionCall = StatementBase & { kind: "UserActionCall"; name: string; argumentNames?: string[]; actorRef?: ActorRef; args: Expression[]; inlineComment: string };
+export type UserFunctionCall = NodeBase & { kind: "UserFunctionCall"; name: string; argumentNames?: string[]; args: Expression[] };
+export type VariableRead = NodeBase & { kind: "VariableRead"; name: string; qualifier: Qualifier };
+export type WaitBroadcastGroup = StatementBase & { kind: "WaitBroadcastGroup"; broadcastRef: string; inlineComment: string };
+export type WaitTime = StatementBase & { kind: "WaitTime"; actorRef?: ActorRef; seconds: Expression; inlineComment: string };
+export type WaitUntil = StatementBase & { kind: "WaitUntil"; actorRef?: ActorRef; condition: Expression; inlineComment: string };
+export type Statement = Readable<Ask | Assignment | Break | Broadcast | BroadcastAndWait | CloneCommand | CommentLine | Continue | ForEach | Forever | (Hole & { role: "statement" }) | IfStatement | ListAppend | ListClear | ListDelete | ListInsert | ListReplace | LocalListDeclaration | LocalVariableDeclaration | LooksCommand | MotionCommand | NoOperation | NumericUpdate | PenCommand | RepeatCount | RepeatUntil | RepeatWhile | ReturnStatement | Say | SoundCommand | StopCommand | TimerReset | UserActionCall | WaitBroadcastGroup | WaitTime | WaitUntil | ExtensionCommand | SyntaxExtraStatement>;
+export type Expression = Readable<ActorQualifiedRead | BinaryExpression | BooleanLiteral | BuiltinCall | CompareExpression | EventCount | (Hole & { role: "expression" }) | ListLiteral | ListRead | LogicalExpression | NumberLiteral | QuantityLiteral | SensorRead | StringLiteral | UnaryExpression | UnitlessRead | UserFunctionCall | VariableRead | ExtensionCalculation | SyntaxExtraExpression>;
+export type Rule = Readable<ContinuousRule | (Hole & { role: "rule" })>;
+export type Target = Readable<(Hole & { role: "target" }) | TargetReference>;
+// The members of a block (BlockTree, blocks.d.ts) by their keys, as every schema that has a key keeps it (an input is
+// one block or a list of blocks in all of them). An input its schema may leave out is not there (undefined); every
+// body of a block's schema is written. A key given as a value (node.bodies[key]) is taken from the block's own schema.
+export type BlockTreeFields = { actorRef?: ActorRef; argumentNames?: string[]; binder?: string; broadcastRef?: string; direction?: string; hasElse?: boolean; heading?: BlockHeading; label?: string; name?: string; qualifier?: Qualifier; text?: string; unit?: Unit; value?: boolean | number | string; xDir?: "left" | "right"; yDir?: "down" | "up" } & { [key: string]: unknown };
+export type BlockTreeInputs = { arg?: BlockTree; args?: BlockTree[]; condition?: BlockTree; count?: BlockTree; distance?: BlockTree; index?: BlockTree; initial?: BlockTree; items?: BlockTree[]; left?: BlockTree; list?: BlockTree; message?: BlockTree; question?: BlockTree; right?: BlockTree; rules?: BlockTree[]; seconds?: BlockTree; target?: BlockTree; units?: BlockTree[]; value?: BlockTree; x?: BlockTree; y?: BlockTree } & { [key: string]: BlockTree | BlockTree[] | undefined };
+export type BlockTreeBodies = { body?: BlockTree[]; elseBody?: BlockTree[]; thenBody?: BlockTree[] } & { [key: string]: BlockTree[] };

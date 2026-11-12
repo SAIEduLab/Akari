@@ -1,0 +1,10 @@
+{
+  "name": "akari-audit-tools-browser",
+  "description": "The audit tools a browser job installs (Playwright is installed apart, at the release the run plans).",
+  "dependencies": {
+    "@babel/parser": "7.28.4",
+    "mdast-util-from-markdown": "2.0.2",
+    "micromark": "4.0.3",
+    "parse5": "7.3.0"
+  }
+}
