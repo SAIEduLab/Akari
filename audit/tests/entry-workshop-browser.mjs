@@ -342,12 +342,18 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   const routes={},viewports=[];
   const route=async(id,steps)=>{await fresh();const states=[await state()];for(const step of steps){await step();states.push(await state());}routes[id]=states;};
   await fresh();
-  for(const size of [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080},{width:390,height:844}]){
+  for(const size of [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768},{width:800,height:600},{width:768,height:1024},{width:740,height:800},{width:390,height:844}]){
    await p.setViewportSize(size);await frames();
-   const seen=await p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),b=n.getBoundingClientRect(),button=document.querySelector('#tutorialStart').getBoundingClientRect(),bar=document.querySelector('.menutool').getBoundingClientRect(),c=getComputedStyle(n),arrow=b.x+parseFloat(c.getPropertyValue('--tutorial-hint-arrow'));
-    const hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);n.focus();
-    return{text:n.textContent,hint:{x:b.x,y:b.y,right:b.right,bottom:b.bottom},button:{x:button.x,right:button.right,bottom:button.bottom},toolbarBottom:bar.bottom,arrow,viewport:{width:innerWidth,height:innerHeight},
-     pointerEvents:c.pointerEvents,hitBubble:hit===n||n.contains(hit),focusable:document.activeElement===n,describedBy:document.querySelector('#tutorialStart').getAttribute('aria-describedby'),ariaHidden:n.getAttribute('aria-hidden')};});
+   const seen=await p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),start=document.querySelector('#tutorialStart'),c=getComputedStyle(n),box=e=>{const b=e.getBoundingClientRect();return{x:b.x,y:b.y,right:b.right,bottom:b.bottom};};
+    const hint=box(n),button=box(start),shown=c.display!=='none'&&c.visibility!=='hidden'&&hint.right>hint.x,arrow=hint.x+parseFloat(c.getPropertyValue('--tutorial-hint-arrow'));
+    // What a child presses or reads as a heading, as the test sees it.
+    const controls=[...document.querySelectorAll('button,select,input,textarea,summary,a[href],label,[role="button"],[tabindex]:not([tabindex="-1"]),.win-title')]
+     .filter(e=>e!==start&&!n.contains(e)&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>({id:e.id||e.className||e.tagName,...box(e)}));
+    const covered=shown?controls.filter(e=>e.x<hint.right&&e.right>hint.x&&e.y<hint.bottom&&e.bottom>hint.y).map(e=>e.id):[];
+    const between=shown?controls.filter(e=>e.x<=arrow&&e.right>=arrow&&e.y<hint.y&&e.bottom>button.bottom).map(e=>e.id):[];
+    const hit=shown?document.elementFromPoint((hint.x+hint.right)/2,(hint.y+hint.bottom)/2):null;n.focus();
+    return{shown,text:n.textContent,hint,button,arrow,covered,between,viewport:{width:innerWidth,height:innerHeight},ariaHidden:n.getAttribute('aria-hidden'),
+     pointerEvents:c.pointerEvents,hitBubble:!!hit&&(hit===n||n.contains(hit)),focusable:document.activeElement===n,describedBy:start.getAttribute('aria-describedby')};});
    viewports.push({size,...seen,screenshot:await picture(p,'first-hint-'+size.width+'x'+size.height)});
   }
   await p.setViewportSize({width:1280,height:720});await frames();

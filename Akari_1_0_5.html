@@ -49691,18 +49691,36 @@ SOFTWARE.
     const tutorialHint=appCalls.$('#tutorialHint'),tutorialStartButton=appCalls.$('#tutorialStart');
     let tutorialHintGone=false;
     try{tutorialHintGone=localStorage.getItem(STORAGE_KEYS.tutorialHint)==='gone';}catch(_){}
-    const tutorialHintWatch=new AbortController();let tutorialHintObserver=null;
-    // It stands under the button, inside the toolbar's width, its arrow at the button's middle.
+    const tutorialHintWatch=new AbortController();let tutorialHintObserver=null,tutorialHintNotes=null;
+    // It stands right under the button (in the toolbar's second row when the toolbar wraps), its arrow on the button, at
+    // the free place nearest the button's middle: over no control, no window heading and no note, with nothing between its
+    // arrow and the button. A screen with no such place (narrower than about 740 pixels) still shows it right under the
+    // button, nearest its middle, over what is there (it takes no pointer, so what is under it can still be pressed).
+    // Only values that change are written, so the observers below do not answer the bubble's own moves.
+    const tutorialHintAvoid='button,select,input,textarea,summary,a[href],label,.win-title,[role="button"],[tabindex]:not([tabindex="-1"]),.mode-blocked-note:not([hidden])';
     const placeTutorialHint=()=>{
       if(tutorialHint.hidden||!tutorialHint.offsetWidth)return;
-      const bar=appCalls.$('.menutool').getBoundingClientRect(),button=tutorialStartButton.getBoundingClientRect(),middle=button.left+button.width/2-bar.left;
-      const left=Math.max(8,Math.min(middle-28,bar.width-tutorialHint.offsetWidth-8));
-      tutorialHint.style.left=left+'px';tutorialHint.style.setProperty('--tutorial-hint-arrow',(middle-left)+'px');
+      const bar=appCalls.$('.menutool').getBoundingClientRect(),button=tutorialStartButton.getBoundingClientRect(),middle=button.left+button.width/2;
+      const width=tutorialHint.offsetWidth,height=tutorialHint.offsetHeight,top=button.bottom+10;
+      const others=[...document.querySelectorAll(tutorialHintAvoid)].filter(n=>n!==tutorialStartButton&&!tutorialHint.contains(n)&&n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden').map(n=>n.getBoundingClientRect());
+      // (the places on the screen whose arrow is on the button, nearest the button's middle first)
+      const places=[];
+      for(let shift=0;shift<=width;shift+=4)for(const left of shift?[middle-28-shift,middle-28+shift]:[middle-28]){
+        const arrow=Math.max(left+16,Math.min(middle,left+width-16));
+        if(left>=8&&left+width<=window.innerWidth-8&&arrow>=button.left&&arrow<=button.right)places.push(left);
+      }
+      // (the strip between the button and the bubble, where the arrow is, counts as the bubble's)
+      const free=places.find(left=>!others.some(r=>r.left<left+width&&r.right>left&&r.top<top+height&&r.bottom>button.bottom));
+      const place=free??places[0]??Math.max(8,Math.min(middle-28,window.innerWidth-width-8));
+      const style=tutorialHint.style,left=place-bar.left+'px',above=top-bar.top+'px',arrow=Math.max(16,Math.min(middle-place,width-16))+'px';
+      if(style.left!==left)style.left=left;
+      if(style.top!==above)style.top=above;
+      if(style.getPropertyValue('--tutorial-hint-arrow')!==arrow)style.setProperty('--tutorial-hint-arrow',arrow);
     };
     const dismissTutorialHint=()=>{
       if(tutorialHintGone)return;
       tutorialHintGone=true;tutorialHint.hidden=true;tutorialStartButton.removeAttribute('aria-describedby');
-      tutorialHintWatch.abort();tutorialHintObserver?.disconnect();
+      tutorialHintWatch.abort();tutorialHintObserver?.disconnect();tutorialHintNotes?.disconnect();
       try{localStorage.setItem(STORAGE_KEYS.tutorialHint,'gone');}catch(_){}
     };
     const offerTutorialHint=kept=>{
@@ -49717,7 +49735,10 @@ SOFTWARE.
       dismissTutorialHint();
     };
     if(!tutorialHintGone){
-      if(typeof ResizeObserver==='function'){tutorialHintObserver=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool')])tutorialHintObserver.observe(node);}
+      // (it moves with the button, the toolbar, the areas under it and the name of the part chosen, and away from a note
+      // shown in the toolbar)
+      if(typeof ResizeObserver==='function'){tutorialHintObserver=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool'),appCalls.$('.main'),appCalls.$('#objectSelect')])tutorialHintObserver.observe(node);}
+      if(typeof MutationObserver==='function'){tutorialHintNotes=new MutationObserver(placeTutorialHint);tutorialHintNotes.observe(appCalls.$('.menutool'),{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});}
       window.addEventListener('resize',placeTutorialHint,{signal:tutorialHintWatch.signal});
       for(const type of ['pointerdown','click','input','keydown'])document.addEventListener(type,startsWork,{capture:true,signal:tutorialHintWatch.signal});
     }

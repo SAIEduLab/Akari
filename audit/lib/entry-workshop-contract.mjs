@@ -24,7 +24,11 @@ export const browserIds=Object.freeze(['ENTRY-FIRST-VIEW','ENTRY-MODE-PRESERVATI
 // ENTRY-FIRST-HINT, from LANGUAGE.md 「はじめに：最初の作品を動かす」: each route starts with an empty browser and records, after
 // each of its steps, whether the bubble is on the screen and what akari.tutorialHint.v1 holds ('unreadable' where reading
 // it throws). The steps are the test's; the states are written here from the specification, not read from the product.
-export const firstHintSizes=Object.freeze([{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080},{width:390,height:844}]);
+// Each size names whether the screen has room for the bubble over nothing: from 740 pixels wide the row under the button
+// is free (the toolbar's second row when it wraps); at 390 every place right under the button is over a control, and the
+// bubble is shown there all the same.
+export const firstHintSizes=Object.freeze([{width:1280,height:720,room:true},{width:1366,height:768,room:true},{width:1920,height:1080,room:true},
+ {width:1024,height:768,room:true},{width:800,height:600,room:true},{width:768,height:1024,room:true},{width:740,height:800,room:true},{width:390,height:844,room:false}]);
 export const firstHintRoutes=Object.freeze({
  // start; reload with nothing touched
  'untouched-reload':[[true,null],[true,null]],
@@ -53,13 +57,17 @@ export const firstHintRoutes=Object.freeze({
 });
 // The checks of ENTRY-FIRST-HINT's observations, from the rectangles the test measured.
 export function verifyFirstHint(hint){
- assert.deepEqual(hint.viewports.map(v=>v.size),firstHintSizes);
- for(const v of hint.viewports){assert.equal(v.text,'さかなを タッチする ゲームを 作ってみよう！');assert.deepEqual(v.viewport,v.size);
-  assert.equal(v.ariaHidden,'true','read once, as the button\'s description');
-  // Right under the toolbar (the button's row when it is one row; under all of it when it wraps, over none of its controls), the arrow
-  // within the button's width, the whole bubble on the screen.
-  assert.ok(v.toolbarBottom>=v.button.bottom&&v.hint.y>=v.toolbarBottom&&v.hint.y-v.toolbarBottom<=24,'bubble right under the toolbar');
-  assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,'arrow at the button');assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width&&v.hint.bottom<=v.size.height,'bubble on the screen');assert.equal(v.pointerEvents,'none');assert.equal(v.hitBubble,false);assert.equal(v.focusable,false);assert.equal(v.describedBy,'tutorialHint');}
+ assert.deepEqual(hint.viewports.map(v=>[v.size.width,v.size.height]),firstHintSizes.map(s=>[s.width,s.height]));
+ for(const [i,v]of hint.viewports.entries()){const {room}=firstHintSizes[i],at=v.size.width+'x'+v.size.height+' ';
+  assert.equal(v.text,'さかなを タッチする ゲームを 作ってみよう！');assert.deepEqual(v.viewport,{width:v.size.width,height:v.size.height});
+  assert.equal(v.ariaHidden,'true',at+'read once, as the button\'s description');assert.equal(v.pointerEvents,'none');assert.equal(v.focusable,false);
+  assert.equal(v.shown,true,at+'shown');assert.equal(v.describedBy,'tutorialHint');assert.equal(v.hitBubble,false,at+'a press goes through');
+  // Right under the button: the arrow's tip (10 px above the bubble) at the button's bottom edge, within its width.
+  assert.ok(v.hint.y-v.button.bottom>=0&&v.hint.y-v.button.bottom<=24,at+'right under the button');
+  assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,at+'arrow at the button');
+  assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width&&v.hint.bottom<=v.size.height,at+'on the screen');
+  if(room){assert.deepEqual(v.covered,[],at+'over no control');assert.deepEqual(v.between,[],at+'no control between the arrow and the button');}
+ }
  assert.deepEqual(Object.keys(hint.routes),Object.keys(firstHintRoutes));
  for(const [id,states]of Object.entries(firstHintRoutes))assert.deepEqual(hint.routes[id],states,'ENTRY-FIRST-HINT '+id);
  return true;
