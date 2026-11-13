@@ -377,7 +377,10 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await route('keys-without-making',[()=>focusIn('#entryEvents'),async()=>{for(const key of ['Shift','Control','Alt','CapsLock','CapsLock','Escape','F2','ArrowRight','ArrowLeft','Home','End'])await p.keyboard.press(key);},
    ()=>p.keyboard.press('Enter')]);
   // ↑ at the list's first block opens the list's tools by a click of the product's own: no making.
-  await route('arrow-up-in-list',[()=>focusIn('#blockEditor [data-blockui-action="palette-add"]'),()=>p.keyboard.press('ArrowUp')]);
+  // (the tools are opened when they are no longer hidden; はじめて's CSS keeps them out of view all the same)
+  const tools=()=>p.locator('#blockEditor .blockui-palette-controls').evaluate(n=>!n.hidden);
+  await route('arrow-up-in-list',[async()=>{await focusIn('#blockEditor [data-blockui-action="palette-add"]');assert.equal(await tools(),false,'the tools of the list are closed');},
+   async()=>{await p.keyboard.press('ArrowUp');assert.equal(await tools(),true,'↑ opened the tools of the list');}]);
   // A click made by a page's code (no press of the child) is no making.
   await route('scripted-click',[()=>p.locator('#blockEditor [data-blockui-action="palette-add"]').first().dispatchEvent('click')]);
   await route('press-guide',[async()=>{await p.locator('#tutorialStart').click();await waitStep(p,auditRoute()[0]);await p.locator('#tutorialExit').click();}]);
@@ -399,10 +402,16 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   // A key alone, with no input: Backspace at the start of the code deletes nothing.
   await route('key-only',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
    async()=>{await p.locator('#codeEditor').evaluate(n=>{n.focus();n.setSelectionRange(0,0);});const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('Backspace');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing deleted');}]);
-  // A made block's body (自分で作ったブロック, a くわしく tool) is a body too: a press in the one shown, blocks or code.
-  await route('made-block',[()=>p.locator('#uiLevel').selectOption('advanced'),()=>p.locator('#procBtn').click(),
-   async()=>{const body=await p.evaluate(()=>['#callableBlocks','#callableCode'].find(s=>document.querySelector(s)?.getClientRects().length));assert.ok(body,'the body of a made block is shown');
-    const b=await p.locator(body).boundingBox();await p.mouse.click(b.x+12,b.y+12);}]);
+  // A made block's body (自分で作ったブロック, a くわしく tool) is a body too, in its code view and in its block view.
+  for(const view of ['code','blocks'])await route('made-block-'+view,[()=>p.locator('#uiLevel').selectOption('advanced'),async()=>{await p.locator('#procBtn').click();await chooseView(p,view,{prefix:'callable'});},
+   async()=>{const b=await p.locator(view==='code'?'#callableCode':'#callableBlocks').boundingBox();await p.mouse.click(b.x+12,b.y+12);}]);
+  // A long text put in the code (4096 letters or more) is put in by the product's own input after the browser's: as one
+  // insertion, and as a paste from the clipboard.
+  const longText='1'.repeat(5000);
+  await route('long-input',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText(longText);}]);
+  await p.context().grantPermissions(['clipboard-read','clipboard-write']);
+  await route('long-paste',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.evaluate(text=>navigator.clipboard.writeText(text),longText);await p.locator('#codeEditor').focus();await p.keyboard.press('ControlOrMeta+V');
+    assert.ok((await p.locator('#codeEditor').inputValue()).includes(longText),'the long text was pasted');}]);
   // The next pages' localStorage throws on every call (a browser that keeps nothing).
   await p.addInitScript(()=>{for(const name of ['getItem','setItem','removeItem','clear'])Storage.prototype[name]=function(){throw new DOMException('blocked','SecurityError');};});
   await route('storage-throws',[listHead,reload]);

@@ -61,8 +61,12 @@ export const firstHintRoutes=Object.freeze({
  'code-typing':[[true,null],[false,null],[false,null],[false,'gone'],[false,'gone']],
  // start; かんたん; the code view; Backspace at the start of the code (a key with no input)
  'key-only':[[true,null],[false,null],[false,null],[false,'gone']],
- // start; くわしく; 自分で作ったブロック opened; a press in its body
- 'made-block':[[true,null],[false,null],[false,null],[false,'gone']],
+ // start; くわしく; 自分で作ったブロック opened in its code view, then in its block view; a press in that body
+ 'made-block-code':[[true,null],[false,null],[false,null],[false,'gone']],
+ 'made-block-blocks':[[true,null],[false,null],[false,null],[false,'gone']],
+ // start; かんたん; the code view; 5000 letters put in at once, or pasted
+ 'long-input':[[true,null],[false,null],[false,null],[false,'gone']],
+ 'long-paste':[[true,null],[false,null],[false,null],[false,'gone']],
  // with a localStorage that throws: start; a mouse press in the block list; reload
  'storage-throws':[[true,'unreadable'],[false,'unreadable'],[true,'unreadable']],
 });
@@ -79,12 +83,14 @@ export function verifyFirstHint(hint){
   assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width&&v.hint.bottom<=v.size.height,at+'on the screen');
   if(room){assert.deepEqual(v.covered,[],at+'over no control');assert.deepEqual(v.between,[],at+'no control between the arrow and the button');}
  }
- // With the note under the view toggle shown at 800x600 the bubble stands clear of it too; with a part whose long name
+ // With the note under the view toggle shown at 800x600 the bubble is over neither the note nor a control (the note
+ // stands below the toolbar, out of the bubble's way, at every width measured); with a part whose long name
  // leaves no free place at 1280x720 the bubble is still shown right under the button (over what is there).
  for(const [name,v,clear]of [['note',hint.withNote,true],['long name',hint.longName,false]]){
   assert.equal(v.shown,true,name+' shown');assert.ok(v.hint.y-v.button.bottom>=0&&v.hint.y-v.button.bottom<=24,name+' right under the button');
   assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,name+' arrow at the button');assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width,name+' on the screen');
-  if(clear){assert.ok(v.covered.length===0&&v.between.length===0,name+' over no control');}
+  if(clear)assert.ok(v.covered.length===0&&v.between.length===0,name+' over no control');
+  else assert.ok(v.covered.includes('objectSelect'),name+': the long name leaves no free place, and the bubble is over the list of parts');
  }
  assert.deepEqual(Object.keys(hint.routes),Object.keys(firstHintRoutes));
  for(const [id,states]of Object.entries(firstHintRoutes))assert.deepEqual(hint.routes[id],states,'ENTRY-FIRST-HINT '+id);

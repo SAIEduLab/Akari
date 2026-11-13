@@ -49682,7 +49682,7 @@ SOFTWARE.
     // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or makes
     // something in the blocks (the list, the body and the two event buttons), in the code (the body of the code view, at
     // any level) or in a made block's body (自分で作ったブロック): a press, a click (a screen reader's or
-    // voice control's press comes as a click alone), an input (the first letter of a word being converted too), or a key
+    // voice control's press comes as a click alone), an input (a paste, a drop and the first letter of a word being converted too), or a key
     // that acts or writes (Enter, Space, a character, Backspace, Delete; no Ctrl, Alt or Meta with it, and not a key
     // taken by the conversion). Tab, a modifier or a lock, Escape, a function key and the keys that move make nothing;
     // nor does a click or an input the product makes itself (the list's ↑ at its first block opens the list's tools). A start that finds a work kept in this browser
@@ -49712,8 +49712,9 @@ SOFTWARE.
         const arrow=Math.max(left+16,Math.min(middle,left+width-16));
         if(left>=8&&left+width<=window.innerWidth-8&&arrow>=button.left&&arrow<=button.right)places.push(left);
       }
-      // (the strip between the button and the bubble, where the arrow is, counts as the bubble's)
-      const free=places.find(left=>!others.some(r=>r.left<left+width&&r.right>left&&r.top<top+height&&r.bottom>button.bottom));
+      // (the bubble, and the arrow's column between the button and the bubble)
+      const free=places.find(left=>{const arrow=Math.max(left+16,Math.min(middle,left+width-16));
+        return !others.some(r=>r.left<left+width&&r.right>left&&r.top<top+height&&r.bottom>top||r.left<arrow+10&&r.right>arrow-10&&r.top<top&&r.bottom>button.bottom);});
       const place=free??places[0]??Math.max(8,Math.min(middle-28,window.innerWidth-width-8));
       const style=tutorialHint.style,left=place-bar.left+'px',above=top-bar.top+'px',arrow=Math.max(16,Math.min(middle-place,width-16))+'px';
       if(style.left!==left)style.left=left;
@@ -49734,6 +49735,9 @@ SOFTWARE.
     const startsWork=event=>{
       // (only what the browser makes from the child: the product's own clicks and inputs, made by its code, are none)
       if(!event.isTrusted||!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents,#codeEditor,#callableBlocks,#callableCode'))return;
+      // (a paste or a long text the product puts in by its own input still comes first as the browser's beforeinput or
+      // paste; undo and redo, also beforeinput, make nothing)
+      if(event.type==='beforeinput'&&!/^(?:insert|delete)/.test(event.inputType))return;
       const key=event;
       if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
       dismissTutorialHint();
@@ -49744,7 +49748,7 @@ SOFTWARE.
       if(typeof ResizeObserver==='function'){tutorialHintObserver=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool'),appCalls.$('.main'),appCalls.$('#objectSelect')])tutorialHintObserver.observe(node);}
       if(typeof MutationObserver==='function'){tutorialHintNotes=new MutationObserver(placeTutorialHint);tutorialHintNotes.observe(appCalls.$('.menutool'),{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});}
       window.addEventListener('resize',placeTutorialHint,{signal:tutorialHintWatch.signal});
-      for(const type of ['pointerdown','click','input','keydown'])document.addEventListener(type,startsWork,{capture:true,signal:tutorialHintWatch.signal});
+      for(const type of ['pointerdown','click','beforeinput','input','paste','drop','keydown'])document.addEventListener(type,startsWork,{capture:true,signal:tutorialHintWatch.signal});
     }
     appCalls.$('#tutorialStart').onclick=()=>{dismissTutorialHint();return appCalls.beginTutorial();};
     appCalls.$('#tutorialExit').onclick=()=>{appCalls.finishTutorial(false);appCalls.setStatus('とちゅうの 作品は のこって いるよ。じゆうに つづけられるよ。');};
