@@ -5680,6 +5680,19 @@ body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugb
 body[data-ui-level="entry"] :is(.blockui-heading-editor,.blockui-rules) { display:none; }
 body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
 body[data-ui-level="entry"] :is(#projectMenu,#tutorialStart) { display:block; }
+/* The bubble under いっしょに作る (placed by the application): only where the button is, on はじめて's edit screen with no
+   guide running. It takes no pointer, so what lies under it can still be pressed; the 作品 menu opens over it. */
+.tutorial-hint { display:none; }
+body[data-ui-level="entry"]:not(.runtime):not([data-tutorial-step]) .menutool > .tutorial-hint:not([hidden]) {
+  display:block; position:absolute; top:calc(100% + 10px); left:8px; z-index:20; width:max-content; max-width:min(20rem, calc(100% - 16px));
+  margin:0; padding:8px 12px; border:2px solid #e0a43a; border-radius:12px; background:#fff8e6; color:#5a3a00;
+  font-size:15px; font-weight:700; line-height:1.5; box-shadow:0 6px 16px #18364b30; pointer-events:none;
+}
+.menutool > .tutorial-hint::before, .menutool > .tutorial-hint::after {
+  content:''; position:absolute; left:var(--tutorial-hint-arrow, 28px); width:0; height:0; border:solid transparent; translate:-50% 0;
+}
+.menutool > .tutorial-hint::before { bottom:100%; border-width:0 10px 10px; border-bottom-color:#e0a43a; }
+.menutool > .tutorial-hint::after { bottom:calc(100% - 3px); border-width:0 7px 7px; border-bottom-color:#fff8e6; }
 body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
 body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ '; }
 body[data-ui-level="entry"] .code-head { display:flex; padding:6px 10px; }

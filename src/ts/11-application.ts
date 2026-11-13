@@ -1015,7 +1015,43 @@ export function initApp() {
   appCalls.$('#saveBtn').onclick = appCalls.requestSave;
   appCalls.$('#entryStartEvent').onclick=()=>appCalls.selectEntryEvent('start');
   appCalls.$('#entryClickEvent').onclick=()=>appCalls.selectEntryEvent('click');
-  appCalls.$('#tutorialStart').onclick=appCalls.beginTutorial;
+  // The bubble under いっしょに作る (はじめて) says what it makes, at each start until the child starts. It goes for good —
+  // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or presses or
+  // types (not Tab or a modifier alone) in the blocks: the list, the body and the two event buttons. A start that finds
+  // a work kept in this browser (an autosave, which keeps the level too) does not show it and keeps that it went, so the
+  // bubble waits for that read. A browser that keeps nothing shows it at each start until the child starts. It is no
+  // control (no pointer, no focus); the CSS shows it only where いっしょに作る is: はじめて's edit screen, no guide running.
+  const tutorialHint=appCalls.$('#tutorialHint'),tutorialStartButton=appCalls.$('#tutorialStart');
+  let tutorialHintGone=false;
+  try{tutorialHintGone=localStorage.getItem(STORAGE_KEYS.tutorialHint)==='gone';}catch(_){}
+  // It stands under the button, inside the toolbar's width, its arrow at the button's middle.
+  const placeTutorialHint=()=>{
+    if(tutorialHint.hidden||!tutorialHint.offsetWidth)return;
+    const bar=appCalls.$('.menutool').getBoundingClientRect(),button=tutorialStartButton.getBoundingClientRect(),middle=button.left+button.width/2-bar.left;
+    const left=Math.max(8,Math.min(middle-28,bar.width-tutorialHint.offsetWidth-8));
+    tutorialHint.style.left=left+'px';tutorialHint.style.setProperty('--tutorial-hint-arrow',(middle-left)+'px');
+  };
+  const dismissTutorialHint=()=>{
+    if(tutorialHintGone)return;
+    tutorialHintGone=true;tutorialHint.hidden=true;tutorialStartButton.removeAttribute('aria-describedby');
+    try{localStorage.setItem(STORAGE_KEYS.tutorialHint,'gone');}catch(_){}
+  };
+  const offerTutorialHint=(kept: boolean)=>{
+    if(tutorialHintGone)return;
+    if(kept){dismissTutorialHint();return;}
+    tutorialHint.hidden=false;tutorialStartButton.setAttribute('aria-describedby','tutorialHint');placeTutorialHint();
+  };
+  if(!tutorialHintGone){
+    if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool')])observer.observe(node);}
+    window.addEventListener('resize',placeTutorialHint);
+    const startsWork=(event: Event)=>{
+      if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents'))return;
+      if(event.type==='keydown'&&['Tab','Shift','Control','Alt','Meta'].includes((event as KeyboardEvent).key))return;
+      dismissTutorialHint();
+    };
+    for(const type of ['pointerdown','keydown'])document.addEventListener(type,startsWork,{capture:true});
+  }
+  appCalls.$('#tutorialStart').onclick=()=>{dismissTutorialHint();return appCalls.beginTutorial();};
   appCalls.$('#tutorialExit').onclick=()=>{appCalls.finishTutorial(false);appCalls.setStatus('とちゅうの 作品は のこって いるよ。じゆうに つづけられるよ。');};
   appCalls.$('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(appVars.tutorial,'verify-save')){appCalls.$('#tutorialSavedFile').value='';appCalls.$('#tutorialSavedFile').click();}};
   // (the change is the file box's)
@@ -1616,6 +1652,7 @@ export function initApp() {
       else if (appVars.appState === 'IMPORTING') appVars.appState = 'DESIGN';
       appCalls.updateRunState();
     },
+    found: offerTutorialHint,
   });
   // The version is in 出力 (はじまりました); the status line says only what is true now.
   appCalls.setStatus(appCalls.emptyProjectStatus(), true);

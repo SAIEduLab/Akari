@@ -458,7 +458,7 @@ export interface AppToolsCalls {
   finishOpenSelection: () => void; fileStemCandidate: (file: Pick<File, 'name'>, names: ReadonlySet<string>, options?: { part?: boolean }) => string;
   fillSamplePicture: (picture: Element, id: string) => void;
   // What this computer keeps of the work: cleared, and offered back.
-  clearAutosave: () => Promise<boolean | void>; checkRecovery: (options?: { hold?: (held: boolean) => void }) => Promise<void>;
+  clearAutosave: () => Promise<boolean | void>; checkRecovery: (options?: { hold?: (held: boolean) => void; found?: (kept: boolean) => void }) => Promise<void>;
   // The data form, the made block read from its form, a thing taken away only with no uses, and a sound tried.
   clearDataFormError: () => void; showDataFormError: (error: Error & { code?: unknown }, field: HTMLElement | null | undefined) => void;
   updateDataForm: () => void;

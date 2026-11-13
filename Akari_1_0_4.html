@@ -5692,6 +5692,19 @@ body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugb
 body[data-ui-level="entry"] :is(.blockui-heading-editor,.blockui-rules) { display:none; }
 body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
 body[data-ui-level="entry"] :is(#projectMenu,#tutorialStart) { display:block; }
+/* The bubble under いっしょに作る (placed by the application): only where the button is, on はじめて's edit screen with no
+   guide running. It takes no pointer, so what lies under it can still be pressed; the 作品 menu opens over it. */
+.tutorial-hint { display:none; }
+body[data-ui-level="entry"]:not(.runtime):not([data-tutorial-step]) .menutool > .tutorial-hint:not([hidden]) {
+  display:block; position:absolute; top:calc(100% + 10px); left:8px; z-index:20; width:max-content; max-width:min(20rem, calc(100% - 16px));
+  margin:0; padding:8px 12px; border:2px solid #e0a43a; border-radius:12px; background:#fff8e6; color:#5a3a00;
+  font-size:15px; font-weight:700; line-height:1.5; box-shadow:0 6px 16px #18364b30; pointer-events:none;
+}
+.menutool > .tutorial-hint::before, .menutool > .tutorial-hint::after {
+  content:''; position:absolute; left:var(--tutorial-hint-arrow, 28px); width:0; height:0; border:solid transparent; translate:-50% 0;
+}
+.menutool > .tutorial-hint::before { bottom:100%; border-width:0 10px 10px; border-bottom-color:#e0a43a; }
+.menutool > .tutorial-hint::after { bottom:calc(100% - 3px); border-width:0 7px 7px; border-bottom-color:#fff8e6; }
 body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
 body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ '; }
 body[data-ui-level="entry"] .code-head { display:flex; padding:6px 10px; }
@@ -6531,6 +6544,7 @@ body[data-meijin-level="on"] #sampleBtn { display:none !important; }
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
     <span id="projectNameText" class="project-name-text" hidden></span>
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
+    <p id="tutorialHint" class="tutorial-hint" hidden>さかなを タッチする ゲームを 作ってみよう！</p>
   </div>
 
   <div class="main">
@@ -13345,6 +13359,7 @@ SOFTWARE.
     fallback: 'akari.autosave.f' + PROJECT_FORMAT_ID,
     uiLevel: 'akari.uiLevel.v1',
     editorMode: 'akari.editorMode.v1',
+    tutorialHint: 'akari.tutorialHint.v1',
   });
 
   // 名人: scripts that belong to no part. In memory they carry this pseudo owner so the editor can select them.
@@ -42784,11 +42799,13 @@ SOFTWARE.
     // options.hold: called with true once a kept work is found and with false when its check ends. Reading its pictures
     // can take a second on a slow computer, and an edit meanwhile would be kept over it (or opening a work would clear it):
     // the caller holds the work while it is checked.
+    // found is told whether this computer keeps a work at all, as read, before the record is checked or offered.
     async function checkRecovery(options = {}) {
       const epoch = appVars.recoveryEpoch, hold = options.hold;
       let held = false;
       try {
         const rec = await appCalls.readAutosave();
+        options.found?.(!!rec);
         if (
           !rec ||
           epoch !== appVars.recoveryEpoch ||
@@ -49660,7 +49677,43 @@ SOFTWARE.
     appCalls.$('#saveBtn').onclick = appCalls.requestSave;
     appCalls.$('#entryStartEvent').onclick=()=>appCalls.selectEntryEvent('start');
     appCalls.$('#entryClickEvent').onclick=()=>appCalls.selectEntryEvent('click');
-    appCalls.$('#tutorialStart').onclick=appCalls.beginTutorial;
+    // The bubble under いっしょに作る (はじめて) says what it makes, at each start until the child starts. It goes for good —
+    // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or presses or
+    // types (not Tab or a modifier alone) in the blocks: the list, the body and the two event buttons. A start that finds
+    // a work kept in this browser (an autosave, which keeps the level too) does not show it and keeps that it went, so the
+    // bubble waits for that read. A browser that keeps nothing shows it at each start until the child starts. It is no
+    // control (no pointer, no focus); the CSS shows it only where いっしょに作る is: はじめて's edit screen, no guide running.
+    const tutorialHint=appCalls.$('#tutorialHint'),tutorialStartButton=appCalls.$('#tutorialStart');
+    let tutorialHintGone=false;
+    try{tutorialHintGone=localStorage.getItem(STORAGE_KEYS.tutorialHint)==='gone';}catch(_){}
+    // It stands under the button, inside the toolbar's width, its arrow at the button's middle.
+    const placeTutorialHint=()=>{
+      if(tutorialHint.hidden||!tutorialHint.offsetWidth)return;
+      const bar=appCalls.$('.menutool').getBoundingClientRect(),button=tutorialStartButton.getBoundingClientRect(),middle=button.left+button.width/2-bar.left;
+      const left=Math.max(8,Math.min(middle-28,bar.width-tutorialHint.offsetWidth-8));
+      tutorialHint.style.left=left+'px';tutorialHint.style.setProperty('--tutorial-hint-arrow',(middle-left)+'px');
+    };
+    const dismissTutorialHint=()=>{
+      if(tutorialHintGone)return;
+      tutorialHintGone=true;tutorialHint.hidden=true;tutorialStartButton.removeAttribute('aria-describedby');
+      try{localStorage.setItem(STORAGE_KEYS.tutorialHint,'gone');}catch(_){}
+    };
+    const offerTutorialHint=kept=>{
+      if(tutorialHintGone)return;
+      if(kept){dismissTutorialHint();return;}
+      tutorialHint.hidden=false;tutorialStartButton.setAttribute('aria-describedby','tutorialHint');placeTutorialHint();
+    };
+    if(!tutorialHintGone){
+      if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool')])observer.observe(node);}
+      window.addEventListener('resize',placeTutorialHint);
+      const startsWork=event=>{
+        if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents'))return;
+        if(event.type==='keydown'&&['Tab','Shift','Control','Alt','Meta'].includes(event.key))return;
+        dismissTutorialHint();
+      };
+      for(const type of ['pointerdown','keydown'])document.addEventListener(type,startsWork,{capture:true});
+    }
+    appCalls.$('#tutorialStart').onclick=()=>{dismissTutorialHint();return appCalls.beginTutorial();};
     appCalls.$('#tutorialExit').onclick=()=>{appCalls.finishTutorial(false);appCalls.setStatus('とちゅうの 作品は のこって いるよ。じゆうに つづけられるよ。');};
     appCalls.$('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(appVars.tutorial,'verify-save')){appCalls.$('#tutorialSavedFile').value='';appCalls.$('#tutorialSavedFile').click();}};
     // (the change is the file box's)
@@ -50261,6 +50314,7 @@ SOFTWARE.
         else if (appVars.appState === 'IMPORTING') appVars.appState = 'DESIGN';
         appCalls.updateRunState();
       },
+      found: offerTutorialHint,
     });
     // The version is in 出力 (はじまりました); the status line says only what is true now.
     appCalls.setStatus(appCalls.emptyProjectStatus(), true);
