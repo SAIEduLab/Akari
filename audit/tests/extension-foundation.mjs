@@ -657,7 +657,10 @@ await withOrdinaryFileBrowser(async browser=>{
   // The heading's 「いつ動く？」 offers the registered extension events by their Japanese names and writes the chosen
   // event's signal name (拡張:拡張ID/機能ID); the standard product, which registers none, offers no such choice.
   await check('EXTENSION-EVENT-HEADING-CHOICE',async()=>{
-    assert.ok(fork);await answerProductConfirms(standard.page,true);
+    // Each product opens in a page of its own: the pages the checks above used keep their works, questions and runs.
+    assert.ok(derived);const plainPage=await pageAt(candidate),derivedPage=await pageAt(derived);
+    try{
+    for(const active of [plainPage,derivedPage])await answerProductConfirms(active.page,true);
     const role=(page,name)=>page.locator('#blockEditor [data-blockui-structured-role="heading.'+name+'"]:visible');
     const open=async page=>{
       const file=await page.evaluate(()=>{const q=Akari.makeEmptyProject();q.name='heading-choice';q.scripts=[{id:'main',targetId:q.components[0].id,event:'start',source:'「来た」と言う。'}];return Akari.serializeProject(q,Akari.makeDefaultAssetStore());});
@@ -668,17 +671,19 @@ await withOrdinaryFileBrowser(async browser=>{
       await page.locator('#sourceHeadingBtn').click();await role(page,'event').selectOption('message');
       await page.locator('#blockEditor .blockui-heading-editor[open] .blockui-trigger-details > summary').click();await role(page,'filter.kind').selectOption('message');
     };
-    await open(standard.page);const standardChoices=await role(standard.page,'filter.extension').count();
-    await open(fork.page);const choices=await role(fork.page,'filter.extension').locator('option').evaluateAll(options=>options.map(option=>[option.value,option.textContent]));
-    const label=role(fork.page,'filter.extension').locator('xpath=..').locator('.blockui-field-label'),shownLabel=await label.isVisible()?await label.textContent():null;
-    await role(fork.page,'filter.extension').selectOption('拡張:demo.offline/changed');const written=await role(fork.page,'filter.value').inputValue();
+    const page=derivedPage.page;
+    await open(plainPage.page);const standardChoices=await role(plainPage.page,'filter.extension').count();
+    await open(page);const choices=await role(page,'filter.extension').locator('option').evaluateAll(options=>options.map(option=>[option.value,option.textContent]));
+    const label=role(page,'filter.extension').locator('xpath=..').locator('.blockui-field-label'),shownLabel=await label.isVisible()?await label.textContent():null;
+    await role(page,'filter.extension').selectOption('拡張:demo.offline/changed');const written=await role(page,'filter.value').inputValue();
     // えらばない empties the event's name; the event is then chosen again for the heading.
-    await role(fork.page,'filter.extension').selectOption('');const cleared=await role(fork.page,'filter.value').inputValue();
-    await role(fork.page,'filter.extension').selectOption('拡張:demo.offline/changed');
-    await fork.page.locator('#blockEditor [data-blockui-action="heading-commit"]:visible').click();
-    await fork.page.waitForFunction(()=>Akari.app.project.scripts[0]?.event==='message');
-    const heading=await fork.page.evaluate(()=>({event:Akari.app.project.scripts[0].event,filter:Akari.app.project.scripts[0].filter}));
+    await role(page,'filter.extension').selectOption('');const cleared=await role(page,'filter.value').inputValue();
+    await role(page,'filter.extension').selectOption('拡張:demo.offline/changed');
+    await page.locator('#blockEditor [data-blockui-action="heading-commit"]:visible').click();
+    await page.waitForFunction(()=>Akari.app.project.scripts[0]?.event==='message');
+    const heading=await page.evaluate(()=>({event:Akari.app.project.scripts[0].event,filter:Akari.app.project.scripts[0].filter}));
     return{standardChoices,choices,shownLabel,written,cleared,heading};
+    }finally{for(const active of [plainPage,derivedPage]){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}}
   });
   for(const active of [standard,fork].filter(Boolean)){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}
 }).catch(error=>{pageErrors.push(error.message);console.error(error.stack);});
