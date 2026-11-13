@@ -379,6 +379,10 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    // The run screen stays after the work ends, until ■ 止める.
    async()=>{await p.locator('#runBtn').click();await p.waitForFunction(()=>document.body.classList.contains('runtime'));},
    async()=>{await pressStop(p.locator('#stopBtn'));await p.waitForFunction(()=>!document.body.classList.contains('runtime'));}]);
+  // The body in the code view is the code: a key there makes. はじめて is blocks only, so the view comes back first.
+  await route('code-typing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.type('1');},
+   // (the key is taken back, so the code reads again and the blocks can come back)
+   async()=>{await p.keyboard.press('Backspace');await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');}]);
   // The next pages' localStorage throws on every call (a browser that keeps nothing).
   await p.addInitScript(()=>{for(const name of ['getItem','setItem','removeItem','clear'])Storage.prototype[name]=function(){throw new DOMException('blocked','SecurityError');};});
   await route('storage-throws',[listHead,reload]);

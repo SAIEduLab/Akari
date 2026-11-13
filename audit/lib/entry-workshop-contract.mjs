@@ -52,6 +52,8 @@ export const firstHintRoutes=Object.freeze({
  'autosave-restore':[[true,null],[true,null],[false,'gone'],[false,'gone']],
  // start; a work with a start body opened; かんたん; はじめて again; running; stopped
  'level-and-run':[[true,null],[true,null],[false,null],[true,null],[false,null],[true,null]],
+ // start; かんたん; the code view; a key in the code; the block view and はじめて again
+ 'code-typing':[[true,null],[false,null],[false,null],[false,'gone'],[false,'gone']],
  // with a localStorage that throws: start; a mouse press in the block list; reload
  'storage-throws':[[true,'unreadable'],[false,'unreadable'],[true,'unreadable']],
 });

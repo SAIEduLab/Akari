@@ -1017,7 +1017,8 @@ export function initApp() {
   appCalls.$('#entryClickEvent').onclick=()=>appCalls.selectEntryEvent('click');
   // The bubble under いっしょに作る (はじめて) says what it makes, at each start until the child starts. It goes for good —
   // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or makes
-  // something in the blocks (the list, the body and the two event buttons): a press, a click (a screen reader's or
+  // something in the blocks (the list, the body and the two event buttons) or in the code (the body of the code view,
+  // at any level): a press, a click (a screen reader's or
   // voice control's press comes as a click alone), an input, or a key that acts or writes (Enter, Space, a character,
   // Backspace, Delete; no Ctrl, Alt or Meta with it, and not while a word is still being converted). Tab, a modifier or
   // a lock, Escape, a function key and the keys that move make nothing. A start that finds a work kept in this browser
@@ -1066,7 +1067,7 @@ export function initApp() {
     tutorialHint.hidden=false;tutorialStartButton.setAttribute('aria-describedby','tutorialHint');placeTutorialHint();
   };
   const startsWork=(event: Event)=>{
-    if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents'))return;
+    if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents,#codeEditor'))return;
     const key=event as KeyboardEvent;
     if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
     dismissTutorialHint();
