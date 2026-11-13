@@ -49680,11 +49680,12 @@ SOFTWARE.
     appCalls.$('#entryClickEvent').onclick=()=>appCalls.selectEntryEvent('click');
     // The bubble under いっしょに作る (はじめて) says what it makes, at each start until the child starts. It goes for good —
     // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or makes
-    // something in the blocks (the list, the body and the two event buttons) or in the code (the body of the code view,
-    // at any level): a press, a click (a screen reader's or
-    // voice control's press comes as a click alone), an input, or a key that acts or writes (Enter, Space, a character,
-    // Backspace, Delete; no Ctrl, Alt or Meta with it, and not while a word is still being converted). Tab, a modifier or
-    // a lock, Escape, a function key and the keys that move make nothing. A start that finds a work kept in this browser
+    // something in the blocks (the list, the body and the two event buttons), in the code (the body of the code view, at
+    // any level) or in a made block's body (自分で作ったブロック): a press, a click (a screen reader's or
+    // voice control's press comes as a click alone), an input (the first letter of a word being converted too), or a key
+    // that acts or writes (Enter, Space, a character, Backspace, Delete; no Ctrl, Alt or Meta with it, and not a key
+    // taken by the conversion). Tab, a modifier or a lock, Escape, a function key and the keys that move make nothing;
+    // nor does a click or an input the product makes itself (the list's ↑ at its first block opens the list's tools). A start that finds a work kept in this browser
     // (an autosave, which keeps the level too) does not show it and keeps that it went, so the bubble waits for that read.
     // A browser that keeps nothing shows it at each start until the child starts. It is no control (no pointer, no
     // focus) and is read once, as the button's description; the CSS shows it only where いっしょに作る is: はじめて's edit
@@ -49695,7 +49696,8 @@ SOFTWARE.
     const tutorialHintWatch=new AbortController();let tutorialHintObserver=null,tutorialHintNotes=null;
     // It stands right under the button (in the toolbar's second row when the toolbar wraps), its arrow on the button, at
     // the free place nearest the button's middle: over no control, no window heading and no note, with nothing between its
-    // arrow and the button. A screen with no such place (narrower than about 740 pixels) still shows it right under the
+    // arrow and the button. When there is no such place (on a screen narrower than about 740 pixels, or when
+    // a part with a long name widens the list of parts under it), it is still shown right under the
     // button, nearest its middle, over what is there (it takes no pointer, so what is under it can still be pressed).
     // Only values that change are written, so the observers below do not answer the bubble's own moves.
     const tutorialHintAvoid='button,select,input,textarea,summary,a[href],label,.win-title,[role="button"],[tabindex]:not([tabindex="-1"]),.mode-blocked-note:not([hidden])';
@@ -49730,7 +49732,8 @@ SOFTWARE.
       tutorialHint.hidden=false;tutorialStartButton.setAttribute('aria-describedby','tutorialHint');placeTutorialHint();
     };
     const startsWork=event=>{
-      if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents,#codeEditor'))return;
+      // (only what the browser makes from the child: the product's own clicks and inputs, made by its code, are none)
+      if(!event.isTrusted||!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents,#codeEditor,#callableBlocks,#callableCode'))return;
       const key=event;
       if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
       dismissTutorialHint();

@@ -341,32 +341,45 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    assert.ok(await p.evaluate(s=>!!document.activeElement?.closest(s),selector),'Tab reaches '+selector);};
   const routes={},viewports=[];
   const route=async(id,steps)=>{await fresh();const states=[await state()];for(const step of steps){await step();states.push(await state());}routes[id]=states;};
+  // Where the bubble stands, as rectangles: the bubble, the button, the arrow, and what it covers or what stands between
+  // its arrow and the button, among what a child presses or reads (as the test sees it, with a note in the toolbar).
+  const measure=()=>p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),start=document.querySelector('#tutorialStart'),c=getComputedStyle(n),box=e=>{const b=e.getBoundingClientRect();return{x:b.x,y:b.y,right:b.right,bottom:b.bottom};};
+   const hint=box(n),button=box(start),shown=c.display!=='none'&&c.visibility!=='hidden'&&hint.right>hint.x,arrow=hint.x+parseFloat(c.getPropertyValue('--tutorial-hint-arrow'));
+   const controls=[...document.querySelectorAll('button,select,input,textarea,summary,a[href],label,[role="button"],[tabindex]:not([tabindex="-1"]),.win-title,.mode-blocked-note')]
+    .filter(e=>e!==start&&!n.contains(e)&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>({id:e.id||e.className||e.tagName,...box(e)}));
+   const covered=shown?controls.filter(e=>e.x<hint.right&&e.right>hint.x&&e.y<hint.bottom&&e.bottom>hint.y).map(e=>e.id):[];
+   const between=shown?controls.filter(e=>e.x<=arrow&&e.right>=arrow&&e.y<hint.y&&e.bottom>button.bottom).map(e=>e.id):[];
+   const hit=shown?document.elementFromPoint((hint.x+hint.right)/2,(hint.y+hint.bottom)/2):null;n.focus();
+   return{shown,text:n.textContent,hint,button,arrow,covered,between,viewport:{width:innerWidth,height:innerHeight},ariaHidden:n.getAttribute('aria-hidden'),
+    pointerEvents:c.pointerEvents,hitBubble:!!hit&&(hit===n||n.contains(hit)),focusable:document.activeElement===n,describedBy:start.getAttribute('aria-describedby')};});
   await fresh();
   for(const size of [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768},{width:800,height:600},{width:768,height:1024},{width:740,height:800},{width:390,height:844}]){
    await p.setViewportSize(size);await frames();
-   const seen=await p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),start=document.querySelector('#tutorialStart'),c=getComputedStyle(n),box=e=>{const b=e.getBoundingClientRect();return{x:b.x,y:b.y,right:b.right,bottom:b.bottom};};
-    const hint=box(n),button=box(start),shown=c.display!=='none'&&c.visibility!=='hidden'&&hint.right>hint.x,arrow=hint.x+parseFloat(c.getPropertyValue('--tutorial-hint-arrow'));
-    // What a child presses or reads as a heading, as the test sees it.
-    const controls=[...document.querySelectorAll('button,select,input,textarea,summary,a[href],label,[role="button"],[tabindex]:not([tabindex="-1"]),.win-title')]
-     .filter(e=>e!==start&&!n.contains(e)&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>({id:e.id||e.className||e.tagName,...box(e)}));
-    const covered=shown?controls.filter(e=>e.x<hint.right&&e.right>hint.x&&e.y<hint.bottom&&e.bottom>hint.y).map(e=>e.id):[];
-    const between=shown?controls.filter(e=>e.x<=arrow&&e.right>=arrow&&e.y<hint.y&&e.bottom>button.bottom).map(e=>e.id):[];
-    const hit=shown?document.elementFromPoint((hint.x+hint.right)/2,(hint.y+hint.bottom)/2):null;n.focus();
-    return{shown,text:n.textContent,hint,button,arrow,covered,between,viewport:{width:innerWidth,height:innerHeight},ariaHidden:n.getAttribute('aria-hidden'),
-     pointerEvents:c.pointerEvents,hitBubble:!!hit&&(hit===n||n.contains(hit)),focusable:document.activeElement===n,describedBy:start.getAttribute('aria-describedby')};});
-   viewports.push({size,...seen,screenshot:await picture(p,'first-hint-'+size.width+'x'+size.height)});
+   viewports.push({size,...await measure(),screenshot:await picture(p,'first-hint-'+size.width+'x'+size.height)});
   }
-  await p.setViewportSize({width:1280,height:720});await frames();
+  // The note under the view toggle (a press of it in はじめて), where the toolbar wraps.
+  await p.setViewportSize({width:800,height:600});await p.locator('.editor-modes button:not([hidden])').first().click();
+  await p.waitForFunction(()=>document.querySelector('#modeBlockedNote')?.hidden===false);await frames();
+  const withNote={size:{width:800,height:600},...await measure(),screenshot:await picture(p,'first-hint-note-800x600')};
+  // A part with a long name widens the list of parts under the bubble (作品 › 開く is no touch of a block).
+  await p.setViewportSize({width:1280,height:720});
+  const named=await p.evaluate(()=>{const work=Akari.makeEmptyProject();work.name='ながい 名前';work.components[0].name='あいうえおかきくけこさしすせそ';return Akari.serializeProject(work,Akari.makeDefaultAssetStore());});
+  await p.locator('#fileInput').setInputFiles({name:'long.akari.md',mimeType:'text/plain',buffer:Buffer.from(named)});await p.waitForFunction(()=>Akari.app.project.name==='ながい 名前');await frames();
+  const longName={size:{width:1280,height:720},...await measure(),screenshot:await picture(p,'first-hint-long-name')};
   await route('untouched-reload',[reload]);
   await route('tab-then-enter',[()=>focusIn('#blockEditor .blockui-palette'),()=>p.keyboard.press('Enter'),reload]);
   await route('mouse-list',[listHead,reload]);
   await route('mouse-body',[()=>p.locator('#blockEditor .blockui-workspace').click({position:{x:20,y:20}})]);
+  // A press held (no release yet), then let go.
+  await route('press-only',[async()=>{const b=await p.locator('#blockEditor .blockui-palette').boundingBox();await p.mouse.move(b.x+12,b.y+12);await p.mouse.down();},()=>p.mouse.up()]);
   await route('tap-event',[()=>p.locator('#entryClickEvent').tap()]);
   // Keys that make nothing: modifiers and locks alone, Escape, a function key, moving keys; then Enter makes.
   await route('keys-without-making',[()=>focusIn('#entryEvents'),async()=>{for(const key of ['Shift','Control','Alt','CapsLock','CapsLock','Escape','F2','ArrowRight','ArrowLeft','Home','End'])await p.keyboard.press(key);},
    ()=>p.keyboard.press('Enter')]);
-  // A press that comes as a click only (as from a screen reader or voice control).
-  await route('click-only',[()=>p.locator('#blockEditor [data-blockui-action="palette-add"]').first().dispatchEvent('click')]);
+  // ↑ at the list's first block opens the list's tools by a click of the product's own: no making.
+  await route('arrow-up-in-list',[()=>focusIn('#blockEditor [data-blockui-action="palette-add"]'),()=>p.keyboard.press('ArrowUp')]);
+  // A click made by a page's code (no press of the child) is no making.
+  await route('scripted-click',[()=>p.locator('#blockEditor [data-blockui-action="palette-add"]').first().dispatchEvent('click')]);
   await route('press-guide',[async()=>{await p.locator('#tutorialStart').click();await waitStep(p,auditRoute()[0]);await p.locator('#tutorialExit').click();}]);
   const keep=async()=>{await p.locator('#entryAddRow button').first().click();await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));};
   const offered=async()=>{await reload();await p.locator('#recoveryModal.show').waitFor();};
@@ -379,14 +392,21 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    // The run screen stays after the work ends, until ■ 止める.
    async()=>{await p.locator('#runBtn').click();await p.waitForFunction(()=>document.body.classList.contains('runtime'));},
    async()=>{await pressStop(p.locator('#stopBtn'));await p.waitForFunction(()=>!document.body.classList.contains('runtime'));}]);
-  // The body in the code view is the code: a key there makes. はじめて is blocks only, so the view comes back first.
-  await route('code-typing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.type('1');},
-   // (the key is taken back, so the code reads again and the blocks can come back)
+  // The body in the code view is the code. A letter put in with no key (an input alone) makes; はじめて is blocks
+  // only, so the letter is taken back and the view comes back first.
+  await route('code-typing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText('1');},
    async()=>{await p.keyboard.press('Backspace');await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');}]);
+  // A key alone, with no input: Backspace at the start of the code deletes nothing.
+  await route('key-only',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   async()=>{await p.locator('#codeEditor').evaluate(n=>{n.focus();n.setSelectionRange(0,0);});const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('Backspace');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing deleted');}]);
+  // A made block's body (自分で作ったブロック, a くわしく tool) is a body too: a press in the one shown, blocks or code.
+  await route('made-block',[()=>p.locator('#uiLevel').selectOption('advanced'),()=>p.locator('#procBtn').click(),
+   async()=>{const body=await p.evaluate(()=>['#callableBlocks','#callableCode'].find(s=>document.querySelector(s)?.getClientRects().length));assert.ok(body,'the body of a made block is shown');
+    const b=await p.locator(body).boundingBox();await p.mouse.click(b.x+12,b.y+12);}]);
   // The next pages' localStorage throws on every call (a browser that keeps nothing).
   await p.addInitScript(()=>{for(const name of ['getItem','setItem','removeItem','clear'])Storage.prototype[name]=function(){throw new DOMException('blocked','SecurityError');};});
   await route('storage-throws',[listHead,reload]);
-  return {viewports,routes};
+  return {viewports,withNote,longName,routes};
  },{hasTouch:true});
 
 },600000);

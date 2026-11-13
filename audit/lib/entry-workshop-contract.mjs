@@ -24,7 +24,8 @@ export const browserIds=Object.freeze(['ENTRY-FIRST-VIEW','ENTRY-MODE-PRESERVATI
 // ENTRY-FIRST-HINT, from LANGUAGE.md 「はじめに：最初の作品を動かす」: each route starts with an empty browser and records, after
 // each of its steps, whether the bubble is on the screen and what akari.tutorialHint.v1 holds ('unreadable' where reading
 // it throws). The steps are the test's; the states are written here from the specification, not read from the product.
-// Each size names whether the screen has room for the bubble over nothing: from 740 pixels wide the row under the button
+// Each size names whether the screen has room for the bubble over nothing with the first work: at these sizes from 740
+// pixels wide the row under the button
 // is free (the toolbar's second row when it wraps); at 390 every place right under the button is over a control, and the
 // bubble is shown there all the same.
 export const firstHintSizes=Object.freeze([{width:1280,height:720,room:true},{width:1366,height:768,room:true},{width:1920,height:1080,room:true},
@@ -38,12 +39,16 @@ export const firstHintRoutes=Object.freeze({
  'mouse-list':[[true,null],[false,'gone'],[false,'gone']],
  // start; a mouse press in the body
  'mouse-body':[[true,null],[false,'gone']],
+ // start; a mouse button held down in the block list (no release yet); let go
+ 'press-only':[[true,null],[false,'gone'],[false,'gone']],
  // start; a tap on an event button
  'tap-event':[[true,null],[false,'gone']],
  // start; Tab to an event button; modifiers, locks, Escape, a function key and moving keys alone; Enter
  'keys-without-making':[[true,null],[true,null],[true,null],[false,'gone']],
- // start; a block added by a click alone (no press before it)
- 'click-only':[[true,null],[false,'gone']],
+ // start; Tab to the list's first block; ↑ (the product opens the list's tools by a click of its own)
+ 'arrow-up-in-list':[[true,null],[true,null],[true,null]],
+ // start; a click made by the page's code on a block of the list
+ 'scripted-click':[[true,null],[true,null]],
  // start; a press of いっしょに作る
  'press-guide':[[true,null],[false,'gone']],
  // start; a character added (no block touched); reload with the autosave kept; that autosave discarded and reload
@@ -52,8 +57,12 @@ export const firstHintRoutes=Object.freeze({
  'autosave-restore':[[true,null],[true,null],[false,'gone'],[false,'gone']],
  // start; a work with a start body opened; かんたん; はじめて again; running; stopped
  'level-and-run':[[true,null],[true,null],[false,null],[true,null],[false,null],[true,null]],
- // start; かんたん; the code view; a key in the code; the block view and はじめて again
+ // start; かんたん; the code view; a letter put in the code with no key; the block view and はじめて again
  'code-typing':[[true,null],[false,null],[false,null],[false,'gone'],[false,'gone']],
+ // start; かんたん; the code view; Backspace at the start of the code (a key with no input)
+ 'key-only':[[true,null],[false,null],[false,null],[false,'gone']],
+ // start; くわしく; 自分で作ったブロック opened; a press in its body
+ 'made-block':[[true,null],[false,null],[false,null],[false,'gone']],
  // with a localStorage that throws: start; a mouse press in the block list; reload
  'storage-throws':[[true,'unreadable'],[false,'unreadable'],[true,'unreadable']],
 });
@@ -69,6 +78,13 @@ export function verifyFirstHint(hint){
   assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,at+'arrow at the button');
   assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width&&v.hint.bottom<=v.size.height,at+'on the screen');
   if(room){assert.deepEqual(v.covered,[],at+'over no control');assert.deepEqual(v.between,[],at+'no control between the arrow and the button');}
+ }
+ // With the note under the view toggle shown at 800x600 the bubble stands clear of it too; with a part whose long name
+ // leaves no free place at 1280x720 the bubble is still shown right under the button (over what is there).
+ for(const [name,v,clear]of [['note',hint.withNote,true],['long name',hint.longName,false]]){
+  assert.equal(v.shown,true,name+' shown');assert.ok(v.hint.y-v.button.bottom>=0&&v.hint.y-v.button.bottom<=24,name+' right under the button');
+  assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,name+' arrow at the button');assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width,name+' on the screen');
+  if(clear){assert.ok(v.covered.length===0&&v.between.length===0,name+' over no control');}
  }
  assert.deepEqual(Object.keys(hint.routes),Object.keys(firstHintRoutes));
  for(const [id,states]of Object.entries(firstHintRoutes))assert.deepEqual(hint.routes[id],states,'ENTRY-FIRST-HINT '+id);
