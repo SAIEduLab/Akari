@@ -140,7 +140,7 @@ export const extensionExpectedObservations = Object.freeze({
     ordinary: [{ message: '「開始」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「開始」の合図を送る。」と 書きます', button: null, source: null }] },
   // The heading's 「いつ動く？」 offers the registered events by their Japanese names; the standard product offers none.
   'EXTENSION-EVENT-HEADING-CHOICE': { standardChoices: 0, choices: [['', 'えらばない'], ['拡張:demo.offline/changed', '拡張「数の記憶」「記憶した数が変わった」']],
-    shownLabel: 'かくちょうの きっかけ', written: '拡張:demo.offline/changed', heading: { event: 'message', filter: { message: '拡張:demo.offline/changed' } } },
+    shownLabel: 'かくちょうの きっかけ', written: '拡張:demo.offline/changed', cleared: '', heading: { event: 'message', filter: { message: '拡張:demo.offline/changed' } } },
   'EXTENSION-OFFLINE-STANDALONE': { independentContext: true, value: '14', profilePreserved: true, externalLoaded: true, unconnectedDiagnostic: true, offlineCalculation: true, httpRequests: 0, errors: 0 },
   'EXTENSION-REAL-POPUP-MESSAGECHANNEL': { popup: true, handshake: true, result: 14, notification: 9, disconnected: true, staleRejected: true },
   'EXTENSION-TYPES-UNITS-DEPENDENCIES': { unitPreserved: true, unitRejected: true, dependencyRejected: true, versionRejected: true, stateMismatchRejected: true },
