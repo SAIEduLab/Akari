@@ -1075,11 +1075,13 @@ export function initApp() {
     // (a paste, a drop or a long text that the product puts in by its own input still comes first as the browser's
     // paste, drop or beforeinput: these count when they bring text into a text field. A paste on a button brings
     // nothing, and a deletion counts by the input that follows it only when something was deleted)
-    const field=event.target.closest('textarea,input,[contenteditable="true"]'),brought=(data: DataTransfer | null | undefined)=>!!data?.getData('text/plain');
+    const field=event.target.closest('textarea,input:not([type="checkbox"],[type="radio"],[type="button"],[type="submit"],[type="range"],[type="color"],[type="file"]),[contenteditable="true"]'),brought=(data: DataTransfer | null | undefined)=>!!data?.getData('text/plain');
     if(event.type==='paste'&&!(field&&brought((event as ClipboardEvent).clipboardData)))return;
     if(event.type==='drop'&&!(field&&brought((event as DragEvent).dataTransfer)))return;
     const typed=event as InputEvent;
     if(event.type==='beforeinput'&&!(field&&typed.inputType.startsWith('insert')&&(typed.data||brought(typed.dataTransfer))))return;
+    // (the input of a paste or a drop is left to the paste or the drop: a paste of a picture or of nothing puts nothing in)
+    if(event.type==='input'&&/^insertFrom(?:Paste|Drop)/.test(typed.inputType))return;
     const key=event as KeyboardEvent;
     if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
     dismissTutorialHint();

@@ -413,6 +413,14 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await route('paste-on-button',[async()=>{await focusIn('#blockEditor [data-blockui-action="palette-add"]');await p.evaluate(()=>navigator.clipboard.writeText('abc'));},()=>p.keyboard.press('ControlOrMeta+V')]);
   await route('ctrl-delete-nothing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
    async()=>{await p.locator('#codeEditor').evaluate(n=>{n.focus();n.setSelectionRange(0,0);});const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('ControlOrMeta+Backspace');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing deleted');}]);
+  // A deletion that deletes counts by its input alone (Ctrl+Backspace's key and beforeinput count for nothing); a paste of
+  // nothing puts nothing in.
+  await route('ctrl-delete-real',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   // (words put in by the page's code count for nothing)
+   async()=>{await p.locator('#codeEditor').evaluate(n=>{if(!n.value)n.value='10歩進む。';n.focus();n.setSelectionRange(n.value.length,n.value.length);});const before=await p.locator('#codeEditor').inputValue();assert.ok(before.length>0,'the code has words to delete');
+    await p.keyboard.press('ControlOrMeta+Backspace');assert.notEqual(await p.locator('#codeEditor').inputValue(),before,'a word deleted');}]);
+  await route('empty-paste',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   async()=>{await p.evaluate(()=>navigator.clipboard.writeText(''));await p.locator('#codeEditor').focus();const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('ControlOrMeta+V');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing pasted');}]);
   await route('long-input',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText(longText);}]);
   await route('long-paste',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.evaluate(text=>navigator.clipboard.writeText(text),longText);await p.locator('#codeEditor').focus();await p.keyboard.press('ControlOrMeta+V');
     assert.ok((await p.locator('#codeEditor').inputValue()).includes(longText),'the long text was pasted');}]);

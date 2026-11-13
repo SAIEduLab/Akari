@@ -68,6 +68,10 @@ export const firstHintRoutes=Object.freeze({
  'paste-on-button':[[true,null],[true,null],[true,null]],
  // start; かんたん; the code view; Ctrl+Backspace at the start of the code (nothing deleted)
  'ctrl-delete-nothing':[[true,null],[false,null],[false,null],[false,null]],
+ // start; かんたん; the code view; Ctrl+Backspace at the end of the code (a word deleted)
+ 'ctrl-delete-real':[[true,null],[false,null],[false,null],[false,'gone']],
+ // start; かんたん; the code view; Ctrl+V with nothing on the clipboard
+ 'empty-paste':[[true,null],[false,null],[false,null],[false,null]],
  // start; かんたん; the code view; 5000 letters put in at once, or pasted
  'long-input':[[true,null],[false,null],[false,null],[false,'gone']],
  'long-paste':[[true,null],[false,null],[false,null],[false,'gone']],
