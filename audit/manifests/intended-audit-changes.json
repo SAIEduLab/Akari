@@ -1,5 +1,14 @@
 {
   "schema": "akari-intended-audit-changes-v1",
   "changes": [],
-  "allowances": []
+  "allowances": [
+    {
+      "change": "source-read-allowance:audit/tests/release-renumber.mjs#16",
+      "reason": "The two new reads take audit/fixtures/refusal-reasons.json from the synthetic repository the test builds (its root is counted as a product path because the fixture writes src/ there); they read no product source."
+    },
+    {
+      "change": "source-read-allowance:audit/tests/release-renumber.mjs#17",
+      "reason": "The two new reads take audit/fixtures/refusal-reasons.json from the synthetic repository the test builds (its root is counted as a product path because the fixture writes src/ there); they read no product source."
+    }
+  ]
 }
