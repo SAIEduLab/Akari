@@ -129,7 +129,8 @@ export function generateStandaloneHtml(project: Project, assetStore: InstanceTyp
   // (the data read back is the one just packed, whose pictures and sounds are in the store)
   AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson) as ExecutableData,
     { packed: new Map<string, { text: string; record: AssetRecord }>(payload.assets.map(a => [a.id, { text: a.dataBase64, record: assetStore.get(a.id)! }])) });
-  const definitions = EXTENSION_HOST.exportDefinitions();
+  // The file carries the extensions the work's record names (a work with no record carries none).
+  const definitions = EXTENSION_HOST.exportDefinitions((payload.extensions?.required ?? []).map(item => item.id));
   const selected = AKARI_RUNTIME.profiles.describe();
   const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
   const script = `'use strict';\n${PORTABLE_FUNCTIONS.map(f => f.toString()).join('\n')}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${payloadJson},${inlineJson({artwork})});`;

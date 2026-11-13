@@ -7560,9 +7560,12 @@ SOFTWARE.
       validateRequirements(upgraded);
       return {envelope:copy(upgraded),upgrades,dropped};
     }
-    function exportDefinitions() {
-      return [...records.values()].map(record=>{
-        if(!record.manifest.selfContained)fail('E708',`拡張「${record.manifest.id}」は自己完結書き出しに対応していません`);
+    // Every registered extension, or with ids those extensions and what they depend on (as requirements), in the order
+    // they were registered; one that cannot be carried in a file is refused.
+    function exportDefinitions(ids) {
+      const chosen=new Set(requirements(ids).required.map(item=>item.id));
+      return [...records.values()].filter(record=>chosen.has(record.manifest.id)).map(record=>{
+        if(!record.manifest.selfContained)fail('E709',`拡張「${record.manifest.id}」は自己完結書き出しに対応していません`);
         return {manifest:copy(record.manifest),factorySource:record.factorySource,contentHash:record.contentHash};
       });
     }
@@ -30700,7 +30703,8 @@ SOFTWARE.
     // (the data read back is the one just packed, whose pictures and sounds are in the store)
     AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson),
       { packed: new Map(payload.assets.map(a => [a.id, { text: a.dataBase64, record: assetStore.get(a.id) }])) });
-    const definitions = EXTENSION_HOST.exportDefinitions();
+    // The file carries the extensions the work's record names (a work with no record carries none).
+    const definitions = EXTENSION_HOST.exportDefinitions((payload.extensions?.required ?? []).map(item => item.id));
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
     const script = `'use strict';\n${PORTABLE_FUNCTIONS.map(f => f.toString()).join('\n')}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${payloadJson},${inlineJson({artwork})});`;

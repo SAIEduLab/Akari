@@ -53,7 +53,7 @@ await buildDerivedProduct({
 | `dependencies` | 必要拡張の `id/version/contentHash`。依存先を先に登録 |
 | `capabilities` | 明示許可が必要なコネクタ機能名。`rpc.`、`akari.` を使わない |
 | `offline` | 本体に含めた処理とローカルデータだけで動く場合 `true` |
-| `selfContained` | 処理factoryを実行HTMLに含められる場合 `true` |
+| `selfContained` | 処理factoryを実行HTMLに含められる場合 `true`。`false` の拡張を使う作品は、書き出しを E709 で止めます |
 | `state` | 状態形式の正整数 `formatVersion`、JSONの `initial`、任意の `persist`（`"run"` 既定、または `"project"`） |
 | `commands`、`calculations` | `id/name/description/args/returns/async`。任意の `capability`。`name` は「」・`\`・改行を含めない（できごとも同じ） |
 | `events` | `id/name/description/payload` |
@@ -126,7 +126,7 @@ factoryは `{commands, calculations, initialize?, dispose?}` を返します。�
 
 `upgradeRequirements(envelope, unused)` は、作品に記録した拡張が登録中の同じIDより古い版で、メジャー版が同じ、pre-release記号がなく（`+` で始まるbuildの記録は新しさの比べに使いません）、`"project"` の状態の `formatVersion` が一致する場合だけ、現在の版・内容hashに書き換えたenvelopeと変化の一覧 `{id,name,from,to}` を返します。版の数は、桁がいくつあっても正確に比べます。`"run"` の状態は初期状態に置き換えます。新しい版が、作品に記録のない登録中の拡張に依存するときは、その拡張（とその依存先）も記録に加え、状態は初期状態から始めます（変化の一覧には入りません）。新しい版が依存をやめたため、作品に記録した拡張が登録されていないときは、二つ目の引数 `unused` に、作品がその拡張を使っていないとして渡されたその拡張のIDがあり、記録に残るどの拡張もそれに依存しない場合だけ、変化の一覧があるときに記録と状態から外し、外したIDを `dropped` で返します。それ以外は `validateRequirements` と同じく拒否します。製品はこの一覧を示して確認し、了承したときだけ作品を開きます。製品は、作品の記録にあって登録されていない拡張を `unused` に渡し、作品がその拡張のブロック（登録されていない拡張のブロック）やできごとを使っているときは、確認せずに「必要な 拡張「ID」が 登録されて いません」（E703）として開きません。
 
-`exportDefinitions()` は `{manifest,factorySource,contentHash}` を返します。ビルド・書き出しはfactoryを **関数のリテラル** としてinline scriptへ含め、保存ファイル由来の文字列を `eval` や `new Function` で実行しません。factoryは外側の変数へ依存せず、終了scriptタグ（`</script`）も、`<!--` と `<script` も含めません（inline scriptの終わりを変えるので、登録とビルドが E701 で止めます）。生成HTMLを別ブラウザーcontextで実行して、独立性を確認してください。外部依存型は処理コードを含められても、別の接続用ページやサービスへの明示接続が必要です。
+`exportDefinitions()` は登録したすべての拡張の `{manifest,factorySource,contentHash}` を、`exportDefinitions(ids)` はそのIDの拡張とその依存先のものを、登録の順に返します。返す拡張に `selfContained` が `false` のものがあれば E709 で止めます。作品の書き出しは、作品の記録（`extensions`）が挙げる拡張だけを含めます。作品が使わず、状態も初期のままの拡張は含めないので、`selfContained` が `false` でも書き出しを止めません。ビルド・書き出しはfactoryを **関数のリテラル** としてinline scriptへ含め、保存ファイル由来の文字列を `eval` や `new Function` で実行しません。factoryは外側の変数へ依存せず、終了scriptタグ（`</script`）も、`<!--` と `<script` も含めません（inline scriptの終わりを変えるので、登録とビルドが E701 で止めます）。生成HTMLを別ブラウザーcontextで実行して、独立性を確認してください。外部依存型は処理コードを含められても、別の接続用ページやサービスへの明示接続が必要です。
 
 ## MessageChannelコネクタ
 

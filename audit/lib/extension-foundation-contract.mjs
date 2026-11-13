@@ -48,6 +48,7 @@ export const extensionFoundationIds = Object.freeze([
   'EXTENSION-NAME-CHARACTERS-REFUSED',
   'EXTENSION-DROPPED-DEPENDENCY-OPEN',
   'EXTENSION-STATE-TEXT-KEPT',
+  'EXTENSION-STANDALONE-USED-ONLY',
 ]);
 export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-STATE-LIFETIME': { runRestart: 0, projectRestart: 7, runSnapshot: 0, projectSnapshot: 7, runRestored: 0, projectRestored: 5,
@@ -120,6 +121,11 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-LANGUAGE-BLOCK-ROUNDTRIP': { equivalent: true, value: 14, commandValue: 9 },
   'EXTENSION-DERIVED-SAVE-RESTORE': { profilePreserved: true, extensionsPreserved: true, sourcePreserved: true, unavailableRejected: true },
   'EXTENSION-PROFILE-COUNT-CAPACITY-ROUNDTRIP': { components: 501, chars: 100001, finiteRejected: true, restored: true, integrityRejected: true },
+  // A file carries the extensions its work's record names (LANGUAGE「拡張基盤」): those the work uses, what they depend
+  // on and those whose kept state is not the initial one; one that cannot be carried refuses only a work that uses it.
+  'EXTENSION-STANDALONE-USED-ONLY': { none: { carried: [], said: ['ふつう'] }, used: { carried: ['demo.offline'], said: ['6'] },
+    dependency: { carried: ['audit.base', 'audit.user'], said: ['2'] }, kept: { carried: ['demo.offline'], said: ['ふつう'] },
+    profileOnly: { carried: [], said: ['ふつう'] }, unfit: 'E709' },
   'EXTENSION-OFFLINE-STANDALONE': { independentContext: true, value: '14', profilePreserved: true, externalLoaded: true, unconnectedDiagnostic: true, offlineCalculation: true, httpRequests: 0, errors: 0 },
   'EXTENSION-REAL-POPUP-MESSAGECHANNEL': { popup: true, handshake: true, result: 14, notification: 9, disconnected: true, staleRejected: true },
   'EXTENSION-TYPES-UNITS-DEPENDENCIES': { unitPreserved: true, unitRejected: true, dependencyRejected: true, versionRejected: true, stateMismatchRejected: true },

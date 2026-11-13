@@ -109,7 +109,8 @@ export interface ExtensionHost {
   initialState(): StateRecord[]; snapshotState(): StateRecord[]; restoreState(state: StateRecord[]): void;
   /** Return kept ("project") state to the initial value while no session runs. */
   resetState(id?: string): void; stateInfo(): StateInfo[];
-  exportDefinitions(): { manifest: Manifest; factorySource: string; contentHash: string }[];
+  /** The definitions to carry in a file: every registered extension, or with ids those and what they depend on. */
+  exportDefinitions(ids?: Iterable<string>): { manifest: Manifest; factorySource: string; contentHash: string }[];
   connectWindow(targetWindow: Window, settings: { origin: string; capabilities?: string[]; timeoutMs?: number }): Promise<Connector>;
 }
 export interface HostOptions {
