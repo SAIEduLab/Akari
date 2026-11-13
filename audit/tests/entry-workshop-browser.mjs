@@ -243,7 +243,9 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
  await row(browser,browserIds[9],async p=>{
   await reach(p,'speech-text');const r=await roles(p),input=field(p,r.text),before=await read(p);
   // F-04: the child's own words go on; empty text stays on the step with 「ことばを 入れてね」.
-  await input.fill('');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');assert.match(await p.locator('#tutorialText').innerText(),/ことばを 入れてね/);
+  await input.fill('');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
+  // (the guide's words are redrawn after the key is taken: wait for them)
+  await p.waitForFunction(()=>/ことばを 入れてね/.test(document.querySelector('#tutorialText').innerText));
   await input.fill('ぼくの ことば');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
   await input.dispatchEvent('compositionend');await input.press('Enter');await waitStep(p,'add-escape');
   assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body[1]?.inputs?.value?.fields?.value),'ぼくの ことば','the work keeps the child\'s own words');
