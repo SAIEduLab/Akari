@@ -49,6 +49,8 @@ export const extensionFoundationIds = Object.freeze([
   'EXTENSION-DROPPED-DEPENDENCY-OPEN',
   'EXTENSION-STATE-TEXT-KEPT',
   'EXTENSION-STANDALONE-USED-ONLY',
+  'EXTENSION-EVENT-NAME-NOTICE',
+  'EXTENSION-EVENT-HEADING-CHOICE',
 ]);
 export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-STATE-LIFETIME': { runRestart: 0, projectRestart: 7, runSnapshot: 0, projectSnapshot: 7, runRestored: 0, projectRestored: 5,
@@ -126,6 +128,15 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-STANDALONE-USED-ONLY': { none: { carried: [], said: ['ふつう'] }, used: { carried: ['demo.offline'], said: ['6'] },
     dependency: { carried: ['audit.base', 'audit.user'], said: ['2'] }, kept: { carried: ['demo.offline'], said: ['ふつう'] },
     profileOnly: { carried: [], said: ['ふつう'] }, unfit: 'E709' },
+  // A heading that receives a registered extension event by its Japanese name is told the event's signal name (I137).
+  'EXTENSION-EVENT-NAME-NOTICE': {
+    event: [{ message: '「記憶した数が変わった」の 合図を 送る 文が、この 作品に ありません。かくちょうの できごとの 合図は「拡張:demo.offline/changed」という 名前で 受けます',
+      button: '「拡張:demo.offline/changed」の 合図に かえる', source: '「拡張:demo.offline/changed」' }],
+    fixedSaid: ['来た'],
+    ordinary: [{ message: '「開始」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「開始」の合図を送る。」と 書きます', button: null, source: null }] },
+  // The heading's 「いつ動く？」 offers the registered events by their Japanese names; the standard product offers none.
+  'EXTENSION-EVENT-HEADING-CHOICE': { standardChoices: 0, choices: [['', 'えらばない'], ['拡張:demo.offline/changed', '拡張「数の記憶」「記憶した数が変わった」']],
+    shownLabel: 'かくちょうの できごと', written: '拡張:demo.offline/changed', heading: { event: 'message', filter: { message: '拡張:demo.offline/changed' } } },
   'EXTENSION-OFFLINE-STANDALONE': { independentContext: true, value: '14', profilePreserved: true, externalLoaded: true, unconnectedDiagnostic: true, offlineCalculation: true, httpRequests: 0, errors: 0 },
   'EXTENSION-REAL-POPUP-MESSAGECHANNEL': { popup: true, handshake: true, result: 14, notification: 9, disconnected: true, staleRejected: true },
   'EXTENSION-TYPES-UNITS-DEPENDENCIES': { unitPreserved: true, unitRejected: true, dependencyRejected: true, versionRejected: true, stateMismatchRejected: true },

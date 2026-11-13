@@ -1,4 +1,4 @@
-import { AkariError, BUILTIN_META, BUILTIN_NAMES, BUILTIN_SURFACES, EDGE_TARGETS, EVENT_BY_TYPE, EVENT_LABELS, EXTENSION_HOST, LIMITS, MEIJIN_OWNER, READ_PLACES, SENSOR_SURFACES, SOURCE_RANGES, eventText, isEdgeTarget, isMeijinScript, keySurface, meijinEventOwner, namedArgumentDetails, namesStage, normalizeSource, resolveColor, sourceRange, validateName } from './02-language-contracts.ts';
+import { AkariError, BUILTIN_META, BUILTIN_NAMES, BUILTIN_SURFACES, EDGE_TARGETS, EVENT_BY_TYPE, EVENT_LABELS, EXTENSION_HOST, LIMITS, MEIJIN_OWNER, READ_PLACES, SENSOR_SURFACES, SOURCE_RANGES, eventText, extensionEventNamed, isEdgeTarget, isMeijinScript, keySurface, meijinEventOwner, namedArgumentDetails, namesStage, normalizeSource, resolveColor, sourceRange, validateName } from './02-language-contracts.ts';
 import { buildSymbols, exprNode, nameSource } from './03-default-assets.ts';
 import { MEIJIN_ONLY_MESSAGE, dataNameKind, formatCondition, parseSyntax, sentenceFormFor } from './04-syntax-expressions.ts';
 import { MOVE_WRITTEN_LEGS, REPEAT_PREVIOUS, SOLFEGE_HZ, STATEMENT_EXPLICIT_ACTORS, readSentenceHeading, sentenceHeadingSource, solfegeMissingMessage, touchShown } from './04-syntax-sentences.ts';
@@ -1922,8 +1922,9 @@ function signalNotes(project: Project,compiled: CompiledProject): Diagnostic[] {
   }
   if(!names.dynamicSenders)for(const r of names.receivers){if(r.name==null||r.name.startsWith('拡張:')||names.sent.includes(r.name))continue;
     // (a heading has no place of its own: the note is put at the place of its source)
-    const heading=r.ast.heading,n=note('I137',r.item,heading as DiagnosticPlace||r.ast,r.name?`「${r.name}」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`:`名前が 空の 合図を 送る 文が、この 作品に ありません。${EMPTY_SIGNAL}。れい：「スタート」という合図を受けたとき、`);
-    const location=heading?receiverHeading(r):null;if(location)n.line=location.line;if(location&&unreceived.length===1)headingProposal(n,location,unreceived[0]);notes.push(n);
+    // (a name that is the Japanese name of a registered extension event is told the signal name of that event)
+    const heading=r.ast.heading,event=extensionEventNamed(r.name,!!r.item.meijin),n=note('I137',r.item,heading as DiagnosticPlace||r.ast,r.name?`「${r.name}」の 合図を 送る 文が、この 作品に ありません。${event?`かくちょうの できごとの 合図は「${event}」という 名前で 受けます`:`送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`}`:`名前が 空の 合図を 送る 文が、この 作品に ありません。${EMPTY_SIGNAL}。れい：「スタート」という合図を受けたとき、`);
+    const location=heading?receiverHeading(r):null;if(location)n.line=location.line;if(location&&(event||unreceived.length===1))headingProposal(n,location,event||unreceived[0]);notes.push(n);
   }return notes;
 }
 export function projectNotes(project: Project, compiled: CompiledProject): Diagnostic[] {

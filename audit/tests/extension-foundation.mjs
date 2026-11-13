@@ -353,6 +353,21 @@ await check('EXTENSION-STANDALONE-USED-ONLY',async()=>{
   const kept=work(D,'拡張「数の記憶」「数を記憶する」（5）。');run(D,kept,D.compileProject(kept));D.updateScriptSource(kept.scripts[0],'「ふつう」と言う。',kept);
   return plain({...observed,kept:player(D,kept)});
 });
+// A heading written in the body that receives a registered extension event by its Japanese name is told the event's
+// signal name, with the button that writes it, and the work receives the event once it is pressed; a name that is no
+// event's is told as before (LANGUAGE I137).
+await check('EXTENSION-EVENT-NAME-NOTICE',async()=>{
+  const D=derivedApi(fewerDerived),sender='拡張「数の記憶」「数を記憶する」（17）。';
+  const work=heading=>{const p=D.makeEmptyProject(),id=p.components[0].id;p.scripts=[{id:'s0',targetId:id,event:'start',source:''},{id:'s1',targetId:id,event:'message',source:''}];
+    D.updateScriptSource(p.scripts[0],sender,p);D.updateScriptSource(p.scripts[1],heading+'\n  「来た」と言う。',p);return p;};
+  const notices=p=>D.compileProject(p).notes.filter(n=>n.code==='I137');
+  const told=p=>notices(p).map(n=>({message:n.message,button:n.proposals?.[0]?.label??null,source:n.proposals?.[0]?.source??null}));
+  const named=work('「記憶した数が変わった」という合図を受けたとき、'),[proposal]=notices(named)[0].proposals;
+  D.updateScriptSource(named.scripts[1],proposal.original.slice(0,proposal.start)+proposal.source+proposal.original.slice(proposal.end),named);
+  const said=[];let now=0;const r=new D.RuntimeModel(named,{});r.now=()=>now;const q=new D.EventScheduler(named,D.compileProject(named),r,{say:(_,t)=>said.push(String(t))});q.schedule=()=>{};
+  try{q.start();for(;now<20;now++){for(let i=0;i<50&&q.ready.length;i++)q.runTurn();q.recheckBlocked();}}finally{q.stop();}
+  return plain({event:told(work('「記憶した数が変わった」という合図を受けたとき、')),fixedSaid:said,ordinary:told(work('「開始」という合図を受けたとき、'))});
+});
 const install=`globalThis.auditDefinitions=[{manifest:${JSON.stringify(offline.manifest)},factory:${offline.factory.toString()}},{manifest:${JSON.stringify(text.manifest)},factory:${text.factory.toString()}}];globalThis.auditConnector={manifest:${JSON.stringify(connector.manifest)},factory:${connector.factory.toString()}};`;
 // Ordinary local files use opaque origin "null". Do not change that contract
 // with --allow-file-access-from-files, or mask requests with abort routes.
@@ -629,6 +644,28 @@ await withOrdinaryFileBrowser(async browser=>{
     const impostorReady=fork.context.waitForEvent('page');await fork.page.evaluate(()=>{window.impostorPeer=window.open('about:blank','akari-impostor-peer');});const unrelated=await impostorReady;
     await fork.page.evaluate(()=>{window.spoofResult=null;window.spoofPending=rpcTest.host.connectWindow(expectedPeer,{origin:'null',capabilities:['demo.add'],timeoutMs:700}).then(()=>{spoofResult='accepted';},e=>{spoofResult=e.code;});});await expected.waitForFunction(()=>!!window.seen);const probe=await expected.evaluate(()=>seen);await unrelated.evaluate(probe=>window.opener.postMessage({jsonrpc:'2.0',id:probe.id,result:{nonce:probe.params.nonce}},'*'),probe);await fork.page.waitForFunction(()=>spoofResult!==null);const impostor=await fork.page.evaluate(()=>spoofResult==='E707');
     await fork.page.evaluate(()=>rpcTest.host.endSession());await fork.page.waitForTimeout(30);assert.deepEqual(await fork.page.evaluate(()=>rpcUnhandled),[],'Transport cleanup leaked an unhandled rejection');await Promise.all([popup.close(),expected.close(),unrelated.close()]);return{malformed,...core,impostor,oldSession,reconnect,refusedValueMovesOn};
+  });
+  // The heading's 「いつ動く？」 offers the registered extension events by their Japanese names and writes the chosen
+  // event's signal name (拡張:拡張ID/機能ID); the standard product, which registers none, offers no such choice.
+  await check('EXTENSION-EVENT-HEADING-CHOICE',async()=>{
+    assert.ok(fork);await answerProductConfirms(standard.page,true);
+    const role=(page,name)=>page.locator('#blockEditor [data-blockui-structured-role="heading.'+name+'"]:visible');
+    const open=async page=>{
+      const file=await page.evaluate(()=>{const q=Akari.makeEmptyProject();q.name='heading-choice';q.scripts=[{id:'main',targetId:q.components[0].id,event:'start',source:'「来た」と言う。'}];return Akari.serializeProject(q,Akari.makeDefaultAssetStore());});
+      await page.locator('#fileInput').setInputFiles({name:'heading-choice.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await page.waitForFunction(()=>Akari.app.project.name==='heading-choice');
+      await page.locator('#uiLevel').selectOption('basic');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();
+      await chooseView(page,'blocks');await page.waitForFunction(()=>document.body.dataset.editorMode==='blocks');
+      await page.locator('#sourceHeadingBtn').click();await role(page,'event').selectOption('message');
+      await page.locator('#blockEditor .blockui-heading-editor[open] .blockui-trigger-details > summary').click();await role(page,'filter.kind').selectOption('message');
+    };
+    await open(standard.page);const standardChoices=await role(standard.page,'filter.extension').count();
+    await open(fork.page);const choices=await role(fork.page,'filter.extension').locator('option').evaluateAll(options=>options.map(option=>[option.value,option.textContent]));
+    const label=role(fork.page,'filter.extension').locator('xpath=..').locator('.blockui-field-label'),shownLabel=await label.isVisible()?await label.textContent():null;
+    await role(fork.page,'filter.extension').selectOption('拡張:demo.offline/changed');const written=await role(fork.page,'filter.value').inputValue();
+    await fork.page.locator('#blockEditor [data-blockui-action="heading-commit"]:visible').click();
+    await fork.page.waitForFunction(()=>Akari.app.project.scripts[0]?.event==='message');
+    const heading=await fork.page.evaluate(()=>({event:Akari.app.project.scripts[0].event,filter:Akari.app.project.scripts[0].filter}));
+    return{standardChoices,choices,shownLabel,written,heading};
   });
   for(const active of [standard,fork].filter(Boolean)){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}
 }).catch(error=>{pageErrors.push(error.message);console.error(error.stack);});

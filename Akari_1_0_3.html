@@ -13238,6 +13238,18 @@ SOFTWARE.
     const [id, operation] = name.split('/'), found = EXTENSION_HOST.describe(name, calculation ? 'calculations' : 'commands');
     return found ? [found.extensionName, found.displayName] : [id, operation];
   }
+  // The registered extension events a body that is not a 名人 body receives, as the signal name a heading writes
+  // (拡張:拡張ID/機能ID) and the Japanese names the event is chosen by.
+  function extensionEventChoices() {
+    return EXTENSION_HOST.operations('events').filter(event => event.scope !== 'meijin')
+      .map(event => ({ message: '拡張:' + event.name, label: `拡張「${event.extensionName}」「${event.displayName}」` }));
+  }
+  // The signal name of the registered extension event a body may receive whose Japanese name is name (registration
+  // keeps the names of all extensions' operations apart, E702); null when there is none.
+  function extensionEventNamed(name, meijin) {
+    const found = EXTENSION_HOST.operations('events').find(event => event.displayName === name && (meijin || event.scope !== 'meijin'));
+    return found ? '拡張:' + found.name : null;
+  }
   function extensionSurface(name, calculation, args) {
     const [extension, operation] = extensionLabels(name, calculation);
     return `${calculation ? '拡張計算' : '拡張'}「${extension}」「${operation}」（${args.map(x => formatExpression(x)).join('、')}）`;
@@ -27414,8 +27426,9 @@ SOFTWARE.
     }
     if(!names.dynamicSenders)for(const r of names.receivers){if(r.name==null||r.name.startsWith('拡張:')||names.sent.includes(r.name))continue;
       // (a heading has no place of its own: the note is put at the place of its source)
-      const heading=r.ast.heading,n=note('I137',r.item,heading||r.ast,r.name?`「${r.name}」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`:`名前が 空の 合図を 送る 文が、この 作品に ありません。${EMPTY_SIGNAL}。れい：「スタート」という合図を受けたとき、`);
-      const location=heading?receiverHeading(r):null;if(location)n.line=location.line;if(location&&unreceived.length===1)headingProposal(n,location,unreceived[0]);notes.push(n);
+      // (a name that is the Japanese name of a registered extension event is told the signal name of that event)
+      const heading=r.ast.heading,event=extensionEventNamed(r.name,!!r.item.meijin),n=note('I137',r.item,heading||r.ast,r.name?`「${r.name}」の 合図を 送る 文が、この 作品に ありません。${event?`かくちょうの できごとの 合図は「${event}」という 名前で 受けます`:`送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`}`:`名前が 空の 合図を 送る 文が、この 作品に ありません。${EMPTY_SIGNAL}。れい：「スタート」という合図を受けたとき、`);
+      const location=heading?receiverHeading(r):null;if(location)n.line=location.line;if(location&&(event||unreceived.length===1))headingProposal(n,location,event||unreceived[0]);notes.push(n);
     }return notes;
   }
   function projectNotes(project, compiled) {
@@ -37616,10 +37629,15 @@ SOFTWARE.
           const filter = choice('どれで動くか', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この合図']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
           const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? '');
           const signals=document.createElement('datalist');signals.id=viewVars.viewId+'-signals-'+node.id;group.append(signals);
+          // A registered extension event is chosen by its Japanese names; the signal's name is then its 拡張:拡張ID/機能ID.
+          const events=extensionEventChoices(),extension=events.length?choice('かくちょうの できごと','filter.extension',[['','えらばない'],...events.map(e=>[e.message,e.label])],''):null;
+          const matchExtension=()=>{if(extension)extension.value=events.some(e=>e.message===filterValue.value)?filterValue.value:'';};
+          if(extension){extension.parentElement.classList.add('blockui-trigger-choice');viewCalls.listen(extension,'change',()=>{if(extension.value)filterValue.value=extension.value;});viewCalls.listen(filterValue,'input',matchExtension);}
           const sync = () => {
             for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
             filterValue.parentElement.hidden = filter.value === 'all';
+            if(extension)extension.parentElement.hidden=filter.value!=='message';matchExtension();
             const names=viewCalls.context().signalNames?.()||{sent:[],received:[]},values=filter.value==='message'?[...names.sent,...names.received]:['スペース','上','下','左','右','エンター','エスケープ'];
             signals.replaceChildren(...[...new Set(values)].map(value=>{const option=document.createElement('option');option.value=value;return option;}));
             filterValue.setAttribute('list',signals.id);
