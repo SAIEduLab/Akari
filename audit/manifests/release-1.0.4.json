@@ -1,0 +1,31 @@
+{
+  "schema": "akari-distribution-v1",
+  "productVersion": "1.0.4",
+  "languageContractId": 5,
+  "runtimeContractId": 5,
+  "projectFormat": 6,
+  "programFormat": 4,
+  "files": {
+    "Akari_1_0_4.html": "a6cf9e58f3aa5f414d63f0378fb83f36b80bdfa4a451e534910a9a43d6a558c7",
+    "EXTENSIONS.md": "0f7dfd0db633c0897385ac747640faf302f7585f06bfe8667e792cb584b81c36",
+    "LANGUAGE_1_0_4.md": "8bbd15676dca5f35b90d79f2332a5a1ed29807fb1abf6a5cb0d4ce845932d56f",
+    "LICENSE": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf",
+    "MANUAL.html": "ff19fe5bd993c5057a00065fd19b78201d3b1f87bba69da222c6e667d2f2fa9f",
+    "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Manual/block-mode.html": "0ddac3a2b5f753601f907f41dc451dd7a8043a27a68f3b9c6a37073f216fd552",
+    "Manual/code-mode-advanced.html": "73dd214c9339b6ca38bfa37fd281d84a9660339f8cb2089fe98e6571829fff14",
+    "Manual/code-mode-beginner.html": "be668f17125111c80e2f4d36a0038d3e2338c4a1d1c3474fefd0279a72201cda",
+    "Manual/code-mode-intermediate.html": "17d4ad1750890c2dc9feb93fe2a063f22ab67fc6fbbb54a1eeca409b0dffe8bf",
+    "Manual/meijin-mode.html": "7f4764ccc2d18164905624fb83be154338f8afe83f93e38dc8dc84f3e694ee71",
+    "extensions/build.mjs": "def7f38819519846270b08a0bf723c228c72954edd215aa5ae520385e482b595",
+    "extensions/examples/connector.html": "fd6598052062da14e7d4e020a065de2563d17e5386b644f6cc7b79e625663895",
+    "extensions/examples/connector.ts": "a164454b8dabf55f2a5b02ff6e671f1aac03329767179317443c285ded60882d",
+    "extensions/examples/meijin.ts": "3e93f1c42f015bc1f00a7b588c59272600f1cd87b8d10da2eefd4de9251b311a",
+    "extensions/examples/offline.ts": "bb3c40dfd2d67349628e356e6f028b2d7d808da65eacd572bf84d23a0c82d3c8",
+    "extensions/examples/profile.ts": "9d74e0dd8c13e3b6aa852e120e74360c13b0b4ac31edb65f68ab20765bec912d",
+    "extensions/foundation.ts": "aec42bb68c2231b78806a4363c72dcf02a7f4da6f1d1cfdc6f8f1660f992be4a",
+    "extensions/limits.md": "25684d958093127a7ec004127ffe34e43a45cbd03b908181135755d5140741d2",
+    "extensions/profiles.ts": "6e382768e1ae3b22793273897d3149d0891c9a9ee07d3ed081e28a159f859b53",
+    "extensions/types.d.ts": "8d62794d47dfce35fa141a13a0b5c0f120f79a17c4fb59d752dc4c55d7268937"
+  }
+}

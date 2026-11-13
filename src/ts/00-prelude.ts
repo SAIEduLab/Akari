@@ -1,5 +1,5 @@
 // Release labels identify the producer; data contracts determine acceptance.
-export const PRODUCT_RELEASE = '1.0.3';
+export const PRODUCT_RELEASE = '1.0.4';
 export function productLabel(compact = false) {
   return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
 }
