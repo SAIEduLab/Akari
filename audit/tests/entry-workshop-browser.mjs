@@ -348,7 +348,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    const controls=[...document.querySelectorAll('button,select,input,textarea,summary,a[href],label,[role="button"],[tabindex]:not([tabindex="-1"]),.win-title,.mode-blocked-note')]
     .filter(e=>e!==start&&!n.contains(e)&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>({id:e.id||e.className||e.tagName,...box(e)}));
    const covered=shown?controls.filter(e=>e.x<hint.right&&e.right>hint.x&&e.y<hint.bottom&&e.bottom>hint.y).map(e=>e.id):[];
-   const between=shown?controls.filter(e=>e.x<=arrow&&e.right>=arrow&&e.y<hint.y&&e.bottom>button.bottom).map(e=>e.id):[];
+   const between=shown?controls.filter(e=>e.x<=arrow+10&&e.right>=arrow-10&&e.y<hint.y&&e.bottom>button.bottom).map(e=>e.id):[];
    const hit=shown?document.elementFromPoint((hint.x+hint.right)/2,(hint.y+hint.bottom)/2):null;n.focus();
    return{shown,text:n.textContent,hint,button,arrow,covered,between,viewport:{width:innerWidth,height:innerHeight},ariaHidden:n.getAttribute('aria-hidden'),
     pointerEvents:c.pointerEvents,hitBubble:!!hit&&(hit===n||n.contains(hit)),focusable:document.activeElement===n,describedBy:start.getAttribute('aria-describedby')};});
@@ -357,10 +357,10 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    await p.setViewportSize(size);await frames();
    viewports.push({size,...await measure(),screenshot:await picture(p,'first-hint-'+size.width+'x'+size.height)});
   }
-  // The note under the view toggle (a press of it in はじめて), where the toolbar wraps.
-  await p.setViewportSize({width:800,height:600});await p.locator('.editor-modes button:not([hidden])').first().click();
+  // The note under the view toggle (a press of it in はじめて), at 1024 wide, where it stands in the bubble's row.
+  await p.setViewportSize({width:1024,height:768});await p.locator('.editor-modes button:not([hidden])').first().click();
   await p.waitForFunction(()=>document.querySelector('#modeBlockedNote')?.hidden===false);await frames();
-  const withNote={size:{width:800,height:600},...await measure(),screenshot:await picture(p,'first-hint-note-800x600')};
+  const withNote={size:{width:1024,height:768},...await measure(),screenshot:await picture(p,'first-hint-note-1024x768')};
   // A part with a long name widens the list of parts under the bubble (作品 › 開く is no touch of a block).
   await p.setViewportSize({width:1280,height:720});
   const named=await p.evaluate(()=>{const work=Akari.makeEmptyProject();work.name='ながい 名前';work.components[0].name='あいうえおかきくけこさしすせそ';return Akari.serializeProject(work,Akari.makeDefaultAssetStore());});
@@ -408,8 +408,12 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   // A long text put in the code (4096 letters or more) is put in by the product's own input after the browser's: as one
   // insertion, and as a paste from the clipboard.
   const longText='1'.repeat(5000);
-  await route('long-input',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText(longText);}]);
   await p.context().grantPermissions(['clipboard-read','clipboard-write']);
+  // Ctrl+V on a block of the list (a button) puts nothing in; Ctrl+Backspace at the start of the code deletes nothing.
+  await route('paste-on-button',[async()=>{await focusIn('#blockEditor [data-blockui-action="palette-add"]');await p.evaluate(()=>navigator.clipboard.writeText('abc'));},()=>p.keyboard.press('ControlOrMeta+V')]);
+  await route('ctrl-delete-nothing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   async()=>{await p.locator('#codeEditor').evaluate(n=>{n.focus();n.setSelectionRange(0,0);});const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('ControlOrMeta+Backspace');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing deleted');}]);
+  await route('long-input',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText(longText);}]);
   await route('long-paste',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.evaluate(text=>navigator.clipboard.writeText(text),longText);await p.locator('#codeEditor').focus();await p.keyboard.press('ControlOrMeta+V');
     assert.ok((await p.locator('#codeEditor').inputValue()).includes(longText),'the long text was pasted');}]);
   // The next pages' localStorage throws on every call (a browser that keeps nothing).

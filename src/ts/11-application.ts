@@ -1072,9 +1072,14 @@ export function initApp() {
   const startsWork=(event: Event)=>{
     // (only what the browser makes from the child: the product's own clicks and inputs, made by its code, are none)
     if(!event.isTrusted||!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents,#codeEditor,#callableBlocks,#callableCode'))return;
-    // (a paste or a long text the product puts in by its own input still comes first as the browser's beforeinput or
-    // paste; undo and redo, also beforeinput, make nothing)
-    if(event.type==='beforeinput'&&!/^(?:insert|delete)/.test((event as InputEvent).inputType))return;
+    // (a paste, a drop or a long text that the product puts in by its own input still comes first as the browser's
+    // paste, drop or beforeinput: these count when they bring text into a text field. A paste on a button brings
+    // nothing, and a deletion counts by the input that follows it only when something was deleted)
+    const field=event.target.closest('textarea,input,[contenteditable="true"]'),brought=(data: DataTransfer | null | undefined)=>!!data?.getData('text/plain');
+    if(event.type==='paste'&&!(field&&brought((event as ClipboardEvent).clipboardData)))return;
+    if(event.type==='drop'&&!(field&&brought((event as DragEvent).dataTransfer)))return;
+    const typed=event as InputEvent;
+    if(event.type==='beforeinput'&&!(field&&typed.inputType.startsWith('insert')&&(typed.data||brought(typed.dataTransfer))))return;
     const key=event as KeyboardEvent;
     if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
     dismissTutorialHint();
