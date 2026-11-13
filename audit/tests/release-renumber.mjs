@@ -34,8 +34,16 @@ export async function runReleaseRenumberChecks(){
   const check=async fn=>{await fn();count++;};
   // A published product at 1.5.1 on main: the product is built from src/ and the record is written by the language release.
   // Fixture modules take names no real module has: the audit inventory parses every script a literal names.
-  const fixture=()=>{
+  // The recorded reasons of the static contract's negatives: two detail lines show names made from the release (the
+  // product name without its "_", the next patch's), the others fixed names; a line of that site that is no detail and
+  // a detail of another site show names made from the start's release, which stay.
+  const reasonsFile='audit/fixtures/refusal-reasons.json';
+  const reasons=(bare,next)=>'{\n "static-contract#1": [\n  {\n   "line": "Akari_1_5_2.html Akari1_5_1.html",\n   "detail": "+ \'../Akari_1_0_1.html\'"\n  },\n'+
+    '  {\n   "detail": "+ \''+next+'\'"\n  },\n  {\n   "detail": "+ \''+bare+'\'"\n  },\n  {\n   "detail": "+   \'Akari1_0_0.html\'"\n  }\n ],\n'+
+    ' "other#1": [\n  {\n   "detail": "Akari_1_5_2.html Akari1_5_1.html"\n  }\n ]\n}\n';
+  const fixture=({withReasons=false}={})=>{
     const root=fs.mkdtempSync(path.join(scratch,'repo-'));
+    if(withReasons)write(root,reasonsFile,reasons('Akari1_5_1.html','Akari_1_5_2.html'));
     write(root,'src/akari.html','<!doctype html>\n<title>あかり</title>\n<style>\n<!-- @include css/screens.css -->\n</style>\n<script>\n(() => {\n<!-- @include ts/00-start.ts -->\n<!-- @portable ../extensions/profiles.ts -->\n<!-- @portable ../extensions/foundation.ts -->\n<!-- @include ts/01-first.ts -->\n<!-- @include ts/02-second.ts -->\n})();\n</script>\n');
     write(root,'src/css/screens.css','/* ── 1.5.1 editor screens ── */\nbody { margin: 0; }\n.first { color: red; }\n.second { color: blue; }\n');
     write(root,'src/ts/00-start.ts',"export const PRODUCT_RELEASE = '1.5.1';\n");
@@ -92,7 +100,7 @@ export async function runReleaseRenumberChecks(){
   try{
     // The second branch renumbers with the command after merging main: 1.5.3, and the change guard passes.
     await check(async()=>{
-      const root=fixture();twoBranches(root);
+      const root=fixture({withReasons:true});twoBranches(root);
       assert.deepEqual(takeIn(root),['Akari_1_5_2.html','audit/manifests/release-1.5.2.json'],'only generated outputs conflict');
       write(root,'NEW.md','あかり 1.5.2 の新しい文書\n');
       const r=cp.spawnSync(process.execPath,[command,'--base','main'],{cwd:root,env:process.env,encoding:'utf8'});
@@ -104,6 +112,8 @@ export async function runReleaseRenumberChecks(){
       noOldRelease(root,['README.md','AUDIT.md','MANUAL.html','NEW.md','src/css/screens.css','src/ts/00-start.ts','LANGUAGE_1_5_3.md'],'1.5.3',/1\.5\.[12](?!\d)/);
       assert.equal(read(root,'TOOLS.md'),'Playwright 1.5.1 で確かめる\n','tool versions stay');
       assert.ok(read(root,'README.md').includes('製品版 1.5.3 の新しい機能'));
+      // The detail lines made from the release follow it; the fixed names and the line that is no detail stay.
+      assert.equal(read(root,reasonsFile),reasons('Akari1_5_3.html','Akari_1_5_4.html'),'recorded reasons follow the release');
       for(const file of ['audit/manifests/features.json','audit/manifests/language-form-coverage.json','audit/browser/browser-audit-manifest.json'])assert.equal(JSON.parse(read(root,file)).productVersion,'1.5.3',file);
       const meta=JSON.parse(read(root,'audit/public-files.json'));
       assert.equal(meta.productFile,'Akari_1_5_3.html');assert.ok(meta.files.includes('audit/manifests/release-1.5.3.json')&&meta.files.includes('LANGUAGE_1_5_3.md'));
@@ -117,7 +127,7 @@ export async function runReleaseRenumberChecks(){
     // Main moved two releases ahead and the author kept this branch's side of every hand-written conflict:
     // the branch's own 1.5.2, main's 1.5.3 and the start's 1.5.1 all follow to 1.5.4.
     await check(async()=>{
-      const root=fixture();twoBranches(root);
+      const root=fixture({withReasons:true});twoBranches(root);
       ok(root,'checkout','-q','-b','third','main');edit(root,'src/ts/01-first.ts',"'first, changed'","'first, third'");
       assert.equal(renumberRelease(root,{base:'main'}).version,'1.5.3');commitAll(root,'third');
       ok(root,'checkout','-q','main');ok(root,'merge','-q','--ff-only','third');ok(root,'checkout','-q','second');
@@ -133,6 +143,8 @@ export async function runReleaseRenumberChecks(){
       assert.ok(read(root,'Akari_1_5_4.html').includes("'first, third'")&&read(root,'Akari_1_5_4.html').includes("'second, changed'"));
       noOldRelease(root,['README.md','AUDIT.md','MANUAL.html','src/css/screens.css','src/ts/00-start.ts','LANGUAGE_1_5_4.md'],'1.5.4',/1\.5\.[123](?!\d)/);
       for(const file of ['audit/manifests/features.json','audit/manifests/language-form-coverage.json','audit/browser/browser-audit-manifest.json'])assert.equal(JSON.parse(read(root,file)).productVersion,'1.5.4',file);
+      // The branch's side of the recorded reasons (made from 1.5.2, conflicting with main's from 1.5.3) follows to 1.5.4.
+      assert.equal(read(root,reasonsFile),reasons('Akari1_5_4.html','Akari_1_5_5.html'),'recorded reasons follow over two releases');
       verifyLanguageRelease(root);
       const report=await changeGuard({repo:root,base:'main',head:'second'});
       assert.equal(report.status,'PASS',JSON.stringify(report));assert.equal(report.version.expected,'1.5.4');

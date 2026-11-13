@@ -318,9 +318,64 @@ await check('EXTENSION-MEIJIN-SCOPE',async()=>{
   return plain({meijinChecked:compiled.errors.length===0,meijinSaid:said,ordinaryCommandStopped:first(work([{source:'拡張「名人の記録」「数を記録する」（7）。'}])),
     ordinaryCalculationStopped:first(work([{source:'拡張計算「名人の記録」「記録した数」（）を言う。'}])),
     ordinaryEventStopped:first(work([{source:'「拡張:demo.meijin/recorded」という合図を受けたとき、\n  「きた」と言う。'}])),
+    // An ordinary body that receives the 名人-only event's Japanese name is not told the event's signal name (I137).
+    ordinaryEventNameNotice:(p=>{p.scripts[0].event='message';M.updateScriptSource(p.scripts[0],'「記録した」という合図を受けたとき、\n  「きた」と言う。',p);
+      return M.compileProject(p).notes.filter(n=>n.code==='I137').map(n=>[n.message,n.proposals?.length??0]);})(work([{source:''}])),
     otherExtensionOrdinary:first(work([{source:'拡張「数の記憶」「数を記憶する」（9）。'}]))===null,
     blocks:M.BLOCK_SCHEMAS.filter(s=>s.id.startsWith('ExtensionCommand:')).map(s=>s.id),meijinHints:hints('meijin'),ordinaryHints:hints(work([]).components[0].id),
     invalidScopeRejected,scopes:['commands','calculations','events'].map(kind=>M.extensions.operations(kind).find(x=>x.extensionId==='demo.meijin').scope)});
+});
+// A file carries the extensions its work's record names, with what they depend on (LANGUAGE「拡張基盤」): an extension
+// the work does not use, whose state is its initial one, is left out, so one that cannot be carried in a file refuses
+// only a work whose record names it (E709): one that uses it or an extension that depends on it, or keeps its state.
+// The file's player opens the work with the extensions it carries.
+await check('EXTENSION-STANDALONE-USED-ONLY',async()=>{
+  const {buildDerivedProduct}=await import('../../extensions/build.mjs'),{createAkariExtensionHost}=await import('../../extensions/foundation.ts'),standardIds=offline.manifest.standard;
+  const unfit={manifest:{...structuredClone(connector.manifest),selfContained:false},factory:connector.factory};
+  const one={id:'one',name:'もとの一',description:'x',args:[],returns:{type:'number',unit:null},async:false};
+  const base={manifest:{id:'audit.base',name:'もとの道具',version:'1.0.0',apiContract:1,standard:standardIds,description:'x',dependencies:[],capabilities:[],offline:true,selfContained:true,
+    state:{formatVersion:1,initial:null},commands:[],events:[],calculations:[one]},factory:function baseFactory(){return{commands:{},calculations:{one(){return 1;}}};}};
+  const {contentHash}=createAkariExtensionHost({standard:standardIds}).register(base.manifest,base.factory);
+  const user={manifest:{...structuredClone(base.manifest),id:'audit.user',name:'つかう道具',dependencies:[{id:'audit.base',version:'1.0.0',contentHash}],calculations:[{...one,id:'two',name:'つかう二'}]},
+    factory:function userFactory(){return{commands:{},calculations:{two(){return 2;}}};}};
+  // (an extension that depends on the one that cannot be carried)
+  const leaning={manifest:{...structuredClone(base.manifest),id:'audit.leaning',name:'よりかかる道具',calculations:[{...one,id:'three',name:'よりかかる三'}],
+    dependencies:[{id:'demo.connector',version:connector.manifest.version,contentHash:createAkariExtensionHost({standard:standardIds}).register(unfit.manifest,unfit.factory).contentHash}]},
+    factory:function leaningFactory(){return{commands:{},calculations:{three(){return 3;}}};}};
+  const made=async(name,options)=>{const file=path.join(directory,name+'.html');await buildDerivedProduct({product:candidate,output:file,allowedCapabilities:connector.manifest.capabilities,...options});return derivedApi(file);};
+  const D=await made('used-only',{extensions:[offline,unfit,base,user,leaning]}),P=await made('used-only-profile',{extensions:[offline,unfit],profiles:[profile],profile:{id:profile.id,version:profile.version}});
+  const work=(A,source,receive)=>{const p=A.makeEmptyProject(),id=p.components[0].id;p.scripts=[{id:'s0',targetId:id,event:'start',source:''}];A.updateScriptSource(p.scripts[0],source,p);
+    if(receive)p.scripts.push({id:'r',targetId:id,event:'message',filter:{message:receive},source:'「来た」と言う。'});return p;};
+  const run=(api,p,compiled)=>{const said=[],q=new api.EventScheduler(p,compiled,new api.RuntimeModel(p,{}),{say:(_,t)=>said.push(String(t))});q.schedule=()=>{};
+    try{q.start();for(let i=0;i<50&&q.ready.length;i++)q.runTurn();}finally{q.stop();}return said;};
+  // The file's player is started as it starts itself, and opens the work it holds (only the mount on the page is replaced).
+  const player=(A,p)=>{let html;try{html=A.generateStandaloneHtml(p,A.makeDefaultAssetStore());}catch(error){return error.code||error.message;}
+    const script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')),needle='\nmountAkariPlayer(createAkariRuntime(';assert.equal(script.split(needle).length,2,'one player mount');let opened=null;
+    const context={console,TextEncoder,TextDecoder,Uint8Array,Uint32Array,DataView,ArrayBuffer,Blob,URL,structuredClone,crypto:crypto.webcrypto,setTimeout,clearTimeout,AbortController:globalThis.AbortController,queueMicrotask:globalThis.queueMicrotask,
+      __open:(api,_stage,payload)=>{const restored=api.restoreExecutable(payload);
+        opened={carried:api.extensions.stateInfo().map(x=>x.id),kept:(payload.extensions?.state??[]).map(item=>[item.id,JSON.stringify(item.value)]),said:run(api,restored.project,restored.compiled)};}};
+    vm.runInNewContext(script.replace(needle,'\n__open(createAkariRuntime('),context,{timeout:30000});return opened;};
+  const observed={none:player(D,work(D,'「ふつう」と言う。')),used:player(D,work(D,'拡張計算「数の記憶」「数を2倍にする」（3）を言う。')),
+    dependency:player(D,work(D,'拡張計算「つかう道具」「つかう二」（）を言う。')),profileOnly:player(P,work(P,'「ふつう」と言う。')),
+    unfit:player(D,work(D,'「ふつう」と言う。','拡張:demo.connector/sample')),unfitDependency:player(D,work(D,'拡張計算「よりかかる道具」「よりかかる三」（）を言う。'))};
+  // The work keeps the state its run left (persist "project"), then no longer uses the extension.
+  const kept=work(D,'拡張「数の記憶」「数を記憶する」（5）。');run(D,kept,D.compileProject(kept));D.updateScriptSource(kept.scripts[0],'「ふつう」と言う。',kept);
+  return plain({...observed,kept:player(D,kept)});
+});
+// A heading written in the body that receives a registered extension event by its Japanese name is told the event's
+// signal name, with the button that writes it, and the work receives the event once it is pressed; a name that is no
+// event's is told as before (LANGUAGE I137).
+await check('EXTENSION-EVENT-NAME-NOTICE',async()=>{
+  const D=derivedApi(fewerDerived),sender='拡張「数の記憶」「数を記憶する」（17）。';
+  const work=heading=>{const p=D.makeEmptyProject(),id=p.components[0].id;p.scripts=[{id:'s0',targetId:id,event:'start',source:''},{id:'s1',targetId:id,event:'message',source:''}];
+    D.updateScriptSource(p.scripts[0],sender,p);D.updateScriptSource(p.scripts[1],heading+'\n  「来た」と言う。',p);return p;};
+  const notices=p=>D.compileProject(p).notes.filter(n=>n.code==='I137');
+  const told=p=>notices(p).map(n=>({message:n.message,button:n.proposals?.[0]?.label??null,source:n.proposals?.[0]?.source??null}));
+  const named=work('「記憶した数が変わった」という合図を受けたとき、'),[proposal]=notices(named)[0].proposals;
+  D.updateScriptSource(named.scripts[1],proposal.original.slice(0,proposal.start)+proposal.source+proposal.original.slice(proposal.end),named);
+  const said=[];let now=0;const r=new D.RuntimeModel(named,{});r.now=()=>now;const q=new D.EventScheduler(named,D.compileProject(named),r,{say:(_,t)=>said.push(String(t))});q.schedule=()=>{};
+  try{q.start();for(;now<20;now++){for(let i=0;i<50&&q.ready.length;i++)q.runTurn();q.recheckBlocked();}}finally{q.stop();}
+  return plain({event:told(work('「記憶した数が変わった」という合図を受けたとき、')),fixedSaid:said,ordinary:told(work('「開始」という合図を受けたとき、'))});
 });
 const install=`globalThis.auditDefinitions=[{manifest:${JSON.stringify(offline.manifest)},factory:${offline.factory.toString()}},{manifest:${JSON.stringify(text.manifest)},factory:${text.factory.toString()}}];globalThis.auditConnector={manifest:${JSON.stringify(connector.manifest)},factory:${connector.factory.toString()}};`;
 // Ordinary local files use opaque origin "null". Do not change that contract
@@ -598,6 +653,39 @@ await withOrdinaryFileBrowser(async browser=>{
     const impostorReady=fork.context.waitForEvent('page');await fork.page.evaluate(()=>{window.impostorPeer=window.open('about:blank','akari-impostor-peer');});const unrelated=await impostorReady;
     await fork.page.evaluate(()=>{window.spoofResult=null;window.spoofPending=rpcTest.host.connectWindow(expectedPeer,{origin:'null',capabilities:['demo.add'],timeoutMs:700}).then(()=>{spoofResult='accepted';},e=>{spoofResult=e.code;});});await expected.waitForFunction(()=>!!window.seen);const probe=await expected.evaluate(()=>seen);await unrelated.evaluate(probe=>window.opener.postMessage({jsonrpc:'2.0',id:probe.id,result:{nonce:probe.params.nonce}},'*'),probe);await fork.page.waitForFunction(()=>spoofResult!==null);const impostor=await fork.page.evaluate(()=>spoofResult==='E707');
     await fork.page.evaluate(()=>rpcTest.host.endSession());await fork.page.waitForTimeout(30);assert.deepEqual(await fork.page.evaluate(()=>rpcUnhandled),[],'Transport cleanup leaked an unhandled rejection');await Promise.all([popup.close(),expected.close(),unrelated.close()]);return{malformed,...core,impostor,oldSession,reconnect,refusedValueMovesOn};
+  });
+  // The heading's 「いつ動く？」 offers the registered extension events by their Japanese names and writes the chosen
+  // event's signal name (拡張:拡張ID/機能ID); the standard product, which registers none, offers no such choice.
+  await check('EXTENSION-EVENT-HEADING-CHOICE',async()=>{
+    // Each product opens in a page of its own: the pages the checks above used keep their works, questions and runs.
+    assert.ok(derived);const plainPage=await pageAt(candidate),derivedPage=await pageAt(derived);
+    try{
+    for(const active of [plainPage,derivedPage])await answerProductConfirms(active.page,true);
+    const role=(page,name)=>page.locator('#blockEditor [data-blockui-structured-role="heading.'+name+'"]:visible');
+    const open=async page=>{
+      const file=await page.evaluate(()=>{const q=Akari.makeEmptyProject();q.name='heading-choice';q.scripts=[{id:'main',targetId:q.components[0].id,event:'start',source:'「来た」と言う。'}];return Akari.serializeProject(q,Akari.makeDefaultAssetStore());});
+      // (a page with unsaved work asks first; the handler answers it in the locator action that waits for it to close)
+      await page.locator('#fileInput').setInputFiles({name:'heading-choice.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await productQuestionAnswered(page);await page.waitForFunction(()=>Akari.app.project.name==='heading-choice');
+      // An opened work shows the stage's bodies: the part's body that starts with 動かす is chosen, as an author would.
+      await page.locator('#uiLevel').selectOption('basic');await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
+      if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();
+      await chooseView(page,'blocks');await page.waitForFunction(()=>document.body.dataset.editorMode==='blocks');
+      await page.locator('#sourceHeadingBtn').click();await role(page,'event').selectOption('message');
+      await page.locator('#blockEditor .blockui-heading-editor[open] .blockui-trigger-details > summary').click();await role(page,'filter.kind').selectOption('message');
+    };
+    const page=derivedPage.page;
+    await open(plainPage.page);const standardChoices=await role(plainPage.page,'filter.extension').count();
+    await open(page);const choices=await role(page,'filter.extension').locator('option').evaluateAll(options=>options.map(option=>[option.value,option.textContent]));
+    const label=role(page,'filter.extension').locator('xpath=..').locator('.blockui-field-label'),shownLabel=await label.isVisible()?await label.textContent():null;
+    await role(page,'filter.extension').selectOption('拡張:demo.offline/changed');const written=await role(page,'filter.value').inputValue();
+    // えらばない empties the event's name; the event is then chosen again for the heading.
+    await role(page,'filter.extension').selectOption('');const cleared=await role(page,'filter.value').inputValue();
+    await role(page,'filter.extension').selectOption('拡張:demo.offline/changed');
+    await page.locator('#blockEditor [data-blockui-action="heading-commit"]:visible').click();
+    await page.waitForFunction(()=>Akari.app.project.scripts[0]?.event==='message');
+    const heading=await page.evaluate(()=>({event:Akari.app.project.scripts[0].event,filter:Akari.app.project.scripts[0].filter}));
+    return{standardChoices,choices,shownLabel,written,cleared,heading};
+    }finally{for(const active of [plainPage,derivedPage]){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}}
   });
   for(const active of [standard,fork].filter(Boolean)){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}
 }).catch(error=>{pageErrors.push(error.message);console.error(error.stack);});

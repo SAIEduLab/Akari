@@ -28,7 +28,7 @@
 - 関数・変数・監査IDは機能・責務を示す名前にします。`restoreV103`、`runVersion09Tests`、`parseRelease104`のようにリリース番号を組み込まず、整理番号が必要なら`validateCase001`や`FORMAT-PROJECT-001`のように機能名から区切ります。番号の対応先は製品版ではありません。
 - 製品のリリースラベルは一か所に定義し、UI表示・保存と書出しの作成元記録・公開APIへの露出だけで参照します。`appVersion`は型・長さ・文字種を検証する記録項目で、現在製品版との一致や大小比較を受入条件にしません。
 - 保存形式・プログラム形式・言語・runtimeは独立した整数契約番号で検証します。同じ契約の別製品版を受け入れ、契約不一致・型不正・欠落・破損を拒否します。所有者、素材、上限、本文一致、原子的な失敗の保証を維持します。自動変換・暗黙の補完は加えません。
-- `audit/lib/release-policy.mjs`をstatic gateで必須実行し、製品の識別子と監査コードの関数名をASTで検査します。製品版・作成元ラベルの参照は許可した構文と用途に限定し、別名経由の読取りや複製した版文字列を拒否します（差し込みのないテンプレート（`` `1.0.3` ``、``[`appVersion`]``）で書いたものも、引用符で書いたものと同じに拒否します）。外部の形式番号・標準API名まで一律禁止しません。`release-policy-negative.mjs`で禁止名・版比較・別名・計算プロパティ等の不正な追加を拒否できることを確認します。違反は警告ではなくFAILです。
+- `audit/lib/release-policy.mjs`をstatic gateで必須実行し、製品の識別子と監査コードの関数名をASTで検査します。製品版・作成元ラベルの参照は許可した構文と用途に限定し、別名経由の読取りや複製した版文字列を拒否します（差し込みのないテンプレート（`` `1.0.4` ``、``[`appVersion`]``）で書いたものも、引用符で書いたものと同じに拒否します）。外部の形式番号・標準API名まで一律禁止しません。`release-policy-negative.mjs`で禁止名・版比較・別名・計算プロパティ等の不正な追加を拒否できることを確認します。違反は警告ではなくFAILです。
 - `format-compatibility.mjs`の固定9件は、製品のリリース表示値だけを変更した候補から作品を作り、同じ契約の別製品による読込み・実保存・自動復元・生成HTMLのオフライン実行を検査します。未保存内容とclean/dirtyの保持、作成元だけを除く指紋、未知の契約と不正データの拒否を含めます。結果の欠落・重複・失敗・別snapshotは独立したvalidatorで拒否します。
 - SEMANTICでは、製品版を動作判定へ戻す間接参照や動的プロパティ名、静的検査の許可用途の拡張も差分レビューします。静的検査だけで任意の間接参照の不存在を証明したとは扱いません。HYBRIDではUI経由の読込み・復元と未保存保護を実ブラウザーで確認します。
 
@@ -78,14 +78,14 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 
 - 版は変更ガードと同じ規則で決めます。baseの版に対して `src/` か製品が変わっていればpatchを1つ上げた版、変わっていなければbaseの版です。それ以外の上げ方は作りません。branchがそれより上の版（理由の記録が要る上げ方）を名乗っていれば、下げずに止めます。
 - 旧版として扱うのは、`src/` の現在のラベル、baseの版、`audit/public-files.json` の版、このbranchがbaseから離れてから名乗った版と名乗る前の版です。
-- `src/` の `PRODUCT_RELEASE`、`audit/public-files.json` の `productVersion`・`productFile`、`productVersion` を写す登録簿（`features.json`・`language-form-coverage.json`・`browser-audit-manifest.json`）を書き換えます。文書と `src/` は現行版だけを名乗るので（`publication-documents`）、旧版の版番号と製品ファイル名を新しい版へ書き換えます。外部ツールの版は書き換えません。製品HTMLは `src/` から作り直し、直下のほかの製品HTMLと旧い配布記録を削除します。仕様書名・リンク・配布一覧・配布記録は仕様書の配布準備で更新します。
+- `src/` の `PRODUCT_RELEASE`、`audit/public-files.json` の `productVersion`・`productFile`、`productVersion` を写す登録簿（`features.json`・`language-form-coverage.json`・`browser-audit-manifest.json`）を書き換えます。文書と `src/` は現行版だけを名乗るので（`publication-documents`）、旧版の版番号と製品ファイル名を新しい版へ書き換えます。外部ツールの版は書き換えません。static contractは現行版から否定の例の名前（`_` を抜いた製品名と、次のpatchの製品名）を作るので、`audit/fixtures/refusal-reasons.json` のその記録（`static-contract#1`）の `detail` の行で、旧版から作るこの2つの形と同じ名前を、新しい版から作った名前へ一度に書き換えます。ほかの行、ほかの記録、ほかの名前は変えません。製品HTMLは `src/` から作り直し、直下のほかの製品HTMLと旧い配布記録を削除します。仕様書名・リンク・配布一覧・配布記録は仕様書の配布準備で更新します。
 - 対象は次のcommitに入るファイル、つまり追跡中のファイルと、無視されていない未追跡のファイルです。
 - 生成物（製品HTML、配布記録）は衝突の状態にかかわらず作り直します。それ以外のファイルに未解決の衝突や衝突マーカーが残っていれば、何も変えずに止めます。両側が仕様書を別の名前へ変えるとgitは衝突なしに両方を残すので、仕様書が2つあれば、手で1つにまとめるよう求めて止めます。baseを取り込んでいないbranch、repoの直下以外での実行でも止めます。
 - 文書・`src/`・登録簿以外で、このbranchが追加した行（未追跡のファイルは全行）が旧版の版番号を含む場合は、データか版の参照かを機械で区別できないので、一覧を示して止めます。手で直してから実行し直します。
 - 書き込みは一時ディレクトリ（`.release-renumber-`）を経由し、元の内容をそこに退避します。最後にgateと同じ文書の検査を行い、現行以外の版や製品名が残っていれば止めます。途中で失敗した場合は実行前の内容に戻します。戻せなかった場合は退避を残してその場所を示し、残った退避があるうちは次の実行を止めます。gitの取り込み・stage・commitは行いません。
 
 integrityの `release-renumber` は、gitの全体設定を読まない合成の一時リポジトリで確かめます。
-- 2本の製品branchを同じbaseから作り、先の1本をmergeした後に、後の1本がmainを取り込んで衝突するのは生成物だけであること、このコマンドで1つ上の版になって変更ガードがPASSすること、未追跡の文書も追従し外部ツールの版は残ること、再実行で何も変わらないこと。
+- 2本の製品branchを同じbaseから作り、先の1本をmergeした後に、後の1本がmainを取り込んで衝突するのは生成物だけであること、このコマンドで1つ上の版になって変更ガードがPASSすること、未追跡の文書も追従し外部ツールの版は残ること、記録した理由の版から作った名前が追従し、固定の名前、`detail` でない行、ほかの記録は残ること、再実行で何も変わらないこと。mainが2版先に進んだ場合も、記録した理由が追従すること。
 - mainが2版先に進み、手書きの衝突をbranch側で解いた場合に、branch・main・開始時点の版がすべて追従し、残った2つの仕様書をまとめるよう求めてから、まとめた後に変更ガードがPASSすること。
 - 製品を変えないbranchはbaseの版のままであること。
 - 未取込みのbase、rebaseの途中、直下以外での実行、手書きの衝突、残った衝突マーカー、以前の版を含む追加行（diffで `+++` に見える行の後も含む）と未追跡のファイル、版を下げる場合、残った退避、仕様書名の衝突、不明なbaseでは何も変えずに拒否すること。配布準備の後の文書の検査で失敗した場合も、すべてのファイルが元に戻ること。
@@ -158,7 +158,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 監査基盤そのものも検査します。次はローカルgate（`audit/lib/gate-contract.mjs`の`gateSteps`）の必須段です。段の一覧と各段の結果の検証は`gate-contract`と`verify-gate-results`が正本で、本書に件数を書きません。
 
 - **公開ファイルの一致**（`publication-inventory`）: `audit/public-files.json`は`git ls-files`と両方向で一致します。gitがない環境ではFAILです。
-- **文書の整合**（`publication-documents`）: 追跡する文書は、現行の製品ファイルと現行のリリース表示だけを挙げます。言語仕様のファイルも、リンク先だけでなく文の中で名を挙げるときも現行の版（`LANGUAGE_1_0_3.md`）だけを挙げます。版のない `LANGUAGE.md` は文書の名として使えます。
+- **文書の整合**（`publication-documents`）: 追跡する文書は、現行の製品ファイルと現行のリリース表示だけを挙げます。言語仕様のファイルも、リンク先だけでなく文の中で名を挙げるときも現行の版（`LANGUAGE_1_0_4.md`）だけを挙げます。版のない `LANGUAGE.md` は文書の名として使えます。
 - **配布の固定**（`release-distribution`）: `audit/manifests/release-<版>.json`は1つだけで、製品・文書・契約番号のhashと一致します。契約番号は`features.json`のEXECUTABLE_CONTRACTから読みます。
 - **監査ファイルの到達性**（`audit-inventory`）: `audit/`の追跡ファイルは、gate段・受入コマンド・ブラウザー群・workflow・runnerの読込み・本書とREADMEの案内のいずれかから到達できます。到達できないファイルはFAILで、合成した孤立ファイルで拒否能力を示します。
 - **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。準備の行の `npm install` は入れるパッケージのスクリプトを動かさず（`--ignore-scripts`）、Pythonのパッケージは版を書いて入れます。監査の道具は、組（`audit/deps/full`・`audit/deps/browser`）ごとの `package.json` と `package-lock.json` から `npm ci` で入れ、依存の依存まで版と integrity を固定します（`toolSetIssues` が、版の固定と、lock がその `package.json` のもので、すべてのパッケージに npm の registry の integrity があることを確かめます）。Playwright は別の場所（`$RUNNER_TEMP/playwright-deps`）に計画の版で入れ、`NODE_PATH` は両方を指します。変更ガードは base のガードに戻す前に道具を入れるので、head の lock を読まず、木のパッケージをすべて版を書いて入れます。どのジョブも、`node` の項目より前に、契約が名指す1つのNodeの版（`audit/lib/workflow-contract.mjs` の `workflowNodeVersion`）を `actions/setup-node` で入れます。分割したジョブのmatrixは計画のshardと一致し、一つの失敗で他のshardを取り消しません。ジョブが `node` で動かすスクリプトについて、読み込みうるnpmのパッケージ（静的なimport、require（`createRequire()` で作ったものを含みます）、文字で書いたimport()。関数の中で後から読むものと、相対パスでたどるファイルを含みます。`audit/lib/script-packages.mjs`）を、そのジョブがそれより前に入れていること、そのジョブの `NODE_PATH` が入れた場所（`$RUNNER_TEMP/audit-deps/node_modules`）を指していることも検査します。スクリプトが子のプロセスとして起動する `node` のスクリプト（その子も）が読み込むパッケージも数えます。起動するスクリプトを変数でしか示さない起動は、起動する側のファイルごとに、一覧（gateの段、受入の段、ブラウザーの課題など）を `declaredLaunches` に宣言します。宣言のないファイルの起動があれば、検査は誤りで止まります。actionは、選んだときにtagが指していたcommitで固定します（`workflowActionPins`。workflowには `owner/name@<commit> # <tag>` と書きます）。tagだけの参照と、別のactionや別のtagのcommitは断ります。
@@ -665,7 +665,7 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
 | EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正と、同じ区分の別の機能のIDと同じ機能名を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
 | EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
-| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.0.3の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
+| EXT17 | handlerの `context` は `signal`・`sessionId`・`runtimeId`・`runtime` の四つだけ。`runtime.actor(id)` は呼ぶたびに新しい凍結した見え方 `{runtimeId, baseId, isClone, x, y, direction}`（1.0.4の座標と向き）を返し、画面とその実行にない部品は `null`。見え方を書きかえても部品は変わらない（EXTENSIONS.md「factoryと実行の寿命」） | extension-foundationに追加する（拡張の見え方の検査） | GA-EXEC |
 | EXT18 | 動いている拡張に登録された できごとの合図を受ける本文があると、実行は「おわった」状態にならず、下の行は「「拡張:…」の 合図を 受けると 動くよ」（画面・部品の登録順で はじめの本文）。登録されていない「拡張:…」の名前と、本文のない登録だけの拡張は、終わりを止めない（LANGUAGE.md「作る画面と動かす画面」） | extension-foundationに追加する（拡張のできごとの本文と実行の終わりの検査） | GA-EXEC |
 | EXT19 | 派生の製品を作る所（`extensions/build.mjs`）は factory を書いたとおりに埋める。factory の中の `$` を置きかえの記号として読まず、製品の残りも変えない。派生で動かした答えと、中身の指紋が、書いたとおりの factory のものになる | EXTENSION-BUILD-AS-WRITTEN | GA-EXEC |
 | EXT20 | 少ない拡張で保存した作品を、多い拡張の派生で開く。作品の記録にない拡張は、ほかの作品がそのページに残した状態ではなく初めの状態から始まり、作品は動かす前でも保存できる（LANGUAGE.md「別作品の状態を継承しない」） | EXTENSION-STATE-OF-UNRECORDED | GA-EXEC |

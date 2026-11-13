@@ -6897,14 +6897,14 @@
    "code": "ERR_ASSERTION",
    "line": "product filename must match release label",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+ 'Akari_1_0_4.html'"
+   "detail": "+ 'Akari_1_0_5.html'"
   },
   {
    "name": "AssertionError",
    "code": "ERR_ASSERTION",
    "line": "product filename must match release label",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+ 'Akari1_0_3.html'"
+   "detail": "+ 'Akari1_0_4.html'"
   },
   {
    "name": "AssertionError",
@@ -6939,14 +6939,14 @@
    "code": "ERR_ASSERTION",
    "line": "no retired product in publication",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+   'Akari_1_0_4.html'"
+   "detail": "+   'Akari_1_0_5.html'"
   },
   {
    "name": "AssertionError",
    "code": "ERR_ASSERTION",
    "line": "no retired product in publication",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+   'Akari1_0_3.html'"
+   "detail": "+   'Akari1_0_4.html'"
   }
  ],
  "surface-negative#1": [

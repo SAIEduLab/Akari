@@ -421,9 +421,12 @@ export function createAkariExtensionHost(options: HostOptions): ExtensionHost {
     validateRequirements(upgraded);
     return {envelope:copy<unknown>(upgraded) as Requirements,upgrades,dropped};
   }
-  function exportDefinitions() {
-    return [...records.values()].map(record=>{
-      if(!record.manifest.selfContained)fail('E708',`拡張「${record.manifest.id}」は自己完結書き出しに対応していません`);
+  // Every registered extension, or with ids those extensions and what they depend on (as requirements), in the order
+  // they were registered; one that cannot be carried in a file is refused.
+  function exportDefinitions(ids?: Iterable<string>) {
+    const chosen=new Set(requirements(ids).required.map(item=>item.id));
+    return [...records.values()].filter(record=>chosen.has(record.manifest.id)).map(record=>{
+      if(!record.manifest.selfContained)fail('E709',`拡張「${record.manifest.id}」は自己完結書き出しに対応していません`);
       return {manifest:copy(record.manifest),factorySource:record.factorySource,contentHash:record.contentHash};
     });
   }

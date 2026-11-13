@@ -1,6 +1,6 @@
 {
   "schema": "akari-public-files-v1",
-  "productVersion": "1.0.3",
+  "productVersion": "1.0.4",
   "files": [
     ".gitattributes",
     ".github/CODEOWNERS",
@@ -10,9 +10,9 @@
     ".github/workflows/akari-work-authorization.yml",
     ".gitignore",
     "AUDIT.md",
-    "Akari_1_0_3.html",
+    "Akari_1_0_4.html",
     "EXTENSIONS.md",
-    "LANGUAGE_1_0_3.md",
+    "LANGUAGE_1_0_4.md",
     "LICENSE",
     "MANUAL.html",
     "Manual/.gitkeep",
@@ -240,7 +240,7 @@
     "audit/manifests/intended-behaviour-changes.json",
     "audit/manifests/language-form-coverage.json",
     "audit/manifests/product-tests.json",
-    "audit/manifests/release-1.0.3.json",
+    "audit/manifests/release-1.0.4.json",
     "audit/manifests/samples.json",
     "audit/public-files.json",
     "audit/renumber-release.mjs",
@@ -469,5 +469,5 @@
     "src/types/view.d.ts",
     "tsconfig.json"
   ],
-  "productFile": "Akari_1_0_3.html"
+  "productFile": "Akari_1_0_4.html"
 }

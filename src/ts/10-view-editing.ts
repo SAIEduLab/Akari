@@ -1,4 +1,4 @@
-import { EDGE_TARGETS, EVENT_LABELS, MEIJIN_EVENTS, eventText, hintCandidates, isEdgeTarget, keySurface } from './02-language-contracts.ts';
+import { EDGE_TARGETS, EVENT_LABELS, MEIJIN_EVENTS, eventText, extensionEventChoices, hintCandidates, isEdgeTarget, keySurface } from './02-language-contracts.ts';
 import { keyName } from './04-syntax-sentences.ts';
 import { BLOCK_SCHEMAS, BLOCK_SCHEMA_BY_ID, createBlock, decimalSource } from './05-command-presentation.ts';
 import { ADVANCED_ONLY_SCHEMA_IDS, BASIC_BLOCK_SCHEMA_IDS, ENTRY_BLOCK_SCHEMA_IDS, ENTRY_PALETTE_ORDER, applyCreationDefaults, blockCreationDefaults, blockPaletteGroup, blockZoomCore, blockZoomScroll, editorInsertionHints, normalizeSearchText } from './09-editor-sessions.ts';
@@ -757,10 +757,16 @@ export function createViewEditing(viewVars: ViewVars, viewCalls: ViewBaseCalls, 
         const filter = choice('どれで動くか', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この合図']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
         const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? '');
         const signals=document.createElement('datalist');signals.id=viewVars.viewId+'-signals-'+node.id;group.append(signals);
+        // A registered extension event is chosen by its Japanese names; the signal's name is then its 拡張:拡張ID/機能ID.
+        // えらばない empties a name that was an event's, and leaves another name as it is.
+        const events=extensionEventChoices(),extension=events.length?choice('かくちょうの きっかけ','filter.extension',[['','えらばない'],...events.map(e=>[e.message,e.label] as const)],''):null;
+        const matchExtension=()=>{if(extension)extension.value=events.some(e=>e.message===filterValue.value)?filterValue.value:'';};
+        if(extension){extension.parentElement!.classList.add('blockui-trigger-choice');viewCalls.listen(extension,'change',()=>{if(extension.value)filterValue.value=extension.value;else if(events.some(e=>e.message===filterValue.value))filterValue.value='';});viewCalls.listen(filterValue,'input',matchExtension);}
         const sync = () => {
           for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
           if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
           filterValue.parentElement!.hidden = filter.value === 'all';
+          if(extension)extension.parentElement!.hidden=filter.value!=='message';matchExtension();
           const names=viewCalls.context().signalNames?.()||{sent:[],received:[]},values=filter.value==='message'?[...names.sent,...names.received]:['スペース','上','下','左','右','エンター','エスケープ'];
           signals.replaceChildren(...[...new Set(values)].map(value=>{const option=document.createElement('option');option.value=value;return option;}));
           filterValue.setAttribute('list',signals.id);

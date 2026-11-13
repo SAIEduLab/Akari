@@ -34,6 +34,18 @@ function extensionLabels(name: string, calculation: boolean) {
   const [id, operation] = name.split('/'), found = EXTENSION_HOST.describe(name, calculation ? 'calculations' : 'commands');
   return found ? [found.extensionName, found.displayName] : [id, operation];
 }
+// The registered extension events a body that is not a 名人 body receives, as the signal name a heading writes
+// (拡張:拡張ID/機能ID) and the Japanese names the event is chosen by.
+export function extensionEventChoices(): { message: string; label: string }[] {
+  return EXTENSION_HOST.operations('events').filter(event => event.scope !== 'meijin')
+    .map(event => ({ message: '拡張:' + event.name, label: `拡張「${event.extensionName}」「${event.displayName}」` }));
+}
+// The signal name of the registered extension event a body may receive whose Japanese name is name (registration
+// keeps the names of all extensions' operations apart, E702); null when there is none.
+export function extensionEventNamed(name: string, meijin: boolean): string | null {
+  const found = EXTENSION_HOST.operations('events').find(event => event.displayName === name && (meijin || event.scope !== 'meijin'));
+  return found ? '拡張:' + found.name : null;
+}
 export function extensionSurface(name: string, calculation: boolean, args: Expression[]) {
   const [extension, operation] = extensionLabels(name, calculation);
   return `${calculation ? '拡張計算' : '拡張'}「${extension}」「${operation}」（${args.map(x => formatExpression(x)).join('、')}）`;

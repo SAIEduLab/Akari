@@ -216,7 +216,7 @@ export const SOURCE_READ_BASELINE = Object.freeze({
   'audit/tests/numeric-display.mjs': 1,
   'audit/tests/product-source.mjs': 23,
   'audit/tests/release-policy-negative.mjs': 1,
-  'audit/tests/release-renumber.mjs': 15,
+  'audit/tests/release-renumber.mjs': 17,
   'audit/tests/resource-references.mjs': 1,
   'audit/tests/review-harness-negative.mjs': 1,
   'audit/tests/samples-negative.mjs': 1,
