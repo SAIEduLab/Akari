@@ -661,7 +661,8 @@ await withOrdinaryFileBrowser(async browser=>{
     const role=(page,name)=>page.locator('#blockEditor [data-blockui-structured-role="heading.'+name+'"]:visible');
     const open=async page=>{
       const file=await page.evaluate(()=>{const q=Akari.makeEmptyProject();q.name='heading-choice';q.scripts=[{id:'main',targetId:q.components[0].id,event:'start',source:'「来た」と言う。'}];return Akari.serializeProject(q,Akari.makeDefaultAssetStore());});
-      await page.locator('#fileInput').setInputFiles({name:'heading-choice.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await page.waitForFunction(()=>Akari.app.project.name==='heading-choice');
+      // (a page with unsaved work asks first; the handler answers it in the locator action that waits for it to close)
+      await page.locator('#fileInput').setInputFiles({name:'heading-choice.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await productQuestionAnswered(page);await page.waitForFunction(()=>Akari.app.project.name==='heading-choice');
       await page.locator('#uiLevel').selectOption('basic');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();
       await chooseView(page,'blocks');await page.waitForFunction(()=>document.body.dataset.editorMode==='blocks');
       await page.locator('#sourceHeadingBtn').click();await role(page,'event').selectOption('message');
