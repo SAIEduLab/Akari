@@ -36,15 +36,34 @@ export const firstHintRoutes=Object.freeze({
  'mouse-body':[[true,null],[false,'gone']],
  // start; a tap on an event button
  'tap-event':[[true,null],[false,'gone']],
+ // start; Tab to an event button; modifiers, locks, Escape, a function key and moving keys alone; Enter
+ 'keys-without-making':[[true,null],[true,null],[true,null],[false,'gone']],
+ // start; a block added by a click alone (no press before it)
+ 'click-only':[[true,null],[false,'gone']],
  // start; a press of いっしょに作る
  'press-guide':[[true,null],[false,'gone']],
  // start; a character added (no block touched); reload with the autosave kept; that autosave discarded and reload
  'autosave':[[true,null],[true,null],[false,'gone'],[false,'gone']],
+ // start; a character added; reload with the autosave kept; that autosave restored
+ 'autosave-restore':[[true,null],[true,null],[false,'gone'],[false,'gone']],
  // start; a work with a start body opened; かんたん; はじめて again; running; stopped
  'level-and-run':[[true,null],[true,null],[false,null],[true,null],[false,null],[true,null]],
  // with a localStorage that throws: start; a mouse press in the block list; reload
  'storage-throws':[[true,'unreadable'],[false,'unreadable'],[true,'unreadable']],
 });
+// The checks of ENTRY-FIRST-HINT's observations, from the rectangles the test measured.
+export function verifyFirstHint(hint){
+ assert.deepEqual(hint.viewports.map(v=>v.size),firstHintSizes);
+ for(const v of hint.viewports){assert.equal(v.text,'さかなを タッチする ゲームを 作ってみよう！');assert.deepEqual(v.viewport,v.size);
+  assert.equal(v.ariaHidden,'true','read once, as the button\'s description');
+  // Right under the toolbar (the button's row when it is one row; under all of it when it wraps, over none of its controls), the arrow
+  // within the button's width, the whole bubble on the screen.
+  assert.ok(v.toolbarBottom>=v.button.bottom&&v.hint.y>=v.toolbarBottom&&v.hint.y-v.toolbarBottom<=24,'bubble right under the toolbar');
+  assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,'arrow at the button');assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width&&v.hint.bottom<=v.size.height,'bubble on the screen');assert.equal(v.pointerEvents,'none');assert.equal(v.hitBubble,false);assert.equal(v.focusable,false);assert.equal(v.describedBy,'tutorialHint');}
+ assert.deepEqual(Object.keys(hint.routes),Object.keys(firstHintRoutes));
+ for(const [id,states]of Object.entries(firstHintRoutes))assert.deepEqual(hint.routes[id],states,'ENTRY-FIRST-HINT '+id);
+ return true;
+}
 export const deniedRoutes=Object.freeze(['new','sample','open','export','mode','target','event','redo','shortcut-save','shortcut-undo','delete-key',
  'menu','drag','file-drop','touch','dialog','mouse-menu','keyboard-enter','keyboard-space']);
 export function verifyEntryReport(report,kind,currentSnapshot,{allowWorkingCopy=false,file=null}={}){
@@ -74,15 +93,7 @@ export function verifyEntryReport(report,kind,currentSnapshot,{allowWorkingCopy=
   assert.deepEqual(branches.map(r=>r.key).sort(),['motion/swim','motion/zigzag','motion/small','score/goal','score/bonus','score/remaining','show/melody','show/costume','show/dance'].sort());
   for(const route of branches){assert.equal(route.completed,true);assert.ok(route.chosenValueVerified);assert.ok(route.undoVerified);}
 
-  const hint=report.results.find(r=>r.id==='ENTRY-FIRST-HINT').observations;
-  assert.deepEqual(hint.viewports.map(v=>v.size),firstHintSizes);
-  for(const v of hint.viewports){assert.equal(v.text,'さかなを タッチする ゲームを 作ってみよう！');assert.deepEqual(v.viewport,v.size);
-   // Right under the toolbar (the button's row when it is one row; under all of it when it wraps, over none of its controls), the arrow
-   // within the button's width, the whole bubble on the screen.
-   assert.ok(v.toolbarBottom>=v.button.bottom&&v.hint.y>=v.toolbarBottom&&v.hint.y-v.toolbarBottom<=24,'bubble right under the toolbar');
-   assert.ok(v.arrow>=v.button.x&&v.arrow<=v.button.right,'arrow at the button');assert.ok(v.hint.x>=0&&v.hint.right<=v.size.width&&v.hint.bottom<=v.size.height,'bubble on the screen');assert.equal(v.pointerEvents,'none');assert.equal(v.hitBubble,false);assert.equal(v.focusable,false);assert.equal(v.describedBy,'tutorialHint');}
-  assert.deepEqual(Object.keys(hint.routes),Object.keys(firstHintRoutes));
-  for(const [id,states]of Object.entries(firstHintRoutes))assert.deepEqual(hint.routes[id],states,'ENTRY-FIRST-HINT '+id);
+  verifyFirstHint(report.results.find(r=>r.id==='ENTRY-FIRST-HINT').observations);
   assert.deepEqual(report.results.find(r=>r.id==='ENTRY-FIRST-VIEW').observations.viewports.map(v=>v.size),
    [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080}]);
   assert.ok(file,'artifact base is required');const base=path.resolve(file+'.artifacts');

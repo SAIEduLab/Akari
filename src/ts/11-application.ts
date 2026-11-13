@@ -1016,14 +1016,19 @@ export function initApp() {
   appCalls.$('#entryStartEvent').onclick=()=>appCalls.selectEntryEvent('start');
   appCalls.$('#entryClickEvent').onclick=()=>appCalls.selectEntryEvent('click');
   // The bubble under いっしょに作る (はじめて) says what it makes, at each start until the child starts. It goes for good —
-  // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or presses or
-  // types (not Tab or a modifier alone) in the blocks: the list, the body and the two event buttons. A start that finds
-  // a work kept in this browser (an autosave, which keeps the level too) does not show it and keeps that it went, so the
-  // bubble waits for that read. A browser that keeps nothing shows it at each start until the child starts. It is no
-  // control (no pointer, no focus); the CSS shows it only where いっしょに作る is: はじめて's edit screen, no guide running.
+  // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or makes
+  // something in the blocks (the list, the body and the two event buttons): a press, a click (a screen reader's or
+  // voice control's press comes as a click alone), an input, or a key that acts or writes (Enter, Space, a character,
+  // Backspace, Delete; no Ctrl, Alt or Meta with it, and not while a word is still being converted). Tab, a modifier or
+  // a lock, Escape, a function key and the keys that move make nothing. A start that finds a work kept in this browser
+  // (an autosave, which keeps the level too) does not show it and keeps that it went, so the bubble waits for that read.
+  // A browser that keeps nothing shows it at each start until the child starts. It is no control (no pointer, no
+  // focus) and is read once, as the button's description; the CSS shows it only where いっしょに作る is: はじめて's edit
+  // screen, no guide running.
   const tutorialHint=appCalls.$('#tutorialHint'),tutorialStartButton=appCalls.$('#tutorialStart');
   let tutorialHintGone=false;
   try{tutorialHintGone=localStorage.getItem(STORAGE_KEYS.tutorialHint)==='gone';}catch(_){}
+  const tutorialHintWatch=new AbortController();let tutorialHintObserver: ResizeObserver | null=null;
   // It stands under the button, inside the toolbar's width, its arrow at the button's middle.
   const placeTutorialHint=()=>{
     if(tutorialHint.hidden||!tutorialHint.offsetWidth)return;
@@ -1034,6 +1039,7 @@ export function initApp() {
   const dismissTutorialHint=()=>{
     if(tutorialHintGone)return;
     tutorialHintGone=true;tutorialHint.hidden=true;tutorialStartButton.removeAttribute('aria-describedby');
+    tutorialHintWatch.abort();tutorialHintObserver?.disconnect();
     try{localStorage.setItem(STORAGE_KEYS.tutorialHint,'gone');}catch(_){}
   };
   const offerTutorialHint=(kept: boolean)=>{
@@ -1041,15 +1047,16 @@ export function initApp() {
     if(kept){dismissTutorialHint();return;}
     tutorialHint.hidden=false;tutorialStartButton.setAttribute('aria-describedby','tutorialHint');placeTutorialHint();
   };
+  const startsWork=(event: Event)=>{
+    if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents'))return;
+    const key=event as KeyboardEvent;
+    if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
+    dismissTutorialHint();
+  };
   if(!tutorialHintGone){
-    if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool')])observer.observe(node);}
-    window.addEventListener('resize',placeTutorialHint);
-    const startsWork=(event: Event)=>{
-      if(!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents'))return;
-      if(event.type==='keydown'&&['Tab','Shift','Control','Alt','Meta'].includes((event as KeyboardEvent).key))return;
-      dismissTutorialHint();
-    };
-    for(const type of ['pointerdown','keydown'])document.addEventListener(type,startsWork,{capture:true});
+    if(typeof ResizeObserver==='function'){tutorialHintObserver=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool')])tutorialHintObserver.observe(node);}
+    window.addEventListener('resize',placeTutorialHint,{signal:tutorialHintWatch.signal});
+    for(const type of ['pointerdown','click','input','keydown'])document.addEventListener(type,startsWork,{capture:true,signal:tutorialHintWatch.signal});
   }
   appCalls.$('#tutorialStart').onclick=()=>{dismissTutorialHint();return appCalls.beginTutorial();};
   appCalls.$('#tutorialExit').onclick=()=>{appCalls.finishTutorial(false);appCalls.setStatus('とちゅうの 作品は のこって いるよ。じゆうに つづけられるよ。');};

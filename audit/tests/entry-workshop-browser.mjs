@@ -325,45 +325,52 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
  });
  // ENTRY-FIRST-HINT: the bubble under いっしょに作る. Each route starts with an empty browser (no setting, no autosave) and
  // records after each step whether the bubble is shown and what akari.tutorialHint.v1 holds; the contract compares them
- // with the states it writes from the specification.
+ // with the states it writes from the specification. Each size records where the bubble stands, as rectangles.
  await row(browser,browserIds[15],async p=>{
-  // A press, a key or a level takes effect in its own event; only a start reads the autosave first.
-  const state=()=>p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),r=n.getBoundingClientRect();let stored;try{stored=localStorage.getItem('akari.tutorialHint.v1');}catch(error){if(error.name!=='SecurityError')throw error;stored='unreadable';}
-   return [getComputedStyle(n).display!=='none'&&r.width>0&&r.height>0,stored];});
-  const loaded=()=>p.waitForFunction(()=>!!globalThis.Akari?.app);
-  // A start has settled when the bubble is shown, the browser keeps that it went, or the kept work is offered.
-  const reload=async()=>{await p.reload();await loaded();await p.waitForFunction(()=>{let stored=null;try{stored=localStorage.getItem('akari.tutorialHint.v1');}catch(error){if(error.name!=='SecurityError')throw error;}
-   return getComputedStyle(document.querySelector('#tutorialHint')).display!=='none'||stored==='gone'||!!document.querySelector('#recoveryModal.show');});};
-  const fresh=async()=>{await p.evaluate(async()=>{try{localStorage.clear();}catch(error){if(error.name!=='SecurityError')throw error;}for(const d of await indexedDB.databases())await new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=()=>r();});});await reload();await p.locator('#tutorialHint').waitFor({state:'visible'});};
+  // A start reads the autosave once (one get of 'latest'); a page knows when that read has answered.
+  await p.addInitScript(()=>{const get=IDBObjectStore.prototype.get;IDBObjectStore.prototype.get=function(key){const request=get.call(this,key);
+   if(key==='latest'){const answered=()=>{globalThis.entryStartRead=true;};request.addEventListener('success',answered);request.addEventListener('error',answered);}return request;};});
+  const frames=()=>p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  // A press, a key or a level takes effect in its own event; a start after the read of the autosave.
+  const state=()=>p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),r=n.getBoundingClientRect(),c=getComputedStyle(n);let stored;try{stored=localStorage.getItem('akari.tutorialHint.v1');}catch(error){if(error.name!=='SecurityError')throw error;stored='unreadable';}
+   return [c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0,stored];});
+  const reload=async()=>{await p.reload();await p.waitForFunction(()=>!!globalThis.Akari?.app&&globalThis.entryStartRead===true);await frames();};
+  const fresh=async()=>{await p.evaluate(async()=>{try{localStorage.clear();}catch(error){if(error.name!=='SecurityError')throw error;}for(const d of await indexedDB.databases())await new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=()=>r();});});await reload();};
   const listHead=()=>p.locator('#blockEditor .blockui-palette').click({position:{x:12,y:12}});
+  const focusIn=async selector=>{for(let i=0;i<80&&!await p.evaluate(s=>!!document.activeElement?.closest(s),selector);i++)await p.keyboard.press('Tab');
+   assert.ok(await p.evaluate(s=>!!document.activeElement?.closest(s),selector),'Tab reaches '+selector);};
   const routes={},viewports=[];
   const route=async(id,steps)=>{await fresh();const states=[await state()];for(const step of steps){await step();states.push(await state());}routes[id]=states;};
   await fresh();
   for(const size of [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080},{width:390,height:844}]){
-   await p.setViewportSize(size);await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+   await p.setViewportSize(size);await frames();
    const seen=await p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),b=n.getBoundingClientRect(),button=document.querySelector('#tutorialStart').getBoundingClientRect(),bar=document.querySelector('.menutool').getBoundingClientRect(),c=getComputedStyle(n),arrow=b.x+parseFloat(c.getPropertyValue('--tutorial-hint-arrow'));
     const hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);n.focus();
     return{text:n.textContent,hint:{x:b.x,y:b.y,right:b.right,bottom:b.bottom},button:{x:button.x,right:button.right,bottom:button.bottom},toolbarBottom:bar.bottom,arrow,viewport:{width:innerWidth,height:innerHeight},
-     pointerEvents:c.pointerEvents,hitBubble:hit===n||n.contains(hit),focusable:document.activeElement===n,describedBy:document.querySelector('#tutorialStart').getAttribute('aria-describedby')};});
+     pointerEvents:c.pointerEvents,hitBubble:hit===n||n.contains(hit),focusable:document.activeElement===n,describedBy:document.querySelector('#tutorialStart').getAttribute('aria-describedby'),ariaHidden:n.getAttribute('aria-hidden')};});
    viewports.push({size,...seen,screenshot:await picture(p,'first-hint-'+size.width+'x'+size.height)});
   }
-  await p.setViewportSize({width:1280,height:720});
+  await p.setViewportSize({width:1280,height:720});await frames();
   await route('untouched-reload',[reload]);
-  await route('tab-then-enter',[async()=>{for(let i=0;i<80&&!await p.evaluate(()=>!!document.activeElement?.closest('#blockEditor .blockui-palette'));i++)await p.keyboard.press('Tab');
-    assert.ok(await p.evaluate(()=>!!document.activeElement?.closest('#blockEditor .blockui-palette')),'Tab reaches the block list');},
-   ()=>p.keyboard.press('Enter'),reload]);
+  await route('tab-then-enter',[()=>focusIn('#blockEditor .blockui-palette'),()=>p.keyboard.press('Enter'),reload]);
   await route('mouse-list',[listHead,reload]);
   await route('mouse-body',[()=>p.locator('#blockEditor .blockui-workspace').click({position:{x:20,y:20}})]);
   await route('tap-event',[()=>p.locator('#entryClickEvent').tap()]);
+  // Keys that make nothing: modifiers and locks alone, Escape, a function key, moving keys; then Enter makes.
+  await route('keys-without-making',[()=>focusIn('#entryEvents'),async()=>{for(const key of ['Shift','Control','Alt','CapsLock','CapsLock','Escape','F2','ArrowRight','ArrowLeft','Home','End'])await p.keyboard.press(key);},
+   ()=>p.keyboard.press('Enter')]);
+  // A press that comes as a click only (as from a screen reader or voice control).
+  await route('click-only',[()=>p.locator('#blockEditor [data-blockui-action="palette-add"]').first().dispatchEvent('click')]);
   await route('press-guide',[async()=>{await p.locator('#tutorialStart').click();await waitStep(p,auditRoute()[0]);await p.locator('#tutorialExit').click();}]);
-  await route('autosave',[async()=>{await p.locator('#entryAddRow button').first().click();await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));},
-   async()=>{await reload();await p.locator('#recoveryModal.show').waitFor();},
-   async()=>{await p.locator('#recoveryDiscard').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal.show'));await reload();}]);
+  const keep=async()=>{await p.locator('#entryAddRow button').first().click();await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));};
+  const offered=async()=>{await reload();await p.locator('#recoveryModal.show').waitFor();};
+  await route('autosave',[keep,offered,async()=>{await p.locator('#recoveryDiscard').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal.show'));await reload();}]);
+  await route('autosave-restore',[keep,offered,async()=>{await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal.show'));}]);
   // An empty work does not run, so a work with a start body is opened (作品 › 開く is no touch of a block).
   const runnable=()=>p.evaluate(()=>{const work=Akari.makeEmptyProject();work.name='吹き出しの 試し';work.scripts=[{id:'hint-start',targetId:'sprite-1',event:'start',source:'10歩進む。'}];return Akari.serializeProject(work,Akari.makeDefaultAssetStore());});
   await route('level-and-run',[async()=>{await p.locator('#fileInput').setInputFiles({name:'hint.akari.md',mimeType:'text/plain',buffer:Buffer.from(await runnable())});await p.waitForFunction(()=>Akari.app.project.name==='吹き出しの 試し');},
    ()=>p.locator('#uiLevel').selectOption('basic'),()=>p.locator('#uiLevel').selectOption('entry'),
-   // The empty work ends at once; the run screen stays until ■ 止める.
+   // The run screen stays after the work ends, until ■ 止める.
    async()=>{await p.locator('#runBtn').click();await p.waitForFunction(()=>document.body.classList.contains('runtime'));},
    async()=>{await pressStop(p.locator('#stopBtn'));await p.waitForFunction(()=>!document.body.classList.contains('runtime'));}]);
   // The next pages' localStorage throws on every call (a browser that keeps nothing).
