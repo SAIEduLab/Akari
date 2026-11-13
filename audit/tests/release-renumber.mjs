@@ -35,11 +35,12 @@ export async function runReleaseRenumberChecks(){
   // A published product at 1.5.1 on main: the product is built from src/ and the record is written by the language release.
   // Fixture modules take names no real module has: the audit inventory parses every script a literal names.
   // The recorded reasons of the static contract's negatives: two detail lines show names made from the release (the
-  // product name without its "_", the next patch's), the others fixed names, and a line that is no detail a made name.
+  // product name without its "_", the next patch's), the others fixed names; a line of that site that is no detail and
+  // a detail of another site show names made from the start's release, which stay.
   const reasonsFile='audit/fixtures/refusal-reasons.json';
-  const reasons=(bare,next)=>'{\n "static-contract#1": [\n  {\n   "line": "product filename must match release label",\n   "detail": "+ \'../Akari_1_0_1.html\'"\n  },\n'+
+  const reasons=(bare,next)=>'{\n "static-contract#1": [\n  {\n   "line": "Akari_1_5_2.html Akari1_5_1.html",\n   "detail": "+ \'../Akari_1_0_1.html\'"\n  },\n'+
     '  {\n   "detail": "+ \''+next+'\'"\n  },\n  {\n   "detail": "+ \''+bare+'\'"\n  },\n  {\n   "detail": "+   \'Akari1_0_0.html\'"\n  }\n ],\n'+
-    ' "other#1": [\n  {\n   "line": "Akari_1_5_2.html Akari1_5_1.html"\n  }\n ]\n}\n';
+    ' "other#1": [\n  {\n   "detail": "Akari_1_5_2.html Akari1_5_1.html"\n  }\n ]\n}\n';
   const fixture=({withReasons=false}={})=>{
     const root=fs.mkdtempSync(path.join(scratch,'repo-'));
     if(withReasons)write(root,reasonsFile,reasons('Akari1_5_1.html','Akari_1_5_2.html'));

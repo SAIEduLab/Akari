@@ -758,9 +758,10 @@ export function createViewEditing(viewVars: ViewVars, viewCalls: ViewBaseCalls, 
         const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? '');
         const signals=document.createElement('datalist');signals.id=viewVars.viewId+'-signals-'+node.id;group.append(signals);
         // A registered extension event is chosen by its Japanese names; the signal's name is then its 拡張:拡張ID/機能ID.
-        const events=extensionEventChoices(),extension=events.length?choice('かくちょうの できごと','filter.extension',[['','えらばない'],...events.map(e=>[e.message,e.label] as const)],''):null;
+        // えらばない empties a name that was an event's, and leaves another name as it is.
+        const events=extensionEventChoices(),extension=events.length?choice('かくちょうの きっかけ','filter.extension',[['','えらばない'],...events.map(e=>[e.message,e.label] as const)],''):null;
         const matchExtension=()=>{if(extension)extension.value=events.some(e=>e.message===filterValue.value)?filterValue.value:'';};
-        if(extension){extension.parentElement!.classList.add('blockui-trigger-choice');viewCalls.listen(extension,'change',()=>{if(extension.value)filterValue.value=extension.value;});viewCalls.listen(filterValue,'input',matchExtension);}
+        if(extension){extension.parentElement!.classList.add('blockui-trigger-choice');viewCalls.listen(extension,'change',()=>{if(extension.value)filterValue.value=extension.value;else if(events.some(e=>e.message===filterValue.value))filterValue.value='';});viewCalls.listen(filterValue,'input',matchExtension);}
         const sync = () => {
           for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
           if (filter.selectedOptions[0]?.disabled) filter.value = 'all';

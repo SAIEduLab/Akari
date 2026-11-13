@@ -1923,7 +1923,7 @@ function signalNotes(project: Project,compiled: CompiledProject): Diagnostic[] {
   if(!names.dynamicSenders)for(const r of names.receivers){if(r.name==null||r.name.startsWith('拡張:')||names.sent.includes(r.name))continue;
     // (a heading has no place of its own: the note is put at the place of its source)
     // (a name that is the Japanese name of a registered extension event is told the signal name of that event)
-    const heading=r.ast.heading,event=extensionEventNamed(r.name,!!r.item.meijin),n=note('I137',r.item,heading as DiagnosticPlace||r.ast,r.name?`「${r.name}」の 合図を 送る 文が、この 作品に ありません。${event?`かくちょうの できごとの 合図は「${event}」という 名前で 受けます`:`送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`}`:`名前が 空の 合図を 送る 文が、この 作品に ありません。${EMPTY_SIGNAL}。れい：「スタート」という合図を受けたとき、`);
+    const heading=r.ast.heading,event=extensionEventNamed(r.name,!!r.item.meijin),n=note('I137',r.item,heading as DiagnosticPlace||r.ast,r.name?`「${r.name}」の 合図を 送る 文が、この 作品に ありません。${event?`かくちょうの きっかけの 合図は「${event}」という 名前で 受けます`:`送る 部品の 本文に「「${r.name}」の合図を送る。」と 書きます`}`:`名前が 空の 合図を 送る 文が、この 作品に ありません。${EMPTY_SIGNAL}。れい：「スタート」という合図を受けたとき、`);
     const location=heading?receiverHeading(r):null;if(location)n.line=location.line;if(location&&(event||unreceived.length===1))headingProposal(n,location,event||unreceived[0]);notes.push(n);
   }return notes;
 }

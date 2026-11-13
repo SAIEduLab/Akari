@@ -101,7 +101,8 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-STATE-OF-UNRECORDED': { recorded: ['demo.offline'], savedBeforeRun: true, said: ['5', '0'], afterRun: [['demo.offline', 5], ['audit.extra', 0]] },
   // extensions/examples/meijin.ts: operations with scope "meijin" are read only in 名人 text.
   'EXTENSION-MEIJIN-SCOPE': { meijinChecked: true, meijinSaid: ['7'], ordinaryCommandStopped: 'S317', ordinaryCalculationStopped: 'S317',
-    ordinaryEventStopped: 'S317', otherExtensionOrdinary: true, blocks: ['ExtensionCommand:demo.offline/remember'], meijinHints: true, ordinaryHints: false,
+    ordinaryEventStopped: 'S317',
+    ordinaryEventNameNotice: [['「記録した」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「記録した」の合図を送る。」と 書きます', 0]], otherExtensionOrdinary: true, blocks: ['ExtensionCommand:demo.offline/remember'], meijinHints: true, ordinaryHints: false,
     invalidScopeRejected: 'E701', scopes: ['meijin', 'meijin', 'meijin'] },
   'EXTENSION-STANDARD-POLICIES': { standardUnchanged: true, standardFrozen: true, keys: 42 },
   'EXTENSION-PROFILE-INHERIT-FINITE-UNLIMITED': { adjustable: 36, inherited: true, finite: true, unlimited: true, stable: true },
@@ -124,19 +125,22 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-DERIVED-SAVE-RESTORE': { profilePreserved: true, extensionsPreserved: true, sourcePreserved: true, unavailableRejected: true },
   'EXTENSION-PROFILE-COUNT-CAPACITY-ROUNDTRIP': { components: 501, chars: 100001, finiteRejected: true, restored: true, integrityRejected: true },
   // A file carries the extensions its work's record names (LANGUAGE「拡張基盤」): those the work uses, what they depend
-  // on and those whose kept state is not the initial one; one that cannot be carried refuses only a work that uses it.
-  'EXTENSION-STANDALONE-USED-ONLY': { none: { carried: [], said: ['ふつう'] }, used: { carried: ['demo.offline'], said: ['6'] },
-    dependency: { carried: ['audit.base', 'audit.user'], said: ['2'] }, kept: { carried: ['demo.offline'], said: ['ふつう'] },
-    profileOnly: { carried: [], said: ['ふつう'] }, unfit: 'E709' },
+  // on and those whose kept state is not the initial one; one that cannot be carried refuses only a work that names it.
+  // kept is the state the file carries for each extension, as JSON.
+  'EXTENSION-STANDALONE-USED-ONLY': { none: { carried: [], kept: [], said: ['ふつう'] },
+    used: { carried: ['demo.offline'], kept: [['demo.offline', '{"value":0}']], said: ['6'] },
+    dependency: { carried: ['audit.base', 'audit.user'], kept: [['audit.base', 'null'], ['audit.user', 'null']], said: ['2'] },
+    kept: { carried: ['demo.offline'], kept: [['demo.offline', '{"value":5}']], said: ['ふつう'] },
+    profileOnly: { carried: [], kept: [], said: ['ふつう'] }, unfit: 'E709', unfitDependency: 'E709' },
   // A heading that receives a registered extension event by its Japanese name is told the event's signal name (I137).
   'EXTENSION-EVENT-NAME-NOTICE': {
-    event: [{ message: '「記憶した数が変わった」の 合図を 送る 文が、この 作品に ありません。かくちょうの できごとの 合図は「拡張:demo.offline/changed」という 名前で 受けます',
+    event: [{ message: '「記憶した数が変わった」の 合図を 送る 文が、この 作品に ありません。かくちょうの きっかけの 合図は「拡張:demo.offline/changed」という 名前で 受けます',
       button: '「拡張:demo.offline/changed」の 合図に かえる', source: '「拡張:demo.offline/changed」' }],
     fixedSaid: ['来た'],
     ordinary: [{ message: '「開始」の 合図を 送る 文が、この 作品に ありません。送る 部品の 本文に「「開始」の合図を送る。」と 書きます', button: null, source: null }] },
   // The heading's 「いつ動く？」 offers the registered events by their Japanese names; the standard product offers none.
   'EXTENSION-EVENT-HEADING-CHOICE': { standardChoices: 0, choices: [['', 'えらばない'], ['拡張:demo.offline/changed', '拡張「数の記憶」「記憶した数が変わった」']],
-    shownLabel: 'かくちょうの できごと', written: '拡張:demo.offline/changed', heading: { event: 'message', filter: { message: '拡張:demo.offline/changed' } } },
+    shownLabel: 'かくちょうの きっかけ', written: '拡張:demo.offline/changed', heading: { event: 'message', filter: { message: '拡張:demo.offline/changed' } } },
   'EXTENSION-OFFLINE-STANDALONE': { independentContext: true, value: '14', profilePreserved: true, externalLoaded: true, unconnectedDiagnostic: true, offlineCalculation: true, httpRequests: 0, errors: 0 },
   'EXTENSION-REAL-POPUP-MESSAGECHANNEL': { popup: true, handshake: true, result: 14, notification: 9, disconnected: true, staleRejected: true },
   'EXTENSION-TYPES-UNITS-DEPENDENCIES': { unitPreserved: true, unitRejected: true, dependencyRejected: true, versionRejected: true, stateMismatchRejected: true },

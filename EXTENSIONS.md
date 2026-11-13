@@ -53,7 +53,7 @@ await buildDerivedProduct({
 | `dependencies` | 必要拡張の `id/version/contentHash`。依存先を先に登録 |
 | `capabilities` | 明示許可が必要なコネクタ機能名。`rpc.`、`akari.` を使わない |
 | `offline` | 本体に含めた処理とローカルデータだけで動く場合 `true` |
-| `selfContained` | 処理factoryを実行HTMLに含められる場合 `true`。`false` の拡張を使う作品は、書き出しを E709 で止めます |
+| `selfContained` | 処理factoryを実行HTMLに含められる場合 `true`。`false` の拡張を作品の記録が挙げる（作品が使う、使う拡張がそれに依存する、状態が初期と違う）とき、書き出しを E709 で止めます |
 | `state` | 状態形式の正整数 `formatVersion`、JSONの `initial`、任意の `persist`（`"run"` 既定、または `"project"`） |
 | `commands`、`calculations` | `id/name/description/args/returns/async`。任意の `capability`。`name` は「」・`\`・改行を含めない（できごとも同じ） |
 | `events` | `id/name/description/payload` |
