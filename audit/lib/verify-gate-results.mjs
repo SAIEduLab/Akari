@@ -36,7 +36,7 @@ export function verifyGateResults(dir,inputs,{extensionProvenance}={}){
   assert.deepEqual(gate.steps.map(s=>s.id),gateSteps('',dir).map(s=>s[0]));
   for(const s of gate.steps){assert.equal(s.status,'PASS',s.id);assert.equal(s.exit,0);assert.equal(s.signal,null);assert.ok(fs.existsSync(path.join(dir,s.log)));}
   verifyEntryReport(read('entry-unit'),'unit',inputs);verifyEntryReport(read('entry-browser'),'browser',inputs,{file:path.join(dir,'entry-browser.json')});
-  const entryVerified=read('entry-verify');assert.equal(entryVerified.status,'PASS');assert.equal(entryVerified.finalCommittedEvidence,true);assert.deepEqual(entryVerified.snapshot,inputs);assert.equal(entryVerified.negatives.length,21);for(const row of entryVerified.negatives)assert.equal(row.rejected,true);
+  const entryVerified=read('entry-verify');assert.equal(entryVerified.status,'PASS');assert.equal(entryVerified.finalCommittedEvidence,true);assert.deepEqual(entryVerified.snapshot,inputs);assert.equal(entryVerified.negatives.length,24);for(const row of entryVerified.negatives)assert.equal(row.rejected,true);
   const productTests=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
   verify(read('product'),productTests,inputs);
   // Steps whose evidence is a list of named checks: release-distribution, workflow-contract,
