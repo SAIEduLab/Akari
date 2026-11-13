@@ -383,6 +383,9 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    async()=>{await p.keyboard.press('ArrowUp');assert.equal(await tools(),true,'↑ opened the tools of the list');}]);
   // A click made by a page's code (no press of the child) is no making.
   await route('scripted-click',[()=>p.locator('#blockEditor [data-blockui-action="palette-add"]').first().dispatchEvent('click')]);
+  // While the name is asked before a save, the bubble is not shown; いいえ brings it back (保存 is no making).
+  await route('save-question',[async()=>{await p.locator('#saveBtn').click();await p.locator('#saveConfirmModal.show').waitFor();},
+   async()=>{await p.locator('#saveConfirmModal.show #saveConfirmNo').click();await p.waitForFunction(()=>!document.querySelector('#saveConfirmModal.show'));}]);
   await route('press-guide',[async()=>{await p.locator('#tutorialStart').click();await waitStep(p,auditRoute()[0]);await p.locator('#tutorialExit').click();}]);
   const keep=async()=>{await p.locator('#entryAddRow button').first().click();await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));};
   const offered=async()=>{await reload();await p.locator('#recoveryModal.show').waitFor();};

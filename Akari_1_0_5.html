@@ -5695,6 +5695,8 @@ body[data-ui-level="entry"] :is(#projectMenu,#tutorialStart) { display:block; }
 /* The bubble under いっしょに作る (placed by the application): only where the button is, on はじめて's edit screen with no
    guide running. It takes no pointer, so what lies under it can still be pressed; the 作品 menu opens over it. */
 .tutorial-hint { display:none; }
+/* While the name is asked before a save, the toolbar stands over everything and the name must be seen: no bubble. */
+body.name-check .menutool > .tutorial-hint { display:none !important; }
 body[data-ui-level="entry"]:not(.runtime):not([data-tutorial-step]) .menutool > .tutorial-hint:not([hidden]) {
   display:block; position:absolute; top:calc(100% + 10px); left:8px; z-index:20; width:max-content; max-width:min(20rem, calc(100% - 16px));
   margin:0; padding:8px 12px; border:2px solid #e0a43a; border-radius:12px; background:#fff8e6; color:#5a3a00;

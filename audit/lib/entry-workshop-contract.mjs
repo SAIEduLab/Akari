@@ -49,6 +49,8 @@ export const firstHintRoutes=Object.freeze({
  'arrow-up-in-list':[[true,null],[true,null],[true,null]],
  // start; a click made by the page's code on a block of the list
  'scripted-click':[[true,null],[true,null]],
+ // start; 保存 pressed (the name is asked); いいえ
+ 'save-question':[[true,null],[false,null],[true,null]],
  // start; a press of いっしょに作る
  'press-guide':[[true,null],[false,'gone']],
  // start; a character added (no block touched); reload with the autosave kept; that autosave discarded and reload
