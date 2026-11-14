@@ -43,7 +43,7 @@ await run('unfinished-source-save-and-storage-key-isolation',async()=>{
  await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));
  const calls=await p.evaluate(()=>__persistenceCalls);
  assert.ok(calls.some(x=>x.api==='indexedDB'&&x.method==='open'&&x.key==='akari-workspace-f'+projectFormat));
- assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f'+projectFormat:x.api==='localStorage'&&['akari.autosave.f'+projectFormat,'akari.uiLevel.v1','akari.editorMode.v1'].includes(x.key)));
+ assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f'+projectFormat:x.api==='localStorage'&&['akari.autosave.f'+projectFormat,'akari.uiLevel.v1','akari.editorMode.v1','akari.tutorialHint.v1'].includes(x.key)));
  await p.reload();await p.locator('#recoveryModal.show').waitFor();await (await reveal(p.locator('#recoveryRestore'))).click();
  assert.equal(JSON.stringify(await getProject()),before.project);assert.equal(await p.locator('#codeEditor').inputValue(),raw);assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),raw);
  const recovered=await state();assert.deepEqual(valid(recovered),valid(before));assert.equal(recovered.history,savedDraft.history+1);assert.equal(recovered.redo,savedDraft.redo);

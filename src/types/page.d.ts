@@ -263,6 +263,7 @@ export interface PageElements {
   "#tutorialExit": HTMLButtonElement;
   "#tutorialFinish": HTMLButtonElement;
   "#tutorialGuide": HTMLElement;
+  "#tutorialHint": HTMLParagraphElement;
   "#tutorialSavedFile": HTMLInputElement;
   "#tutorialStart": HTMLButtonElement;
   "#tutorialText": HTMLParagraphElement;

@@ -243,7 +243,9 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
  await row(browser,browserIds[9],async p=>{
   await reach(p,'speech-text');const r=await roles(p),input=field(p,r.text),before=await read(p);
   // F-04: the child's own words go on; empty text stays on the step with 「ことばを 入れてね」.
-  await input.fill('');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');assert.match(await p.locator('#tutorialText').innerText(),/ことばを 入れてね/);
+  await input.fill('');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
+  // (the guide's words are redrawn after the key is taken: wait for them)
+  await p.waitForFunction(()=>/ことばを 入れてね/.test(document.querySelector('#tutorialText').innerText));
   await input.fill('ぼくの ことば');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
   await input.dispatchEvent('compositionend');await input.press('Enter');await waitStep(p,'add-escape');
   assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body[1]?.inputs?.value?.fields?.value),'ぼくの ことば','the work keeps the child\'s own words');
@@ -321,6 +323,115 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    },{initialUiLevel:null});
   }return {routes};
  });
+ // ENTRY-FIRST-HINT: the bubble under いっしょに作る. Each route starts with an empty browser (no setting, no autosave) and
+ // records after each step whether the bubble is shown and what akari.tutorialHint.v1 holds; the contract compares them
+ // with the states it writes from the specification. Each size records where the bubble stands, as rectangles.
+ await row(browser,browserIds[15],async p=>{
+  // A start reads the autosave once (one get of 'latest'); a page knows when that read has answered.
+  await p.addInitScript(()=>{const get=IDBObjectStore.prototype.get;IDBObjectStore.prototype.get=function(key){const request=get.call(this,key);
+   if(key==='latest'){const answered=()=>{globalThis.entryStartRead=true;};request.addEventListener('success',answered);request.addEventListener('error',answered);}return request;};});
+  const frames=()=>p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  // A press, a key or a level takes effect in its own event; a start after the read of the autosave.
+  const state=()=>p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),r=n.getBoundingClientRect(),c=getComputedStyle(n);let stored;try{stored=localStorage.getItem('akari.tutorialHint.v1');}catch(error){if(error.name!=='SecurityError')throw error;stored='unreadable';}
+   return [c.display!=='none'&&c.visibility!=='hidden'&&r.width>0&&r.height>0,stored];});
+  const reload=async()=>{await p.reload();await p.waitForFunction(()=>!!globalThis.Akari?.app&&globalThis.entryStartRead===true);await frames();};
+  const fresh=async()=>{await p.evaluate(async()=>{try{localStorage.clear();}catch(error){if(error.name!=='SecurityError')throw error;}for(const d of await indexedDB.databases())await new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=()=>r();});});await reload();};
+  const listHead=()=>p.locator('#blockEditor .blockui-palette').click({position:{x:12,y:12}});
+  const focusIn=async selector=>{for(let i=0;i<80&&!await p.evaluate(s=>!!document.activeElement?.closest(s),selector);i++)await p.keyboard.press('Tab');
+   assert.ok(await p.evaluate(s=>!!document.activeElement?.closest(s),selector),'Tab reaches '+selector);};
+  const routes={},viewports=[];
+  const route=async(id,steps)=>{await fresh();const states=[await state()];for(const step of steps){await step();states.push(await state());}routes[id]=states;};
+  // Where the bubble stands, as rectangles: the bubble, the button, the arrow, and what it covers or what stands between
+  // its arrow and the button, among what a child presses or reads (as the test sees it, with a note in the toolbar).
+  const measure=()=>p.evaluate(()=>{const n=document.querySelector('#tutorialHint'),start=document.querySelector('#tutorialStart'),c=getComputedStyle(n),box=e=>{const b=e.getBoundingClientRect();return{x:b.x,y:b.y,right:b.right,bottom:b.bottom};};
+   const hint=box(n),button=box(start),shown=c.display!=='none'&&c.visibility!=='hidden'&&hint.right>hint.x,arrow=hint.x+parseFloat(c.getPropertyValue('--tutorial-hint-arrow'));
+   const controls=[...document.querySelectorAll('button,select,input,textarea,summary,a[href],label,[role="button"],[tabindex]:not([tabindex="-1"]),.win-title,.mode-blocked-note')]
+    .filter(e=>e!==start&&!n.contains(e)&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden').map(e=>({id:e.id||e.className||e.tagName,...box(e)}));
+   const covered=shown?controls.filter(e=>e.x<hint.right&&e.right>hint.x&&e.y<hint.bottom&&e.bottom>hint.y).map(e=>e.id):[];
+   const between=shown?controls.filter(e=>e.x<=arrow+10&&e.right>=arrow-10&&e.y<hint.y&&e.bottom>button.bottom).map(e=>e.id):[];
+   const hit=shown?document.elementFromPoint((hint.x+hint.right)/2,(hint.y+hint.bottom)/2):null;n.focus();
+   return{shown,text:n.textContent,hint,button,arrow,covered,between,viewport:{width:innerWidth,height:innerHeight},ariaHidden:n.getAttribute('aria-hidden'),
+    pointerEvents:c.pointerEvents,hitBubble:!!hit&&(hit===n||n.contains(hit)),focusable:document.activeElement===n,describedBy:start.getAttribute('aria-describedby')};});
+  await fresh();
+  for(const size of [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080},{width:1024,height:768},{width:800,height:600},{width:768,height:1024},{width:740,height:800},{width:390,height:844}]){
+   await p.setViewportSize(size);await frames();
+   viewports.push({size,...await measure(),screenshot:await picture(p,'first-hint-'+size.width+'x'+size.height)});
+  }
+  // The note under the view toggle (a press of it in はじめて), at 1024 wide, where it stands in the bubble's row.
+  await p.setViewportSize({width:1024,height:768});await p.locator('.editor-modes button:not([hidden])').first().click();
+  await p.waitForFunction(()=>document.querySelector('#modeBlockedNote')?.hidden===false);await frames();
+  const withNote={size:{width:1024,height:768},...await measure(),screenshot:await picture(p,'first-hint-note-1024x768')};
+  // A part with a long name widens the list of parts under the bubble (作品 › 開く is no touch of a block).
+  await p.setViewportSize({width:1280,height:720});
+  const named=await p.evaluate(()=>{const work=Akari.makeEmptyProject();work.name='ながい 名前';work.components[0].name='あいうえおかきくけこさしすせそ';return Akari.serializeProject(work,Akari.makeDefaultAssetStore());});
+  await p.locator('#fileInput').setInputFiles({name:'long.akari.md',mimeType:'text/plain',buffer:Buffer.from(named)});await p.waitForFunction(()=>Akari.app.project.name==='ながい 名前');await frames();
+  const longName={size:{width:1280,height:720},...await measure(),screenshot:await picture(p,'first-hint-long-name')};
+  await route('untouched-reload',[reload]);
+  await route('tab-then-enter',[()=>focusIn('#blockEditor .blockui-palette'),()=>p.keyboard.press('Enter'),reload]);
+  await route('mouse-list',[listHead,reload]);
+  await route('mouse-body',[()=>p.locator('#blockEditor .blockui-workspace').click({position:{x:20,y:20}})]);
+  // A press held (no release yet), then let go.
+  await route('press-only',[async()=>{const b=await p.locator('#blockEditor .blockui-palette').boundingBox();await p.mouse.move(b.x+12,b.y+12);await p.mouse.down();},()=>p.mouse.up()]);
+  await route('tap-event',[()=>p.locator('#entryClickEvent').tap()]);
+  // Keys that make nothing: modifiers and locks alone, Escape, a function key, moving keys; then Enter makes.
+  await route('keys-without-making',[()=>focusIn('#entryEvents'),async()=>{for(const key of ['Shift','Control','Alt','CapsLock','CapsLock','Escape','F2','ArrowRight','ArrowLeft','Home','End'])await p.keyboard.press(key);},
+   ()=>p.keyboard.press('Enter')]);
+  // ↑ at the list's first block opens the list's tools by a click of the product's own: no making.
+  // (the tools are opened when they are no longer hidden; はじめて's CSS keeps them out of view all the same)
+  const tools=()=>p.locator('#blockEditor .blockui-palette-controls').evaluate(n=>!n.hidden);
+  await route('arrow-up-in-list',[async()=>{await focusIn('#blockEditor [data-blockui-action="palette-add"]');assert.equal(await tools(),false,'the tools of the list are closed');},
+   async()=>{await p.keyboard.press('ArrowUp');assert.equal(await tools(),true,'↑ opened the tools of the list');}]);
+  // A click made by a page's code (no press of the child) is no making.
+  await route('scripted-click',[()=>p.locator('#blockEditor [data-blockui-action="palette-add"]').first().dispatchEvent('click')]);
+  // While the name is asked before a save, the bubble is not shown; いいえ brings it back (保存 is no making).
+  await route('save-question',[async()=>{await p.locator('#saveBtn').click();await p.locator('#saveConfirmModal.show').waitFor();},
+   async()=>{await p.locator('#saveConfirmModal.show #saveConfirmNo').click();await p.waitForFunction(()=>!document.querySelector('#saveConfirmModal.show'));}]);
+  await route('press-guide',[async()=>{await p.locator('#tutorialStart').click();await waitStep(p,auditRoute()[0]);await p.locator('#tutorialExit').click();}]);
+  const keep=async()=>{await p.locator('#entryAddRow button').first().click();await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));};
+  const offered=async()=>{await reload();await p.locator('#recoveryModal.show').waitFor();};
+  await route('autosave',[keep,offered,async()=>{await p.locator('#recoveryDiscard').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal.show'));await reload();}]);
+  await route('autosave-restore',[keep,offered,async()=>{await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal.show'));}]);
+  // An empty work does not run, so a work with a start body is opened (作品 › 開く is no touch of a block).
+  const runnable=()=>p.evaluate(()=>{const work=Akari.makeEmptyProject();work.name='吹き出しの 試し';work.scripts=[{id:'hint-start',targetId:'sprite-1',event:'start',source:'10歩進む。'}];return Akari.serializeProject(work,Akari.makeDefaultAssetStore());});
+  await route('level-and-run',[async()=>{await p.locator('#fileInput').setInputFiles({name:'hint.akari.md',mimeType:'text/plain',buffer:Buffer.from(await runnable())});await p.waitForFunction(()=>Akari.app.project.name==='吹き出しの 試し');},
+   ()=>p.locator('#uiLevel').selectOption('basic'),()=>p.locator('#uiLevel').selectOption('entry'),
+   // The run screen stays after the work ends, until ■ 止める.
+   async()=>{await p.locator('#runBtn').click();await p.waitForFunction(()=>document.body.classList.contains('runtime'));},
+   async()=>{await pressStop(p.locator('#stopBtn'));await p.waitForFunction(()=>!document.body.classList.contains('runtime'));}]);
+  // The body in the code view is the code. A letter put in with no key (an input alone) makes; はじめて is blocks
+  // only, so the letter is taken back and the view comes back first.
+  await route('code-typing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText('1');},
+   async()=>{await p.keyboard.press('Backspace');await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');}]);
+  // A key alone, with no input: Backspace at the start of the code deletes nothing.
+  await route('key-only',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   async()=>{await p.locator('#codeEditor').evaluate(n=>{n.focus();n.setSelectionRange(0,0);});const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('Backspace');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing deleted');}]);
+  // A made block's body (自分で作ったブロック, a くわしく tool) is a body too, in its code view and in its block view.
+  for(const view of ['code','blocks'])await route('made-block-'+view,[()=>p.locator('#uiLevel').selectOption('advanced'),async()=>{await p.locator('#procBtn').click();await chooseView(p,view,{prefix:'callable'});},
+   async()=>{const b=await p.locator(view==='code'?'#callableCode':'#callableBlocks').boundingBox();await p.mouse.click(b.x+12,b.y+12);}]);
+  // A long text put in the code (4096 letters or more) is put in by the product's own input after the browser's: as one
+  // insertion, and as a paste from the clipboard.
+  const longText='1'.repeat(5000);
+  await p.context().grantPermissions(['clipboard-read','clipboard-write']);
+  // Ctrl+V on a block of the list (a button) puts nothing in; Ctrl+Backspace at the start of the code deletes nothing.
+  await route('paste-on-button',[async()=>{await focusIn('#blockEditor [data-blockui-action="palette-add"]');await p.evaluate(()=>navigator.clipboard.writeText('abc'));},()=>p.keyboard.press('ControlOrMeta+V')]);
+  await route('ctrl-delete-nothing',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   async()=>{await p.locator('#codeEditor').evaluate(n=>{n.focus();n.setSelectionRange(0,0);});const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('ControlOrMeta+Backspace');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing deleted');}]);
+  // A deletion that deletes counts by its input alone (Ctrl+Backspace's key and beforeinput count for nothing); a paste of
+  // nothing puts nothing in.
+  await route('ctrl-delete-real',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   // (words put in by the page's code count for nothing)
+   async()=>{await p.locator('#codeEditor').evaluate(n=>{if(!n.value)n.value='10歩進む。';n.focus();n.setSelectionRange(n.value.length,n.value.length);});const before=await p.locator('#codeEditor').inputValue();assert.ok(before.length>0,'the code has words to delete');
+    await p.keyboard.press('ControlOrMeta+Backspace');assert.notEqual(await p.locator('#codeEditor').inputValue(),before,'a word deleted');}]);
+  await route('empty-paste',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),
+   async()=>{await p.evaluate(()=>navigator.clipboard.writeText(''));await p.locator('#codeEditor').focus();const before=await p.locator('#codeEditor').inputValue();await p.keyboard.press('ControlOrMeta+V');assert.equal(await p.locator('#codeEditor').inputValue(),before,'nothing pasted');}]);
+  await route('long-input',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.locator('#codeEditor').focus();await p.keyboard.insertText(longText);}]);
+  await route('long-paste',[()=>p.locator('#uiLevel').selectOption('basic'),()=>chooseView(p,'code'),async()=>{await p.evaluate(text=>navigator.clipboard.writeText(text),longText);await p.locator('#codeEditor').focus();await p.keyboard.press('ControlOrMeta+V');
+    assert.ok((await p.locator('#codeEditor').inputValue()).includes(longText),'the long text was pasted');}]);
+  // The next pages' localStorage throws on every call (a browser that keeps nothing).
+  await p.addInitScript(()=>{for(const name of ['getItem','setItem','removeItem','clear'])Storage.prototype[name]=function(){throw new DOMException('blocked','SecurityError');};});
+  await route('storage-throws',[listHead,reload]);
+  return {viewports,withNote,longName,routes};
+ },{hasTouch:true});
 
 },600000);
 report.status=report.results.every(r=>r.status==='PASS')&&report.pageErrors.length===0?'PASS':'FAIL';save();

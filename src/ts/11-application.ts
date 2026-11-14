@@ -1015,7 +1015,86 @@ export function initApp() {
   appCalls.$('#saveBtn').onclick = appCalls.requestSave;
   appCalls.$('#entryStartEvent').onclick=()=>appCalls.selectEntryEvent('start');
   appCalls.$('#entryClickEvent').onclick=()=>appCalls.selectEntryEvent('click');
-  appCalls.$('#tutorialStart').onclick=appCalls.beginTutorial;
+  // The bubble under いっしょに作る (はじめて) says what it makes, at each start until the child starts. It goes for good —
+  // this browser keeps that it went (one child has one computer) — when the child presses いっしょに作る, or makes
+  // something in the blocks (the list, the body and the two event buttons), in the code (the body of the code view, at
+  // any level) or in a made block's body (自分で作ったブロック): a press, a click (a screen reader's or
+  // voice control's press comes as a click alone), an input (a paste, a drop and the first letter of a word being converted too), or a key
+  // that acts or writes (Enter, Space, a character, Backspace, Delete; no Ctrl, Alt or Meta with it, and not a key
+  // taken by the conversion). Tab, a modifier or a lock, Escape, a function key and the keys that move make nothing;
+  // nor does a click or an input the product makes itself (the list's ↑ at its first block opens the list's tools). A start that finds a work kept in this browser
+  // (an autosave, which keeps the level too) does not show it and keeps that it went, so the bubble waits for that read.
+  // A browser that keeps nothing shows it at each start until the child starts. It is no control (no pointer, no
+  // focus) and is read once, as the button's description; the CSS shows it only where いっしょに作る is: はじめて's edit
+  // screen, no guide running.
+  const tutorialHint=appCalls.$('#tutorialHint'),tutorialStartButton=appCalls.$('#tutorialStart');
+  let tutorialHintGone=false;
+  try{tutorialHintGone=localStorage.getItem(STORAGE_KEYS.tutorialHint)==='gone';}catch(_){}
+  const tutorialHintWatch=new AbortController();let tutorialHintObserver: ResizeObserver | null=null,tutorialHintNotes: MutationObserver | null=null;
+  // It stands right under the button (in the toolbar's second row when the toolbar wraps), its arrow on the button, at
+  // the free place nearest the button's middle: over no control, no window heading and no note, with nothing between its
+  // arrow and the button. When there is no such place (on a screen narrower than about 740 pixels, or when
+  // a part with a long name widens the list of parts under it), it is still shown right under the
+  // button, nearest its middle, over what is there (it takes no pointer, so what is under it can still be pressed).
+  // Only values that change are written, so the observers below do not answer the bubble's own moves.
+  const tutorialHintAvoid='button,select,input,textarea,summary,a[href],label,.win-title,[role="button"],[tabindex]:not([tabindex="-1"]),.mode-blocked-note:not([hidden])';
+  const placeTutorialHint=()=>{
+    if(tutorialHint.hidden||!tutorialHint.offsetWidth)return;
+    const bar=appCalls.$('.menutool').getBoundingClientRect(),button=tutorialStartButton.getBoundingClientRect(),middle=button.left+button.width/2;
+    const width=tutorialHint.offsetWidth,height=tutorialHint.offsetHeight,top=button.bottom+10;
+    const others=[...document.querySelectorAll<HTMLElement>(tutorialHintAvoid)].filter(n=>n!==tutorialStartButton&&!tutorialHint.contains(n)&&n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden').map(n=>n.getBoundingClientRect());
+    // (the places on the screen whose arrow is on the button, nearest the button's middle first)
+    const places: number[]=[];
+    for(let shift=0;shift<=width;shift+=4)for(const left of shift?[middle-28-shift,middle-28+shift]:[middle-28]){
+      const arrow=Math.max(left+16,Math.min(middle,left+width-16));
+      if(left>=8&&left+width<=window.innerWidth-8&&arrow>=button.left&&arrow<=button.right)places.push(left);
+    }
+    // (the bubble, and the arrow's column between the button and the bubble)
+    const free=places.find(left=>{const arrow=Math.max(left+16,Math.min(middle,left+width-16));
+      return !others.some(r=>r.left<left+width&&r.right>left&&r.top<top+height&&r.bottom>top||r.left<arrow+10&&r.right>arrow-10&&r.top<top&&r.bottom>button.bottom);});
+    const place=free??places[0]??Math.max(8,Math.min(middle-28,window.innerWidth-width-8));
+    const style=tutorialHint.style,left=place-bar.left+'px',above=top-bar.top+'px',arrow=Math.max(16,Math.min(middle-place,width-16))+'px';
+    if(style.left!==left)style.left=left;
+    if(style.top!==above)style.top=above;
+    if(style.getPropertyValue('--tutorial-hint-arrow')!==arrow)style.setProperty('--tutorial-hint-arrow',arrow);
+  };
+  const dismissTutorialHint=()=>{
+    if(tutorialHintGone)return;
+    tutorialHintGone=true;tutorialHint.hidden=true;tutorialStartButton.removeAttribute('aria-describedby');
+    tutorialHintWatch.abort();tutorialHintObserver?.disconnect();tutorialHintNotes?.disconnect();
+    try{localStorage.setItem(STORAGE_KEYS.tutorialHint,'gone');}catch(_){}
+  };
+  const offerTutorialHint=(kept: boolean)=>{
+    if(tutorialHintGone)return;
+    if(kept){dismissTutorialHint();return;}
+    tutorialHint.hidden=false;tutorialStartButton.setAttribute('aria-describedby','tutorialHint');placeTutorialHint();
+  };
+  const startsWork=(event: Event)=>{
+    // (only what the browser makes from the child: the product's own clicks and inputs, made by its code, are none)
+    if(!event.isTrusted||!(event.target instanceof Element)||!event.target.closest('#blockEditor,#entryEvents,#codeEditor,#callableBlocks,#callableCode'))return;
+    // (a paste, a drop or a long text that the product puts in by its own input still comes first as the browser's
+    // paste, drop or beforeinput: these count when they bring text into a text field. A paste on a button brings
+    // nothing, and a deletion counts by the input that follows it only when something was deleted)
+    const field=event.target.closest('textarea,input:not([type="checkbox"],[type="radio"],[type="button"],[type="submit"],[type="range"],[type="color"],[type="file"]),[contenteditable="true"]'),brought=(data: DataTransfer | null | undefined)=>!!data?.getData('text/plain');
+    if(event.type==='paste'&&!(field&&brought((event as ClipboardEvent).clipboardData)))return;
+    if(event.type==='drop'&&!(field&&brought((event as DragEvent).dataTransfer)))return;
+    const typed=event as InputEvent;
+    if(event.type==='beforeinput'&&!(field&&typed.inputType.startsWith('insert')&&(typed.data||brought(typed.dataTransfer))))return;
+    // (the input of a paste or a drop is left to the paste or the drop: a paste of a picture or of nothing puts nothing in)
+    if(event.type==='input'&&/^insertFrom(?:Paste|Drop)/.test(typed.inputType))return;
+    const key=event as KeyboardEvent;
+    if(event.type==='keydown'&&!((key.key.length===1||['Enter','Backspace','Delete'].includes(key.key))&&!key.ctrlKey&&!key.altKey&&!key.metaKey&&!key.isComposing))return;
+    dismissTutorialHint();
+  };
+  if(!tutorialHintGone){
+    // (it moves with the button, the toolbar, the areas under it and the name of the part chosen, and away from a note
+    // shown in the toolbar)
+    if(typeof ResizeObserver==='function'){tutorialHintObserver=new ResizeObserver(placeTutorialHint);for(const node of [tutorialHint,tutorialStartButton,appCalls.$('.menutool'),appCalls.$('.main'),appCalls.$('#objectSelect')])tutorialHintObserver.observe(node);}
+    if(typeof MutationObserver==='function'){tutorialHintNotes=new MutationObserver(placeTutorialHint);tutorialHintNotes.observe(appCalls.$('.menutool'),{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});}
+    window.addEventListener('resize',placeTutorialHint,{signal:tutorialHintWatch.signal});
+    for(const type of ['pointerdown','click','beforeinput','input','paste','drop','keydown'])document.addEventListener(type,startsWork,{capture:true,signal:tutorialHintWatch.signal});
+  }
+  appCalls.$('#tutorialStart').onclick=()=>{dismissTutorialHint();return appCalls.beginTutorial();};
   appCalls.$('#tutorialExit').onclick=()=>{appCalls.finishTutorial(false);appCalls.setStatus('とちゅうの 作品は のこって いるよ。じゆうに つづけられるよ。');};
   appCalls.$('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(appVars.tutorial,'verify-save')){appCalls.$('#tutorialSavedFile').value='';appCalls.$('#tutorialSavedFile').click();}};
   // (the change is the file box's)
@@ -1616,6 +1695,7 @@ export function initApp() {
       else if (appVars.appState === 'IMPORTING') appVars.appState = 'DESIGN';
       appCalls.updateRunState();
     },
+    found: offerTutorialHint,
   });
   // The version is in 出力 (はじまりました); the status line says only what is true now.
   appCalls.setStatus(appCalls.emptyProjectStatus(), true);

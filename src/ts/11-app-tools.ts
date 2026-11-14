@@ -1092,11 +1092,14 @@ export function createAppTools(appVars: AppVars, appCalls: AppToolsCoreCalls, ap
   // options.hold: called with true once a kept work is found and with false when its check ends. Reading its pictures
   // can take a second on a slow computer, and an edit meanwhile would be kept over it (or opening a work would clear it):
   // the caller holds the work while it is checked.
-  async function checkRecovery(options: { hold?: (held: boolean) => void } = {}) {
+  // found is told whether this computer keeps a work at all, as read, before the record is checked or offered; it is
+  // told apart from this check, so nothing it does can stop the offer.
+  async function checkRecovery(options: { hold?: (held: boolean) => void; found?: (kept: boolean) => void } = {}) {
     const epoch = appVars.recoveryEpoch, hold = options.hold;
     let held = false;
     try {
       const rec = await appCalls.readAutosave();
+      const found=options.found;if(found)queueMicrotask(()=>found(!!rec));
       if (
         !rec ||
         epoch !== appVars.recoveryEpoch ||

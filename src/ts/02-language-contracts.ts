@@ -141,6 +141,7 @@ export const STORAGE_KEYS = Object.freeze({
   fallback: 'akari.autosave.f' + PROJECT_FORMAT_ID,
   uiLevel: 'akari.uiLevel.v1',
   editorMode: 'akari.editorMode.v1',
+  tutorialHint: 'akari.tutorialHint.v1',
 });
 
 // 名人: scripts that belong to no part. In memory they carry this pseudo owner so the editor can select them.
