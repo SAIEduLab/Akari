@@ -25,6 +25,9 @@ try {
     GIT_AUTHOR_NAME:'Akari audit',GIT_AUTHOR_EMAIL:'audit@akari.invalid',GIT_COMMITTER_NAME:'Akari audit',GIT_COMMITTER_EMAIL:'audit@akari.invalid',
     GIT_AUTHOR_DATE:'2000-01-01T00:00:00Z',GIT_COMMITTER_DATE:'2000-01-01T00:00:00Z'});
   const repo=path.join(tmp,'repo'),trees=path.join(tmp,'trees');
+  // The folders of the records the guard makes (os.tmpdir) are made in one folder of this test.
+  const temp=path.join(tmp,'temp');fs.mkdirSync(temp);Object.assign(process.env,{TEMP:temp,TMP:temp,TMPDIR:temp});
+  const recordFolders=()=>fs.readdirSync(temp).filter(name=>name.startsWith('akari-snapshot-'));
   cp.execFileSync('git',['init','-q',repo],{stdio:'pipe'});fs.mkdirSync(trees);
   // The base commit mirrors the candidate checkout: audit/, src/, the portable extensions src/ embeds, the product and AUDIT.md.
   const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(dir+'/'+e.name):e.isFile()?[dir+'/'+e.name]:[]);
@@ -248,9 +251,6 @@ try {
   const recorded=await worldsGuard({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
   assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes: '+JSON.stringify(recorded.errors));
   assert.ok(formatGuardReport(recorded).includes('- changed behaviour of '+changedCases[0]+': '),'the recorded change is listed for the owner');pass('behaviour/recorded-change-listed');
-  // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job.
-  const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
-  failed('limits/worlds-never-finish',await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:endless}),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
   }
   if(mine.has('behaviour/assist-change-needs-record')){
   // The assist cases and the lines of the worlds against the base product, on one product changed twice: it gives at
@@ -263,10 +263,19 @@ try {
   const lineEnd='    endColumn: line.endColumn ?? Math.max(1, surfaceLineInfo(line).columns.count + 1),\n';
   const changedText=productReplaced(productReplaced(productText,'const ASSIST_MAX=4,','const ASSIST_MAX=3,'),lineEnd,lineEnd.replace('+ 1)','+ 2)'));
   const changedHead=release(nextPatch(version),{changeSource:true,productBytes:changedText});
+  // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job. Against
+  // a base with the changed product, the guard returns only when every child it started has closed and removed its
+  // folder, and a record stopped half-way (the assist cases of the changed product) is not kept, so the next run of that
+  // product records it.
+  const changedBase=derive(changedHead),endless=productReplaced(productText,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
+  const stopped=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless}),changedBase),{from:changedBase,limitMs:20000});
+  failed('limits/worlds-never-finish',stopped,'errors',/the specification worlds did not finish within 20 s/);
+  assert.deepEqual(recordFolders(),[],'every child of the stopped run has closed and removed its folder');
   const unrecordedChange=await guard(derive(changedHead)),changedCases=unrecordedChange.behaviour.differences;
   const assistChanged=changedCases.filter(id=>id.startsWith('assist/')),lineChanged=changedCases.filter(id=>id.startsWith('line/'));
   assert.deepEqual([unrecordedChange.errors,unrecordedChange.behaviour.kinds.world.differing,assistChanged.length+lineChanged.length],[[],0,changedCases.length],'no world changes');
   assert.ok(assistChanged.length>0&&lineChanged.length>0,'assist cases and lines change: '+changedCases.slice(0,5).join(', '));
+  pass('limits/stopped-children-closed');
   // The line parses alike but for a source position, and the guard names it with its text.
   const lineText=new Map(lines.map(line=>[lineCase(line),line])),position=lineChanged.map(id=>lineText.get(id));
   const parsed=html=>Object.values(lineSnapshot(html,position)),[baseParse,headParse]=[parsed(productText),parsed(changedText)];

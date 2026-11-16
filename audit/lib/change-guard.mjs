@@ -305,17 +305,18 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
       // Scripts that differ only in the release label (a renumbered branch) behave alike; nothing is run for them.
       if(script(before.product)===script(after.product))for(const kind of Object.keys(kinds))differing[kind]=[];
       else{
-        // Every kind of both products runs at once, each in its own child, recorded once per product blob in this
-        // process. The worlds are awaited first: a world record that cannot be made is the error reported, and the other
-        // children are stopped.
-        const controller=new AbortController();
+        // Every kind of both products runs at once, each in its own child of this run. A finished record is kept for the
+        // product blob in this process (behaviourCache holds records, never a run). The worlds are awaited first: a world
+        // record that cannot be made is the error reported, and the other children are stopped. The guard goes on only
+        // when every child it started has closed and its folder is removed.
+        const controller=new AbortController(),started=[];
         const recorded=(kind,blob)=>{const key=kind+':'+blob+':'+kinds[kind].key;
-          if(!behaviourCache.has(key)){const run=kinds[kind].run(blob,controller.signal);behaviourCache.set(key,run);run.catch(()=>{if(behaviourCache.get(key)===run)behaviourCache.delete(key);});}
-          return behaviourCache.get(key);};
+          if(behaviourCache.has(key))return behaviourCache.get(key);
+          const run=kinds[kind].run(blob,controller.signal).then(result=>{behaviourCache.set(key,result);return result;});started.push(run);return run;};
         const runs=Object.fromEntries(Object.keys(kinds).map(kind=>[kind,Promise.all([recorded(kind,before.product),recorded(kind,after.product)])]));
         for(const run of Object.values(runs))run.catch(()=>{});
         try{for(const [kind,run] of Object.entries(runs)){const [base,head]=await run;differing[kind]=behaviourDifferences(base,head);}}
-        finally{controller.abort();}
+        finally{controller.abort();await Promise.allSettled(started);}
       }
       const differences=Object.values(differing).flat();
       const record=commit=>{const oid=optionalObject(repo,commit+':'+intendedChangesFile);return oid?JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')):null;};
