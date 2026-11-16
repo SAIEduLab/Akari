@@ -5,14 +5,14 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
+import {changeGuard,guardLimitMs,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
 import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract,guardCodePaths} from '../lib/gate-contract.mjs';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
 import {currentPart,partItems} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
-import {boundedSnapshot,productApi,runLimited} from '../lib/behaviour-snapshot.mjs';
+import {boundedSnapshot,boundedAssist,boundedLines,productApi,fixedClockApi,fixedClockMs,assistCases,assistSnapshot,snapshotCases,worldLines,lineCase,lineSnapshot,runLimited} from '../lib/behaviour-snapshot.mjs';
 import {boundedCoverage} from '../lib/node-coverage.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
 const part=currentPart('change-guard-negative'),mine=new Set(partItems('change-guard-negative',gateCaseIds['change-guard-negative'],part));
@@ -25,6 +25,9 @@ try {
     GIT_AUTHOR_NAME:'Akari audit',GIT_AUTHOR_EMAIL:'audit@akari.invalid',GIT_COMMITTER_NAME:'Akari audit',GIT_COMMITTER_EMAIL:'audit@akari.invalid',
     GIT_AUTHOR_DATE:'2000-01-01T00:00:00Z',GIT_COMMITTER_DATE:'2000-01-01T00:00:00Z'});
   const repo=path.join(tmp,'repo'),trees=path.join(tmp,'trees');
+  // The folders of the records the guard makes (os.tmpdir) are made in one folder of this test.
+  const temp=path.join(tmp,'temp');fs.mkdirSync(temp);Object.assign(process.env,{TEMP:temp,TMP:temp,TMPDIR:temp});
+  const recordFolders=()=>fs.readdirSync(temp).filter(name=>name.startsWith('akari-snapshot-'));
   cp.execFileSync('git',['init','-q',repo],{stdio:'pipe'});fs.mkdirSync(trees);
   // The base commit mirrors the candidate checkout: audit/, src/, the portable extensions src/ embeds, the product and AUDIT.md.
   const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(dir+'/'+e.name):e.isFile()?[dir+'/'+e.name]:[]);
@@ -79,6 +82,14 @@ try {
   // script (one anchor, which must be in it once), and the head product is the next patch.
   const productText=text(product);
   const productLine=(anchor,insert)=>{assert.equal(productText.split(anchor).length,2,'one anchor in the product: '+anchor.trim());return productText.replace(anchor,()=>anchor+insert);};
+  // The cases about the worlds run on a base and a head that both hold a small assist fixture, the first case of each
+  // world the full fixture builds: the assist kind runs in them, on fewer cases. The cases about the assist hold the full
+  // fixture.
+  const assistFile='audit/fixtures/assist/code-assist-cases.json',fullFixture=JSON.parse(text(assistFile)),fixtureWorlds=new Set();
+  const smallFixture={...fullFixture,cases:fullFixture.cases.filter(c=>!fixtureWorlds.has(JSON.stringify(c.world))&&fixtureWorlds.add(JSON.stringify(c.world)))};
+  const fixtureFile=fixture=>({[assistFile]:JSON.stringify(fixture,null,2)+'\n'});
+  let smallBase;
+  const worldsGuard=(changes,options={})=>{smallBase??=derive(fixtureFile(smallFixture));return guard(derive({...fixtureFile(smallFixture),...changes},smallBase),{from:smallBase,...options});};
   // A function the syntax suite runs, and a no-op sum to put at its start.
   const runFn='  function replaceUnprotectedWord(text, from, to) {\n',noOpLine='    void (1 + 1);\n';
   // A CI part (AKARI_PART) runs its planned groups (audit/lib/shard-plan.cjs): the tree, record, version and language
@@ -234,16 +245,147 @@ try {
   // record without a change fails.
   const message='かを 書きます。れい：${part}の${messageExpression(n)}`;';
   const reworded=replaced(product,message,message.replace('書きます','書いてね'));
-  const unrecorded=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:reworded})));
+  const unrecorded=await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:reworded}));
   failed('behaviour/unrecorded-change',unrecorded,'behaviourIssues',/changed, and audit\/manifests\/intended-behaviour-changes\.json does not record it/);
   const changedCases=unrecorded.behaviour.differences;assert.ok(changedCases.length>0,'the turn changes at least one world');
-  const recordedHead=derive({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
-  const recorded=await guard(recordedHead);
+  assert.deepEqual([unrecorded.behaviour.kinds.assist.cases,smallFixture.cases.length>0],[smallFixture.cases.length,true],'the assist runs on the cases of the small fixture');
+  const recorded=await worldsGuard({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
   assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes: '+JSON.stringify(recorded.errors));
   assert.ok(formatGuardReport(recorded).includes('- changed behaviour of '+changedCases[0]+': '),'the recorded change is listed for the owner');pass('behaviour/recorded-change-listed');
-  // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job.
+  // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job, and
+  // leaves no record folder.
   const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
-  failed('limits/worlds-never-finish',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless})),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
+  failed('limits/worlds-never-finish',await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:endless}),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
+  assert.deepEqual(recordFolders(),[],'every child of the run at its limit has closed and removed its folder');
+  }
+  if(mine.has('behaviour/assist-change-needs-record')){
+  // The assist cases and the lines of the worlds against the base product, on one product changed twice: it gives at
+  // most three candidates instead of four, which changes what the assist answers in some cases, and a sentence that
+  // ends where its line ends ends a column further, which changes the source position one line's parse records; no
+  // world changes. Each kind left unrecorded fails while the other is recorded, both recorded with a reason pass with the
+  // counts in the report, and a record of an assist case or a line that did not change fails.
+  const fixture=JSON.parse(text('audit/fixtures/assist/code-assist-cases.json')),lines=worldLines(snapshotCases());
+  const productReplaced=(html,from,to)=>{assert.equal(html.split(from).length,2,'one anchor in the product: '+from);return html.replace(from,()=>to);};
+  const lineEnd='    endColumn: line.endColumn ?? Math.max(1, surfaceLineInfo(line).columns.count + 1),\n';
+  const changedText=productReplaced(productReplaced(productText,'const ASSIST_MAX=4,','const ASSIST_MAX=3,'),lineEnd,lineEnd.replace('+ 1)','+ 2)'));
+  const changedHead=release(nextPatch(version),{changeSource:true,productBytes:changedText});
+  // A head product that ends its world child at once (exit 3 when it loads there) while its other children never end by
+  // themselves (in the children of the assist cases and the lines its parse and its project making never return), against
+  // a base with the changed product, under the default limit: the guard reports the world failure, stops the other
+  // children and returns well before the limit, when every child has closed and removed its folder; the assist record
+  // of the changed product, under way when the run stopped, is not kept, and the next run of that product makes it.
+  const changedBase=derive(changedHead),hostProcess='console.log.constructor("return process")()';
+  const scriptStart=productText.indexOf('<script>')+8,scriptEnd=productText.lastIndexOf('</script>');
+  const trap=productText.slice(0,scriptStart)+'if ('+hostProcess+'.argv.includes("--run")) '+hostProcess+'.exit(3);\n'+productText.slice(scriptStart,scriptEnd)+
+    'if (["--assist", "--lines"].some(kind => '+hostProcess+'.argv.includes(kind))) globalThis.Akari.parseSyntax = globalThis.Akari.makeDefaultProject = () => { for (;;) {} };\n'+productText.slice(scriptEnd);
+  const trapStart=performance.now(),trapped=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:trap}),changedBase),{from:changedBase});
+  const trapTook=performance.now()-trapStart;
+  assert.ok(trapped.errors.some(m=>/^the specification worlds failed \(exit 3\)/.test(m)),'the world failure is reported: '+JSON.stringify(trapped.errors));
+  assert.ok(trapTook<guardLimitMs/2,'the run returns well before the limit of its children: '+Math.round(trapTook)+' ms');
+  assert.deepEqual(recordFolders(),[],'every child of the stopped run has closed and removed its folder');
+  pass('limits/stopped-at-once');
+  const unrecordedChange=await guard(derive(changedHead)),changedCases=unrecordedChange.behaviour.differences;
+  const assistChanged=changedCases.filter(id=>id.startsWith('assist/')),lineChanged=changedCases.filter(id=>id.startsWith('line/'));
+  assert.deepEqual([unrecordedChange.errors,unrecordedChange.behaviour.kinds.world.differing,assistChanged.length+lineChanged.length],[[],0,changedCases.length],'no world changes');
+  assert.ok(assistChanged.length>0&&lineChanged.length>0,'assist cases and lines change: '+changedCases.slice(0,5).join(', '));
+  pass('limits/stopped-children-closed');
+  // The line parses alike but for a source position, and the guard names it with its text.
+  const lineText=new Map(lines.map(line=>[lineCase(line),line])),position=lineChanged.map(id=>lineText.get(id));
+  const parsed=html=>Object.values(lineSnapshot(html,position)),[baseParse,headParse]=[parsed(productText),parsed(changedText)];
+  const spanless=value=>JSON.stringify(value,(key,v)=>key==='sourceSpan'?undefined:v);
+  assert.deepEqual([spanless(headParse),headParse.every((parse,i)=>JSON.stringify(parse)!==JSON.stringify(baseParse[i]))],[spanless(baseParse),true],'only a source position changes');
+  // A line records its diagnostics whole: a product that names a proposal of a diagnostic otherwise (最後に for さいごに)
+  // gives the line another record, though the code, the position and the message of the diagnostic stay.
+  {
+    const proposalLine='答えを名前に入れる。',renamed=productText.replaceAll("'さいごに入れる'","'最後に入れる'");
+    assert.equal(productText.split("'さいごに入れる'").length-1,3,'the proposal name in the product');
+    const [before,after]=[productText,renamed].map(html=>lineSnapshot(html,[proposalLine])[lineCase(proposalLine)]);
+    const kept=d=>[d.code,d.line,d.column,d.message];
+    assert.deepEqual([before.syntaxDiagnostics.map(kept),before.syntaxDiagnostics[0].proposals[0].label!==after.syntaxDiagnostics[0].proposals[0].label],[after.syntaxDiagnostics.map(kept),true],'the proposal alone changes');
+    assert.notDeepEqual(after,before,'the line records the proposal');
+    pass('behaviour/line-diagnostics-whole');
+  }
+  const unrecordedIssue=id=>'the behaviour of '+id+(lineText.has(id)?' '+JSON.stringify(lineText.get(id)):'')+' changed, and audit/manifests/intended-behaviour-changes.json does not record it';
+  assert.deepEqual([unrecordedChange.status,unrecordedChange.behaviourIssues],['FAIL',changedCases.map(unrecordedIssue)],'every change is unrecorded');
+  const assistUnrecorded=await guard(derive({...changedHead,...intended(lineChanged)}));
+  assert.deepEqual([assistUnrecorded.status,assistUnrecorded.behaviourIssues],['FAIL',assistChanged.map(unrecordedIssue)],'an unrecorded assist change');
+  pass('behaviour/assist-change-needs-record');
+  const lineUnrecorded=await guard(derive({...changedHead,...intended(assistChanged)}));
+  assert.deepEqual([lineUnrecorded.status,lineUnrecorded.behaviourIssues],['FAIL',lineChanged.map(unrecordedIssue)],'an unrecorded line change');
+  pass('behaviour/line-change-needs-record');
+  const recordedChange=await guard(derive({...changedHead,...intended(changedCases)}));
+  assert.deepEqual([recordedChange.status,recordedChange.behaviourIssues],['PASS',[]],'a recorded change passes: '+JSON.stringify(recordedChange.errors));
+  const shown=formatGuardReport(recordedChange);
+  assert.ok(shown.includes('Behaviour: 0 of '+snapshotCases().length+' specification worlds differ from the base product'),'the report counts the worlds');
+  assert.ok(shown.includes('Behaviour: '+assistChanged.length+' of '+fixture.cases.length+' assist cases differ from the base product'),'the report counts the assist cases');
+  assert.ok(shown.includes('Behaviour: '+lineChanged.length+' of '+lines.length+' lines of the specification worlds parse otherwise than with the base product'),'the report counts the lines');
+  assert.ok(shown.includes('- changed behaviour of '+lineChanged[0]+' '+JSON.stringify(position[0])+': '),'the recorded line is listed for the owner with its text');
+  pass('behaviour/assist-and-line-change-recorded');
+  const unchangedAssist=assistCases(fixture).find(id=>!assistChanged.includes(id)),unchangedLine=lines.find(line=>!lineChanged.includes(lineCase(line)));
+  const extra=await guard(derive({...changedHead,...intended([...changedCases,unchangedAssist,lineCase(unchangedLine)])}));
+  assert.deepEqual(extra.behaviourIssues,['audit/manifests/intended-behaviour-changes.json records a change of '+unchangedAssist+', but its behaviour did not change',
+    'audit/manifests/intended-behaviour-changes.json records a change of '+lineCase(unchangedLine)+' '+JSON.stringify(unchangedLine)+', but its behaviour did not change'],'a record of an assist case and a line that did not change');
+  failed('behaviour/assist-or-line-record-without-change',extra,'behaviourIssues',/but its behaviour did not change/);
+  // The cases of the merge base's assist fixture count too: a product change that also edits the fixture case that shows
+  // it, or removes the fixture, is compared on the case as the base had it (<its id>@base). The base holds the small
+  // fixture and that case.
+  {
+    const shown=fullFixture.cases.find(c=>assistChanged.includes('assist/'+c.id)&&!smallFixture.cases.some(s=>s.id===c.id)),other=fullFixture.cases.find(c=>'assist/'+c.id===unchangedAssist);
+    const withShown={...smallFixture,cases:[...smallFixture.cases.filter(c=>c.id!==shown.id),shown]},fixtureBase=derive(fixtureFile(withShown));
+    const edited={...withShown,cases:withShown.cases.map(c=>c.id===shown.id?{...other,id:shown.id}:c)},baseCase='assist/'+shown.id+'@base';
+    const fromBase=changes=>guard(derive(changes,fixtureBase),{from:fixtureBase});
+    const editedRun=await fromBase({...changedHead,...fixtureFile(edited)});
+    assert.deepEqual([editedRun.behaviour.differences.includes(baseCase),editedRun.behaviour.differences.includes('assist/'+shown.id)],[true,false],'the case as the base had it changes: '+JSON.stringify(editedRun.behaviour.differences));
+    assert.ok(editedRun.behaviourIssues.includes(unrecordedIssue(baseCase)),JSON.stringify(editedRun.behaviourIssues));
+    const editedRecorded=await fromBase({...changedHead,...fixtureFile(edited),...intended(editedRun.behaviour.differences)});
+    assert.deepEqual([editedRecorded.status,editedRecorded.behaviourIssues],['PASS',[]],'recorded, the edited case passes: '+JSON.stringify(editedRecorded.errors));
+    pass('behaviour/assist-fixture-case-edited');
+    const removedRun=await fromBase({...changedHead,[assistFile]:null});
+    assert.deepEqual([removedRun.errors,removedRun.behaviour.kinds.assist.cases],[[],withShown.cases.length],'the base cases of a removed fixture');
+    assert.ok(removedRun.behaviourIssues.includes(unrecordedIssue(baseCase)),JSON.stringify(removedRun.behaviourIssues));
+    pass('behaviour/assist-fixture-removed');
+    // The same head fixture and the same products against two base fixtures: against the small fixture no base case is
+    // compared; against the small fixture with the case that shows the change, that case is (the record of the assist
+    // cases depends on the base's fixture too).
+    const againstSmall=await worldsGuard(changedHead),againstShown=await fromBase({...changedHead,...fixtureFile(smallFixture)});
+    assert.deepEqual([againstSmall.errors,againstSmall.behaviour.differences.filter(id=>id.endsWith('@base')),againstShown.errors,againstShown.behaviour.differences.filter(id=>id.endsWith('@base'))],[[],[],[],[baseCase]],'the base fixture decides the base cases');
+    pass('behaviour/assist-base-fixture-in-record');
+    // A base case that the head has with its keys in another order is the same case: no <its id>@base.
+    const reordered={...withShown,cases:withShown.cases.map(c=>c.id===shown.id?Object.fromEntries(Object.entries(c).reverse()):c)};
+    const reorderedRun=await fromBase({...changedHead,...fixtureFile(reordered)});
+    assert.deepEqual([reorderedRun.errors,reorderedRun.behaviour.kinds.assist.cases,reorderedRun.behaviour.differences.filter(id=>id.endsWith('@base'))],[[],withShown.cases.length,[]],'keys in another order');
+    pass('behaviour/assist-fixture-key-order');
+    // A head case whose id ends in @base, and a fixture that is not {cases:[…]} JSON, are errors that name them.
+    const suffixed=await fromBase(fixtureFile({...withShown,cases:[...withShown.cases,{...other,id:shown.id+'@base'}]}));
+    failed('behaviour/assist-fixture-base-suffix-refused',suffixed,'errors',new RegExp('names the case '+shown.id+'@base: an assist case id does not end in @base'));
+    const notCases=await fromBase({[assistFile]:'{"schema":"akari-code-assist-expectations-v1"}\n'});
+    failed('behaviour/assist-fixture-not-cases-refused',notCases,'errors',/code-assist-cases\.json of [0-9a-f]+ is not \{cases:\[…\]\} JSON with an id to each case/);
+  }
+  // The assist cases are recorded on a fixed clock (fixedClockApi): the clock the assist reads its time budget from reads
+  // fixedClockMs there at every read, and the context has no performance; the same page in a context with Date's own
+  // clock reads the time.
+  const [,clock]=productText.match(/const now=\(\)=>(globalThis\.performance[^;]*);/)??[];
+  assert.ok(clock,'the clock the assist reads its time budget from');
+  const clockPage='<script>var Akari={clock:()=>'+clock+',performance:typeof performance};</script>',fixed=fixedClockApi(clockPage),own=productApi(clockPage);
+  assert.deepEqual([fixed.performance,fixed.clock(),fixed.clock()],['undefined',fixedClockMs,fixedClockMs],'the assist reads the fixed clock');
+  assert.notEqual(own.clock(),fixedClockMs,'a context with a real clock reads the time');
+  pass('behaviour/assist-clock-fixed');
+  // A page with no Akari API records that it has none, in every assist case and every line.
+  {
+    const page='<p>no product</p>',none={unavailable:'the page has no Akari API'};
+    assert.deepEqual(Object.values(assistSnapshot(page,smallFixture)),smallFixture.cases.map(()=>none),'the assist cases of a page with no API');
+    assert.deepEqual(Object.values(lineSnapshot(page,lines)),lines.map(()=>none),'the lines of a page with no API');
+    pass('behaviour/no-api-unavailable');
+  }
+  // assistSnapshot records on that clock: a product whose assist has no time at all (a budget of 0 ms) records the same
+  // as the product in cases whose search takes long.
+  {
+    const slow={...fullFixture,cases:fullFixture.cases.filter(c=>['ASSIST-1603','ASSIST-774','ASSIST-533','ASSIST-936','ASSIST-743'].includes(c.id))};
+    const noTime=productReplaced(productText,'ASSIST_BUDGET_MS=300;','ASSIST_BUDGET_MS=0;');
+    assert.equal(slow.cases.length,5,'the slow assist cases');
+    assert.deepEqual(assistSnapshot(noTime,slow),assistSnapshot(productText,slow),'no time passes for the assist on the fixed clock');
+    pass('behaviour/assist-snapshot-fixed-clock');
+  }
   }
   if(mine.has('assertions/fewer-checks-needs-record')){
   // A file that checks less is an audit change to record: one assertion fewer in static-contract.
@@ -257,7 +399,7 @@ try {
   {
     const extOpening='function createAkariExtensionHost(options) {\n',spacedText=productText.replace(extOpening,()=>'    '+extOpening);
     assert.notEqual(spacedText,productText,'the indented line');
-    const spaced=await guard(derive(release(nextPatch(version),{productBytes:spacedText})));
+    const spaced=await worldsGuard(release(nextPatch(version),{productBytes:spacedText}));
     assert.deepEqual([spaced.status,changedScriptLines(productText,spacedText)],['PASS',[]],'spacing is no changed line: '+JSON.stringify(spaced.errors));
     pass('coverage/spacing-only-no-changed-line');
   }
@@ -287,7 +429,7 @@ try {
     const parseStart='  function parseSyntax(source, context = {}) {\n',cut=productText.slice(0,from)+productText.slice(to);
     const moved=cut.replace(parseStart,()=>fn+parseStart);
     assert.deepEqual(changedScriptLines(productText,moved).map(([,text])=>text),['  }'],'only the closing brace is a changed line');
-    const judged=await guard(derive(release(nextPatch(version),{productBytes:moved})));
+    const judged=await worldsGuard(release(nextPatch(version),{productBytes:moved}));
     assert.deepEqual([judged.status,judged.behaviour.differences],['PASS',[]],'moved as it is');
     pass('coverage/moved-line-unchanged');
   }
@@ -314,12 +456,15 @@ try {
     pass('confined/guard-loads-only-guard-code');
   }
   // A product run by the guard writes no file but its own record: from inside the vm it reaches the host's process (as
-  // the in-process load shows), but the worlds and the coverage run are children that may not write.
+  // the in-process load shows), but the worlds, the assist cases, the lines and the coverage run are children that may
+  // not write.
   if(mine.has('confined/product-writes-nothing')){
     const mark=path.join(tmp,'written-by-product'),script='try{console.log.constructor("return process")().getBuiltinModule("fs").writeFileSync('+JSON.stringify(mark)+',"x");}catch{}';
     const page='<script>'+script+'</script>',written=()=>{const was=fs.existsSync(mark);fs.rmSync(mark,{force:true});return was;};
     productApi(page);assert.ok(written(),'the escape writes from an unconfined process');
-    boundedSnapshot(page,60000);assert.equal(written(),false,'the worlds');
+    await boundedSnapshot(page,60000);assert.equal(written(),false,'the worlds');
+    await boundedAssist(page,JSON.parse(text('audit/fixtures/assist/code-assist-cases.json')),60000);assert.equal(written(),false,'the assist cases');
+    await boundedLines(page,60000);assert.equal(written(),false,'the lines');
     try{boundedCoverage(page,product,60000);}catch{}assert.equal(written(),false,'the coverage run');
     // (and the tree's own contracts, which the guard reads in a child too: a gate contract that writes when it is loaded, and leaves a timer)
     const tree=path.join(tmp,'contracts');fs.mkdirSync(path.join(tree,'audit/lib'),{recursive:true});

@@ -45,7 +45,12 @@ export const changeGuardCaseIds=Object.freeze([
   'release/two-manifests','release/wrong-name','release/missing',
   'identity/head-evaluation-failure','identity/no-merge-base',
   'language/reader-table-changed','language/verbs-changed','language/reader-change-recorded','language/candidate-not-base-canonical',
-  'behaviour/unrecorded-change','behaviour/recorded-change-listed','assertions/fewer-checks-needs-record','coverage/spacing-only-no-changed-line','coverage/source-only-unbuilt','coverage/spacing-in-a-string-changes-a-line','coverage/moved-line-unchanged','coverage/common-line-not-moved','test-map/names-the-suites','behaviour/record-without-change','limits/worlds-never-finish']);
+  'behaviour/unrecorded-change','behaviour/recorded-change-listed','assertions/fewer-checks-needs-record','coverage/spacing-only-no-changed-line','coverage/source-only-unbuilt','coverage/spacing-in-a-string-changes-a-line','coverage/moved-line-unchanged','coverage/common-line-not-moved','test-map/names-the-suites','behaviour/record-without-change','limits/worlds-never-finish',
+  'behaviour/assist-change-needs-record','behaviour/line-change-needs-record','behaviour/assist-and-line-change-recorded','behaviour/assist-or-line-record-without-change','behaviour/assist-clock-fixed',
+  'limits/stopped-children-closed','behaviour/line-diagnostics-whole','behaviour/assist-snapshot-fixed-clock',
+  'behaviour/assist-fixture-case-edited','behaviour/assist-fixture-removed',
+  'behaviour/no-api-unavailable','behaviour/assist-fixture-key-order','behaviour/assist-fixture-base-suffix-refused','behaviour/assist-fixture-not-cases-refused',
+  'limits/stopped-at-once','behaviour/assist-base-fixture-in-record']);
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);

@@ -1,7 +1,8 @@
 // The product's behaviour over fixed works (AUDIT.md「前の版との振る舞いの差分」). Every specification world
 // (audit/fixtures/spec-expectations) is built as a work, written back as code and through blocks, checked, and run on a
 // fake clock with a fixed random seed; what the work says, where its parts are, its values and its runtime errors are
-// recorded. The same product gives the same record, so two products that differ in the record behave differently.
+// recorded. The cases of the assist fixture and the lines of the worlds' scripts are recorded too (assistSnapshot,
+// lineSnapshot). The same product gives the same record, so two products that differ in the record behave differently.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,6 +12,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {buildProject} from './spec-expectations-host.mjs';
 import {areas, expectationsRoot} from './spec-expectations.mjs';
+import {assistWorld, assistObservation} from './code-assist-host.mjs';
 
 // The node options of a child that runs a product: it reads files but writes only the given files or folders (Node's
 // permission model), and starts no process or worker. The product is code of the change under test, and a vm context
@@ -28,14 +30,38 @@ export function runLimited(args, limitMs, what, writable, options) {
   if (r.error) throw r.error;
   if (r.status !== 0) throw new Error(what + ' failed (exit ' + r.status + '): ' + (r.stderr || '').trim().slice(-2000));
 }
+// runLimited without blocking: the children of several products run at the same time. signal stops the child early,
+// and the promise then rejects with the AbortError.
+export function runLimitedAsync(args, limitMs, what, writable, {signal, ...options} = {}) {
+  return new Promise((resolve, reject) => {
+    const child = cp.spawn(process.execPath, [...confined(writable, options), ...args], {timeout: limitMs, signal, stdio: ['ignore', 'ignore', 'pipe']});
+    let stderr = '', aborted = null;
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', text => { stderr = (stderr + text).slice(-64 * 1024); });
+    child.on('error', error => { if (error.name === 'AbortError') aborted = error; else reject(error); });
+    child.on('close', (status, killedBy) => {
+      if (aborted) reject(aborted);
+      else if (killedBy) reject(new Error(what + ' did not finish within ' + limitMs / 1000 + ' s'));
+      else if (status !== 0) reject(new Error(what + ' failed (exit ' + status + '): ' + stderr.trim().slice(-2000)));
+      else resolve();
+    });
+  });
+}
 
-// The product's API in a fresh context, as the node suites load it.
-export function productApi(html) {
+// The product's API in a fresh context, as the node suites load it. The context has no performance, so the product reads
+// the time from Date.now. With fixedClock, Date.now there always reads fixedClockMs: the assist stops adding candidates
+// after a time budget it reads from that clock, so on the fixed clock its answer does not depend on how fast the machine
+// runs it.
+export const fixedClockMs = 0;
+export function productApi(html, {fixedClock = false} = {}) {
   const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
-  const context = {console, TextEncoder, TextDecoder, Uint8Array, Uint32Array, ArrayBuffer, Blob, URL, structuredClone, crypto: crypto.webcrypto, setTimeout, clearTimeout};
-  vm.runInNewContext(script, context, {timeout: 30000});
+  const context = vm.createContext({console, TextEncoder, TextDecoder, Uint8Array, Uint32Array, ArrayBuffer, Blob, URL, structuredClone, crypto: crypto.webcrypto, setTimeout, clearTimeout});
+  if (fixedClock) vm.runInContext('Date.now = () => ' + fixedClockMs + ';', context);
+  vm.runInContext(script, context, {timeout: 30000});
   return context.Akari;
 }
+// The context the assist cases are recorded in, on the fixed clock.
+export const fixedClockApi = html => productApi(html, {fixedClock: true});
 
 export function snapshotCases(root = path.resolve(expectationsRoot, '../../..')) {
   const cases = [];
@@ -102,27 +128,67 @@ export function caseBehaviour(api, c) {
   return strip(record);
 }
 
+// A page with no Akari API (a synthetic test product) runs nothing: that is its behaviour in every case.
+const unavailable = ids => Object.fromEntries(ids.map(id => [id, {unavailable: 'the page has no Akari API'}]));
+const loaded = (html, load) => { try { const api = load(html); return api?.makeEmptyProject ? api : null; } catch { return null; } };
+const failure = error => String(error?.code ?? error?.name ?? 'Error');
+
 export function behaviourSnapshot(html, cases) {
-  // A page with no Akari API (a synthetic test product) runs nothing: that is its behaviour in every world.
-  let api;
-  try { api = productApi(html); } catch (error) { api = null; }
-  if (!api?.makeEmptyProject) return Object.fromEntries(cases.map(c => [c.id, {unavailable: 'the page has no Akari API'}]));
+  const api = loaded(html, productApi);
+  if (!api) return unavailable(cases.map(c => c.id));
   return Object.fromEntries(cases.map(c => [c.id, caseBehaviour(api, c)]));
 }
 
-// behaviourSnapshot of every specification world in a child process (node audit/lib/behaviour-snapshot.mjs --run <page>
-// <record>), stopped after limitMs.
-export function boundedSnapshot(html, limitMs) {
+// Every case of the assist fixture (audit/fixtures/assist/code-assist-cases.json) as assist/<its id>: what the assist
+// answers there (assistObservation, audit/lib/code-assist-host.mjs) in the project its world builds, on the fixed clock.
+// A case that throws is recorded by the name of what it throws.
+export const assistCases = fixture => fixture.cases.map(test => 'assist/' + test.id);
+export function assistSnapshot(html, fixture) {
+  const api = loaded(html, fixedClockApi), ids = assistCases(fixture);
+  if (new Set(ids).size !== ids.length) throw new Error('the assist fixture names a case twice');
+  if (!api) return unavailable(ids);
+  return Object.fromEntries(fixture.cases.map((test, i) => {
+    try { return [ids[i], assistObservation(api, assistWorld(api, test.world), test)]; } catch (error) { return [ids[i], {exception: failure(error)}]; }
+  }));
+}
+
+// The distinct non-empty lines of the scripts of the specification worlds, with their indentation.
+export function worldLines(cases) {
+  const lines = new Set();
+  for (const c of cases) for (const s of c.world.scripts ?? []) for (const line of String(s.source ?? '').split('\n')) if (line.trim()) lines.add(line);
+  return [...lines];
+}
+// Every line of worldLines as line/ and the first 16 hex digits of the sha256 of its text: all api.parseSyntax returns
+// for the line alone on the fixed clock, as plain JSON (the tree with its source positions, and every diagnostic whole).
+// A line whose parse throws is recorded by the name of what it throws.
+export const lineCase = line => 'line/' + crypto.createHash('sha256').update(line).digest('hex').slice(0, 16);
+export function lineSnapshot(html, lines) {
+  const api = loaded(html, fixedClockApi), ids = lines.map(lineCase);
+  if (new Set(ids).size !== ids.length) throw new Error('two lines of the specification worlds have one case name');
+  if (!api) return unavailable(ids);
+  return Object.fromEntries(lines.map((line, i) => [ids[i], lineParse(api, line)]));
+}
+function lineParse(api, line) {
+  try { return JSON.parse(JSON.stringify(api.parseSyntax(line))); } catch (error) { return {exception: failure(error)}; }
+}
+
+// A record of a product in a child process (node audit/lib/behaviour-snapshot.mjs <kind> <page> [<fixture>] <record>),
+// stopped after limitMs, or when signal aborts.
+async function boundedRecord(kind, what, html, fixture, limitMs, signal) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'akari-snapshot-'));
   try {
-    const page = path.join(dir, 'page.html'), record = path.join(dir, 'record.json');
+    const page = path.join(dir, 'page.html'), record = path.join(dir, 'record.json'), inputs = [page];
     fs.writeFileSync(page, html);
-    runLimited([fileURLToPath(import.meta.url), '--run', page, record], limitMs, 'the specification worlds', [record]);
+    if (fixture) { inputs.push(path.join(dir, 'fixture.json')); fs.writeFileSync(inputs[1], JSON.stringify(fixture)); }
+    await runLimitedAsync([fileURLToPath(import.meta.url), kind, ...inputs, record], limitMs, what, [record], {signal});
     return JSON.parse(fs.readFileSync(record, 'utf8'));
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && process.argv[2] === '--run')
-  fs.writeFileSync(process.argv[4], JSON.stringify(behaviourSnapshot(fs.readFileSync(process.argv[3], 'utf8'), snapshotCases())));
+// behaviourSnapshot of every specification world, assistSnapshot of every assist case and lineSnapshot of every line of
+// the worlds, each in its own child.
+export const boundedSnapshot = (html, limitMs, signal) => boundedRecord('--run', 'the specification worlds', html, null, limitMs, signal);
+export const boundedAssist = (html, fixture, limitMs, signal) => boundedRecord('--assist', 'the assist cases', html, fixture, limitMs, signal);
+export const boundedLines = (html, limitMs, signal) => boundedRecord('--lines', 'the lines of the specification worlds', html, null, limitMs, signal);
 
 // Cases whose record differs between two snapshots.
 export function behaviourDifferences(before, after) {
@@ -134,7 +200,8 @@ export function behaviourDifferences(before, after) {
 // base already had belongs to an earlier change. An added entry must match a difference, and every difference must have one.
 export const intendedChangesFile = 'audit/manifests/intended-behaviour-changes.json';
 export const intendedChangesSchema = 'akari-intended-behaviour-changes-v1';
-export function behaviourIssues(differences, baseRecord, headRecord) {
+// label names a case in a message (a line case with its text).
+export function behaviourIssues(differences, baseRecord, headRecord, label = id => id) {
   const issues = [], read = record => {
     if (!record) return [];
     assert(record.schema === intendedChangesSchema && Array.isArray(record.changes), intendedChangesFile + ' has the wrong shape');
@@ -143,8 +210,15 @@ export function behaviourIssues(differences, baseRecord, headRecord) {
   };
   const before = new Set(read(baseRecord).map(c => c.case + '\u0000' + c.reason)), added = read(headRecord).filter(c => !before.has(c.case + '\u0000' + c.reason));
   const recorded = new Set(added.map(c => c.case));
-  for (const id of differences) if (!recorded.has(id)) issues.push('the behaviour of ' + id + ' changed, and ' + intendedChangesFile + ' does not record it');
-  for (const c of added) if (!differences.includes(c.case)) issues.push(intendedChangesFile + ' records a change of ' + c.case + ', but its behaviour did not change');
+  for (const id of differences) if (!recorded.has(id)) issues.push('the behaviour of ' + label(id) + ' changed, and ' + intendedChangesFile + ' does not record it');
+  for (const c of added) if (!differences.includes(c.case)) issues.push(intendedChangesFile + ' records a change of ' + label(c.case) + ', but its behaviour did not change');
   return {issues, intended: added};
 }
 function assert(ok, message) { if (!ok) throw new Error(message); }
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const [kind, page, ...rest] = process.argv.slice(2), record = rest.at(-1), html = () => fs.readFileSync(page, 'utf8');
+  if (kind === '--run') fs.writeFileSync(record, JSON.stringify(behaviourSnapshot(html(), snapshotCases())));
+  if (kind === '--assist') fs.writeFileSync(record, JSON.stringify(assistSnapshot(html(), JSON.parse(fs.readFileSync(rest[0], 'utf8')))));
+  if (kind === '--lines') fs.writeFileSync(record, JSON.stringify(lineSnapshot(html(), worldLines(snapshotCases()))));
+}

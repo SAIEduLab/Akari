@@ -10,11 +10,11 @@ import assert from 'node:assert/strict';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import {verifyAssistLanguageInvariance} from './assist-language-invariance.mjs';
-import {boundedSnapshot,snapshotCases,behaviourDifferences,behaviourIssues,intendedChangesFile,runLimited} from './behaviour-snapshot.mjs';
+import {boundedSnapshot,boundedAssist,boundedLines,snapshotCases,assistCases,worldLines,lineCase,behaviourDifferences,behaviourIssues,intendedChangesFile,runLimited} from './behaviour-snapshot.mjs';
 import {assertionCounts,weakenedFiles} from './assertion-counts.mjs';
 import {productLines} from './node-coverage.mjs';
 const assistInvarianceCache=new Map(),behaviourCache=new Map(),countCache=new Map();
-export const guardReportSchema='akari-change-guard-v1';
+export const guardReportSchema='akari-change-guard-v1',assistFixtureFile='audit/fixtures/assist/code-assist-cases.json';
 // The allowances the audit may only shrink (AUDIT.md「製品のソースの一致」「監査のコード」): an entry a change adds is recorded
 // with a reason, as a removed check is. A count is one entry for each unit of it, so a raised count adds entries.
 export const allowanceCategories=Object.freeze(['unnamed-code','clone-allowance','shown-text-allowance','wait-allowance','source-read-allowance','lint-allowance']);
@@ -23,7 +23,7 @@ const releasePattern=/^audit\/manifests\/release-[^/]*\.json$/;
 const pinPattern=/(?<![0-9A-Za-z])(?:[0-9a-f]{64}|[0-9a-f]{40})(?![0-9A-Za-z])/g;
 
 // A run still going after 180 s never finishes: the limit of one git call and one run of the product (measured: the
-// worlds of one product about 11 s).
+// worlds of one product about 11 s, its assist cases about 45 s).
 export const guardLimitMs=180000;
 export function git(repo,args,input){
   return cp.execFileSync('git',['-C',repo,...args],{input,maxBuffer:512*1024*1024,stdio:['pipe','pipe','pipe'],timeout:guardLimitMs});
@@ -263,8 +263,8 @@ export function guardStatus(report){
 
 const emptyReport=(base,head)=>({schema:guardReportSchema,status:'FAIL',base,head,mergeBase:null,
   guardCode:null,identitySizes:null,removed:{},grown:{},pinFiles:{},version:null,versionIssues:[],releaseIssues:[],behaviour:null,behaviourIssues:[],weakened:[],auditChanges:[],auditChangeIssues:[],errors:[]});
-// limitMs: how long one run of the product (the worlds of one product) may take before the guard stops it with an error
-// (guardLimitMs).
+// limitMs: how long one run of a product (one child: the worlds, the assist cases or the lines of one product) may take
+// before the guard stops it with an error (guardLimitMs).
 export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs}){
   const report=emptyReport(base,head);
   const ownDir=!workDir;workDir??=fs.mkdtempSync(path.join(os.tmpdir(),'akari-guard-'));
@@ -281,7 +281,15 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
     for(const category of allowanceCategories){const had=new Set(before.allowances[category]),grown=[...new Set(after.allowances[category])].filter(item=>!had.has(item));
       if(grown.length)report.grown[category]=grown;}
     const productChanged=before.source!==after.source||before.product!==after.product;
-    const assistFixture=optionalObject(repo,headCommit+':audit/fixtures/assist/code-assist-cases.json');
+    // The assist fixture of a commit: its blob and its cases, or null when the commit has none. A fixture that is not
+    // {cases:[…]} JSON with an id to each case is an error that names the commit.
+    const fixtureAt=commit=>{const oid=optionalObject(repo,commit+':'+assistFixtureFile);if(!oid)return null;let cases;
+      try{({cases}=JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')));}catch{cases=null;}
+      if(!Array.isArray(cases)||!cases.every(c=>typeof c?.id==='string'))throw new Error(assistFixtureFile+' of '+commit+' is not {cases:[…]} JSON with an id to each case');
+      return {oid,cases};};
+    const headFixture=fixtureAt(headCommit),assistFixture=headFixture?.oid??null;
+    // (a case of the base's fixture is compared as <its id>@base: a case of the head may not end so)
+    for(const c of headFixture?.cases??[])if(c.id.endsWith('@base'))throw new Error(assistFixtureFile+' of '+headCommit+' names the case '+c.id+': an assist case id does not end in @base');
     if(assistFixture){
       const key=[before.product,after.product,assistFixture].join(':');
       if(!assistInvarianceCache.has(key)){
@@ -290,17 +298,47 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
       }
       report.languageInvariance=assistInvarianceCache.get(key);
     }
-    // The behaviour of every specification world, base product against head product (AUDIT.md「前の版との振る舞いの差分」):
-    // a difference passes only when this change records it with a reason.
+    // The behaviour of the base product against the head product (AUDIT.md「前の版との振る舞いの差分」), in kinds of
+    // cases: every specification world, every case of the head's assist fixture and every line of the worlds' scripts. A
+    // case of the merge base's fixture that the head's fixture lacks, or has with other content, is an assist case too,
+    // as <its id>@base. A difference passes only when this change records it with a reason.
     if(productChanged){
-      const objects=readBlobs(repo,[before.product,after.product]),cases=snapshotCases();
-      const snapshot=blob=>{if(!behaviourCache.has(blob))behaviourCache.set(blob,boundedSnapshot(objects.get(blob).toString('utf8'),limitMs));return behaviourCache.get(blob);};
-      const script=blob=>{const html=objects.get(blob).toString('utf8');return html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')).replace(/const PRODUCT_RELEASE = '\d+\.\d+\.\d+';/,'');};
+      const objects=readBlobs(repo,[before.product,after.product]),html=blob=>objects.get(blob).toString('utf8'),baseFixture=fixtureAt(mergeBase);
+      // (cases are compared by their content, whatever the order of their keys)
+      const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+      const headCases=new Map((headFixture?.cases??[]).map(c=>[c.id,canonical(c)]));
+      const baseOnly=baseFixture?.oid===assistFixture?[]:(baseFixture?.cases??[]).filter(c=>headCases.get(c.id)!==canonical(c)).map(c=>({...c,id:c.id+'@base'}));
+      const fixture={cases:[...(headFixture?.cases??[]),...baseOnly]};
+      const cases=snapshotCases(),lineText=new Map(worldLines(cases).map(line=>[lineCase(line),line]));
+      const kinds={world:{cases:cases.map(c=>c.id),key:'',run:(blob,signal)=>boundedSnapshot(html(blob),limitMs,signal)},
+        // (with no case, no child: the record of no case is empty)
+        assist:{cases:assistCases(fixture),key:assistFixture+':'+(baseOnly.length?baseFixture.oid:''),run:(blob,signal)=>fixture.cases.length?boundedAssist(html(blob),fixture,limitMs,signal):Promise.resolve({})},
+        line:{cases:[...lineText.keys()],key:'',run:(blob,signal)=>boundedLines(html(blob),limitMs,signal)}};
+      const script=blob=>{const text=html(blob);return text.slice(text.indexOf('<script>')+8,text.lastIndexOf('</script>')).replace(/const PRODUCT_RELEASE = '\d+\.\d+\.\d+';/,'');};
+      const differing={};
       // Scripts that differ only in the release label (a renumbered branch) behave alike; nothing is run for them.
-      const differences=script(before.product)===script(after.product)?[]:behaviourDifferences(snapshot(before.product),snapshot(after.product));
+      if(script(before.product)===script(after.product))for(const kind of Object.keys(kinds))differing[kind]=[];
+      else{
+        // Every kind of both products runs at once, each in its own child of this run. A finished record is kept for the
+        // product blob in this process (behaviourCache holds records, never a run). The worlds are awaited first: a world
+        // record that cannot be made is the error reported, and the other children are stopped. The guard goes on only
+        // when every child it started has closed and its folder is removed.
+        const controller=new AbortController(),started=[];
+        const recorded=(kind,blob)=>{const key=kind+':'+blob+':'+kinds[kind].key;
+          if(behaviourCache.has(key))return behaviourCache.get(key);
+          const run=kinds[kind].run(blob,controller.signal).then(result=>{behaviourCache.set(key,result);return result;});started.push(run);return run;};
+        const runs=Object.fromEntries(Object.keys(kinds).map(kind=>[kind,Promise.all([recorded(kind,before.product),recorded(kind,after.product)])]));
+        for(const run of Object.values(runs))run.catch(()=>{});
+        try{for(const [kind,run] of Object.entries(runs)){const [base,head]=await run;differing[kind]=behaviourDifferences(base,head);}}
+        finally{controller.abort();await Promise.allSettled(started);}
+      }
+      const differences=Object.values(differing).flat();
       const record=commit=>{const oid=optionalObject(repo,commit+':'+intendedChangesFile);return oid?JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')):null;};
-      const {issues,intended}=behaviourIssues(differences,record(mergeBase),record(headCommit));
-      report.behaviour={cases:cases.length,differences,intended:intended.map(c=>({case:c.case,reason:c.reason}))};report.behaviourIssues=issues;
+      const {issues,intended}=behaviourIssues(differences,record(mergeBase),record(headCommit),id=>lineText.has(id)?id+' '+JSON.stringify(lineText.get(id)):id);
+      report.behaviour={cases:kinds.world.cases.length,differences,kinds:Object.fromEntries(Object.entries(kinds).map(([kind,{cases}])=>[kind,{cases:cases.length,differing:differing[kind].length}])),
+        intended:intended.map(c=>({case:c.case,reason:c.reason})),
+        // the text of each line case the report names
+        lines:Object.fromEntries([...differences,...intended.map(c=>c.case)].filter(id=>lineText.has(id)).map(id=>[id,lineText.get(id)]))};report.behaviourIssues=issues;
     }
     // An audit file that checks less than at the base is an audit change (AUDIT.md「監査の変更ガード」).
     const counts=commit=>{const key=gitText(repo,['rev-parse',commit+':audit']);if(!countCache.has(key)){
@@ -344,7 +382,9 @@ export function formatGuardReport(report){
   const lines=['### Audit change guard: '+report.status,'','Merge base `'+report.mergeBase+'` → head `'+report.head+'`'];
   if(report.guardCode)lines.push('Guard code: '+(report.guardCode.base?'the base\'s':report.guardCode.head?'the head\'s own (this run shows how the change judges itself; the run with the base\'s guard judges it)':'neither the base\'s nor the head\'s'));
   if(report.version)lines.push('Product version: '+report.version.base+' → '+report.version.head+(report.version.productChanged?' (product or src/ changed)':' (product and src/ unchanged)'));
-  if(report.behaviour)lines.push('Behaviour: '+report.behaviour.differences.length+' of '+report.behaviour.cases+' specification worlds differ from the base product');
+  if(report.behaviour){const {world,assist,line}=report.behaviour.kinds;
+    lines.push('Behaviour: '+world.differing+' of '+world.cases+' specification worlds differ from the base product','Behaviour: '+assist.differing+' of '+assist.cases+' assist cases differ from the base product',
+      'Behaviour: '+line.differing+' of '+line.cases+' lines of the specification worlds parse otherwise than with the base product');}
   for(const message of [...report.errors,...report.versionIssues,...report.releaseIssues,...report.behaviourIssues,...report.auditChangeIssues])lines.push('- '+message);
   const removed=Object.entries(report.removed),intended=report.behaviour?.intended??[],grown=Object.entries(report.grown||{});
   if(removed.length||grown.length||intended.length||report.weakened.length||report.version?.beyondPatch){
@@ -353,7 +393,7 @@ export function formatGuardReport(report){
     if(report.version?.beyondPatch)lines.push('- the product version '+report.version.head+' is raised past the next patch '+report.version.expected+why('version:'+report.version.head));
     for(const [category,ids] of removed)for(const id of ids)lines.push('- '+(category==='pin'?'changed or removed pin '+id+' ('+report.pinFiles[id].join(', ')+')':'removed '+category+' '+id)+why(category+':'+id));
     for(const [category,items] of grown)for(const item of items)lines.push('- a new '+category+' entry '+item+why(category+':'+item));
-    for(const change of intended)lines.push('- changed behaviour of '+change.case+': '+change.reason);
+    for(const change of intended)lines.push('- changed behaviour of '+change.case+(Object.hasOwn(report.behaviour.lines,change.case)?' '+JSON.stringify(report.behaviour.lines[change.case]):'')+': '+change.reason);
     for(const file of report.weakened)lines.push('- fewer checks in '+file+why('fewer-checks:'+file.slice(0,file.indexOf(': '))));
   }
   return lines.join('\n');
