@@ -14,7 +14,7 @@ import {boundedSnapshot,boundedAssist,boundedLines,snapshotCases,assistCases,wor
 import {assertionCounts,weakenedFiles} from './assertion-counts.mjs';
 import {productLines} from './node-coverage.mjs';
 const assistInvarianceCache=new Map(),behaviourCache=new Map(),countCache=new Map();
-export const guardReportSchema='akari-change-guard-v1';
+export const guardReportSchema='akari-change-guard-v1',assistFixtureFile='audit/fixtures/assist/code-assist-cases.json';
 // The allowances the audit may only shrink (AUDIT.md「製品のソースの一致」「監査のコード」): an entry a change adds is recorded
 // with a reason, as a removed check is. A count is one entry for each unit of it, so a raised count adds entries.
 export const allowanceCategories=Object.freeze(['unnamed-code','clone-allowance','shown-text-allowance','wait-allowance','source-read-allowance','lint-allowance']);
@@ -281,7 +281,15 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
     for(const category of allowanceCategories){const had=new Set(before.allowances[category]),grown=[...new Set(after.allowances[category])].filter(item=>!had.has(item));
       if(grown.length)report.grown[category]=grown;}
     const productChanged=before.source!==after.source||before.product!==after.product;
-    const assistFixture=optionalObject(repo,headCommit+':audit/fixtures/assist/code-assist-cases.json'),baseFixture=optionalObject(repo,mergeBase+':audit/fixtures/assist/code-assist-cases.json');
+    // The assist fixture of a commit: its blob and its cases, or null when the commit has none. A fixture that is not
+    // {cases:[…]} JSON with an id to each case is an error that names the commit.
+    const fixtureAt=commit=>{const oid=optionalObject(repo,commit+':'+assistFixtureFile);if(!oid)return null;let cases;
+      try{({cases}=JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')));}catch{cases=null;}
+      if(!Array.isArray(cases)||!cases.every(c=>typeof c?.id==='string'))throw new Error(assistFixtureFile+' of '+commit+' is not {cases:[…]} JSON with an id to each case');
+      return {oid,cases};};
+    const headFixture=fixtureAt(headCommit),assistFixture=headFixture?.oid??null;
+    // (a case of the base's fixture is compared as <its id>@base: a case of the head may not end so)
+    for(const c of headFixture?.cases??[])if(c.id.endsWith('@base'))throw new Error(assistFixtureFile+' of '+headCommit+' names the case '+c.id+': an assist case id does not end in @base');
     if(assistFixture){
       const key=[before.product,after.product,assistFixture].join(':');
       if(!assistInvarianceCache.has(key)){
@@ -295,13 +303,16 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
     // case of the merge base's fixture that the head's fixture lacks, or has with other content, is an assist case too,
     // as <its id>@base. A difference passes only when this change records it with a reason.
     if(productChanged){
-      const fixtures=[assistFixture,baseFixture].filter(Boolean),objects=readBlobs(repo,[before.product,after.product,...fixtures]),html=blob=>objects.get(blob).toString('utf8');
-      const fixtureCases=oid=>oid?JSON.parse(objects.get(oid).toString('utf8')).cases:[],headCases=new Map(fixtureCases(assistFixture).map(c=>[c.id,JSON.stringify(c)]));
-      const baseOnly=baseFixture===assistFixture?[]:fixtureCases(baseFixture).filter(c=>headCases.get(c.id)!==JSON.stringify(c)).map(c=>({...c,id:c.id+'@base'}));
-      const fixture={cases:[...fixtureCases(assistFixture),...baseOnly]};
+      const objects=readBlobs(repo,[before.product,after.product]),html=blob=>objects.get(blob).toString('utf8'),baseFixture=fixtureAt(mergeBase);
+      // (cases are compared by their content, whatever the order of their keys)
+      const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+      const headCases=new Map((headFixture?.cases??[]).map(c=>[c.id,canonical(c)]));
+      const baseOnly=baseFixture?.oid===assistFixture?[]:(baseFixture?.cases??[]).filter(c=>headCases.get(c.id)!==canonical(c)).map(c=>({...c,id:c.id+'@base'}));
+      const fixture={cases:[...(headFixture?.cases??[]),...baseOnly]};
       const cases=snapshotCases(),lineText=new Map(worldLines(cases).map(line=>[lineCase(line),line]));
       const kinds={world:{cases:cases.map(c=>c.id),key:'',run:(blob,signal)=>boundedSnapshot(html(blob),limitMs,signal)},
-        assist:{cases:assistCases(fixture),key:assistFixture+':'+(baseOnly.length?baseFixture:''),run:(blob,signal)=>boundedAssist(html(blob),fixture,limitMs,signal)},
+        // (with no case, no child: the record of no case is empty)
+        assist:{cases:assistCases(fixture),key:assistFixture+':'+(baseOnly.length?baseFixture.oid:''),run:(blob,signal)=>fixture.cases.length?boundedAssist(html(blob),fixture,limitMs,signal):Promise.resolve({})},
         line:{cases:[...lineText.keys()],key:'',run:(blob,signal)=>boundedLines(html(blob),limitMs,signal)}};
       const script=blob=>{const text=html(blob);return text.slice(text.indexOf('<script>')+8,text.lastIndexOf('</script>')).replace(/const PRODUCT_RELEASE = '\d+\.\d+\.\d+';/,'');};
       const differing={};

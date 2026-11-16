@@ -332,6 +332,16 @@ try {
     assert.deepEqual([removedRun.errors,removedRun.behaviour.kinds.assist.cases],[[],withShown.cases.length],'the base cases of a removed fixture');
     assert.ok(removedRun.behaviourIssues.includes(unrecordedIssue(baseCase)),JSON.stringify(removedRun.behaviourIssues));
     pass('behaviour/assist-fixture-removed');
+    // A base case that the head has with its keys in another order is the same case: no <its id>@base.
+    const reordered={...withShown,cases:withShown.cases.map(c=>c.id===shown.id?Object.fromEntries(Object.entries(c).reverse()):c)};
+    const reorderedRun=await fromBase({...changedHead,...fixtureFile(reordered)});
+    assert.deepEqual([reorderedRun.errors,reorderedRun.behaviour.kinds.assist.cases,reorderedRun.behaviour.differences.filter(id=>id.endsWith('@base'))],[[],withShown.cases.length,[]],'keys in another order');
+    pass('behaviour/assist-fixture-key-order');
+    // A head case whose id ends in @base, and a fixture that is not {cases:[…]} JSON, are errors that name them.
+    const suffixed=await fromBase(fixtureFile({...withShown,cases:[...withShown.cases,{...other,id:shown.id+'@base'}]}));
+    failed('behaviour/assist-fixture-base-suffix-refused',suffixed,'errors',new RegExp('names the case '+shown.id+'@base: an assist case id does not end in @base'));
+    const notCases=await fromBase({[assistFile]:'{"schema":"akari-code-assist-expectations-v1"}\n'});
+    failed('behaviour/assist-fixture-not-cases-refused',notCases,'errors',/code-assist-cases\.json of [0-9a-f]+ is not \{cases:\[…\]\} JSON with an id to each case/);
   }
   // The assist cases are recorded on a fixed clock (fixedClockApi): the clock the assist reads its time budget from reads
   // fixedClockMs there at every read, and the context has no performance; the same page in a context with Date's own
