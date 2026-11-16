@@ -281,6 +281,17 @@ try {
   const parsed=html=>Object.values(lineSnapshot(html,position)),[baseParse,headParse]=[parsed(productText),parsed(changedText)];
   const spanless=value=>JSON.stringify(value,(key,v)=>key==='sourceSpan'?undefined:v);
   assert.deepEqual([spanless(headParse),headParse.every((parse,i)=>JSON.stringify(parse)!==JSON.stringify(baseParse[i]))],[spanless(baseParse),true],'only a source position changes');
+  // A line records its diagnostics whole: a product that names a proposal of a diagnostic otherwise (最後に for さいごに)
+  // gives the line another record, though the code, the position and the message of the diagnostic stay.
+  {
+    const proposalLine='答えを名前に入れる。',renamed=productText.replaceAll("'さいごに入れる'","'最後に入れる'");
+    assert.equal(productText.split("'さいごに入れる'").length-1,3,'the proposal name in the product');
+    const [before,after]=[productText,renamed].map(html=>lineSnapshot(html,[proposalLine])[lineCase(proposalLine)]);
+    const kept=d=>[d.code,d.line,d.column,d.message];
+    assert.deepEqual([before.syntaxDiagnostics.map(kept),before.syntaxDiagnostics[0].proposals[0].label!==after.syntaxDiagnostics[0].proposals[0].label],[after.syntaxDiagnostics.map(kept),true],'the proposal alone changes');
+    assert.notDeepEqual(after,before,'the line records the proposal');
+    pass('behaviour/line-diagnostics-whole');
+  }
   const unrecordedIssue=id=>'the behaviour of '+id+(lineText.has(id)?' '+JSON.stringify(lineText.get(id)):'')+' changed, and audit/manifests/intended-behaviour-changes.json does not record it';
   assert.deepEqual([unrecordedChange.status,unrecordedChange.behaviourIssues],['FAIL',changedCases.map(unrecordedIssue)],'every change is unrecorded');
   const assistUnrecorded=await guard(derive({...changedHead,...intended(lineChanged)}));

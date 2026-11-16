@@ -47,7 +47,7 @@ export const changeGuardCaseIds=Object.freeze([
   'language/reader-table-changed','language/verbs-changed','language/reader-change-recorded','language/candidate-not-base-canonical',
   'behaviour/unrecorded-change','behaviour/recorded-change-listed','assertions/fewer-checks-needs-record','coverage/spacing-only-no-changed-line','coverage/source-only-unbuilt','coverage/spacing-in-a-string-changes-a-line','coverage/moved-line-unchanged','coverage/common-line-not-moved','test-map/names-the-suites','behaviour/record-without-change','limits/worlds-never-finish',
   'behaviour/assist-change-needs-record','behaviour/line-change-needs-record','behaviour/assist-and-line-change-recorded','behaviour/assist-or-line-record-without-change','behaviour/assist-clock-fixed',
-  'limits/stopped-children-closed']);
+  'limits/stopped-children-closed','behaviour/line-diagnostics-whole']);
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);

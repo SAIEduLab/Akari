@@ -157,9 +157,9 @@ export function worldLines(cases) {
   for (const c of cases) for (const s of c.world.scripts ?? []) for (const line of String(s.source ?? '').split('\n')) if (line.trim()) lines.add(line);
   return [...lines];
 }
-// Every line of worldLines as line/ and the first 16 hex digits of the sha256 of its text: what api.parseSyntax gives
-// for the line alone on the fixed clock, its tree with the source positions kept and each diagnostic's code, position
-// and message. A line whose parse throws is recorded by the name of what it throws.
+// Every line of worldLines as line/ and the first 16 hex digits of the sha256 of its text: all api.parseSyntax returns
+// for the line alone on the fixed clock, as plain JSON (the tree with its source positions, and every diagnostic whole).
+// A line whose parse throws is recorded by the name of what it throws.
 export const lineCase = line => 'line/' + crypto.createHash('sha256').update(line).digest('hex').slice(0, 16);
 export function lineSnapshot(html, lines) {
   const api = loaded(html, fixedClockApi), ids = lines.map(lineCase);
@@ -168,10 +168,7 @@ export function lineSnapshot(html, lines) {
   return Object.fromEntries(lines.map((line, i) => [ids[i], lineParse(api, line)]));
 }
 function lineParse(api, line) {
-  try {
-    const {ast, syntaxDiagnostics} = api.parseSyntax(line);
-    return {ast: JSON.parse(JSON.stringify(ast ?? null)), diagnostics: (syntaxDiagnostics ?? []).map(d => ({code: d.code, line: d.line, column: d.column, endLine: d.endLine, endColumn: d.endColumn, message: d.message}))};
-  } catch (error) { return {exception: failure(error)}; }
+  try { return JSON.parse(JSON.stringify(api.parseSyntax(line))); } catch (error) { return {exception: failure(error)}; }
 }
 
 // A record of a product in a child process (node audit/lib/behaviour-snapshot.mjs <kind> <page> [<fixture>] <record>),
