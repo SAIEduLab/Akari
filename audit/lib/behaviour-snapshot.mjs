@@ -1,7 +1,8 @@
 // The product's behaviour over fixed works (AUDIT.md「前の版との振る舞いの差分」). Every specification world
 // (audit/fixtures/spec-expectations) is built as a work, written back as code and through blocks, checked, and run on a
 // fake clock with a fixed random seed; what the work says, where its parts are, its values and its runtime errors are
-// recorded. The same product gives the same record, so two products that differ in the record behave differently.
+// recorded. The cases of the assist fixture and the lines of the worlds' scripts are recorded too (assistSnapshot,
+// lineSnapshot). The same product gives the same record, so two products that differ in the record behave differently.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -150,6 +151,29 @@ export function assistSnapshot(html, fixture) {
   }));
 }
 
+// The distinct non-empty lines of the scripts of the specification worlds, with their indentation.
+export function worldLines(cases) {
+  const lines = new Set();
+  for (const c of cases) for (const s of c.world.scripts ?? []) for (const line of String(s.source ?? '').split('\n')) if (line.trim()) lines.add(line);
+  return [...lines];
+}
+// Every line of worldLines as line/ and the first 16 hex digits of the sha256 of its text: what api.parseSyntax gives
+// for the line alone on the fixed clock, its tree with the source positions kept and each diagnostic's code, position
+// and message. A line whose parse throws is recorded by the name of what it throws.
+export const lineCase = line => 'line/' + crypto.createHash('sha256').update(line).digest('hex').slice(0, 16);
+export function lineSnapshot(html, lines) {
+  const api = loaded(html, fixedClockApi), ids = lines.map(lineCase);
+  if (new Set(ids).size !== ids.length) throw new Error('two lines of the specification worlds have one case name');
+  if (!api) return unavailable(ids);
+  return Object.fromEntries(lines.map((line, i) => [ids[i], lineParse(api, line)]));
+}
+function lineParse(api, line) {
+  try {
+    const {ast, syntaxDiagnostics} = api.parseSyntax(line);
+    return {ast: JSON.parse(JSON.stringify(ast ?? null)), diagnostics: (syntaxDiagnostics ?? []).map(d => ({code: d.code, line: d.line, column: d.column, endLine: d.endLine, endColumn: d.endColumn, message: d.message}))};
+  } catch (error) { return {exception: failure(error)}; }
+}
+
 // A record of a product in a child process (node audit/lib/behaviour-snapshot.mjs <kind> <page> [<fixture>] <record>),
 // stopped after limitMs, or when signal aborts.
 async function boundedRecord(kind, what, html, fixture, limitMs, signal) {
@@ -162,9 +186,11 @@ async function boundedRecord(kind, what, html, fixture, limitMs, signal) {
     return JSON.parse(fs.readFileSync(record, 'utf8'));
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
-// behaviourSnapshot of every specification world, and assistSnapshot of every assist case, each in its own child.
+// behaviourSnapshot of every specification world, assistSnapshot of every assist case and lineSnapshot of every line of
+// the worlds, each in its own child.
 export const boundedSnapshot = (html, limitMs, signal) => boundedRecord('--run', 'the specification worlds', html, null, limitMs, signal);
 export const boundedAssist = (html, fixture, limitMs, signal) => boundedRecord('--assist', 'the assist cases', html, fixture, limitMs, signal);
+export const boundedLines = (html, limitMs, signal) => boundedRecord('--lines', 'the lines of the specification worlds', html, null, limitMs, signal);
 
 // Cases whose record differs between two snapshots.
 export function behaviourDifferences(before, after) {
@@ -176,7 +202,8 @@ export function behaviourDifferences(before, after) {
 // base already had belongs to an earlier change. An added entry must match a difference, and every difference must have one.
 export const intendedChangesFile = 'audit/manifests/intended-behaviour-changes.json';
 export const intendedChangesSchema = 'akari-intended-behaviour-changes-v1';
-export function behaviourIssues(differences, baseRecord, headRecord) {
+// label names a case in a message (a line case with its text).
+export function behaviourIssues(differences, baseRecord, headRecord, label = id => id) {
   const issues = [], read = record => {
     if (!record) return [];
     assert(record.schema === intendedChangesSchema && Array.isArray(record.changes), intendedChangesFile + ' has the wrong shape');
@@ -185,8 +212,8 @@ export function behaviourIssues(differences, baseRecord, headRecord) {
   };
   const before = new Set(read(baseRecord).map(c => c.case + '\u0000' + c.reason)), added = read(headRecord).filter(c => !before.has(c.case + '\u0000' + c.reason));
   const recorded = new Set(added.map(c => c.case));
-  for (const id of differences) if (!recorded.has(id)) issues.push('the behaviour of ' + id + ' changed, and ' + intendedChangesFile + ' does not record it');
-  for (const c of added) if (!differences.includes(c.case)) issues.push(intendedChangesFile + ' records a change of ' + c.case + ', but its behaviour did not change');
+  for (const id of differences) if (!recorded.has(id)) issues.push('the behaviour of ' + label(id) + ' changed, and ' + intendedChangesFile + ' does not record it');
+  for (const c of added) if (!differences.includes(c.case)) issues.push(intendedChangesFile + ' records a change of ' + label(c.case) + ', but its behaviour did not change');
   return {issues, intended: added};
 }
 function assert(ok, message) { if (!ok) throw new Error(message); }
@@ -195,4 +222,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [kind, page, ...rest] = process.argv.slice(2), record = rest.at(-1), html = () => fs.readFileSync(page, 'utf8');
   if (kind === '--run') fs.writeFileSync(record, JSON.stringify(behaviourSnapshot(html(), snapshotCases())));
   if (kind === '--assist') fs.writeFileSync(record, JSON.stringify(assistSnapshot(html(), JSON.parse(fs.readFileSync(rest[0], 'utf8')))));
+  if (kind === '--lines') fs.writeFileSync(record, JSON.stringify(lineSnapshot(html(), worldLines(snapshotCases()))));
 }

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import {verifyAssistLanguageInvariance} from './assist-language-invariance.mjs';
-import {boundedSnapshot,boundedAssist,snapshotCases,assistCases,behaviourDifferences,behaviourIssues,intendedChangesFile,runLimited} from './behaviour-snapshot.mjs';
+import {boundedSnapshot,boundedAssist,boundedLines,snapshotCases,assistCases,worldLines,lineCase,behaviourDifferences,behaviourIssues,intendedChangesFile,runLimited} from './behaviour-snapshot.mjs';
 import {assertionCounts,weakenedFiles} from './assertion-counts.mjs';
 import {productLines} from './node-coverage.mjs';
 const assistInvarianceCache=new Map(),behaviourCache=new Map(),countCache=new Map();
@@ -291,13 +291,15 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
       report.languageInvariance=assistInvarianceCache.get(key);
     }
     // The behaviour of the base product against the head product (AUDIT.md「前の版との振る舞いの差分」), in kinds of
-    // cases: every specification world, and every case of the head's assist fixture. A difference passes only when this
-    // change records it with a reason.
+    // cases: every specification world, every case of the head's assist fixture and every line of the worlds' scripts. A
+    // difference passes only when this change records it with a reason.
     if(productChanged){
       const objects=readBlobs(repo,[before.product,after.product,...(assistFixture?[assistFixture]:[])]),html=blob=>objects.get(blob).toString('utf8');
       const fixture=assistFixture?JSON.parse(objects.get(assistFixture).toString('utf8')):{cases:[]};
-      const kinds={world:{cases:snapshotCases().map(c=>c.id),key:'',run:(blob,signal)=>boundedSnapshot(html(blob),limitMs,signal)},
-        assist:{cases:assistCases(fixture),key:assistFixture,run:(blob,signal)=>boundedAssist(html(blob),fixture,limitMs,signal)}};
+      const cases=snapshotCases(),lineText=new Map(worldLines(cases).map(line=>[lineCase(line),line]));
+      const kinds={world:{cases:cases.map(c=>c.id),key:'',run:(blob,signal)=>boundedSnapshot(html(blob),limitMs,signal)},
+        assist:{cases:assistCases(fixture),key:assistFixture,run:(blob,signal)=>boundedAssist(html(blob),fixture,limitMs,signal)},
+        line:{cases:[...lineText.keys()],key:'',run:(blob,signal)=>boundedLines(html(blob),limitMs,signal)}};
       const script=blob=>{const text=html(blob);return text.slice(text.indexOf('<script>')+8,text.lastIndexOf('</script>')).replace(/const PRODUCT_RELEASE = '\d+\.\d+\.\d+';/,'');};
       const differing={};
       // Scripts that differ only in the release label (a renumbered branch) behave alike; nothing is run for them.
@@ -317,9 +319,11 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
       }
       const differences=Object.values(differing).flat();
       const record=commit=>{const oid=optionalObject(repo,commit+':'+intendedChangesFile);return oid?JSON.parse(readBlobs(repo,[oid]).get(oid).toString('utf8')):null;};
-      const {issues,intended}=behaviourIssues(differences,record(mergeBase),record(headCommit));
+      const {issues,intended}=behaviourIssues(differences,record(mergeBase),record(headCommit),id=>lineText.has(id)?id+' '+JSON.stringify(lineText.get(id)):id);
       report.behaviour={cases:kinds.world.cases.length,differences,kinds:Object.fromEntries(Object.entries(kinds).map(([kind,{cases}])=>[kind,{cases:cases.length,differing:differing[kind].length}])),
-        intended:intended.map(c=>({case:c.case,reason:c.reason}))};report.behaviourIssues=issues;
+        intended:intended.map(c=>({case:c.case,reason:c.reason})),
+        // the text of each line case the report names
+        lines:Object.fromEntries([...differences,...intended.map(c=>c.case)].filter(id=>lineText.has(id)).map(id=>[id,lineText.get(id)]))};report.behaviourIssues=issues;
     }
     // An audit file that checks less than at the base is an audit change (AUDIT.md「監査の変更ガード」).
     const counts=commit=>{const key=gitText(repo,['rev-parse',commit+':audit']);if(!countCache.has(key)){
@@ -363,8 +367,9 @@ export function formatGuardReport(report){
   const lines=['### Audit change guard: '+report.status,'','Merge base `'+report.mergeBase+'` → head `'+report.head+'`'];
   if(report.guardCode)lines.push('Guard code: '+(report.guardCode.base?'the base\'s':report.guardCode.head?'the head\'s own (this run shows how the change judges itself; the run with the base\'s guard judges it)':'neither the base\'s nor the head\'s'));
   if(report.version)lines.push('Product version: '+report.version.base+' → '+report.version.head+(report.version.productChanged?' (product or src/ changed)':' (product and src/ unchanged)'));
-  if(report.behaviour){const {world,assist}=report.behaviour.kinds;
-    lines.push('Behaviour: '+world.differing+' of '+world.cases+' specification worlds differ from the base product','Behaviour: '+assist.differing+' of '+assist.cases+' assist cases differ from the base product');}
+  if(report.behaviour){const {world,assist,line}=report.behaviour.kinds;
+    lines.push('Behaviour: '+world.differing+' of '+world.cases+' specification worlds differ from the base product','Behaviour: '+assist.differing+' of '+assist.cases+' assist cases differ from the base product',
+      'Behaviour: '+line.differing+' of '+line.cases+' lines of the specification worlds parse otherwise than with the base product');}
   for(const message of [...report.errors,...report.versionIssues,...report.releaseIssues,...report.behaviourIssues,...report.auditChangeIssues])lines.push('- '+message);
   const removed=Object.entries(report.removed),intended=report.behaviour?.intended??[],grown=Object.entries(report.grown||{});
   if(removed.length||grown.length||intended.length||report.weakened.length||report.version?.beyondPatch){
@@ -373,7 +378,7 @@ export function formatGuardReport(report){
     if(report.version?.beyondPatch)lines.push('- the product version '+report.version.head+' is raised past the next patch '+report.version.expected+why('version:'+report.version.head));
     for(const [category,ids] of removed)for(const id of ids)lines.push('- '+(category==='pin'?'changed or removed pin '+id+' ('+report.pinFiles[id].join(', ')+')':'removed '+category+' '+id)+why(category+':'+id));
     for(const [category,items] of grown)for(const item of items)lines.push('- a new '+category+' entry '+item+why(category+':'+item));
-    for(const change of intended)lines.push('- changed behaviour of '+change.case+': '+change.reason);
+    for(const change of intended)lines.push('- changed behaviour of '+change.case+(Object.hasOwn(report.behaviour.lines,change.case)?' '+JSON.stringify(report.behaviour.lines[change.case]):'')+': '+change.reason);
     for(const file of report.weakened)lines.push('- fewer checks in '+file+why('fewer-checks:'+file.slice(0,file.indexOf(': '))));
   }
   return lines.join('\n');

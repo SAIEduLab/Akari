@@ -28,8 +28,8 @@ const splits={
   // group there took 0.86 of its time): the tree, record, version and language rules with the confinement (63 s); and the behaviour and
   // limit rules (68 s), the assertion and changed-line rules, the test map and the record without a change (about 55 s
   // more, from the cases' runs: 11 s for the worlds of one product, about 3 s for one comparison of changed lines and
-  // about 10 s for the test map). The assist cases of a product (about 45 s, at the same time as its worlds) make the
-  // behaviour and limit part about 257 s on a machine where it took 111 s without them.
+  // about 10 s for the test map). The assist cases and the lines of a product (about 45 s, at the same time as its
+  // worlds) make the behaviour and limit part about 262 s on a machine where it took 111 s without them.
   'change-guard-negative':{parts:indexed(2),assign:id=>/^(?:behaviour|limits|assertions|coverage|test-map)\//.test(id)?'2/2':'1/2'},
   // 347-574 s (two CI runs) over 9 viewport/zoom contexts of about 55-78 s (two other CI runs, one of them 598 s, at
   // the 600 s child limit); two parts of five and four contexts (about 319 s and 255 s at the slower run).
