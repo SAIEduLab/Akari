@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
+import {changeGuard,guardLimitMs,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
 import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract,guardCodePaths} from '../lib/gate-contract.mjs';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
@@ -249,9 +249,15 @@ try {
   const unrecorded=await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:reworded}));
   failed('behaviour/unrecorded-change',unrecorded,'behaviourIssues',/changed, and audit\/manifests\/intended-behaviour-changes\.json does not record it/);
   const changedCases=unrecorded.behaviour.differences;assert.ok(changedCases.length>0,'the turn changes at least one world');
+  assert.deepEqual([unrecorded.behaviour.kinds.assist.cases,smallFixture.cases.length>0],[smallFixture.cases.length,true],'the assist runs on the cases of the small fixture');
   const recorded=await worldsGuard({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
   assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes: '+JSON.stringify(recorded.errors));
   assert.ok(formatGuardReport(recorded).includes('- changed behaviour of '+changedCases[0]+': '),'the recorded change is listed for the owner');pass('behaviour/recorded-change-listed');
+  // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job, and
+  // leaves no record folder.
+  const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
+  failed('limits/worlds-never-finish',await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:endless}),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
+  assert.deepEqual(recordFolders(),[],'every child of the run at its limit has closed and removed its folder');
   }
   if(mine.has('behaviour/assist-change-needs-record')){
   // The assist cases and the lines of the worlds against the base product, on one product changed twice: it gives at
@@ -264,14 +270,21 @@ try {
   const lineEnd='    endColumn: line.endColumn ?? Math.max(1, surfaceLineInfo(line).columns.count + 1),\n';
   const changedText=productReplaced(productReplaced(productText,'const ASSIST_MAX=4,','const ASSIST_MAX=3,'),lineEnd,lineEnd.replace('+ 1)','+ 2)'));
   const changedHead=release(nextPatch(version),{changeSource:true,productBytes:changedText});
-  // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job. Against
-  // a base with the changed product, the guard returns only when every child it started has closed and removed its
-  // folder, and a record stopped half-way (the assist cases of the changed product) is not kept, so the next run of that
-  // product records it.
-  const changedBase=derive(changedHead),endless=productReplaced(productText,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
-  const stopped=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless}),changedBase),{from:changedBase,limitMs:20000});
-  failed('limits/worlds-never-finish',stopped,'errors',/the specification worlds did not finish within 20 s/);
+  // A head product that ends its world child at once (exit 3 when it loads there) while its other children never end by
+  // themselves (in the children of the assist cases and the lines its parse and its project making never return), against
+  // a base with the changed product, under the default limit: the guard reports the world failure, stops the other
+  // children and returns well before the limit, when every child has closed and removed its folder; the assist record
+  // of the changed product, under way when the run stopped, is not kept, and the next run of that product makes it.
+  const changedBase=derive(changedHead),hostProcess='console.log.constructor("return process")()';
+  const scriptStart=productText.indexOf('<script>')+8,scriptEnd=productText.lastIndexOf('</script>');
+  const trap=productText.slice(0,scriptStart)+'if ('+hostProcess+'.argv.includes("--run")) '+hostProcess+'.exit(3);\n'+productText.slice(scriptStart,scriptEnd)+
+    'if (["--assist", "--lines"].some(kind => '+hostProcess+'.argv.includes(kind))) globalThis.Akari.parseSyntax = globalThis.Akari.makeDefaultProject = () => { for (;;) {} };\n'+productText.slice(scriptEnd);
+  const trapStart=performance.now(),trapped=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:trap}),changedBase),{from:changedBase});
+  const trapTook=performance.now()-trapStart;
+  assert.ok(trapped.errors.some(m=>/^the specification worlds failed \(exit 3\)/.test(m)),'the world failure is reported: '+JSON.stringify(trapped.errors));
+  assert.ok(trapTook<guardLimitMs/2,'the run returns well before the limit of its children: '+Math.round(trapTook)+' ms');
   assert.deepEqual(recordFolders(),[],'every child of the stopped run has closed and removed its folder');
+  pass('limits/stopped-at-once');
   const unrecordedChange=await guard(derive(changedHead)),changedCases=unrecordedChange.behaviour.differences;
   const assistChanged=changedCases.filter(id=>id.startsWith('assist/')),lineChanged=changedCases.filter(id=>id.startsWith('line/'));
   assert.deepEqual([unrecordedChange.errors,unrecordedChange.behaviour.kinds.world.differing,assistChanged.length+lineChanged.length],[[],0,changedCases.length],'no world changes');
@@ -318,7 +331,7 @@ try {
   // it, or removes the fixture, is compared on the case as the base had it (<its id>@base). The base holds the small
   // fixture and that case.
   {
-    const shown=fullFixture.cases.find(c=>'assist/'+c.id===assistChanged[0]),other=fullFixture.cases.find(c=>'assist/'+c.id===unchangedAssist);
+    const shown=fullFixture.cases.find(c=>assistChanged.includes('assist/'+c.id)&&!smallFixture.cases.some(s=>s.id===c.id)),other=fullFixture.cases.find(c=>'assist/'+c.id===unchangedAssist);
     const withShown={...smallFixture,cases:[...smallFixture.cases.filter(c=>c.id!==shown.id),shown]},fixtureBase=derive(fixtureFile(withShown));
     const edited={...withShown,cases:withShown.cases.map(c=>c.id===shown.id?{...other,id:shown.id}:c)},baseCase='assist/'+shown.id+'@base';
     const fromBase=changes=>guard(derive(changes,fixtureBase),{from:fixtureBase});
@@ -332,6 +345,12 @@ try {
     assert.deepEqual([removedRun.errors,removedRun.behaviour.kinds.assist.cases],[[],withShown.cases.length],'the base cases of a removed fixture');
     assert.ok(removedRun.behaviourIssues.includes(unrecordedIssue(baseCase)),JSON.stringify(removedRun.behaviourIssues));
     pass('behaviour/assist-fixture-removed');
+    // The same head fixture and the same products against two base fixtures: against the small fixture no base case is
+    // compared; against the small fixture with the case that shows the change, that case is (the record of the assist
+    // cases depends on the base's fixture too).
+    const againstSmall=await worldsGuard(changedHead),againstShown=await fromBase({...changedHead,...fixtureFile(smallFixture)});
+    assert.deepEqual([againstSmall.errors,againstSmall.behaviour.differences.filter(id=>id.endsWith('@base')),againstShown.errors,againstShown.behaviour.differences.filter(id=>id.endsWith('@base'))],[[],[],[],[baseCase]],'the base fixture decides the base cases');
+    pass('behaviour/assist-base-fixture-in-record');
     // A base case that the head has with its keys in another order is the same case: no <its id>@base.
     const reordered={...withShown,cases:withShown.cases.map(c=>c.id===shown.id?Object.fromEntries(Object.entries(c).reverse()):c)};
     const reorderedRun=await fromBase({...changedHead,...fixtureFile(reordered)});
