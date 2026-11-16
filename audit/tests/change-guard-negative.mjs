@@ -79,6 +79,14 @@ try {
   // script (one anchor, which must be in it once), and the head product is the next patch.
   const productText=text(product);
   const productLine=(anchor,insert)=>{assert.equal(productText.split(anchor).length,2,'one anchor in the product: '+anchor.trim());return productText.replace(anchor,()=>anchor+insert);};
+  // The cases about the worlds run on a base and a head that both hold a small assist fixture, the first case of each
+  // world the full fixture builds: the assist kind runs in them, on fewer cases. The cases about the assist hold the full
+  // fixture.
+  const assistFile='audit/fixtures/assist/code-assist-cases.json',fullFixture=JSON.parse(text(assistFile)),fixtureWorlds=new Set();
+  const smallFixture={...fullFixture,cases:fullFixture.cases.filter(c=>!fixtureWorlds.has(JSON.stringify(c.world))&&fixtureWorlds.add(JSON.stringify(c.world)))};
+  const fixtureFile=fixture=>({[assistFile]:JSON.stringify(fixture,null,2)+'\n'});
+  let smallBase;
+  const worldsGuard=(changes,options={})=>{smallBase??=derive(fixtureFile(smallFixture));return guard(derive({...fixtureFile(smallFixture),...changes},smallBase),{from:smallBase,...options});};
   // A function the syntax suite runs, and a no-op sum to put at its start.
   const runFn='  function replaceUnprotectedWord(text, from, to) {\n',noOpLine='    void (1 + 1);\n';
   // A CI part (AKARI_PART) runs its planned groups (audit/lib/shard-plan.cjs): the tree, record, version and language
@@ -234,16 +242,15 @@ try {
   // record without a change fails.
   const message='かを 書きます。れい：${part}の${messageExpression(n)}`;';
   const reworded=replaced(product,message,message.replace('書きます','書いてね'));
-  const unrecorded=await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:reworded})));
+  const unrecorded=await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:reworded}));
   failed('behaviour/unrecorded-change',unrecorded,'behaviourIssues',/changed, and audit\/manifests\/intended-behaviour-changes\.json does not record it/);
   const changedCases=unrecorded.behaviour.differences;assert.ok(changedCases.length>0,'the turn changes at least one world');
-  const recordedHead=derive({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
-  const recorded=await guard(recordedHead);
+  const recorded=await worldsGuard({...release(nextPatch(version),{changeSource:true,productBytes:reworded}),...intended(changedCases)});
   assert.deepEqual([recorded.status,recorded.behaviourIssues,recorded.behaviour.intended.map(c=>c.case)],['PASS',[],changedCases],'a recorded change passes: '+JSON.stringify(recorded.errors));
   assert.ok(formatGuardReport(recorded).includes('- changed behaviour of '+changedCases[0]+': '),'the recorded change is listed for the owner');pass('behaviour/recorded-change-listed');
   // A product whose worlds never finish stops the guard at its limit with an error, instead of holding the job.
   const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
-  failed('limits/worlds-never-finish',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless})),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
+  failed('limits/worlds-never-finish',await worldsGuard(release(nextPatch(version),{changeSource:true,productBytes:endless}),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
   }
   if(mine.has('behaviour/assist-change-needs-record')){
   // The assist cases and the lines of the worlds against the base product, on one product changed twice: it gives at
@@ -308,7 +315,7 @@ try {
   {
     const extOpening='function createAkariExtensionHost(options) {\n',spacedText=productText.replace(extOpening,()=>'    '+extOpening);
     assert.notEqual(spacedText,productText,'the indented line');
-    const spaced=await guard(derive(release(nextPatch(version),{productBytes:spacedText})));
+    const spaced=await worldsGuard(release(nextPatch(version),{productBytes:spacedText}));
     assert.deepEqual([spaced.status,changedScriptLines(productText,spacedText)],['PASS',[]],'spacing is no changed line: '+JSON.stringify(spaced.errors));
     pass('coverage/spacing-only-no-changed-line');
   }
@@ -338,7 +345,7 @@ try {
     const parseStart='  function parseSyntax(source, context = {}) {\n',cut=productText.slice(0,from)+productText.slice(to);
     const moved=cut.replace(parseStart,()=>fn+parseStart);
     assert.deepEqual(changedScriptLines(productText,moved).map(([,text])=>text),['  }'],'only the closing brace is a changed line');
-    const judged=await guard(derive(release(nextPatch(version),{productBytes:moved})));
+    const judged=await worldsGuard(release(nextPatch(version),{productBytes:moved}));
     assert.deepEqual([judged.status,judged.behaviour.differences],['PASS',[]],'moved as it is');
     pass('coverage/moved-line-unchanged');
   }

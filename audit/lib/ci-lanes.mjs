@@ -6,11 +6,11 @@ import {pathToFileURL} from 'node:url';
 // Windows seconds per indivisible bundle, from the receipts of two CI runs, with the parts of the change guard's
 // negative test (audit/lib/shard-plan.cjs) at 0.86 of their time on a second machine (the ratio of a CI run to that
 // machine, 372 s to 433 s): s04 runs the designer alone (38 s, its receipt less the guard's cases);
-// s05 is its receipt less 0.86 of 346 s and s08 less 0.86 of 68 s, the cases they ran; s07 runs the cases it ran; s10 is
-// 0.86 of about 123 s and its warm-up (111 s), times 262 s to 111 s, the part's time on one machine with the assist cases
-// and the lines of every product it runs and without them.
+// s05 is its receipt less 0.86 of 346 s and s08 less 0.86 of 68 s, the cases they ran; s07 runs the cases it ran. s10 is
+// the second part of that test. It was planned at 111 s. On one machine the part took 111 s before the guard recorded
+// the assist cases and the lines, and 161 s after; s10 is 161 s.
 // Setup is paid once for all bundles on a worker. Bundle IDs also name the sealed output directories.
-export const auditSeconds={s01:467,s02:480,s03:426,s04:38,s05:216,s06:387,s07:478,s08:334,s09:417,s10:262,
+export const auditSeconds={s01:467,s02:480,s03:426,s04:38,s05:216,s06:387,s07:478,s08:334,s09:417,s10:161,
   b01:477,b02:536,b03:518,b04:484,b05:499,b06:484,b07:521,audio:48};
 export const acceptanceSeconds={c01:519,c02:510,c03:322,editing:310};
 export const runnerSlots=20;
