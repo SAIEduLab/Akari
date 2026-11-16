@@ -38,7 +38,8 @@ export function declaredLaunches(root) {
     'audit/run-ux-phrase-gui.mjs': () => literals('audit/run-ux-phrase-gui.mjs'),
     'audit/tests/release-renumber.mjs': () => named('audit/tests/release-renumber.mjs', /const command=path\.join\(repositoryRoot,'([^']+)'\);/),
     'audit/tests/runtime-boundary.mjs': () => runtimeRuns.map(([script]) => 'audit/tests/runtime-boundary/' + script),
-    // runLimited: the change guard's children (the worlds, the coverage run, the contracts of a tree).
+    // runLimited and runLimitedAsync: the change guard's children (the worlds, the assist cases and the lines of a
+    // product, the coverage run, the contracts of a tree).
     'audit/lib/behaviour-snapshot.mjs': () => ['audit/lib/behaviour-snapshot.mjs', 'audit/lib/node-coverage.mjs', 'audit/lib/change-guard.mjs'],
     // The guard's entry, loaded by a child that records each module it loads (confined/guard-loads-only-guard-code).
     'audit/tests/change-guard-negative.mjs': () => ['audit/tests/change-guard.mjs'],

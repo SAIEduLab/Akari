@@ -456,7 +456,8 @@ try {
     pass('confined/guard-loads-only-guard-code');
   }
   // A product run by the guard writes no file but its own record: from inside the vm it reaches the host's process (as
-  // the in-process load shows), but the worlds and the coverage run are children that may not write.
+  // the in-process load shows), but the worlds, the assist cases, the lines and the coverage run are children that may
+  // not write.
   if(mine.has('confined/product-writes-nothing')){
     const mark=path.join(tmp,'written-by-product'),script='try{console.log.constructor("return process")().getBuiltinModule("fs").writeFileSync('+JSON.stringify(mark)+',"x");}catch{}';
     const page='<script>'+script+'</script>',written=()=>{const was=fs.existsSync(mark);fs.rmSync(mark,{force:true});return was;};

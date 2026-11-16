@@ -23,16 +23,12 @@ const splits={
   'schema-shards':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
   // 706.8 s over 6 viewport/mode contexts of about 118 s; two parts of three contexts (about 354 s).
   'modern-browser':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
-  // It has 80 cases: 58 in the first part and 22 in the second. When it had 69 cases, its two halves took 315 s and
-  // 270 s locally and up to 525 s each in CI. Two parts, one for each
-  // pair of groups the test runs together (gated by its first case), measured on a second machine (4 CPUs; a CI run of a
-  // group there took 0.86 of its time): the tree, record, version and language rules with the confinement (63 s); and the behaviour and
-  // limit rules (68 s), the assertion and changed-line rules, the test map and the record without a change (about 55 s
-  // more, from the cases' runs: 11 s for the worlds of one product, about 3 s for one comparison of changed lines and
-  // about 10 s for the test map). The guard also records the assist cases and the lines of each product. The cases about
-  // the worlds give the assist a small fixture, and only the cases about the assist run the full fixture (about 45 s for
-  // one product, at the same time as its worlds). On one machine the first part took 110 s, and the behaviour and limit
-  // part 111 s before the guard recorded the assist cases and the lines and 176 s now.
+  // 85 cases in two parts, one for each pair of groups the test runs together (gated by its first case): the tree,
+  // record, version and language rules with the confinement (58 cases); and the behaviour and limit rules, the assertion
+  // and changed-line rules, the test map and the record without a change (27 cases). On one machine (16 CPUs) the first
+  // part takes 112 s and the second 192 s. In the second part a guard run that records a product takes about 13 s for
+  // its worlds and, at the same time, about 45 s for the full assist fixture; the cases about the worlds give the assist
+  // a small fixture. One comparison of changed lines takes about 3 s and the test map about 10 s.
   'change-guard-negative':{parts:indexed(2),assign:id=>/^(?:behaviour|limits|assertions|coverage|test-map)\//.test(id)?'2/2':'1/2'},
   // 347-574 s (two CI runs) over 9 viewport/zoom contexts of about 55-78 s (two other CI runs, one of them 598 s, at
   // the 600 s child limit); two parts of five and four contexts (about 319 s and 255 s at the slower run).
