@@ -241,9 +241,11 @@ const rewrittenCells=1<<24;
 // line numbers of the base's script. Lines are read as their tokens (spacing and comments alone change no line, and a
 // line with no token is no line). Nothing is rewritten when the head holds every line of the base in the base's order,
 // whatever lines it adds between them. Otherwise the rewritten lines are the fewest lines to take from the base so that
-// the rest is in the head in that order (of two such sets, the one that takes the earlier line): a line changed, removed
-// or put in another order is among them. Between the first and the last line that differ, two scripts too long for the
-// table have all the base's lines rewritten. A script the head lacks (given as empty) has none of the base's lines.
+// the rest is in the head in that order: a line changed, removed or put in another order is among them. Where several
+// such sets are as small, the walk from the first line keeps a line of the base that reads as the head's line it is at,
+// and takes the base's line when taking it and passing the head's line leave as many. Between the first and the last
+// line that differ, two scripts too long for the table have all the base's lines rewritten. A script the head lacks
+// (given as empty) has none of the base's lines.
 export function rewrittenLines(before,after){
   const [was,now]=scriptTexts(before,after),at=[],base=[];
   testScriptLines(was).forEach((text,i)=>{if(text){at.push(i+1);base.push(text);}});
