@@ -314,6 +314,25 @@ try {
   assert.deepEqual(extra.behaviourIssues,['audit/manifests/intended-behaviour-changes.json records a change of '+unchangedAssist+', but its behaviour did not change',
     'audit/manifests/intended-behaviour-changes.json records a change of '+lineCase(unchangedLine)+' '+JSON.stringify(unchangedLine)+', but its behaviour did not change'],'a record of an assist case and a line that did not change');
   failed('behaviour/assist-or-line-record-without-change',extra,'behaviourIssues',/but its behaviour did not change/);
+  // The cases of the merge base's assist fixture count too: a product change that also edits the fixture case that shows
+  // it, or removes the fixture, is compared on the case as the base had it (<its id>@base). The base holds the small
+  // fixture and that case.
+  {
+    const shown=fullFixture.cases.find(c=>'assist/'+c.id===assistChanged[0]),other=fullFixture.cases.find(c=>'assist/'+c.id===unchangedAssist);
+    const withShown={...smallFixture,cases:[...smallFixture.cases.filter(c=>c.id!==shown.id),shown]},fixtureBase=derive(fixtureFile(withShown));
+    const edited={...withShown,cases:withShown.cases.map(c=>c.id===shown.id?{...other,id:shown.id}:c)},baseCase='assist/'+shown.id+'@base';
+    const fromBase=changes=>guard(derive(changes,fixtureBase),{from:fixtureBase});
+    const editedRun=await fromBase({...changedHead,...fixtureFile(edited)});
+    assert.deepEqual([editedRun.behaviour.differences.includes(baseCase),editedRun.behaviour.differences.includes('assist/'+shown.id)],[true,false],'the case as the base had it changes: '+JSON.stringify(editedRun.behaviour.differences));
+    assert.ok(editedRun.behaviourIssues.includes(unrecordedIssue(baseCase)),JSON.stringify(editedRun.behaviourIssues));
+    const editedRecorded=await fromBase({...changedHead,...fixtureFile(edited),...intended(editedRun.behaviour.differences)});
+    assert.deepEqual([editedRecorded.status,editedRecorded.behaviourIssues],['PASS',[]],'recorded, the edited case passes: '+JSON.stringify(editedRecorded.errors));
+    pass('behaviour/assist-fixture-case-edited');
+    const removedRun=await fromBase({...changedHead,[assistFile]:null});
+    assert.deepEqual([removedRun.errors,removedRun.behaviour.kinds.assist.cases],[[],withShown.cases.length],'the base cases of a removed fixture');
+    assert.ok(removedRun.behaviourIssues.includes(unrecordedIssue(baseCase)),JSON.stringify(removedRun.behaviourIssues));
+    pass('behaviour/assist-fixture-removed');
+  }
   // The assist cases are recorded on a fixed clock (fixedClockApi): the clock the assist reads its time budget from reads
   // fixedClockMs there at every read, and the context has no performance; the same page in a context with Date's own
   // clock reads the time.

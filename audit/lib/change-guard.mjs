@@ -281,7 +281,7 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
     for(const category of allowanceCategories){const had=new Set(before.allowances[category]),grown=[...new Set(after.allowances[category])].filter(item=>!had.has(item));
       if(grown.length)report.grown[category]=grown;}
     const productChanged=before.source!==after.source||before.product!==after.product;
-    const assistFixture=optionalObject(repo,headCommit+':audit/fixtures/assist/code-assist-cases.json');
+    const assistFixture=optionalObject(repo,headCommit+':audit/fixtures/assist/code-assist-cases.json'),baseFixture=optionalObject(repo,mergeBase+':audit/fixtures/assist/code-assist-cases.json');
     if(assistFixture){
       const key=[before.product,after.product,assistFixture].join(':');
       if(!assistInvarianceCache.has(key)){
@@ -292,13 +292,16 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
     }
     // The behaviour of the base product against the head product (AUDIT.md「前の版との振る舞いの差分」), in kinds of
     // cases: every specification world, every case of the head's assist fixture and every line of the worlds' scripts. A
-    // difference passes only when this change records it with a reason.
+    // case of the merge base's fixture that the head's fixture lacks, or has with other content, is an assist case too,
+    // as <its id>@base. A difference passes only when this change records it with a reason.
     if(productChanged){
-      const objects=readBlobs(repo,[before.product,after.product,...(assistFixture?[assistFixture]:[])]),html=blob=>objects.get(blob).toString('utf8');
-      const fixture=assistFixture?JSON.parse(objects.get(assistFixture).toString('utf8')):{cases:[]};
+      const fixtures=[assistFixture,baseFixture].filter(Boolean),objects=readBlobs(repo,[before.product,after.product,...fixtures]),html=blob=>objects.get(blob).toString('utf8');
+      const fixtureCases=oid=>oid?JSON.parse(objects.get(oid).toString('utf8')).cases:[],headCases=new Map(fixtureCases(assistFixture).map(c=>[c.id,JSON.stringify(c)]));
+      const baseOnly=baseFixture===assistFixture?[]:fixtureCases(baseFixture).filter(c=>headCases.get(c.id)!==JSON.stringify(c)).map(c=>({...c,id:c.id+'@base'}));
+      const fixture={cases:[...fixtureCases(assistFixture),...baseOnly]};
       const cases=snapshotCases(),lineText=new Map(worldLines(cases).map(line=>[lineCase(line),line]));
       const kinds={world:{cases:cases.map(c=>c.id),key:'',run:(blob,signal)=>boundedSnapshot(html(blob),limitMs,signal)},
-        assist:{cases:assistCases(fixture),key:assistFixture,run:(blob,signal)=>boundedAssist(html(blob),fixture,limitMs,signal)},
+        assist:{cases:assistCases(fixture),key:assistFixture+':'+(baseOnly.length?baseFixture:''),run:(blob,signal)=>boundedAssist(html(blob),fixture,limitMs,signal)},
         line:{cases:[...lineText.keys()],key:'',run:(blob,signal)=>boundedLines(html(blob),limitMs,signal)}};
       const script=blob=>{const text=html(blob);return text.slice(text.indexOf('<script>')+8,text.lastIndexOf('</script>')).replace(/const PRODUCT_RELEASE = '\d+\.\d+\.\d+';/,'');};
       const differing={};
