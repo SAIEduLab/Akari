@@ -23,12 +23,13 @@ const splits={
   'schema-shards':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
   // 706.8 s over 6 viewport/mode contexts of about 118 s; two parts of three contexts (about 354 s).
   'modern-browser':{parts:indexed(2),assign:(_,i)=>(i%2+1)+'/2'},
-  // 85 cases in two parts, one for each pair of groups the test runs together (gated by its first case): the tree,
-  // record, version and language rules with the confinement (58 cases); and the behaviour and limit rules, the assertion
-  // and changed-line rules, the test map and the record without a change (27 cases). On one machine (16 CPUs) the first
-  // part takes 112 s and the second 192 s. In the second part a guard run that records a product takes about 13 s for
-  // its worlds and, at the same time, about 45 s for the full assist fixture; the cases about the worlds give the assist
-  // a small fixture. One comparison of changed lines takes about 3 s and the test map about 10 s.
+  // 91 cases in two parts, one for each pair of groups the test runs together (gated by its first case): the tree,
+  // record, version and language rules with the confinement (58 cases); and the behaviour and limit rules, the assertion,
+  // rewritten-test and changed-line rules, the test map and the record without a change (33 cases). On one machine
+  // (16 CPUs) the first part takes 114 s and the second 219 s; in a CI run the first took 187 s. In the second part a
+  // guard run that records a product takes about 13 s for its worlds and, at the same time, about 45 s for the full
+  // assist fixture; the cases about the worlds give the assist a small fixture. One comparison of changed lines takes
+  // about 3 s and the test map about 10 s.
   'change-guard-negative':{parts:indexed(2),assign:id=>/^(?:behaviour|limits|assertions|coverage|test-map)\//.test(id)?'2/2':'1/2'},
   // 347-574 s (two CI runs) over 9 viewport/zoom contexts of about 55-78 s (two other CI runs, one of them 598 s, at
   // the 600 s child limit); two parts of five and four contexts (about 319 s and 255 s at the slower run).

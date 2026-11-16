@@ -50,7 +50,8 @@ export const changeGuardCaseIds=Object.freeze([
   'limits/stopped-children-closed','behaviour/line-diagnostics-whole','behaviour/assist-snapshot-fixed-clock',
   'behaviour/assist-fixture-case-edited','behaviour/assist-fixture-removed',
   'behaviour/no-api-unavailable','behaviour/assist-fixture-key-order','behaviour/assist-fixture-base-suffix-refused','behaviour/assist-fixture-not-cases-refused',
-  'limits/stopped-at-once','behaviour/assist-base-fixture-in-record']);
+  'limits/stopped-at-once','behaviour/assist-base-fixture-in-record',
+  'assertions/rewritten-test-needs-record','assertions/rewritten-test-recorded','assertions/rewritten-test-free-edits','assertions/rewritten-test-audit-only-free','assertions/rewritten-test-removed-file','assertions/rewritten-test-unreadable']);
 
 // Past work-process names that audit callables must not use (release-policy-negative).
 export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);
