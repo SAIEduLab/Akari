@@ -48,9 +48,10 @@ export function runLimitedAsync(args, limitMs, what, writable, {signal, ...optio
   });
 }
 
-// The product's API in a fresh context, as the node suites load it. With fixedClock, Date.now in the context always
-// reads fixedClockMs, and the context has no performance: the assist stops adding candidates after a time budget it
-// reads from that clock, so on the fixed clock its answer does not depend on how fast the machine runs it.
+// The product's API in a fresh context, as the node suites load it. The context has no performance, so the product reads
+// the time from Date.now. With fixedClock, Date.now there always reads fixedClockMs: the assist stops adding candidates
+// after a time budget it reads from that clock, so on the fixed clock its answer does not depend on how fast the machine
+// runs it.
 export const fixedClockMs = 0;
 export function productApi(html, {fixedClock = false} = {}) {
   const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));

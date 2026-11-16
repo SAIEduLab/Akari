@@ -342,6 +342,13 @@ try {
   assert.deepEqual([fixed.performance,fixed.clock(),fixed.clock()],['undefined',fixedClockMs,fixedClockMs],'the assist reads the fixed clock');
   assert.notEqual(own.clock(),fixedClockMs,'a context with a real clock reads the time');
   pass('behaviour/assist-clock-fixed');
+  // A page with no Akari API records that it has none, in every assist case and every line.
+  {
+    const page='<p>no product</p>',none={unavailable:'the page has no Akari API'};
+    assert.deepEqual(Object.values(assistSnapshot(page,smallFixture)),smallFixture.cases.map(()=>none),'the assist cases of a page with no API');
+    assert.deepEqual(Object.values(lineSnapshot(page,lines)),lines.map(()=>none),'the lines of a page with no API');
+    pass('behaviour/no-api-unavailable');
+  }
   // assistSnapshot records on that clock: a product whose assist has no time at all (a budget of 0 ms) answers there as
   // the product does, in cases whose search runs for more than 100 ms even when it stops at once; on a real clock it
   // stops adding candidates in each of them.

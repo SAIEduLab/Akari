@@ -263,8 +263,8 @@ export function guardStatus(report){
 
 const emptyReport=(base,head)=>({schema:guardReportSchema,status:'FAIL',base,head,mergeBase:null,
   guardCode:null,identitySizes:null,removed:{},grown:{},pinFiles:{},version:null,versionIssues:[],releaseIssues:[],behaviour:null,behaviourIssues:[],weakened:[],auditChanges:[],auditChangeIssues:[],errors:[]});
-// limitMs: how long one run of the product (the worlds of one product) may take before the guard stops it with an error
-// (guardLimitMs).
+// limitMs: how long one run of a product (one child: the worlds, the assist cases or the lines of one product) may take
+// before the guard stops it with an error (guardLimitMs).
 export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs}){
   const report=emptyReport(base,head);
   const ownDir=!workDir;workDir??=fs.mkdtempSync(path.join(os.tmpdir(),'akari-guard-'));
