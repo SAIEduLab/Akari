@@ -12,7 +12,8 @@ import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib
 import {currentPart,partItems} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
-import {boundedSnapshot,boundedAssist,boundedLines,productApi,fixedClockApi,fixedClockMs,assistCases,snapshotCases,worldLines,lineCase,lineSnapshot,runLimited} from '../lib/behaviour-snapshot.mjs';
+import {assistWorld,assistObservation} from '../lib/code-assist-host.mjs';
+import {boundedSnapshot,boundedAssist,boundedLines,productApi,fixedClockApi,fixedClockMs,assistCases,assistSnapshot,snapshotCases,worldLines,lineCase,lineSnapshot,runLimited} from '../lib/behaviour-snapshot.mjs';
 import {boundedCoverage} from '../lib/node-coverage.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
 const part=currentPart('change-guard-negative'),mine=new Set(partItems('change-guard-negative',gateCaseIds['change-guard-negative'],part));
@@ -322,6 +323,19 @@ try {
   assert.deepEqual([fixed.performance,fixed.clock(),fixed.clock()],['undefined',fixedClockMs,fixedClockMs],'the assist reads the fixed clock');
   assert.notEqual(own.clock(),fixedClockMs,'a context with a real clock reads the time');
   pass('behaviour/assist-clock-fixed');
+  // assistSnapshot records on that clock: a product whose assist has no time at all (a budget of 0 ms) answers there as
+  // the product does, in cases whose search runs for more than 100 ms even when it stops at once; on a real clock it
+  // stops adding candidates in each of them.
+  {
+    const slow={...fullFixture,cases:fullFixture.cases.filter(c=>['ASSIST-1603','ASSIST-774','ASSIST-533','ASSIST-936','ASSIST-743'].includes(c.id))};
+    const noTime=productReplaced(productText,'ASSIST_BUDGET_MS=300;','ASSIST_BUDGET_MS=0;');
+    assert.equal(slow.cases.length,5,'the slow assist cases');
+    const answers=assistSnapshot(productText,slow);
+    assert.deepEqual(assistSnapshot(noTime,slow),answers,'no time passes for the assist on the fixed clock');
+    const realClock=productApi(noTime);
+    assert.ok(slow.cases.every(c=>JSON.stringify(assistObservation(realClock,assistWorld(realClock,c.world),c))!==JSON.stringify(answers['assist/'+c.id])),'on a real clock the assist stops early in each case');
+    pass('behaviour/assist-snapshot-fixed-clock');
+  }
   }
   if(mine.has('assertions/fewer-checks-needs-record')){
   // A file that checks less is an audit change to record: one assertion fewer in static-contract.
