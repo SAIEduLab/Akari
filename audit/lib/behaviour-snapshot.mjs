@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {buildProject} from './spec-expectations-host.mjs';
 import {areas, expectationsRoot} from './spec-expectations.mjs';
+import {assistWorld, assistObservation} from './code-assist-host.mjs';
 
 // The node options of a child that runs a product: it reads files but writes only the given files or folders (Node's
 // permission model), and starts no process or worker. The product is code of the change under test, and a vm context
@@ -28,14 +29,37 @@ export function runLimited(args, limitMs, what, writable, options) {
   if (r.error) throw r.error;
   if (r.status !== 0) throw new Error(what + ' failed (exit ' + r.status + '): ' + (r.stderr || '').trim().slice(-2000));
 }
+// runLimited without blocking: the children of several products run at the same time. signal stops the child early,
+// and the promise then rejects with the AbortError.
+export function runLimitedAsync(args, limitMs, what, writable, {signal, ...options} = {}) {
+  return new Promise((resolve, reject) => {
+    const child = cp.spawn(process.execPath, [...confined(writable, options), ...args], {timeout: limitMs, signal, stdio: ['ignore', 'ignore', 'pipe']});
+    let stderr = '', aborted = null;
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', text => { stderr = (stderr + text).slice(-64 * 1024); });
+    child.on('error', error => { if (error.name === 'AbortError') aborted = error; else reject(error); });
+    child.on('close', (status, killedBy) => {
+      if (aborted) reject(aborted);
+      else if (killedBy) reject(new Error(what + ' did not finish within ' + limitMs / 1000 + ' s'));
+      else if (status !== 0) reject(new Error(what + ' failed (exit ' + status + '): ' + stderr.trim().slice(-2000)));
+      else resolve();
+    });
+  });
+}
 
-// The product's API in a fresh context, as the node suites load it.
-export function productApi(html) {
+// The product's API in a fresh context, as the node suites load it. With fixedClock, Date.now in the context always
+// reads fixedClockMs, and the context has no performance: the assist stops adding candidates after a time budget it
+// reads from that clock, so on the fixed clock its answer does not depend on how fast the machine runs it.
+export const fixedClockMs = 0;
+export function productApi(html, {fixedClock = false} = {}) {
   const script = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>'));
-  const context = {console, TextEncoder, TextDecoder, Uint8Array, Uint32Array, ArrayBuffer, Blob, URL, structuredClone, crypto: crypto.webcrypto, setTimeout, clearTimeout};
-  vm.runInNewContext(script, context, {timeout: 30000});
+  const context = vm.createContext({console, TextEncoder, TextDecoder, Uint8Array, Uint32Array, ArrayBuffer, Blob, URL, structuredClone, crypto: crypto.webcrypto, setTimeout, clearTimeout});
+  if (fixedClock) vm.runInContext('Date.now = () => ' + fixedClockMs + ';', context);
+  vm.runInContext(script, context, {timeout: 30000});
   return context.Akari;
 }
+// The context the assist cases are recorded in, on the fixed clock.
+export const fixedClockApi = html => productApi(html, {fixedClock: true});
 
 export function snapshotCases(root = path.resolve(expectationsRoot, '../../..')) {
   const cases = [];
@@ -102,27 +126,45 @@ export function caseBehaviour(api, c) {
   return strip(record);
 }
 
+// A page with no Akari API (a synthetic test product) runs nothing: that is its behaviour in every case.
+const unavailable = ids => Object.fromEntries(ids.map(id => [id, {unavailable: 'the page has no Akari API'}]));
+const loaded = (html, load) => { try { const api = load(html); return api?.makeEmptyProject ? api : null; } catch { return null; } };
+const failure = error => String(error?.code ?? error?.name ?? 'Error');
+
 export function behaviourSnapshot(html, cases) {
-  // A page with no Akari API (a synthetic test product) runs nothing: that is its behaviour in every world.
-  let api;
-  try { api = productApi(html); } catch (error) { api = null; }
-  if (!api?.makeEmptyProject) return Object.fromEntries(cases.map(c => [c.id, {unavailable: 'the page has no Akari API'}]));
+  const api = loaded(html, productApi);
+  if (!api) return unavailable(cases.map(c => c.id));
   return Object.fromEntries(cases.map(c => [c.id, caseBehaviour(api, c)]));
 }
 
-// behaviourSnapshot of every specification world in a child process (node audit/lib/behaviour-snapshot.mjs --run <page>
-// <record>), stopped after limitMs.
-export function boundedSnapshot(html, limitMs) {
+// Every case of the assist fixture (audit/fixtures/assist/code-assist-cases.json) as assist/<its id>: what the assist
+// answers there (assistObservation, audit/lib/code-assist-host.mjs) in the project its world builds, on the fixed clock.
+// A case that throws is recorded by the name of what it throws.
+export const assistCases = fixture => fixture.cases.map(test => 'assist/' + test.id);
+export function assistSnapshot(html, fixture) {
+  const api = loaded(html, fixedClockApi), ids = assistCases(fixture);
+  if (new Set(ids).size !== ids.length) throw new Error('the assist fixture names a case twice');
+  if (!api) return unavailable(ids);
+  return Object.fromEntries(fixture.cases.map((test, i) => {
+    try { return [ids[i], assistObservation(api, assistWorld(api, test.world), test)]; } catch (error) { return [ids[i], {exception: failure(error)}]; }
+  }));
+}
+
+// A record of a product in a child process (node audit/lib/behaviour-snapshot.mjs <kind> <page> [<fixture>] <record>),
+// stopped after limitMs, or when signal aborts.
+async function boundedRecord(kind, what, html, fixture, limitMs, signal) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'akari-snapshot-'));
   try {
-    const page = path.join(dir, 'page.html'), record = path.join(dir, 'record.json');
+    const page = path.join(dir, 'page.html'), record = path.join(dir, 'record.json'), inputs = [page];
     fs.writeFileSync(page, html);
-    runLimited([fileURLToPath(import.meta.url), '--run', page, record], limitMs, 'the specification worlds', [record]);
+    if (fixture) { inputs.push(path.join(dir, 'fixture.json')); fs.writeFileSync(inputs[1], JSON.stringify(fixture)); }
+    await runLimitedAsync([fileURLToPath(import.meta.url), kind, ...inputs, record], limitMs, what, [record], {signal});
     return JSON.parse(fs.readFileSync(record, 'utf8'));
   } finally { fs.rmSync(dir, {recursive: true, force: true}); }
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && process.argv[2] === '--run')
-  fs.writeFileSync(process.argv[4], JSON.stringify(behaviourSnapshot(fs.readFileSync(process.argv[3], 'utf8'), snapshotCases())));
+// behaviourSnapshot of every specification world, and assistSnapshot of every assist case, each in its own child.
+export const boundedSnapshot = (html, limitMs, signal) => boundedRecord('--run', 'the specification worlds', html, null, limitMs, signal);
+export const boundedAssist = (html, fixture, limitMs, signal) => boundedRecord('--assist', 'the assist cases', html, fixture, limitMs, signal);
 
 // Cases whose record differs between two snapshots.
 export function behaviourDifferences(before, after) {
@@ -148,3 +190,9 @@ export function behaviourIssues(differences, baseRecord, headRecord) {
   return {issues, intended: added};
 }
 function assert(ok, message) { if (!ok) throw new Error(message); }
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const [kind, page, ...rest] = process.argv.slice(2), record = rest.at(-1), html = () => fs.readFileSync(page, 'utf8');
+  if (kind === '--run') fs.writeFileSync(record, JSON.stringify(behaviourSnapshot(html(), snapshotCases())));
+  if (kind === '--assist') fs.writeFileSync(record, JSON.stringify(assistSnapshot(html(), JSON.parse(fs.readFileSync(rest[0], 'utf8')))));
+}

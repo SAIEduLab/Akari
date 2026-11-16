@@ -12,7 +12,7 @@ import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib
 import {currentPart,partItems} from '../lib/shard-plan.cjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
 import {currentProductFile,currentProductVersion,currentReleaseFile} from '../lib/product-path.cjs';
-import {boundedSnapshot,productApi,runLimited} from '../lib/behaviour-snapshot.mjs';
+import {boundedSnapshot,boundedAssist,productApi,fixedClockApi,fixedClockMs,assistCases,runLimited} from '../lib/behaviour-snapshot.mjs';
 import {boundedCoverage} from '../lib/node-coverage.mjs';
 const [output]=process.argv.slice(2);assert.ok(output,'usage: change-guard-negative.mjs <result.json>');
 const part=currentPart('change-guard-negative'),mine=new Set(partItems('change-guard-negative',gateCaseIds['change-guard-negative'],part));
@@ -245,6 +245,36 @@ try {
   const endless=replaced(product,"const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);","for (;;) {} const turn = 0;");
   failed('limits/worlds-never-finish',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:endless})),{limitMs:20000}),'errors',/the specification worlds did not finish within 20 s/);
   }
+  if(mine.has('behaviour/assist-only-change')){
+  // The assist cases against the base product: a product that gives at most three candidates instead of four answers
+  // otherwise in some assist cases and in no world; unrecorded it fails, recorded with a reason it passes with the
+  // count in the report, and a record of an assist case that did not change fails.
+  const fixture=JSON.parse(text('audit/fixtures/assist/code-assist-cases.json'));
+  const productReplaced=(from,to)=>{assert.equal(productText.split(from).length,2,'one anchor in the product: '+from);return productText.replace(from,()=>to);};
+  const fewerCandidates=release(nextPatch(version),{changeSource:true,productBytes:productReplaced('const ASSIST_MAX=4,','const ASSIST_MAX=3,')});
+  const unrecordedAssist=await guard(derive(fewerCandidates)),assistChanged=unrecordedAssist.behaviour.differences;
+  assert.deepEqual([unrecordedAssist.errors,unrecordedAssist.behaviour.kinds.world.differing],[[],0],'no world changes');
+  assert.ok(assistChanged.length>0&&assistChanged.every(id=>id.startsWith('assist/')),'only assist cases change: '+assistChanged.slice(0,5).join(', '));
+  assert.ok(unrecordedAssist.behaviourIssues.includes('the behaviour of '+assistChanged[0]+' changed, and audit/manifests/intended-behaviour-changes.json does not record it'),JSON.stringify(unrecordedAssist.behaviourIssues.slice(0,3)));
+  assert.equal(unrecordedAssist.status,'FAIL','an unrecorded assist change');
+  const recordedAssist=await guard(derive({...fewerCandidates,...intended(assistChanged)}));
+  assert.deepEqual([recordedAssist.status,recordedAssist.behaviourIssues],['PASS',[]],'a recorded assist change passes: '+JSON.stringify(recordedAssist.errors));
+  assert.ok(formatGuardReport(recordedAssist).includes('Behaviour: '+assistChanged.length+' of '+fixture.cases.length+' assist cases differ from the base product'),'the report counts the assist cases');
+  pass('behaviour/assist-only-change');
+  const unchanged=assistCases(fixture).find(id=>!assistChanged.includes(id));
+  const extra=await guard(derive({...fewerCandidates,...intended([...assistChanged,unchanged])}));
+  assert.deepEqual(extra.behaviourIssues,['audit/manifests/intended-behaviour-changes.json records a change of '+unchanged+', but its behaviour did not change'],'a record of an assist case that did not change');
+  failed('behaviour/assist-record-without-change',extra,'behaviourIssues',/but its behaviour did not change/);
+  // The assist cases are recorded on a fixed clock (fixedClockApi): the clock the assist reads its time budget from reads
+  // fixedClockMs there at every read, and the context has no performance; the same page in a context with Date's own
+  // clock reads the time.
+  const [,clock]=productText.match(/const now=\(\)=>(globalThis\.performance[^;]*);/)??[];
+  assert.ok(clock,'the clock the assist reads its time budget from');
+  const clockPage='<script>var Akari={clock:()=>'+clock+',performance:typeof performance};</script>',fixed=fixedClockApi(clockPage),own=productApi(clockPage);
+  assert.deepEqual([fixed.performance,fixed.clock(),fixed.clock()],['undefined',fixedClockMs,fixedClockMs],'the assist reads the fixed clock');
+  assert.notEqual(own.clock(),fixedClockMs,'a context with a real clock reads the time');
+  pass('behaviour/assist-clock-fixed');
+  }
   if(mine.has('assertions/fewer-checks-needs-record')){
   // A file that checks less is an audit change to record: one assertion fewer in static-contract.
   const weakenedHead=derive({'audit/tests/static-contract.mjs':replaced('audit/tests/static-contract.mjs',"assert.ok(!publicationPathAllowed('AGENTS.md'));assert.ok(!publicationPathAllowed('audit/AGENTS.md'));","assert.ok(!publicationPathAllowed('AGENTS.md'));")});
@@ -319,7 +349,8 @@ try {
     const mark=path.join(tmp,'written-by-product'),script='try{console.log.constructor("return process")().getBuiltinModule("fs").writeFileSync('+JSON.stringify(mark)+',"x");}catch{}';
     const page='<script>'+script+'</script>',written=()=>{const was=fs.existsSync(mark);fs.rmSync(mark,{force:true});return was;};
     productApi(page);assert.ok(written(),'the escape writes from an unconfined process');
-    boundedSnapshot(page,60000);assert.equal(written(),false,'the worlds');
+    await boundedSnapshot(page,60000);assert.equal(written(),false,'the worlds');
+    await boundedAssist(page,JSON.parse(text('audit/fixtures/assist/code-assist-cases.json')),60000);assert.equal(written(),false,'the assist cases');
     try{boundedCoverage(page,product,60000);}catch{}assert.equal(written(),false,'the coverage run');
     // (and the tree's own contracts, which the guard reads in a child too: a gate contract that writes when it is loaded, and leaves a timer)
     const tree=path.join(tmp,'contracts');fs.mkdirSync(path.join(tree,'audit/lib'),{recursive:true});
