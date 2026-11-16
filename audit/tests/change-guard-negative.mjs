@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
-import {changeGuard,guardLimitMs,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines} from '../lib/change-guard.mjs';
+import {changeGuard,guardLimitMs,treeIdentity,git,nextPatch,formatGuardReport,auditChangesFile,auditChangesSchema,changedScriptLines,rewrittenLines,testScriptPattern} from '../lib/change-guard.mjs';
 import {gateSteps,integrityControlIds,acceptanceCommands,acceptanceIds,workflowContract,guardCodePaths} from '../lib/gate-contract.mjs';
 import {pathToFileURL,fileURLToPath} from 'node:url';
 import {declaredGateCases,caseRecorder,writeCaseReport,gateCaseIds} from '../lib/gate-case-contract.mjs';
@@ -394,6 +394,93 @@ try {
   assert.equal(weakened.status,'FAIL','fewer checks without a record');assert.ok(weakened.weakened.some(w=>w.startsWith('audit/tests/static-contract.mjs: ')),JSON.stringify(weakened.weakened));
   const weakenedRecorded=await guard(derive({'audit/tests/static-contract.mjs':replaced('audit/tests/static-contract.mjs',"assert.ok(!publicationPathAllowed('AGENTS.md'));assert.ok(!publicationPathAllowed('audit/AGENTS.md'));","assert.ok(!publicationPathAllowed('AGENTS.md'));"),...record('fewer-checks:audit/tests/static-contract.mjs')}));
   assert.equal(weakenedRecorded.status,'PASS','a recorded file with fewer checks passes');pass('assertions/fewer-checks-needs-record');
+  // A test script whose lines a change rewrites, removes or puts in another order along with the product (or src/, or
+  // extensions/) is an audit change to record: a product suite, a browser case and a test of the audit, each with
+  // tokens added to one line.
+  {
+    const withProduct=()=>release(nextPatch(version),{changeSource:true,productBytes:productText+'\n'});
+    const scripts=['audit/browser/cases/browser-storage-media.cjs','audit/suites/runColorPickerTests.js','audit/tests/static-contract.mjs'];
+    // (the first line that holds code, with a statement added to it: the line reads otherwise, and the script still runs)
+    const rewrite=file=>{const lines=text(file).split('\n'),at=lines.findIndex(line=>/^\s*(?:import|const|async|function)\b.*[;{]\s*$/.test(line));
+      assert.ok(at>=0,file+' has a line to rewrite');lines[at]+=' void 0;';return [lines.join('\n'),at+1];};
+    const rewritten=Object.fromEntries(scripts.map(file=>[file,rewrite(file)[0]])),expected=scripts.map(file=>({file,lines:[rewrite(file)[1]]}));
+    for(const file of scripts)assert.deepEqual(rewrittenLines(text(file),rewritten[file]),[rewrite(file)[1]],'one line of '+file+' is rewritten');
+    const names=scripts.map(file=>'rewritten-test:'+file),unrecorded=file=>new RegExp('the audit change rewritten-test:'+file.replaceAll('.','\\.')+' is not recorded with a reason');
+    const only=(report,what)=>assert.deepEqual([report.errors,report.versionIssues,report.releaseIssues,report.behaviourIssues,report.weakened],[[],[],[],[],[]],what+': '+JSON.stringify(report));
+    const bare=await guard(derive({...withProduct(),...rewritten}));
+    assert.equal(bare.status,'FAIL','rewritten test scripts without a record');only(bare,'it fails only for the record');assert.deepEqual(bare.rewritten,expected);
+    for(const file of scripts)assert.ok(bare.auditChangeIssues.some(m=>unrecorded(file).test(m)),file+': '+JSON.stringify(bare.auditChangeIssues));
+    assert.equal(bare.auditChangeIssues.length,scripts.length,JSON.stringify(bare.auditChangeIssues));
+    // (extensions/ changed alone asks the same)
+    const withExtension=await guard(derive({'extensions/guard-case.txt':'a file added to the extensions\n','audit/tests/static-contract.mjs':rewritten['audit/tests/static-contract.mjs']}));
+    assert.equal(withExtension.status,'FAIL','a rewritten test script with extensions/ changed');only(withExtension,'it fails only for the record');
+    assert.ok(withExtension.auditChangeIssues.some(m=>unrecorded('audit/tests/static-contract.mjs').test(m)),JSON.stringify(withExtension.auditChangeIssues));
+    // (src/ changed with the product file as it was asks the same)
+    const withSource=await guard(derive({...release(nextPatch(version),{changeSource:true}),'audit/tests/static-contract.mjs':rewritten['audit/tests/static-contract.mjs']}));
+    assert.equal(withSource.status,'FAIL','a rewritten test script with src/ changed');only(withSource,'it fails only for the record');
+    assert.ok(withSource.auditChangeIssues.some(m=>unrecorded('audit/tests/static-contract.mjs').test(m)),JSON.stringify(withSource.auditChangeIssues));
+    pass('assertions/rewritten-test-needs-record');
+    // Recorded with a reason, the change passes and the report lists each script with its lines and the reason.
+    const recorded=await guard(derive({...withProduct(),...rewritten,...record(...names)}));
+    assert.equal(recorded.status,'PASS','recorded rewritten test scripts: '+JSON.stringify(recorded));assert.deepEqual(recorded.rewritten,expected);
+    for(const {file,lines} of expected)assert.ok(formatGuardReport(recorded).includes('- rewritten, removed or reordered lines in '+file+' (1 of the base: '+lines[0]+'): an audit change made for this guard case'),file+' is listed for the owner');
+    // (the report names the first ten lines of a script, then …)
+    assert.ok(formatGuardReport({...recorded,rewritten:[{file:scripts[2],lines:Array.from({length:12},(_,i)=>i+1)}]}).includes('- rewritten, removed or reordered lines in '+scripts[2]+' (12 of the base: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …): '),'a long list of lines is cut');
+    pass('assertions/rewritten-test-recorded');
+    // The test scripts are the scripts under the three folders, at any depth; no other file is one.
+    assert.deepEqual(['audit/suites/a.js','audit/browser/cases/a.cjs','audit/tests/a.mjs','audit/tests/deep/er/a.mjs','audit/lib/a.mjs','audit/tests/a.json','audit/run-a.mjs','audit/browser/a.cjs','src/audit/tests/a.mjs'].map(file=>testScriptPattern.test(file)),
+      [true,true,true,true,false,false,false,false,false],'the test scripts');
+    // What rewrites no line asks no record, and a record of it fails: lines added between the base's lines, a comment
+    // added or removed, an empty line removed, spacing; so does a rewritten script of audit/lib, which is none of the
+    // test scripts.
+    const contract=text('audit/tests/static-contract.mjs'),contractLines=contract.split('\n'),first=contractLines.findIndex(line=>line.startsWith('import '));
+    assert.ok(first>=0,'an import line to indent');
+    const free=[...contractLines];free[first]='  '+free[first]+' // indented';free.splice(first,0,'// a comment added','void 0;');free.push('void 1;');
+    assert.deepEqual(rewrittenLines(contract,free.join('\n')),[],'added lines, a comment and spacing rewrite no line');
+    assert.deepEqual(rewrittenLines('a();\n\n// n\nb();\n','a();\nb();\n'),[],'a comment and an empty line removed rewrite no line');
+    // A line changed, removed or put in another order is rewritten, and is named by its line in the base's script: one
+    // of two lines that read the same, spacing in a string, a script that is gone, a line after lines with no token,
+    // two changes apart, two lines that change places (the earlier is named), a line put after the lines that followed
+    // it, the ends of two checks that change places, and two pairs of lines that change places.
+    assert.deepEqual([rewrittenLines('x();\ny();\nx();\n','x();\ny();\n'),rewrittenLines("eq(t,'a b');\n","eq(t,'a  b');\n"),rewrittenLines('a=1;\nb=2;\n',''),rewrittenLines('a();\n\n// c\nb();\n','a();\nc();\n'),
+      rewrittenLines('a();\nb();\nc();\nd();\ne();\n','A();\nb();\nc();\nd();\nE();\n'),rewrittenLines('a();\nb();\n','b();\na();\n'),rewrittenLines('x();\na();\nb();\nc();\n','a();\nb();\nc();\nx();\n'),
+      rewrittenLines('eq(f(1),\n  2);\neq(f(2),\n  3);\n','eq(f(1),\n  3);\neq(f(2),\n  2);\n'),rewrittenLines('a();\nb();\nc();\nd();\ne();\nf();\n','c();\nd();\na();\nb();\ne();\nf();\n')],
+      [[3],[1],[1,2],[4],[1,5],[1],[1],[2,3],[1,2]],'changed, removed and reordered lines');
+    // The fewest lines are named: of 100 lines whose pairs change places, 50, and of 4095 lines, the longest the table
+    // holds, 2048 (the last line has no pair). Of 4096 lines, too long for the table, every line between the first and
+    // the last that differ is named, and the same lines before and after them are not. Lines only added to a long script
+    // name none.
+    const manyLines=(count,line)=>Array.from({length:count},(_,i)=>line(i)).join('\n')+'\n',call=i=>'f'+i+'();',swapped=count=>manyLines(count,i=>call(i^1));
+    assert.deepEqual([rewrittenLines(manyLines(100,call),swapped(100)).length,rewrittenLines(manyLines(4095,call),swapped(4095)).length,rewrittenLines(manyLines(4096,call),swapped(4096)).length,
+      rewrittenLines(manyLines(4100,call),manyLines(8200,i=>i%2?call(i>>1):'g'+i+'();'))],[50,2048,4096,[]],'the fewest lines, and scripts too long for the table');
+    assert.deepEqual(rewrittenLines('p();\n'+manyLines(4096,call)+'q();\n','p();\n'+swapped(4096)+'q();\n'),Array.from({length:4096},(_,i)=>i+2),'the lines between the first and the last that differ');
+    const freeEdits={'audit/tests/static-contract.mjs':free.join('\n'),'audit/lib/assertion-counts.mjs':rewrite('audit/lib/assertion-counts.mjs')[0]};
+    const unasked=await guard(derive({...withProduct(),...freeEdits}));
+    assert.deepEqual([unasked.status,unasked.rewritten],['PASS',[]],'no line is rewritten: '+JSON.stringify(unasked));
+    failed('assertions/rewritten-test-free-edits',await guard(derive({...withProduct(),...freeEdits,...record(names[2])})),'auditChangeIssues',/records rewritten-test:audit\/tests\/static-contract\.mjs, but this change does not make it/);
+    // A change of the audit alone rewrites its tests without this record, and a record of it there fails.
+    const auditOnly=await guard(derive(rewritten));
+    assert.deepEqual([auditOnly.status,auditOnly.rewritten],['PASS',[]],'a change of the audit alone: '+JSON.stringify(auditOnly));
+    failed('assertions/rewritten-test-audit-only-free',await guard(derive({...rewritten,...record(names[2])})),'auditChangeIssues',/records rewritten-test:audit\/tests\/static-contract\.mjs, but this change does not make it/);
+    // A test script the head lacks has none of its lines; one the head holds in a form that cannot be read as a script
+    // is compared as text, and so has none of the base's lines either. Both ask the record (the script holds no check,
+    // so no other rule asks anything).
+    const helper='audit/tests/guard-case-helper.mjs',withHelper=derive({[helper]:'export const a=1;\nexport const b=2;\n'}),gone=[{file:helper,lines:[1,2]}];
+    const removed=await guard(derive(withProduct(),withHelper),{from:withHelper});
+    assert.equal(removed.status,'FAIL','a removed test script without a record');only(removed,'it fails only for the record');assert.deepEqual(removed.rewritten,gone);
+    assert.ok(removed.auditChangeIssues.some(m=>unrecorded(helper).test(m)),JSON.stringify(removed.auditChangeIssues));
+    accepted('assertions/rewritten-test-removed-file',await guard(derive({...withProduct(),...record('rewritten-test:'+helper)},withHelper),{from:withHelper}));
+    const unreadable=await guard(derive({...withProduct(),[helper]:'export const a=1;\nexport const b=;\n'},withHelper),{from:withHelper});
+    assert.equal(unreadable.status,'FAIL','an unreadable test script without a record');only(unreadable,'it fails only for the record');assert.deepEqual(unreadable.rewritten,gone);
+    assert.deepEqual(rewrittenLines('a=1;\nb=;\n','a=1;\n  b=;\n'),[],'two scripts that cannot be read are compared as text, spacing at the ends of a line apart');
+    assert.deepEqual(rewrittenLines('a=1;\nb=;\n','a=2;\nb=;\n'),[1],'a line of a script that cannot be read, changed');
+    // (a line of text equals no line of tokens, also when it reads as one; a NUL changes nothing in this; bytes that are
+    // not UTF-8 are compared byte for byte)
+    assert.deepEqual([rewrittenLines('x;\n','["x",";"]\nfoo=;\n'),rewrittenLines('a=;\n\0x\n','b=;\n\0y\n'),rewrittenLines('a();\n','b\0=;\n')],[[1],[1,2],[1]],'text lines against token lines, and NUL');
+    const bytes=byte=>Buffer.from([0x61,0x3d,0x22,byte,0x22,0x3b,0x0a]);
+    assert.deepEqual([rewrittenLines(bytes(0xff),bytes(0xfe)),rewrittenLines(bytes(0xff),bytes(0xff))],[[1],[]],'bytes that are not UTF-8');
+    pass('assertions/rewritten-test-unreadable');
+  }
   // Spacing alone changes no line: a line of the extension host the product embeds, indented further, changes the
   // product and no line of it, and the guard passes it.
   {

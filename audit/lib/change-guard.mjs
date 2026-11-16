@@ -1,7 +1,8 @@
 // Pull-request change guard. Compares the audit identity of the merge base with the head: a removed check ID, a changed
 // pin or a file that checks less passes only when the change records it with a reason, which the report lists for the
-// owner to read before the merge; one that checks less is recorded only in a change of the audit alone. The product
-// version and the release manifest rules hold whatever is recorded.
+// owner to read before the merge; one that checks less is recorded only in a change of the audit alone. A test script
+// whose lines are rewritten, removed or put in another order in a change that also changes src/, extensions/ or the
+// product is recorded with a reason too. The product version and the release manifest rules hold whatever is recorded.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -169,8 +170,9 @@ let babel;
 // string, a template or a regular expression keeps its spacing). Comments and the spacing
 // between tokens are left out, so a line changed only in them reads the same; a token over several lines (a template)
 // belongs to the line it starts on.
-export function scriptTokenLines(script){
-  const ast=(babel??=require('@babel/parser')).parse(script,{sourceType:'script',tokens:true,errorRecovery:false,allowReturnOutsideFunction:true});
+// options: how the script is parsed (the product's script by default; a test script is read as testScriptOptions).
+export function scriptTokenLines(script,options={sourceType:'script'}){
+  const ast=(babel??=require('@babel/parser')).parse(script,{...options,tokens:true,errorRecovery:false,allowReturnOutsideFunction:true});
   // A line is what ends with \n (the parser counts other line terminators too).
   const lines=script.split('\n').map(()=>[]),starts=[0];
   for(let i=0;i<script.length;i++)if(script.charCodeAt(i)===10)starts.push(i+1);
@@ -218,6 +220,56 @@ export function changedScriptLines(beforeHtml,afterHtml){
   }
   return changed;
 }
+// The test scripts (AUDIT.md「試験の書きかえ」): the product suites, the browser cases and the audit's tests.
+export const testScriptPattern=/^audit\/(?:suites|browser\/cases|tests)\/.*\.(?:m|c)?js$/;
+const testScriptOptions={sourceType:'unambiguous',allowAwaitOutsideFunction:true};
+// The lines of a test script as its tokens read them (each a JSON array). A script that cannot be read as one is its
+// lines of text without the spacing at their ends, each marked as text, so it equals no line of tokens.
+function testScriptLines(script){
+  try{return scriptTokenLines(script,testScriptOptions);}catch{return script.split('\n').map(line=>line.trim()&&'text:'+line.trim());}
+}
+// The two scripts as text: their UTF-8 text, or, when either holds bytes that are not UTF-8, both byte for byte, so
+// that other bytes are other text.
+function scriptTexts(...scripts){
+  const bytes=scripts.map(script=>typeof script==='string'?Buffer.from(script,'utf8'):script),texts=bytes.map(b=>b.toString('utf8'));
+  return texts.every((text,i)=>Buffer.from(text,'utf8').equals(bytes[i]))?texts:bytes.map(b=>b.toString('latin1'));
+}
+// The most cells the table of rewrittenLines holds: 2^24 (32 MB), over twice a test script of 2800 lines (the longest
+// has about that many) rewritten in every line.
+const rewrittenCells=1<<24;
+// The lines of the base's test script (its bytes or its text) that the head's script no longer has in their order, as
+// line numbers of the base's script. Lines are read as their tokens (spacing and comments alone change no line, and a
+// line with no token is no line). Nothing is rewritten when the head holds every line of the base in the base's order,
+// whatever lines it adds between them. Otherwise the rewritten lines are the fewest lines to take from the base so that
+// the rest is in the head in that order: a line changed, removed or put in another order is among them. Where several
+// such sets are as small, the walk from the first line keeps a line of the base that reads as the head's line it is at,
+// and takes the base's line when taking it and passing the head's line leave as many. Between the first and the last
+// line that differ, two scripts too long for the table have all the base's lines rewritten. A script the head lacks
+// (given as empty) has none of the base's lines.
+export function rewrittenLines(before,after){
+  const [was,now]=scriptTexts(before,after),at=[],base=[];
+  testScriptLines(was).forEach((text,i)=>{if(text){at.push(i+1);base.push(text);}});
+  const head=testScriptLines(now).filter(Boolean);
+  let next=0;
+  for(const text of head)if(next<base.length&&text===base[next])next++;
+  if(next===base.length)return [];
+  let start=0,baseEnd=base.length,headEnd=head.length;
+  while(start<baseEnd&&start<headEnd&&base[start]===head[start])start++;
+  while(baseEnd>start&&headEnd>start&&base[baseEnd-1]===head[headEnd-1]){baseEnd--;headEnd--;}
+  const n=baseEnd-start,m=headEnd-start,width=m+1;
+  if((n+1)*width>rewrittenCells)return at.slice(start,baseEnd);
+  // common[i*width+j]: how many lines of base[start+i…] are in head[start+j…] in their order, at most.
+  const common=new Uint16Array((n+1)*width);
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)
+    common[i*width+j]=base[start+i]===head[start+j]?common[(i+1)*width+j+1]+1:Math.max(common[(i+1)*width+j],common[i*width+j+1]);
+  const gone=[];
+  for(let i=0,j=0;i<n;){
+    if(j<m&&base[start+i]===head[start+j]){i++;j++;}
+    else if(j>=m||common[(i+1)*width+j]>=common[i*width+j+1]){gone.push(at[start+i]);i++;}
+    else j++;
+  }
+  return gone;
+}
 // Whether the guard running here is the base's and the head's own: its file against theirs, read as git stores
 // them. The run of a change to the guard workflow with the head's own guard shows how the change judges itself; the run
 // with the base's guard judges it.
@@ -228,8 +280,8 @@ function guardCode(repo,commits){
   return {base:same(commits.base),head:same(commits.head)};
 }
 
-// What a change does to the audit itself (a removed check or pin, a file that checks less, a lowered oldest browser or
-// Playwright, a version raised past the next patch) passes only when the change records each one with a reason; a record that
+// What a change does to the audit itself (a removed check or pin, a file that checks less, a test script rewritten with
+// the product, a lowered oldest browser or Playwright, a version raised past the next patch) passes only when the change records each one with a reason; a record that
 // matches nothing this change does fails too. As for behaviour changes, an entry kept from the base covers nothing: each change gives its own reasons, which the report lists for the owner to read before the merge.
 // The record keeps two lists: `changes` for what the change does to the checks, pins and the version, and `allowances` for
 // each entry it adds to an allowance (grown). An entry in the other list than its own matches nothing there, so it fails.
@@ -262,7 +314,7 @@ export function guardStatus(report){
 }
 
 const emptyReport=(base,head)=>({schema:guardReportSchema,status:'FAIL',base,head,mergeBase:null,
-  guardCode:null,identitySizes:null,removed:{},grown:{},pinFiles:{},version:null,versionIssues:[],releaseIssues:[],behaviour:null,behaviourIssues:[],weakened:[],auditChanges:[],auditChangeIssues:[],errors:[]});
+  guardCode:null,identitySizes:null,removed:{},grown:{},pinFiles:{},version:null,versionIssues:[],releaseIssues:[],behaviour:null,behaviourIssues:[],weakened:[],rewritten:[],auditChanges:[],auditChangeIssues:[],errors:[]});
 // limitMs: how long one run of a product (one child: the worlds, the assist cases or the lines of one product) may take
 // before the guard stops it with an error (guardLimitMs).
 export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs}){
@@ -347,6 +399,16 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
       countCache.set(key,assertionCounts(rows.map(([file])=>file),file=>blobs.get(byFile.get(file)).toString('utf8')));}
       return countCache.get(key);};
     report.weakened=weakenedFiles(counts(mergeBase),counts(headCommit));
+    // A test script of the base whose lines the head rewrites, removes or puts in another order, in a change that also
+    // changes src/, extensions/ or the product, is an audit change to record (AUDIT.md「試験の書きかえ」): the expectation
+    // and the code it holds change in one merge. Only the scripts whose bytes differ are read.
+    const withProduct=productChanged||before.extensions!==after.extensions;
+    if(withProduct){
+      const scripts=commit=>new Map(treeEntries(repo,commit,'audit').filter(e=>e.type==='blob'&&testScriptPattern.test(e.path)).map(e=>[e.path,e.oid]));
+      const was=scripts(mergeBase),now=scripts(headCommit),differing=[...was].filter(([file,oid])=>now.get(file)!==oid);
+      const blobs=readBlobs(repo,differing.flatMap(([file,oid])=>[oid,now.get(file)]).filter(Boolean));
+      report.rewritten=differing.map(([file,oid])=>({file,lines:rewrittenLines(blobs.get(oid),now.has(file)?blobs.get(now.get(file)):Buffer.alloc(0))})).filter(r=>r.lines.length);
+    }
     const expected=productChanged?nextPatch(before.version):before.version;
     report.version={base:before.version,head:after.version,expected,productChanged};
     // A product change raises the version: one patch by default; any other raise is an audit change.
@@ -364,11 +426,12 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
     // A grown allowance is recorded too, in the record's allowances; it may come with the product change it is for (the
     // finding it allows is there).
     const grown=Object.entries(report.grown).flatMap(([category,items])=>items.map(item=>category+':'+item));
-    const items=[...less,...(report.removed.pin||[]).map(id=>'pin:'+id),...(report.version.beyondPatch?['version:'+after.version]:[])];
+    // (a rewritten test script checks no less by itself, so it is recorded with the product change it comes with)
+    const items=[...less,...(report.removed.pin||[]).map(id=>'pin:'+id),...report.rewritten.map(r=>'rewritten-test:'+r.file),...(report.version.beyondPatch?['version:'+after.version]:[])];
     const audited=auditChangeIssues(items,auditRecord(mergeBase),auditRecord(headCommit),grown);report.auditChanges=audited.recorded;report.auditChangeIssues=audited.issues;
     // A change that checks less is recorded only in a change of the audit alone: with src/, extensions/ or the product
     // changed as well, the owner would read the weaker audit and the code it lets through in one merge.
-    if(productChanged||before.extensions!==after.extensions)for(const c of audited.recorded)if(less.includes(c.change))
+    if(withProduct)for(const c of audited.recorded)if(less.includes(c.change))
       report.auditChangeIssues.push('the audit change '+c.change+' checks less, and this change also changes src/, extensions/ or the product: record it in a change of the audit alone');
     const release='audit/manifests/release-'+after.version+'.json';
     if(JSON.stringify(after.releases)!==JSON.stringify([release]))report.releaseIssues.push('exactly one release manifest, '+release+', must exist; found '+(after.releases.join(', ')||'none'));
@@ -387,7 +450,7 @@ export function formatGuardReport(report){
       'Behaviour: '+line.differing+' of '+line.cases+' lines of the specification worlds parse otherwise than with the base product');}
   for(const message of [...report.errors,...report.versionIssues,...report.releaseIssues,...report.behaviourIssues,...report.auditChangeIssues])lines.push('- '+message);
   const removed=Object.entries(report.removed),intended=report.behaviour?.intended??[],grown=Object.entries(report.grown||{});
-  if(removed.length||grown.length||intended.length||report.weakened.length||report.version?.beyondPatch){
+  if(removed.length||grown.length||intended.length||report.weakened.length||report.rewritten.length||report.version?.beyondPatch){
     lines.push('','For the owner to read before the merge:');
     const why=change=>{const r=report.auditChanges.find(c=>c.change===change);return r?': '+r.reason:'';};
     if(report.version?.beyondPatch)lines.push('- the product version '+report.version.head+' is raised past the next patch '+report.version.expected+why('version:'+report.version.head));
@@ -395,6 +458,7 @@ export function formatGuardReport(report){
     for(const [category,items] of grown)for(const item of items)lines.push('- a new '+category+' entry '+item+why(category+':'+item));
     for(const change of intended)lines.push('- changed behaviour of '+change.case+(Object.hasOwn(report.behaviour.lines,change.case)?' '+JSON.stringify(report.behaviour.lines[change.case]):'')+': '+change.reason);
     for(const file of report.weakened)lines.push('- fewer checks in '+file+why('fewer-checks:'+file.slice(0,file.indexOf(': '))));
+    for(const {file,lines:gone} of report.rewritten)lines.push('- rewritten, removed or reordered lines in '+file+' ('+gone.length+' of the base: '+gone.slice(0,10).join(', ')+(gone.length>10?', …':'')+')'+why('rewritten-test:'+file));
   }
   return lines.join('\n');
 }
