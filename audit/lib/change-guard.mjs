@@ -1,7 +1,8 @@
 // Pull-request change guard. Compares the audit identity of the merge base with the head: a removed check ID, a changed
 // pin or a file that checks less passes only when the change records it with a reason, which the report lists for the
 // owner to read before the merge; one that checks less is recorded only in a change of the audit alone. A test script
-// whose lines are rewritten or removed in a change of the product is recorded with a reason too. The product
+// whose lines are rewritten or removed in a change that also changes src/, extensions/ or the product is recorded with a
+// reason too. The product
 // version and the release manifest rules hold whatever is recorded.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -228,15 +229,33 @@ const testScriptOptions={sourceType:'unambiguous',allowAwaitOutsideFunction:true
 function testScriptLines(script){
   try{return scriptTokenLines(script,testScriptOptions);}catch{return script.split('\n').map(line=>line.trim());}
 }
-// The lines of the base's test script that the head's script no longer has, as line numbers of the base's script: a
-// line the head has fewer times than the base, read as its tokens (spacing and comments alone change no line, and a
-// line with no token is no line). A line moved as it is, or with lines added around it, is still there. A script the
-// head lacks has none of the base's lines.
+// The lines of the base's test script that the head's script no longer has in their order, as line numbers of the
+// base's script. Lines are read as their tokens (spacing and comments alone change no line, and a line with no token is
+// no line). Nothing is rewritten when the head holds every line of the base in the base's order, whatever lines it adds
+// between them; otherwise the rewritten lines are those a smallest set of removals takes from the base, so a line
+// changed, removed or put before a line it came after is one. A script the head lacks has none of the base's lines.
 export function rewrittenLines(before,after){
-  const left=new Map();
-  for(const text of testScriptLines(after))if(text)left.set(text,(left.get(text)??0)+1);
+  const at=[],base=[];
+  testScriptLines(before).forEach((text,i)=>{if(text){at.push(i+1);base.push(text);}});
+  const head=testScriptLines(after).filter(Boolean);
+  let next=0;
+  for(const text of head)if(next<base.length&&text===base[next])next++;
+  if(next===base.length)return [];
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-lines-'));
+  let out;
+  try{
+    const fa=path.join(dir,'base.txt'),fb=path.join(dir,'head.txt');
+    fs.writeFileSync(fa,base.map(text=>text+'\n').join(''));fs.writeFileSync(fb,head.map(text=>text+'\n').join(''));
+    const r=cp.spawnSync('git',['diff','--no-index','--no-color','--no-ext-diff','--minimal','--diff-algorithm=myers','-U0','--',fa,fb],{encoding:'utf8',maxBuffer:512*1024*1024,timeout:guardLimitMs});
+    if(r.status!==0&&r.status!==1)throw new Error('the comparison of the test scripts failed: '+(r.error?.message||r.stderr));
+    out=r.stdout;
+  }finally{fs.rmSync(dir,{recursive:true,force:true});}
   const gone=[];
-  testScriptLines(before).forEach((text,i)=>{if(!text)return;const n=left.get(text)??0;if(n)left.set(text,n-1);else gone.push(i+1);});
+  for(const row of out.split('\n')){
+    const hunk=row.match(/^@@ -(\d+)(?:,(\d+))? \+/);
+    if(hunk)for(let k=0;k<Number(hunk[2]??1);k++)gone.push(at[Number(hunk[1])-1+k]);
+  }
+  if(!gone.length)throw new Error('the comparison of the test scripts names no rewritten line');
   return gone;
 }
 // Whether the guard running here is the base's and the head's own: its file against theirs, read as git stores
