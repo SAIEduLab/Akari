@@ -1,9 +1,8 @@
 // Pull-request change guard. Compares the audit identity of the merge base with the head: a removed check ID, a changed
 // pin or a file that checks less passes only when the change records it with a reason, which the report lists for the
 // owner to read before the merge; one that checks less is recorded only in a change of the audit alone. A test script
-// whose lines are rewritten or removed in a change that also changes src/, extensions/ or the product is recorded with a
-// reason too. The product
-// version and the release manifest rules hold whatever is recorded.
+// whose lines are rewritten, removed or put in another order in a change that also changes src/, extensions/ or the
+// product is recorded with a reason too. The product version and the release manifest rules hold whatever is recorded.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -224,38 +223,49 @@ export function changedScriptLines(beforeHtml,afterHtml){
 // The test scripts (AUDIT.md「試験の書きかえ」): the product suites, the browser cases and the audit's tests.
 export const testScriptPattern=/^audit\/(?:suites|browser\/cases|tests)\/.*\.(?:m|c)?js$/;
 const testScriptOptions={sourceType:'unambiguous',allowAwaitOutsideFunction:true};
-// The lines of a test script as its tokens read them. A script that cannot be read as one is its lines of text without
-// the spacing at their ends, so any change of such a line is a change.
+// The lines of a test script as its tokens read them (each a JSON array). A script that cannot be read as one is its
+// lines of text without the spacing at their ends, each marked as text, so it equals no line of tokens.
 function testScriptLines(script){
-  try{return scriptTokenLines(script,testScriptOptions);}catch{return script.split('\n').map(line=>line.trim());}
+  try{return scriptTokenLines(script,testScriptOptions);}catch{return script.split('\n').map(line=>line.trim()&&'text:'+line.trim());}
 }
-// The lines of the base's test script that the head's script no longer has in their order, as line numbers of the
-// base's script. Lines are read as their tokens (spacing and comments alone change no line, and a line with no token is
-// no line). Nothing is rewritten when the head holds every line of the base in the base's order, whatever lines it adds
-// between them; otherwise the rewritten lines are those a smallest set of removals takes from the base, so a line
-// changed, removed or put before a line it came after is one. A script the head lacks has none of the base's lines.
+// The two scripts as text: their UTF-8 text, or, when either holds bytes that are not UTF-8, both byte for byte, so
+// that other bytes are other text.
+function scriptTexts(...scripts){
+  const bytes=scripts.map(script=>typeof script==='string'?Buffer.from(script,'utf8'):script),texts=bytes.map(b=>b.toString('utf8'));
+  return texts.every((text,i)=>Buffer.from(text,'utf8').equals(bytes[i]))?texts:bytes.map(b=>b.toString('latin1'));
+}
+// The most cells the table of rewrittenLines holds: 2^24 (32 MB), over twice a test script of 2800 lines (the longest
+// has about that many) rewritten in every line.
+const rewrittenCells=1<<24;
+// The lines of the base's test script (its bytes or its text) that the head's script no longer has in their order, as
+// line numbers of the base's script. Lines are read as their tokens (spacing and comments alone change no line, and a
+// line with no token is no line). Nothing is rewritten when the head holds every line of the base in the base's order,
+// whatever lines it adds between them. Otherwise the rewritten lines are the fewest lines to take from the base so that
+// the rest is in the head in that order (of two such sets, the one that takes the earlier line): a line changed, removed
+// or put in another order is among them. Between the first and the last line that differ, two scripts too long for the
+// table have all the base's lines rewritten. A script the head lacks (given as empty) has none of the base's lines.
 export function rewrittenLines(before,after){
-  const at=[],base=[];
-  testScriptLines(before).forEach((text,i)=>{if(text){at.push(i+1);base.push(text);}});
-  const head=testScriptLines(after).filter(Boolean);
+  const [was,now]=scriptTexts(before,after),at=[],base=[];
+  testScriptLines(was).forEach((text,i)=>{if(text){at.push(i+1);base.push(text);}});
+  const head=testScriptLines(now).filter(Boolean);
   let next=0;
   for(const text of head)if(next<base.length&&text===base[next])next++;
   if(next===base.length)return [];
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-lines-'));
-  let out;
-  try{
-    const fa=path.join(dir,'base.txt'),fb=path.join(dir,'head.txt');
-    fs.writeFileSync(fa,base.map(text=>text+'\n').join(''));fs.writeFileSync(fb,head.map(text=>text+'\n').join(''));
-    const r=cp.spawnSync('git',['diff','--no-index','--no-color','--no-ext-diff','--minimal','--diff-algorithm=myers','-U0','--',fa,fb],{encoding:'utf8',maxBuffer:512*1024*1024,timeout:guardLimitMs});
-    if(r.status!==0&&r.status!==1)throw new Error('the comparison of the test scripts failed: '+(r.error?.message||r.stderr));
-    out=r.stdout;
-  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+  let start=0,baseEnd=base.length,headEnd=head.length;
+  while(start<baseEnd&&start<headEnd&&base[start]===head[start])start++;
+  while(baseEnd>start&&headEnd>start&&base[baseEnd-1]===head[headEnd-1]){baseEnd--;headEnd--;}
+  const n=baseEnd-start,m=headEnd-start,width=m+1;
+  if((n+1)*width>rewrittenCells)return at.slice(start,baseEnd);
+  // common[i*width+j]: how many lines of base[start+i…] are in head[start+j…] in their order, at most.
+  const common=new Uint16Array((n+1)*width);
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)
+    common[i*width+j]=base[start+i]===head[start+j]?common[(i+1)*width+j+1]+1:Math.max(common[(i+1)*width+j],common[i*width+j+1]);
   const gone=[];
-  for(const row of out.split('\n')){
-    const hunk=row.match(/^@@ -(\d+)(?:,(\d+))? \+/);
-    if(hunk)for(let k=0;k<Number(hunk[2]??1);k++)gone.push(at[Number(hunk[1])-1+k]);
+  for(let i=0,j=0;i<n;){
+    if(j<m&&base[start+i]===head[start+j]){i++;j++;}
+    else if(j>=m||common[(i+1)*width+j]>=common[i*width+j+1]){gone.push(at[start+i]);i++;}
+    else j++;
   }
-  if(!gone.length)throw new Error('the comparison of the test scripts names no rewritten line');
   return gone;
 }
 // Whether the guard running here is the base's and the head's own: its file against theirs, read as git stores
@@ -387,15 +397,15 @@ export async function changeGuard({repo,base,head,workDir,limitMs=guardLimitMs})
       countCache.set(key,assertionCounts(rows.map(([file])=>file),file=>blobs.get(byFile.get(file)).toString('utf8')));}
       return countCache.get(key);};
     report.weakened=weakenedFiles(counts(mergeBase),counts(headCommit));
-    // A test script of the base whose lines the head rewrites or removes, in a change that also changes src/,
-    // extensions/ or the product, is an audit change to record (AUDIT.md「試験の書きかえ」): the expectation and the code
-    // it holds change in one merge. Only the scripts whose bytes differ are read.
+    // A test script of the base whose lines the head rewrites, removes or puts in another order, in a change that also
+    // changes src/, extensions/ or the product, is an audit change to record (AUDIT.md「試験の書きかえ」): the expectation
+    // and the code it holds change in one merge. Only the scripts whose bytes differ are read.
     const withProduct=productChanged||before.extensions!==after.extensions;
     if(withProduct){
       const scripts=commit=>new Map(treeEntries(repo,commit,'audit').filter(e=>e.type==='blob'&&testScriptPattern.test(e.path)).map(e=>[e.path,e.oid]));
       const was=scripts(mergeBase),now=scripts(headCommit),differing=[...was].filter(([file,oid])=>now.get(file)!==oid);
-      const blobs=readBlobs(repo,differing.flatMap(([file,oid])=>[oid,now.get(file)]).filter(Boolean)),read=oid=>oid?blobs.get(oid).toString('utf8'):'';
-      report.rewritten=differing.map(([file,oid])=>({file,lines:rewrittenLines(read(oid),read(now.get(file)))})).filter(r=>r.lines.length);
+      const blobs=readBlobs(repo,differing.flatMap(([file,oid])=>[oid,now.get(file)]).filter(Boolean));
+      report.rewritten=differing.map(([file,oid])=>({file,lines:rewrittenLines(blobs.get(oid),now.has(file)?blobs.get(now.get(file)):Buffer.alloc(0))})).filter(r=>r.lines.length);
     }
     const expected=productChanged?nextPatch(before.version):before.version;
     report.version={base:before.version,head:after.version,expected,productChanged};
@@ -446,7 +456,7 @@ export function formatGuardReport(report){
     for(const [category,items] of grown)for(const item of items)lines.push('- a new '+category+' entry '+item+why(category+':'+item));
     for(const change of intended)lines.push('- changed behaviour of '+change.case+(Object.hasOwn(report.behaviour.lines,change.case)?' '+JSON.stringify(report.behaviour.lines[change.case]):'')+': '+change.reason);
     for(const file of report.weakened)lines.push('- fewer checks in '+file+why('fewer-checks:'+file.slice(0,file.indexOf(': '))));
-    for(const {file,lines:gone} of report.rewritten)lines.push('- rewritten or removed lines in '+file+' ('+gone.length+' of the base: '+gone.slice(0,10).join(', ')+(gone.length>10?', …':'')+')'+why('rewritten-test:'+file));
+    for(const {file,lines:gone} of report.rewritten)lines.push('- rewritten, removed or reordered lines in '+file+' ('+gone.length+' of the base: '+gone.slice(0,10).join(', ')+(gone.length>10?', …':'')+')'+why('rewritten-test:'+file));
   }
   return lines.join('\n');
 }

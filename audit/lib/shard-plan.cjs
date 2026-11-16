@@ -26,7 +26,7 @@ const splits={
   // 91 cases in two parts, one for each pair of groups the test runs together (gated by its first case): the tree,
   // record, version and language rules with the confinement (58 cases); and the behaviour and limit rules, the assertion,
   // rewritten-test and changed-line rules, the test map and the record without a change (33 cases). On one machine
-  // (16 CPUs) the first part takes 114 s and the second 219 s; in a CI run the first took 187 s. In the second part a
+  // (16 CPUs) the first part takes 114 s and the second about 220 s; in a CI run the first took 187 s. In the second part a
   // guard run that records a product takes about 13 s for its worlds and, at the same time, about 45 s for the full
   // assist fixture; the cases about the worlds give the assist a small fixture. One comparison of changed lines takes
   // about 3 s and the test map about 10 s.

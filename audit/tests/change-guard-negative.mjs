@@ -418,9 +418,9 @@ try {
     // Recorded with a reason, the change passes and the report lists each script with its lines and the reason.
     const recorded=await guard(derive({...withProduct(),...rewritten,...record(...names)}));
     assert.equal(recorded.status,'PASS','recorded rewritten test scripts: '+JSON.stringify(recorded));assert.deepEqual(recorded.rewritten,expected);
-    for(const {file,lines} of expected)assert.ok(formatGuardReport(recorded).includes('- rewritten or removed lines in '+file+' (1 of the base: '+lines[0]+'): an audit change made for this guard case'),file+' is listed for the owner');
+    for(const {file,lines} of expected)assert.ok(formatGuardReport(recorded).includes('- rewritten, removed or reordered lines in '+file+' (1 of the base: '+lines[0]+'): an audit change made for this guard case'),file+' is listed for the owner');
     // (the report names the first ten lines of a script, then …)
-    assert.ok(formatGuardReport({...recorded,rewritten:[{file:scripts[2],lines:Array.from({length:12},(_,i)=>i+1)}]}).includes('- rewritten or removed lines in '+scripts[2]+' (12 of the base: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …): '),'a long list of lines is cut');
+    assert.ok(formatGuardReport({...recorded,rewritten:[{file:scripts[2],lines:Array.from({length:12},(_,i)=>i+1)}]}).includes('- rewritten, removed or reordered lines in '+scripts[2]+' (12 of the base: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, …): '),'a long list of lines is cut');
     // (src/ changed with the product file as it was asks the same)
     const withSource=await guard(derive({...release(nextPatch(version),{changeSource:true}),'audit/tests/static-contract.mjs':rewritten['audit/tests/static-contract.mjs']}));
     assert.equal(withSource.status,'FAIL','a rewritten test script with src/ changed');only(withSource,'it fails only for the record');
@@ -437,11 +437,19 @@ try {
     const free=[...contractLines];free[first]='  '+free[first]+' // indented';free.splice(first,0,'// a comment added','void 0;');free.push('void 1;');
     assert.deepEqual(rewrittenLines(contract,free.join('\n')),[],'added lines, a comment and spacing rewrite no line');
     assert.deepEqual(rewrittenLines('a();\n\n// n\nb();\n','a();\nb();\n'),[],'a comment and an empty line removed rewrite no line');
-    // A line changed, removed or put in another order is rewritten: one of two lines that read the same, spacing in a
-    // string, a script that is gone, two lines that change places (one of them is named), a line put after the lines
-    // that followed it, and the ends of two checks that change places.
-    assert.deepEqual([rewrittenLines('x();\ny();\nx();\n','x();\ny();\n'),rewrittenLines("eq(t,'a b');\n","eq(t,'a  b');\n"),rewrittenLines('a=1;\nb=2;\n',''),rewrittenLines('a();\nb();\n','b();\na();\n').length,
-      rewrittenLines('x();\na();\nb();\nc();\n','a();\nb();\nc();\nx();\n'),rewrittenLines('eq(f(1),\n  2);\neq(f(2),\n  3);\n','eq(f(1),\n  3);\neq(f(2),\n  2);\n').length>0],[[3],[1],[1,2],1,[1],true],'changed, removed and reordered lines');
+    // A line changed, removed or put in another order is rewritten, and is named by its line in the base's script: one
+    // of two lines that read the same, spacing in a string, a script that is gone, a line after lines with no token,
+    // two changes apart, two lines that change places (the earlier is named), a line put after the lines that followed
+    // it, the ends of two checks that change places, and two pairs of lines that change places.
+    assert.deepEqual([rewrittenLines('x();\ny();\nx();\n','x();\ny();\n'),rewrittenLines("eq(t,'a b');\n","eq(t,'a  b');\n"),rewrittenLines('a=1;\nb=2;\n',''),rewrittenLines('a();\n\n// c\nb();\n','a();\nc();\n'),
+      rewrittenLines('a();\nb();\nc();\nd();\ne();\n','A();\nb();\nc();\nd();\nE();\n'),rewrittenLines('a();\nb();\n','b();\na();\n'),rewrittenLines('x();\na();\nb();\nc();\n','a();\nb();\nc();\nx();\n'),
+      rewrittenLines('eq(f(1),\n  2);\neq(f(2),\n  3);\n','eq(f(1),\n  3);\neq(f(2),\n  2);\n'),rewrittenLines('a();\nb();\nc();\nd();\ne();\nf();\n','c();\nd();\na();\nb();\ne();\nf();\n')],
+      [[3],[1],[1,2],[4],[1,5],[1],[1],[2,3],[1,2]],'changed, removed and reordered lines');
+    // The fewest lines are named: of 100 lines whose pairs change places, 50. Two scripts too long for the table have
+    // every line between the first and the last that differ named, and lines only added to a long script name none.
+    const manyLines=(count,line)=>Array.from({length:count},(_,i)=>line(i)).join('\n')+'\n',call=i=>'f'+i+'();';
+    assert.deepEqual([rewrittenLines(manyLines(100,call),manyLines(100,i=>call(i^1))).length,rewrittenLines(manyLines(4100,call),manyLines(4100,i=>call(i^1))).length,
+      rewrittenLines(manyLines(4100,call),manyLines(8200,i=>i%2?call(i>>1):'g'+i+'();'))],[50,4100,[]],'the fewest lines, and scripts too long for the table');
     const freeEdits={'audit/tests/static-contract.mjs':free.join('\n'),'audit/lib/assertion-counts.mjs':rewrite('audit/lib/assertion-counts.mjs')[0]};
     const unasked=await guard(derive({...withProduct(),...freeEdits}));
     assert.deepEqual([unasked.status,unasked.rewritten],['PASS',[]],'no line is rewritten: '+JSON.stringify(unasked));
@@ -462,6 +470,11 @@ try {
     assert.equal(unreadable.status,'FAIL','an unreadable test script without a record');only(unreadable,'it fails only for the record');assert.deepEqual(unreadable.rewritten,gone);
     assert.deepEqual(rewrittenLines('a=1;\nb=;\n','a=1;\n  b=;\n'),[],'two scripts that cannot be read are compared as text, spacing at the ends of a line apart');
     assert.deepEqual(rewrittenLines('a=1;\nb=;\n','a=2;\nb=;\n'),[1],'a line of a script that cannot be read, changed');
+    // (a line of text equals no line of tokens, also when it reads as one; a NUL changes nothing in this; bytes that are
+    // not UTF-8 are compared byte for byte)
+    assert.deepEqual([rewrittenLines('x;\n','["x",";"]\nfoo=;\n'),rewrittenLines('a=;\n\0x\n','b=;\n\0y\n'),rewrittenLines('a();\n','b\0=;\n')],[[1],[1,2],[1]],'text lines against token lines, and NUL');
+    const bytes=byte=>Buffer.from([0x61,0x3d,0x22,byte,0x22,0x3b,0x0a]);
+    assert.deepEqual([rewrittenLines(bytes(0xff),bytes(0xfe)),rewrittenLines(bytes(0xff),bytes(0xff))],[[1],[]],'bytes that are not UTF-8');
     pass('assertions/rewritten-test-unreadable');
   }
   // Spacing alone changes no line: a line of the extension host the product embeds, indented further, changes the
