@@ -105,3 +105,36 @@ export interface AssistCandidate {
   assist: true; schemaId: string; origin: string; label: string; text: string; sentence?: string; source: string;
   start: number; end: number; description?: string;
 }
+
+// A normalized text stream produced by the two-layer token protection lattice (bound-first and general).
+export interface AssistLatticeVariant {
+  text: string; boundFirst: boolean;
+}
+
+// Structural decomposition tree of a sentence before leaf synthesis.
+// Uses skeletonTag so dispatch-value audits do not confuse it with AST node properties.
+export type AssistSkeleton =
+  | { skeletonTag: 'LeafClause'; raw: string }
+  | { skeletonTag: 'SequenceWrap'; children: AssistSkeleton[] }
+  | { skeletonTag: 'HeadingWrap'; headerText: string; body: AssistSkeleton; repeatCount?: number }
+  | { skeletonTag: 'RepeatCountWrap'; count: number; body: AssistSkeleton; spanStart?: number; spanEnd?: number }
+  | { skeletonTag: 'ForeverWrap'; body: AssistSkeleton }
+  | { skeletonTag: 'RepeatUntilWrap'; conditionText: string; body: AssistSkeleton; explicitComma?: boolean }
+  | { skeletonTag: 'WhileOrContinuousWrap'; conditionText: string; body: AssistSkeleton; isKeyHold?: boolean; speedSec?: number; speedSteps?: number; directionWord?: string }
+  | { skeletonTag: 'IfWrap'; conditionText: string; body: AssistSkeleton | null }
+  | { skeletonTag: 'ForEachWrap'; listName: string; seconds: number };
+
+// Memoized neutral-baseline results for assistWorkCheck, keyed by span.
+export interface AssistWorkCheckBaseline {
+  neutralReach: number;
+  neutralErrors: string[];
+  neutralUnchecked: boolean;
+}
+export type AssistWorkCheckCache = Map<string, AssistWorkCheckBaseline>;
+
+// Deterministic budget and template AST cache shared across one assistCandidates pass.
+export interface AssistRunState {
+  parsesRemaining: number;
+  templateCache: Map<string, AssistCanonical | null>;
+  workCheckCache: AssistWorkCheckCache;
+}

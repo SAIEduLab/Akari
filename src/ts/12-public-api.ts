@@ -17,7 +17,9 @@ import { createAkariStageView } from './08-stage-view.ts';
 import { PORTABLE_FUNCTIONS, generateStandaloneHtml, packExecutable } from './08-stage-and-export.ts';
 import { blockInsertionAvailability, builtinAssetRecords, blockPaletteGroup, blockShapeKind, blockShapePath, blockZoomCore, blockZoomScroll, buildBlockIndex, createEditorSession, prepareBlockEdit, refreshEditorSession, resolvedEditorMode, searchReading } from './09-editor-sessions.ts';
 import { searchIntent } from './09-editor-search-core.ts';
-import { assistCandidates, assistKeepsCondition, assistKeepsWritten, assistProposalKeepsSubject, assistSeeds, blockBodyRanges, blockPaletteSearchText, blockSearchCandidates, searchHintCandidates } from './09-editor-search.ts';
+import { assistSeeds } from './09-assist-normalize.ts';
+import { assistKeepsCondition, assistKeepsWritten, assistProposalKeepsSubject } from './09-assist-verify.ts';
+import { assistCandidates, blockBodyRanges, blockPaletteSearchText, blockSearchCandidates, searchHintCandidates } from './09-editor-search.ts';
 import { COLOR_PRESETS, DESIGN_RESIZE_DIRECTIONS, designResizeGeometry, designResizeMode, designResizePoint, pickerHex, pickerHexToHsv, pickerHsvToHex, pickerRgb, pickerWheelHS } from './10-block-view.ts';
 import { app, initApp } from './11-application.ts';
 

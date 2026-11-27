@@ -1,6 +1,6 @@
 {
   "schema": "akari-public-files-v1",
-  "productVersion": "1.0.5",
+  "productVersion": "1.0.6",
   "files": [
     ".gitattributes",
     ".github/CODEOWNERS",
@@ -10,9 +10,9 @@
     ".github/workflows/akari-work-authorization.yml",
     ".gitignore",
     "AUDIT.md",
-    "Akari_1_0_5.html",
+    "Akari_1_0_6.html",
     "EXTENSIONS.md",
-    "LANGUAGE_1_0_5.md",
+    "LANGUAGE_1_0_6.md",
     "LICENSE",
     "MANUAL.html",
     "Manual/.gitkeep",
@@ -240,7 +240,7 @@
     "audit/manifests/intended-behaviour-changes.json",
     "audit/manifests/language-form-coverage.json",
     "audit/manifests/product-tests.json",
-    "audit/manifests/release-1.0.5.json",
+    "audit/manifests/release-1.0.6.json",
     "audit/manifests/samples.json",
     "audit/public-files.json",
     "audit/renumber-release.mjs",
@@ -434,6 +434,9 @@
     "src/ts/08-player.ts",
     "src/ts/08-stage-and-export.ts",
     "src/ts/08-stage-view.ts",
+    "src/ts/09-assist-decompose.ts",
+    "src/ts/09-assist-normalize.ts",
+    "src/ts/09-assist-verify.ts",
     "src/ts/09-editor-search-core.ts",
     "src/ts/09-editor-search.ts",
     "src/ts/09-editor-sessions.ts",
@@ -469,5 +472,5 @@
     "src/types/view.d.ts",
     "tsconfig.json"
   ],
-  "productFile": "Akari_1_0_5.html"
+  "productFile": "Akari_1_0_6.html"
 }

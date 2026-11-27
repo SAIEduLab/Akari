@@ -3431,6 +3431,46 @@
   {
    "name": "AssertionError",
    "code": "ERR_ASSERTION",
+   "line": "ASSIST-1633 first",
+   "at": "audit/lib/code-assist-contract.mjs",
+   "detail": "+   schemaId: 'MotionCommand:MOVE',"
+  },
+  {
+   "name": "AssertionError",
+   "code": "ERR_ASSERTION",
+   "line": "ASSIST-1636 first",
+   "at": "audit/lib/code-assist-contract.mjs",
+   "detail": "+   text: 'ずっとくり返す。\\n  前へ10歩進む。'"
+  },
+  {
+   "name": "AssertionError",
+   "code": "ERR_ASSERTION",
+   "line": "ASSIST-1642 absent {\"schemaId\":\"LooksCommand:SET_SCALE\",\"text\":\"大きさを10％にする。\"}",
+   "at": "audit/lib/code-assist-contract.mjs"
+  },
+  {
+   "name": "AssertionError",
+   "code": "ERR_ASSERTION",
+   "line": "ASSIST-1648 absent \"ListInsert\"",
+   "at": "audit/lib/code-assist-contract.mjs"
+  },
+  {
+   "name": "AssertionError",
+   "code": "ERR_ASSERTION",
+   "line": "ASSIST-1639 first",
+   "at": "audit/lib/code-assist-contract.mjs",
+   "detail": "+   text: '3回くり返す。\\n  いまのばしょから、上へ10歩動く。'"
+  },
+  {
+   "name": "AssertionError",
+   "code": "ERR_ASSERTION",
+   "line": "ASSIST-1613 first",
+   "at": "audit/lib/code-assist-contract.mjs",
+   "detail": "+   text: '「星」にふれるまで、くり返す。\\n  いまのばしょから、右へ10歩動く。\\n  「ついた」と言う。'"
+  },
+  {
+   "name": "AssertionError",
+   "code": "ERR_ASSERTION",
    "line": "The input was expected to not match the regular expression /候補|構文|スキーマ/. Input:",
    "at": "audit/lib/code-assist-contract.mjs"
   },
@@ -6897,14 +6937,14 @@
    "code": "ERR_ASSERTION",
    "line": "product filename must match release label",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+ 'Akari_1_0_6.html'"
+   "detail": "+ 'Akari_1_0_7.html'"
   },
   {
    "name": "AssertionError",
    "code": "ERR_ASSERTION",
    "line": "product filename must match release label",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+ 'Akari1_0_5.html'"
+   "detail": "+ 'Akari1_0_6.html'"
   },
   {
    "name": "AssertionError",
@@ -6939,14 +6979,14 @@
    "code": "ERR_ASSERTION",
    "line": "no retired product in publication",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+   'Akari_1_0_6.html'"
+   "detail": "+   'Akari_1_0_7.html'"
   },
   {
    "name": "AssertionError",
    "code": "ERR_ASSERTION",
    "line": "no retired product in publication",
    "at": "audit/lib/product-path.cjs",
-   "detail": "+   'Akari1_0_5.html'"
+   "detail": "+   'Akari1_0_6.html'"
   }
  ],
  "surface-negative#1": [

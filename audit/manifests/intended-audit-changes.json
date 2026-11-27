@@ -1,6 +1,11 @@
 {
   "schema": "akari-intended-audit-changes-v1",
-  "changes": [],
+  "changes": [
+    {
+      "change": "rewritten-test:audit/suites/runAkariSelfTests.js",
+      "reason": "Updated expected assist outputs on lines 629-630 for unpunctuated until-action inputs to RepeatUntil followed by WaitUntil."
+    }
+  ],
   "allowances": [
     {
       "change": "source-read-allowance:audit/tests/release-renumber.mjs#16",

@@ -5865,11 +5865,11 @@
         "definitionKind": null
       },
       "expect": {
-        "code": "P205",
+        "code": "P205|P201",
         "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true,
-        "existingProposals": 1,
+        "existingProposals": 0,
         "first": {
           "schemaId": "LooksCommand:SET_SCALE",
           "text": "大きさを150％にする。"
@@ -7010,11 +7010,11 @@
         "definitionKind": null
       },
       "expect": {
-        "code": "P205",
+        "code": "P205|P201",
         "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true,
-        "existingProposals": 1,
+        "existingProposals": 0,
         "first": {
           "schemaId": "LooksCommand:SET_COLOR",
           "text": "色を「赤」にする。"
@@ -9753,11 +9753,11 @@
         "definitionKind": null
       },
       "expect": {
-        "code": "P205",
+        "code": "P205|P201",
         "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true,
-        "existingProposals": 1,
+        "existingProposals": 0,
         "first": {
           "schemaId": "LooksCommand:NEXT_COSTUME",
           "text": "次のすがたにかえる。"
@@ -15177,11 +15177,11 @@
         "definitionKind": null
       },
       "expect": {
-        "code": "P205",
+        "code": "P205|P201",
         "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true,
-        "existingProposals": 1,
+        "existingProposals": 0,
         "first": {
           "schemaId": "SoundCommand:SET_VOLUME",
           "text": "音の大きさを100％にする。"
@@ -19044,11 +19044,11 @@
         "definitionKind": null
       },
       "expect": {
-        "code": "P205",
+        "code": "P205|P201",
         "absent": [],
         "maxAssist": 4,
         "differsFromOriginal": true,
-        "existingProposals": 1,
+        "existingProposals": 0,
         "first": {
           "schemaId": "PenCommand:SET_SIZE",
           "text": "ペンの太さを3にする。"
@@ -52233,7 +52233,7 @@
     {
       "id": "ASSIST-1066",
       "kind": "candidates",
-      "polarity": "negative",
+      "polarity": "positive",
       "world": {
         "parts": [
           "ねこ",
@@ -52266,10 +52266,14 @@
       },
       "expect": {
         "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が0とちがっていて、点数÷10のあまりが0と同じなら、"
+        },
         "absent": [
           "Meijin:WordCondition"
         ],
-        "maxAssist": 0,
+        "maxAssist": 4,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -52280,14 +52284,18 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+          "quote": "「からっぽ」「空っぽ」「奇数」「〜の倍数」「〜の約数」で書いた条件も、同じく書き方を案内します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
         }
       ]
     },
     {
       "id": "ASSIST-1067",
       "kind": "candidates",
-      "polarity": "negative",
+      "polarity": "positive",
       "world": {
         "parts": [
           "ねこ",
@@ -52320,10 +52328,14 @@
       },
       "expect": {
         "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし条件（点数が0より大きいかつ切り捨て（点数）が点数と同じかつ12÷点数のあまりが0と同じ）が成り立つなら、"
+        },
         "absent": [
           "Meijin:WordCondition"
         ],
-        "maxAssist": 0,
+        "maxAssist": 4,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -52334,14 +52346,18 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+          "quote": "「からっぽ」「空っぽ」「奇数」「〜の倍数」「〜の約数」で書いた条件も、同じく書き方を案内します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
         }
       ]
     },
     {
       "id": "ASSIST-1068",
       "kind": "candidates",
-      "polarity": "negative",
+      "polarity": "positive",
       "world": {
         "parts": [
           "ねこ",
@@ -52374,10 +52390,14 @@
       },
       "expect": {
         "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし持ち物の数が0なら、"
+        },
         "absent": [
           "Meijin:WordCondition"
         ],
-        "maxAssist": 0,
+        "maxAssist": 4,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -52388,14 +52408,18 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "読めない1行には、その作品にそのまま書けば読める近い書き方を、最大4つ、ボタンで示します。押したときだけ、その行をその文に書きかえます。"
+          "quote": "「からっぽ」「空っぽ」「奇数」「〜の倍数」「〜の約数」で書いた条件も、同じく書き方を案内します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
         }
       ]
     },
     {
       "id": "ASSIST-1069",
       "kind": "candidates",
-      "polarity": "negative",
+      "polarity": "positive",
       "world": {
         "parts": [
           "ねこ",
@@ -52428,10 +52452,14 @@
       },
       "expect": {
         "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が0とちがっていて、点数÷5のあまりが0と同じなら、"
+        },
         "absent": [
           "Meijin:WordCondition"
         ],
-        "maxAssist": 0,
+        "maxAssist": 4,
         "differsFromOriginal": true
       },
       "invariants": {
@@ -52442,7 +52470,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+          "quote": "「からっぽ」「空っぽ」「奇数」「〜の倍数」「〜の約数」で書いた条件も、同じく書き方を案内します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
         }
       ]
     },
@@ -72194,6 +72226,3872 @@
         {
           "file": "LANGUAGE.md",
           "quote": "時間がどちらの時間か書いていないとき（「ねこを2秒右へ動かす」）は、どちらかに決めず、意味ごとに示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1606",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "星にふれるまで右に動く",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatUntil",
+          "text": "「星」にふれるまで、くり返す。\n  いまのばしょから、右へ10歩動く。"
+        },
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ10歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「、」を書かずに「〜まで」のすぐあとに動きを書いた文（「星にふれるまで右に動く」「点数が10になるまで右に動く」）には、その動きを「〜まで、くり返す。」の中に書いた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "待ってから一度だけ動く文は、そのあとに並べて示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜まで」のあとにすることを書いた文（「星にふれるまで右に動く」）には、「〜まで、くり返す。」の文を示せないとき、待ってから一度する文も示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1607",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数が10になるまで右に動く",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatUntil",
+          "text": "点数が10になるまで、くり返す。\n  いまのばしょから、右へ10歩動く。"
+        },
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ10歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「、」を書かずに「〜まで」のすぐあとに動きを書いた文（「星にふれるまで右に動く」「点数が10になるまで右に動く」）には、その動きを「〜まで、くり返す。」の中に書いた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "待ってから一度だけ動く文は、そのあとに並べて示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1608",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "画面のはしにふれるまで前に進む",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatUntil",
+          "text": "画面のはしにふれるまで、くり返す。\n  前へ10歩進む。"
+        },
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「、」を書かずに「〜まで」のすぐあとに動きを書いた文（「星にふれるまで右に動く」「点数が10になるまで右に動く」）には、その動きを「〜まで、くり返す。」の中に書いた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1609",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "犬にふれるまで前に10歩ずつ進む",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "RepeatUntil",
+          "text": "「犬」にふれるまで、くり返す。\n  前へ10歩進む。"
+        },
+        "absent": [],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「、」を書かずに「〜まで」のすぐあとに動きを書いた文（「星にふれるまで右に動く」「点数が10になるまで右に動く」）には、その動きを「〜まで、くり返す。」の中に書いた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1610",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "星にふれるまで右に動く",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "action"
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatUntil",
+          "text": "「星」にふれるまで、くり返す。\n  いまのばしょから、右へ10歩動く。"
+        },
+        "absent": [],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「、」を書かずに「〜まで」のすぐあとに動きを書いた文（「星にふれるまで右に動く」「点数が10になるまで右に動く」）には、その動きを「〜まで、くり返す。」の中に書いた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "待ってから一度だけ動く文は、そのあとに並べて示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1611",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数が10になるまで右に動く",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "function"
+      },
+      "expect": {
+        "code": "P205",
+        "absent": [
+          "RepeatUntil",
+          "WaitUntil",
+          "MotionCommand:MOVE_BY"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「答えを もとめる」の本文と画面の本文では、この文を示しません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "画面の本文と「答えを もとめる」の本文には、そこで使えない動きの文を示しません。近い書き方が一つも無いときは「近い 書き方は ありません。「書ける ことば」で さがせます」と出します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を保つ文がないときは、近い書き方を示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1612",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数が10になるまで右に動く",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "stage",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "absent": [
+          "RepeatUntil",
+          "WaitUntil",
+          "MotionCommand:MOVE_BY"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「答えを もとめる」の本文と画面の本文では、この文を示しません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "画面の本文と「答えを もとめる」の本文には、そこで使えない動きの文を示しません。近い書き方が一つも無いときは「近い 書き方は ありません。「書ける ことば」で さがせます」と出します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1613",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "星にふれるまで右に動く\n「ついた」と言う。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatUntil",
+          "text": "「星」にふれるまで、くり返す。\n  いまのばしょから、右へ10歩動く。"
+        },
+        "absent": [
+          {
+            "schemaId": "RepeatUntil",
+            "text": "「星」にふれるまで、くり返す。\n  いまのばしょから、右へ10歩動く。\n  「ついた」と言う。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「、」を書かずに「〜まで」のすぐあとに動きを書いた文（「星にふれるまで右に動く」「点数が10になるまで右に動く」）には、その動きを「〜まで、くり返す。」の中に書いた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜して、」でつないだ文は、文ごとに主語・数・時間を比べます。そのため、ほかの文の意味は変えません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1614",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が10の倍数なら「きりがいい」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が0とちがっていて、点数÷10のあまりが0と同じなら、\n  「きりがいい」と言う。"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件のあとに、することを同じ行に続けた文には、することを次の行に書いた文を示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1615",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし持ち物がからっぽなら「からっぽ」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし持ち物の数が0なら、\n  「からっぽ」と言う。"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件のあとに、することを同じ行に続けた文には、することを次の行に書いた文を示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1616",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が12の約数なら「やくすう」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし条件（点数が0より大きいかつ切り捨て（点数）が点数と同じかつ12÷点数のあまりが0と同じ）が成り立つなら、\n  「やくすう」と言う。"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件のあとに、することを同じ行に続けた文には、することを次の行に書いた文を示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1617",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が10の倍数なら、前へ10歩進む。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が0とちがっていて、点数÷10のあまりが0と同じなら、\n  前へ10歩進む。"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件のあとに、することを同じ行に続けた文には、することを次の行に書いた文を示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1618",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし持ち物がからっぽなら、\n  「からっぽ」と言う。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし持ち物の数が0なら、"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1619",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が10の倍数なら、\n  点数を0にする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "stage",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が0とちがっていて、点数÷10のあまりが0と同じなら、"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1620",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ],
+        "functions": [
+          {
+            "name": "けいさん",
+            "args": [
+              "値"
+            ]
+          }
+        ]
+      },
+      "input": {
+        "source": "もし値が12の約数なら、\n  1を答えとして返す。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "function"
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし条件（値が0より大きいかつ切り捨て（値）が値と同じかつ12÷値のあまりが0と同じ）が成り立つなら、"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「からっぽ」「空っぽ」「奇数」「〜の倍数」「〜の約数」で書いた条件も、同じく書き方を案内します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1621",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が10の倍数なら、\n  点数を0にする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "S301",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が0とちがっていて、点数÷10のあまりが0と同じなら、"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「もし」の条件に「からっぽ」「空っぽ」「〜の倍数」「〜の約数」を書いた文には、上の案内と同じ条件に書きかえた文を、近い書き方に示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1622",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が奇数なら10歩進む",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし絶対値（点数÷2のあまり）が1なら、\n  前へ10歩進む。"
+        },
+        "absent": [
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「スコアが奇数なら」は「スコア÷2のあまりが1か－1なら」と案内します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1623",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし点数が素数なら「そすう」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "absent": [
+          "IfStatement",
+          "Meijin:WordCondition"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "素数・正の数などのほかの言葉を書いた条件には、書きかえた文を示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "素数・正の数などのほかの言葉は、この案内の対象ではありません"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1624",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "だんだん大きくする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_SCALE",
+          "text": "大きさを150％にする。"
+        },
+        "absent": [
+          "UserActionCall"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1625",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "少し小さくする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_SCALE",
+          "text": "大きさを50％にする。"
+        },
+        "absent": [
+          "UserActionCall"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1626",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "右に移動する。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "いまのばしょから、右へ10歩動く。"
+        },
+        "absent": [
+          "UserActionCall"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1627",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "音を大きくする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "stage",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "SoundCommand:SET_VOLUME",
+          "text": "音の大きさを100％にする。"
+        },
+        "absent": [
+          "UserActionCall"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1628",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "右に回転する。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "action"
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "MotionCommand:TURN_RIGHT",
+          "text": "右に15度回る。"
+        },
+        "absent": [
+          "UserActionCall",
+          "MotionCommand:TURN_LEFT"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方は、書いた文に近いものから並べます。向きや角度を書いた文では、その向きの文を先に示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1629",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "だんだん大きくする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_SCALE",
+          "text": "大きさを150％にする。"
+        },
+        "absent": [
+          "UserActionCall"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1630",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "だんだん大きくする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "stage",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "absent": [
+          "UserActionCall",
+          "LooksCommand:SET_SCALE"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "画面の本文と「答えを もとめる」の本文には、そこで使えない動きの文を示しません。近い書き方が一つも無いときは「近い 書き方は ありません。「書ける ことば」で さがせます」と出します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1631",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "丸のすがたにする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205|P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_COSTUME",
+          "text": "すがたを「丸」にかえる。"
+        },
+        "absent": [
+          "UserActionCall"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 0
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "てじゅんへの短い呼び方の書きかえを出さず、近い書き方を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方に入れる名前は、その作品にある名前だけです。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1632",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "持ち物をリセットする。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "ListClear",
+          "text": "持ち物の中身を全部消す。"
+        },
+        "absent": [],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 1
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "へんすうやリストの名前に「〜する」をつけた文（「点数をリセットする。」）には、てじゅんへの短い呼び方の書きかえのあとに、近い書き方を示します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "既存の書きかえを優先する原則には、元の文にないてじゅんへの短い呼び方の書きかえしか無い場合の例外があり、そのときは既存の後に最大4件を足します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1633",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "前へ10歩進んでから右に90度曲がるのを4回くり返す",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "RepeatCount",
+          "text": "4回くり返す。\n  前へ10歩進む。\n  右に90度回る。"
+        },
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\n右に90度回る。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\n4回くり返す。\n  前へ10歩進む。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\nずっとくり返す。\n  右に15度回る。"
+          },
+          {
+            "schemaId": "RepeatCount",
+            "text": "4回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しと、くり返す中身を一つの文に書いたときは、書いた節をすべて、書いた順に、くり返しの中に入れた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1634",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "前へ10歩進んでから右に90度曲がるのを4回くり返す",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "RepeatCount",
+          "text": "4回くり返す。\n  前へ10歩進む。\n  右に90度回る。"
+        },
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\n右に90度回る。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\n4回くり返す。\n  前へ10歩進む。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\nずっとくり返す。\n  右に15度回る。"
+          },
+          {
+            "schemaId": "RepeatCount",
+            "text": "4回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しと、くり返す中身を一つの文に書いたときは、書いた節をすべて、書いた順に、くり返しの中に入れた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1635",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "前へ10歩進んでから右に90度曲がるのを4回くり返す",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "action"
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "RepeatCount",
+          "text": "4回くり返す。\n  前へ10歩進む。\n  右に90度回る。"
+        },
+        "absent": [
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\n右に90度回る。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\n4回くり返す。\n  前へ10歩進む。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE",
+            "text": "前へ10歩進む。\nずっとくり返す。\n  右に15度回る。"
+          },
+          {
+            "schemaId": "RepeatCount",
+            "text": "4回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しと、くり返す中身を一つの文に書いたときは、書いた節をすべて、書いた順に、くり返しの中に入れた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1636",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ずっと前に10歩進んで画面のはしで跳ね返る",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "Forever",
+          "text": "ずっとくり返す。\n  前へ10歩進む。\n  画面のはしにふれていれば、はね返る。"
+        },
+        "absent": [
+          {
+            "schemaId": "Forever",
+            "text": "ずっとくり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しと、くり返す中身を一つの文に書いたときは、書いた節をすべて、書いた順に、くり返しの中に入れた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方は、書いた文のくり返し（「〜ごとに」「ずっと」「〜たびに」）、合図とその待ち、きょり、するものとして書いたへんすうとリスト（「持ち物の」「点数を」）を保ちます。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1637",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ずっと前に10歩進んで画面のはしで跳ね返る",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "basic",
+        "definitionKind": "action"
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "Forever",
+          "text": "ずっとくり返す。\n  前へ10歩進む。\n  画面のはしにふれていれば、はね返る。"
+        },
+        "absent": [
+          {
+            "schemaId": "Forever",
+            "text": "ずっとくり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しと、くり返す中身を一つの文に書いたときは、書いた節をすべて、書いた順に、くり返しの中に入れた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1638",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ずっと前に10歩進んで画面のはしで跳ね返る",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "basic",
+        "definitionKind": "function"
+      },
+      "expect": {
+        "code": "P201",
+        "absent": [
+          "Forever",
+          "MotionCommand:MOVE",
+          "MotionCommand:BOUNCE"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "画面の本文と「答えを もとめる」の本文には、そこで使えない動きの文を示しません。近い書き方が一つも無いときは「近い 書き方は ありません。「書ける ことば」で さがせます」と出します。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "文脈で使えない文型の近い書き方は示しません（答えを もとめる の本文の 止める、くり返しの外の このくり返しを終える など）。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1639",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ジャンプを3回する",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "RepeatCount",
+          "text": "3回くり返す。\n  【ジャンプ】というてじゅんを行う。"
+        },
+        "absent": [
+          {
+            "schemaId": "RepeatCount",
+            "text": "3回くり返す。\n  いまのばしょから、上へ10歩動く。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、上へ10歩動く。"
+          },
+          {
+            "schemaId": "UserActionCall",
+            "text": "【ジャンプ】というてじゅんを行う。"
+          },
+          {
+            "schemaId": "RepeatCount",
+            "text": "3回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品にあるてじゅんの名前を書いた文には、そのてじゅんを行う文を示し、てじゅんの名前を、あかりにある動きの文に置きかえません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1640",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "ジャンプを3回する",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "RepeatCount",
+          "text": "3回くり返す。\n  【ジャンプ】というてじゅんを行う。"
+        },
+        "absent": [
+          {
+            "schemaId": "RepeatCount",
+            "text": "3回くり返す。\n  いまのばしょから、上へ10歩動く。"
+          },
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、上へ10歩動く。"
+          },
+          {
+            "schemaId": "UserActionCall",
+            "text": "【ジャンプ】というてじゅんを行う。"
+          },
+          {
+            "schemaId": "RepeatCount",
+            "text": "3回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品にあるてじゅんの名前を書いた文には、そのてじゅんを行う文を示し、てじゅんの名前を、あかりにある動きの文に置きかえません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1641",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "10歩進んでから右に90度曲がる。この二つを4回くり返す。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatCount",
+          "text": "4回くり返す。\n  前へ10歩進む。\n  右に90度回る。"
+        },
+        "absent": [
+          {
+            "schemaId": "Forever",
+            "text": "ずっとくり返す。\n  右に15度回る。"
+          },
+          {
+            "schemaId": "RepeatCount",
+            "text": "4回くり返す。\n  前へ10歩進む。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しと、くり返す中身を一つの文に書いたときは、書いた節をすべて、書いた順に、くり返しの中に入れた文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "前の文を「この二つを」「これを」でさしてくり返す行も同じです。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "くり返しを落とした文、節の一つを落とした文、節をくり返しの外に出した文は示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1642",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "大きさを10％大きくする",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_SCALE",
+          "text": "大きさを（大きさ＋10）％にする。"
+        },
+        "absent": [
+          {
+            "schemaId": "LooksCommand:SET_SCALE",
+            "text": "大きさを10％にする。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "ふやす・へらす量を数で書いた文（「大きさを10％大きくする」「x座標を-10ずつ変える」「音の大きさを10大きくする」）には、いまの値にその数を足す・引く文を示し、その数にする文は示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "数が同じでも、役割のちがう数は同じ意味とみなしません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1643",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "大きさを10％小さくする",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_SCALE",
+          "text": "大きさを（大きさ－10）％にする。"
+        },
+        "absent": [
+          {
+            "schemaId": "LooksCommand:SET_SCALE",
+            "text": "大きさを10％にする。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "ふやす・へらす量を数で書いた文（「大きさを10％大きくする」「x座標を-10ずつ変える」「音の大きさを10大きくする」）には、いまの値にその数を足す・引く文を示し、その数にする文は示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "数が同じでも、役割のちがう数は同じ意味とみなしません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1644",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "大きさを10％大きくする",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "LooksCommand:SET_SCALE",
+          "text": "大きさを（大きさ＋10）％にする。"
+        },
+        "absent": [
+          {
+            "schemaId": "LooksCommand:SET_SCALE",
+            "text": "大きさを10％にする。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "ふやす・へらす量を数で書いた文（「大きさを10％大きくする」「x座標を-10ずつ変える」「音の大きさを10大きくする」）には、いまの値にその数を足す・引く文を示し、その数にする文は示しません"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1645",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "x座標を-10ずつ変える",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "MotionCommand:MOVE_BY",
+          "text": "いまのばしょから、左へ10歩動く。"
+        },
+        "absent": [
+          "MotionCommand:GOTO"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "ふやす・へらす量を数で書いた文（「大きさを10％大きくする」「x座標を-10ずつ変える」「音の大きさを10大きくする」）には、いまの値にその数を足す・引く文を示し、その数にする文は示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "数が同じでも、役割のちがう数は同じ意味とみなしません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1646",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "音の大きさを10大きくする",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "stage",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "SoundCommand:SET_VOLUME",
+          "text": "音の大きさを（音の大きさ＋10）％にする。"
+        },
+        "absent": [
+          {
+            "schemaId": "SoundCommand:SET_VOLUME",
+            "text": "音の大きさを10％にする。"
+          },
+          {
+            "schemaId": "SoundCommand:SET_VOLUME",
+            "text": "音の大きさを50％にする。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "ふやす・へらす量を数で書いた文（「大きさを10％大きくする」「x座標を-10ずつ変える」「音の大きさを10大きくする」）には、いまの値にその数を足す・引く文を示し、その数にする文は示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味をすべて保つ文があるときは、その一部を落とした文を示しません。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1647",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ],
+        "functions": [
+          {
+            "name": "けいさん",
+            "args": [
+              "値"
+            ]
+          }
+        ]
+      },
+      "input": {
+        "source": "大きさを10％大きくする",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "function"
+      },
+      "expect": {
+        "code": "P201",
+        "absent": [
+          "LooksCommand:SET_SCALE"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "文脈で使えない文型の近い書き方は示しません（答えを もとめる の本文の 止める、くり返しの外の このくり返しを終える など）。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1648",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "持ち物を1番目から順に2秒ずつ言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "ForEach",
+          "text": "持ち物の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【これ】とよぶ。\n  これを2秒話す。"
+        },
+        "absent": [
+          "ListInsert",
+          "ListReplace",
+          "ListDelete"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "言う・話すことを書いた文には、リストの中身を入れる・かえる・消す文を示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "リストの中身を全部言う文（「持ち物の中身を全部言う。」）には、先頭から一つずつ話す文を示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1649",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "持ち物を1番目から順に2秒ずつ言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "ForEach",
+          "text": "持ち物の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【これ】とよぶ。\n  これを2秒話す。"
+        },
+        "absent": [
+          "ListInsert",
+          "ListReplace",
+          "ListDelete"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "言う・話すことを書いた文には、リストの中身を入れる・かえる・消す文を示しません"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1650",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "持ち物を1番目から順に2秒ずつ言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "advanced",
+        "definitionKind": "function"
+      },
+      "expect": {
+        "code": "P201",
+        "absent": [
+          "ListInsert",
+          "ListReplace",
+          "ListDelete",
+          "ReturnStatement",
+          "Say"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "言う・話すことを書いた文には、リストの中身を入れる・かえる・消す文を示しません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1651",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ",
+          {
+            "name": "四角をかく",
+            "args": [
+              "長さ"
+            ]
+          }
+        ]
+      },
+      "input": {
+        "source": "長さを50にして四角をかく",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "UserActionCall",
+          "text": "長さを50として、【四角をかく】というてじゅんを行う。"
+        },
+        "absent": [
+          "PenCommand:DOWN"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品にあるてじゅんの名前を書いた文には、そのてじゅんを行う文を示し、てじゅんの名前を、あかりにある動きの文に置きかえません"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方には、書いた歩数・秒数・度数と、作品にある部品やへんすうの名前を入れて示します。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1652",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数を1ふやして得点板に出す",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "NumericUpdate:ADD",
+          "text": "点数を1ふやす。\n「得点板」の文字を点数にかえる。"
+        },
+        "absent": [
+          {
+            "schemaId": "NumericUpdate:ADD",
+            "text": "点数を1ふやす。\n「得点板」の文字を「こんにちは」にかえる。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "前の節で変えたへんすうを、あとの節で出すときは、そのへんすうを出す文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1653",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数を1ふやして得点板に出す",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "first": {
+          "schemaId": "NumericUpdate:ADD",
+          "text": "点数を1ふやす。\n「得点板」の文字を点数にかえる。"
+        },
+        "absent": [
+          {
+            "schemaId": "NumericUpdate:ADD",
+            "text": "点数を1ふやす。\n「得点板」の文字を「こんにちは」にかえる。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "前の節で変えたへんすうを、あとの節で出すときは、そのへんすうを出す文を示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1654",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし答えがほしなら「せいかい」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし答えが「ほし」なら、\n  「せいかい」と言う。"
+        },
+        "absent": [
+          "Say"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1655",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "もし「星」にふれていなかったら10歩進む",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし「星」にふれていなければ、\n  前へ10歩進む。"
+        },
+        "absent": [
+          {
+            "schemaId": "IfStatement",
+            "text": "もし「星」にふれていれば、\n  前へ10歩進む。"
+          },
+          "MotionCommand:MOVE"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なかったら」「〜未満なら」「〜より少なかったら」「〜がなければ」は、「〜ていなければ」「〜より小さければ」「〜が入っていなければ」と読んで、条件を保つ文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1656",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数が10点より少なかったら「もう一回」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が10より小さければ、\n  「もう一回」と言う。"
+        },
+        "absent": [
+          "Say"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なかったら」「〜未満なら」「〜より少なかったら」「〜がなければ」は、「〜ていなければ」「〜より小さければ」「〜が入っていなければ」と読んで、条件を保つ文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1657",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数が10点未満なら「もう一回」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が10より小さければ、\n  「もう一回」と言う。"
+        },
+        "absent": [
+          {
+            "schemaId": "IfStatement",
+            "text": "もし点数が10以下なら、\n  「もう一回」と言う。"
+          },
+          "Say"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なかったら」「〜未満なら」「〜より少なかったら」「〜がなければ」は、「〜ていなければ」「〜より小さければ」「〜が入っていなければ」と読んで、条件を保つ文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1658",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "点数が10点未満なら「もう一回」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "basic",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし点数が10より小さければ、\n  「もう一回」と言う。"
+        },
+        "absent": [
+          {
+            "schemaId": "IfStatement",
+            "text": "もし点数が10以下なら、\n  「もう一回」と言う。"
+          },
+          "Say"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なかったら」「〜未満なら」「〜より少なかったら」「〜がなければ」は、「〜ていなければ」「〜より小さければ」「〜が入っていなければ」と読んで、条件を保つ文を示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1659",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "持ち物に「かさ」がなければ「ないよ」と言う",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "IfStatement",
+          "text": "もし持ち物に「かさ」が入っていなければ、\n  「ないよ」と言う。"
+        },
+        "absent": [
+          {
+            "schemaId": "IfStatement",
+            "text": "もし持ち物に「かさ」が入っていれば、\n  「ないよ」と言う。"
+          },
+          "Say"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なかったら」「〜未満なら」「〜より少なかったら」「〜がなければ」は、「〜ていなければ」「〜より小さければ」「〜が入っていなければ」と読んで、条件を保つ文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1660",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "右の矢印キーをおしている間は、右に動く",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "RepeatWhile",
+          "text": "「右」キーがおされているあいだ、くり返す。\n  いまのばしょから、右へ10歩動く。"
+        },
+        "absent": [
+          "IfStatement",
+          "Heading:keyDown",
+          {
+            "schemaId": "MotionCommand:MOVE_BY",
+            "text": "いまのばしょから、右へ10歩動く。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜ている間は、」には「〜あいだ、くり返す。」の文を示します"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "条件を書いた文（「〜たら」「〜なら」「〜ば」「〜とき」「〜と」「〜まで」「〜あいだ」）には、「、」を書いていなくても、その条件を保つ文だけを示します"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1661",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "スペースキーをおすたびに、ねこを1回ジャンプさせる",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "contains": [
+          {
+            "schemaId": "Heading:keyDown",
+            "text": "「スペース」キーをおすたびに、\n  【ジャンプ】というてじゅんを行う。"
+          }
+        ],
+        "absent": [
+          {
+            "schemaId": "UserActionCall",
+            "text": "【ジャンプ】というてじゅんを行う。"
+          },
+          "MotionCommand:MOVE_BY",
+          "RepeatCount"
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方は、書いた文のくり返し（「〜ごとに」「ずっと」「〜たびに」）、合図とその待ち、きょり、するものとして書いたへんすうとリスト（「持ち物の」「点数を」）を保ちます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品にあるてじゅんの名前を書いた文には、そのてじゅんを行う文を示し、てじゅんの名前を、あかりにある動きの文に置きかえません"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1662",
+      "kind": "candidates",
+      "polarity": "positive",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "スペースキーがおされるまでまってからジャンプする",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P205",
+        "first": {
+          "schemaId": "WaitUntil",
+          "text": "「スペース」キーがおされるまで待つ。\n【ジャンプ】というてじゅんを行う。"
+        },
+        "absent": [
+          "RepeatUntil",
+          {
+            "schemaId": "UserActionCall",
+            "text": "【ジャンプ】というてじゅんを行う。"
+          }
+        ],
+        "maxAssist": 4,
+        "differsFromOriginal": true,
+        "existingProposals": 1
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "近い書き方は、書いた文のくり返し（「〜ごとに」「ずっと」「〜たびに」）、合図とその待ち、きょり、するものとして書いたへんすうとリスト（「持ち物の」「点数を」）を保ちます。"
+        },
+        {
+          "file": "LANGUAGE.md",
+          "quote": "作品にあるてじゅんの名前を書いた文には、そのてじゅんを行う文を示し、てじゅんの名前を、あかりにある動きの文に置きかえません"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1663",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "10歩進まない。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "sprite-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "absent": [
+          "MotionCommand:MOVE",
+          "MotionCommand:MOVE_BY"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1664",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "4回くり返さない。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": null,
+        "event": null,
+        "level": "basic",
+        "definitionKind": "action"
+      },
+      "expect": {
+        "code": "P201",
+        "absent": [
+          "RepeatCount"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
+        }
+      ]
+    },
+    {
+      "id": "ASSIST-1665",
+      "kind": "candidates",
+      "polarity": "negative",
+      "world": {
+        "parts": [
+          "ねこ",
+          "犬",
+          "星"
+        ],
+        "uiParts": [
+          "得点板（文字）",
+          "ボタン1（ボタン）"
+        ],
+        "variables": [
+          "点数"
+        ],
+        "lists": [
+          "持ち物"
+        ],
+        "sounds": [
+          "ベル"
+        ],
+        "actions": [
+          "ジャンプ"
+        ]
+      },
+      "input": {
+        "source": "「やあ」と言わない。",
+        "line": 1
+      },
+      "context": {
+        "surface": "code",
+        "targetId": "button-1",
+        "event": "start",
+        "level": "advanced",
+        "definitionKind": null
+      },
+      "expect": {
+        "code": "P201",
+        "absent": [
+          "Say"
+        ],
+        "maxAssist": 0,
+        "differsFromOriginal": true
+      },
+      "invariants": {
+        "sourceUnchanged": true,
+        "projectUnchanged": true,
+        "historyUnchanged": true
+      },
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "書いた意味とちがう文は示しません。ちがう文とは、別の主語、別の向き、別の数、別の時間の文、書いていないことばや時間を足した文、書いていない部品を相手にした文です。"
         }
       ]
     }

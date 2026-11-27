@@ -1247,7 +1247,67 @@ export const codeAssistIds=[
  "ASSIST-1602",
  "ASSIST-1603",
  "ASSIST-1604",
- "ASSIST-1605"
+ "ASSIST-1605",
+ "ASSIST-1606",
+ "ASSIST-1607",
+ "ASSIST-1608",
+ "ASSIST-1609",
+ "ASSIST-1610",
+ "ASSIST-1611",
+ "ASSIST-1612",
+ "ASSIST-1613",
+ "ASSIST-1614",
+ "ASSIST-1615",
+ "ASSIST-1616",
+ "ASSIST-1617",
+ "ASSIST-1618",
+ "ASSIST-1619",
+ "ASSIST-1620",
+ "ASSIST-1621",
+ "ASSIST-1622",
+ "ASSIST-1623",
+ "ASSIST-1624",
+ "ASSIST-1625",
+ "ASSIST-1626",
+ "ASSIST-1627",
+ "ASSIST-1628",
+ "ASSIST-1629",
+ "ASSIST-1630",
+ "ASSIST-1631",
+ "ASSIST-1632",
+ "ASSIST-1633",
+ "ASSIST-1634",
+ "ASSIST-1635",
+ "ASSIST-1636",
+ "ASSIST-1637",
+ "ASSIST-1638",
+ "ASSIST-1639",
+ "ASSIST-1640",
+ "ASSIST-1641",
+ "ASSIST-1642",
+ "ASSIST-1643",
+ "ASSIST-1644",
+ "ASSIST-1645",
+ "ASSIST-1646",
+ "ASSIST-1647",
+ "ASSIST-1648",
+ "ASSIST-1649",
+ "ASSIST-1650",
+ "ASSIST-1651",
+ "ASSIST-1652",
+ "ASSIST-1653",
+ "ASSIST-1654",
+ "ASSIST-1655",
+ "ASSIST-1656",
+ "ASSIST-1657",
+ "ASSIST-1658",
+ "ASSIST-1659",
+ "ASSIST-1660",
+ "ASSIST-1661",
+ "ASSIST-1662",
+ "ASSIST-1663",
+ "ASSIST-1664",
+ "ASSIST-1665"
 ];
 
 export const codeAssistBrowserIds=['ui/keyboard','ui/mouse','ui/close','ui/escape','ui/callable-escape','ui/ime','ui/cached-error','ui/two-sentences','ui/multiline','ui/history-queued','ui/history-after-undo','ui/original-proposals','ui/short-call-proposals','ui/stale-source','ui/revision-same-message','ui/runtime','ui/1180','ui/1024','ui/390','signals/send','signals/receive','signals/switch','signals/refresh'];
@@ -1346,8 +1406,8 @@ function verifyAssistPlaces(rows,api){
   }
   const texts=id=>by[id].candidates.map(c=>c.text);
   assert.equal(texts('condition-ba')[0],'もし点数が10より大きければ、\n  この動きを止める。');assert.deepEqual(texts('condition-aida'),['点数が10より小さいあいだ、くり返す。\n  点数を1ふやす。']);
-  assert.deepEqual(texts('condition-made'),[]);assert.ok(texts('condition-touch').includes('もし「星」にふれていれば、\n  すがたをかくす。'));
-  assert.deepEqual(texts('own-variable'),['点数を1ふやす。']);assert.deepEqual(by['own-variable-amount'].proposals.map(p=>p.source),['点数を10ふやす']);assert.deepEqual(texts('condition-made-value'),[]);
+  assert.deepEqual(texts('condition-made'),['「星」にふれるまで、くり返す。\n  いまのばしょから、右へ10歩動く。','「星」にふれるまで待つ。\nいまのばしょから、右へ10歩動く。']);assert.ok(texts('condition-touch').includes('もし「星」にふれていれば、\n  すがたをかくす。'));
+  assert.deepEqual(texts('own-variable'),['点数を1ふやす。']);assert.deepEqual(by['own-variable-amount'].proposals.map(p=>p.source),['点数を10ふやす']);assert.deepEqual(texts('condition-made-value'),['点数が10になるまで、くり返す。\n  いまのばしょから、右へ10歩動く。','点数が10になるまで待つ。\nいまのばしょから、右へ10歩動く。']);
   assert.equal(by['list-all-said'].candidates[0].schemaId,'ForEach');assert.equal(by['list-said-in-order'].candidates[0].schemaId,'ForEach');assert.deepEqual(texts('list-said-in-order'),['持ち物の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【これ】とよぶ。\n  これを1秒話す。']);
   assert.deepEqual(texts('proposal-stage-costume'),[]);assert.deepEqual(texts('repeat-every-second'),['ずっとくり返す。\n  1秒待つ。\n  点数を1ふやす。']);assert.deepEqual(texts('distance-written-ga'),['「星」までのきょりを言う。']);
   assert.deepEqual(texts('signal-wait-written-ga'),['「スタート」の合図を送って、その合図で始まったことが全部終わるまで待つ。']);assert.deepEqual(texts('click-opening-before-sentence'),[]);assert.deepEqual(by['click-opening-before-sentence'].proposals,[]);
@@ -1370,7 +1430,10 @@ function observeAssistRegressions(api){
   const sent=api.compileProject(chained);assert.deepEqual(plain(sent.errors),[]);
   // A § written stays as it is when the text is read for the near sentences (the quotes are marked with §n§).
   const marks=['§0§を3回くり返す','「やあ」と§0§言う','§と言う','§１§秒待つ'].map(text=>api.assistSeeds(text,null,{}).text);
-  return{engine,marks,readings:[['パーセント','％'],['1パー','1％']].map(([a,b])=>[api.searchReading(a),api.searchReading(b)]),intents:['前へ10歩ふみだす','前に10歩およぐ','3回やる','3回する','3回おなじことをする','前へ10歩踏み出す','前に10歩泳ぐ','3回同じことをする'].map(q=>api.searchIntent(q)?.schemaId||null),receivers:plain(receivers.notes.filter(n=>n.code==='I137')),inline:plain(inline.notes.filter(n=>n.code==='I137')),spaced:plain(spaced.notes.filter(n=>n.code==='I137')),targeted:plain(targeted.notes.filter(n=>n.code==='I138')),sender:plain(sent.notes.find(n=>n.code==='I136'))};
+  const shortCallWorld=assistWorld(api,{parts:['ねこ','犬','星'],variables:['点数'],lists:['持ち物'],sounds:['ベル'],actions:['ジャンプ']});
+  const {trigger:shortCallTrigger}=assistContexts(api,shortCallWorld);
+  const shortCallProposals=['だんだん大きくする。','少し小さくする。','右に移動する。','音を大きくする。','丸のすがたにする。','点数をリセットする。','ジャンプする。'].map(source=>({source,count:(api.parseSyntax(source,shortCallTrigger).syntaxDiagnostics[0]?.proposals||[]).length}));
+  return{engine,marks,shortCallProposals,readings:[['パーセント','％'],['1パー','1％']].map(([a,b])=>[api.searchReading(a),api.searchReading(b)]),intents:['前へ10歩ふみだす','前に10歩およぐ','3回やる','3回する','3回おなじことをする','前へ10歩踏み出す','前に10歩泳ぐ','3回同じことをする'].map(q=>api.searchIntent(q)?.schemaId||null),receivers:plain(receivers.notes.filter(n=>n.code==='I137')),inline:plain(inline.notes.filter(n=>n.code==='I137')),spaced:plain(spaced.notes.filter(n=>n.code==='I137')),targeted:plain(targeted.notes.filter(n=>n.code==='I138')),sender:plain(sent.notes.find(n=>n.code==='I136'))};
 }
 function verifyAssistRegressions(o){
   assert.deepEqual(o.engine.map(r=>r.id),assistRegressionInputs.map(([id])=>id));const rows=Object.fromEntries(o.engine.map(r=>[r.id,r.candidates]));
@@ -1387,6 +1450,7 @@ function verifyAssistRegressions(o){
   assert.equal(rows['argument-negative'].find(c=>c.schemaId==='UserActionCall')?.text,'高さを1、時間を－2として、【ジャンプ】というてじゅんを行う。');
   assert.ok(rows['local-scope'].every(c=>!c.text.includes('体力')));assert.ok(rows['costume-scope'].every(c=>c.schemaId!=='LooksCommand:SET_COSTUME'));
   assert.deepEqual(o.marks,['§0§を3回くり返す','「やあ」と§0§言う','§と言う','§1§秒待つ'],'a § written stays as written');
+  assert.deepEqual(o.shortCallProposals,[{source:'だんだん大きくする。',count:0},{source:'少し小さくする。',count:0},{source:'右に移動する。',count:0},{source:'音を大きくする。',count:0},{source:'丸のすがたにする。',count:0},{source:'点数をリセットする。',count:1},{source:'ジャンプする。',count:1}],'standard action words omit unrelated procedure proposals while keeping short calls');
   for(const pair of o.readings)assert.equal(pair[0],pair[1]);assert.deepEqual(o.intents,['MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount','RepeatCount','RepeatCount','MotionCommand:MOVE','MotionCommand:MOVE','RepeatCount']);
   assert.deepEqual(o.receivers.map(n=>n.line),[1,3]);assert.deepEqual(o.receivers.map(n=>n.proposals?.[0]?.start),[2,28]);
   for(const n of o.receivers){const p=n.proposals[0];assert.equal(p.source,'「出発」');assert.equal(repeatedReceiverSource.slice(p.start,p.end),'「開始」');assert.equal(p.original,repeatedReceiverSource);}
@@ -1551,6 +1615,12 @@ export const codeAssistWrongMeaning=[
   ['wrong-snapshot',r=>r.snapshot.productSha256='0'.repeat(64)],
   ['page-error',r=>r.pageErrors.push('error')],['external-request',r=>r.networkRequests.push('https://example.invalid')],
   ['missing-report',r=>{delete r.results;}],['ux-acceptance-true',r=>r.uxAcceptance=true],
+  ['skeleton-repetition-dropped',r=>{const row=r.results.find(r=>r.id==='ASSIST-1633');row.observed.candidates.unshift({...row.observed.candidates[0],schemaId:'MotionCommand:MOVE',text:'前へ10歩進む。\n右に90度回る。',source:'前へ10歩進む。\n右に90度回る。'});}],
+  ['skeleton-clause-dropped',r=>{const row=r.results.find(r=>r.id==='ASSIST-1636');row.observed.candidates.unshift({...row.observed.candidates[0],schemaId:'Forever',text:'ずっとくり返す。\n  前へ10歩進む。',source:'ずっとくり返す。\n  前へ10歩進む。'});}],
+  ['relative-change-made-absolute',r=>{const row=r.results.find(r=>r.id==='ASSIST-1642');row.observed.candidates.push({...row.observed.candidates[0],schemaId:'LooksCommand:SET_SCALE',text:'大きさを10％にする。',source:'大きさを10％にする。'});}],
+  ['speech-made-list-mutation',r=>{const row=r.results.find(r=>r.id==='ASSIST-1648');row.observed.candidates.push({...row.observed.candidates[0],schemaId:'ListInsert',text:'持ち物の1番目に1を入れる。',source:'持ち物の1番目に1を入れる。'});}],
+  ['registered-action-hijacked',r=>{const row=r.results.find(r=>r.id==='ASSIST-1639');row.observed.candidates.unshift({...row.observed.candidates[0],schemaId:'RepeatCount',text:'3回くり返す。\n  いまのばしょから、上へ10歩動く。',source:'3回くり返す。\n  いまのばしょから、上へ10歩動く。'});}],
+  ['two-sentence-corrupts-following',r=>{const row=r.results.find(r=>r.id==='ASSIST-1613');const c=row.observed.candidates[0];c.text='「星」にふれるまで、くり返す。\n  いまのばしょから、右へ10歩動く。\n  「ついた」と言う。';c.source=c.text;}],
 ];
 
 function verifyChoiceView(view,line=1){
