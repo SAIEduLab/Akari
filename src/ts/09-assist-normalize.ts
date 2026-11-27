@@ -14,9 +14,7 @@ import type { Script } from '../types/syntax.d.ts';
 // 09 — Code assist stage 0: token protection lattice and normalization
 // ────────────────────────────────────────────────────────────────────────
 
-export const ASSIST_MAX = 4;
-export const ASSIST_FULL_PARSE_CHARS = 4000;
-export const ASSIST_BUDGET_MS = 300;
+export const ASSIST_MAX=4,ASSIST_FULL_PARSE_CHARS=4000,ASSIST_BUDGET_MS=300;
 export const ASSIST_NORM_PASSES = 3;
 export const ASSIST_MAX_DEPTH = 2;
 export const ASSIST_MAX_CLAUSES = 4;

@@ -309,7 +309,7 @@ function assistCandidatesAsWritten(project: Project, basis: string, context: Ass
       pool.splice(i, 0, ...(made.map(meaningOf).filter(c => c?.meaning && (!from || c.meaning.missing < from.missing || c.meaning.explicit && !from.explicit)) as { text: string; meaning: AssistMeaning }[]).map(({ text }) => ({ ...pool[i], text, ast: null, label: pool[i].label === pool[i].text ? text : pool[i].label })));
     }
   }
-  const now = () => globalThis.performance?.now?.() ?? Date.now();
+  const now=()=>globalThis.performance?.now?.()??Date.now();
   const contextHints = hintCandidates(project, ctx.targetId, { ...ctx, source: basis, start: range.lineStart + range.indent, end: range.lineEnd });
   const knownSchemas = new Set(contextHints.filter(h => h.mode === 'statement').map(h => hintSchemaId(h.id).replace(/:timed$/, '')));
   const hasHigher = pool.some(p => p.layer < 6);

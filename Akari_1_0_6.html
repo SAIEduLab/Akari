@@ -34057,9 +34057,7 @@ SOFTWARE.
   // 09 — Code assist stage 0: token protection lattice and normalization
   // ────────────────────────────────────────────────────────────────────────
 
-  const ASSIST_MAX = 4;
-  const ASSIST_FULL_PARSE_CHARS = 4000;
-  const ASSIST_BUDGET_MS = 300;
+  const ASSIST_MAX=4,ASSIST_FULL_PARSE_CHARS=4000,ASSIST_BUDGET_MS=300;
   const ASSIST_NORM_PASSES = 3;
   const ASSIST_MAX_DEPTH = 2;
   const ASSIST_MAX_CLAUSES = 4;
@@ -36868,7 +36866,7 @@ SOFTWARE.
         pool.splice(i, 0, ...made.map(meaningOf).filter(c => c?.meaning && (!from || c.meaning.missing < from.missing || c.meaning.explicit && !from.explicit)).map(({ text }) => ({ ...pool[i], text, ast: null, label: pool[i].label === pool[i].text ? text : pool[i].label })));
       }
     }
-    const now = () => globalThis.performance?.now?.() ?? Date.now();
+    const now=()=>globalThis.performance?.now?.()??Date.now();
     const contextHints = hintCandidates(project, ctx.targetId, { ...ctx, source: basis, start: range.lineStart + range.indent, end: range.lineEnd });
     const knownSchemas = new Set(contextHints.filter(h => h.mode === 'statement').map(h => hintSchemaId(h.id).replace(/:timed$/, '')));
     const hasHigher = pool.some(p => p.layer < 6);
