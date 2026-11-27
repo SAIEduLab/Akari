@@ -1,4 +1,353 @@
 {
   "schema": "akari-intended-behaviour-changes-v1",
-  "changes": []
+  "changes": [
+    {
+      "case": "assist/ASSIST-1003",
+      "reason": "Multi-clause decomposition includes a sequential alternative alongside simultaneous phrasing."
+    },
+    {
+      "case": "assist/ASSIST-1004",
+      "reason": "Multi-clause decomposition includes a sequential alternative alongside simultaneous phrasing."
+    },
+    {
+      "case": "assist/ASSIST-1015",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1016",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1058",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-1066",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1066@base",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1067",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1067@base",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1068",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1068@base",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1069",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1069@base",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1079",
+      "reason": "Ordered list speech synthesizes ForEach while excluding list mutations and invalid ReturnStatement in function bodies."
+    },
+    {
+      "case": "assist/ASSIST-1088",
+      "reason": "Multi-clause decomposition includes a sequential alternative alongside simultaneous phrasing."
+    },
+    {
+      "case": "assist/ASSIST-1137",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1138",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1203",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-1223",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-1245",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-1268",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-1269",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-1606",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1607",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1608",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1609",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1610",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1613",
+      "reason": "Unpunctuated until-action phrasing synthesizes RepeatUntil first followed by WaitUntil."
+    },
+    {
+      "case": "assist/ASSIST-1614",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1615",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1616",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1617",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1618",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1619",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1620",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1621",
+      "reason": "Arithmetic and empty-list condition wording S301 diagnostics now produce canonical rewrite candidates."
+    },
+    {
+      "case": "assist/ASSIST-1631",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-1633",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1634",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1635",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1636",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1637",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1639",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1640",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1641",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-1642",
+      "reason": "Relative scale, relative volume, and signed coordinate delta inputs synthesize relative expressions or directional steps instead of absolute assignments."
+    },
+    {
+      "case": "assist/ASSIST-1643",
+      "reason": "Relative scale, relative volume, and signed coordinate delta inputs synthesize relative expressions or directional steps instead of absolute assignments."
+    },
+    {
+      "case": "assist/ASSIST-1644",
+      "reason": "Relative scale, relative volume, and signed coordinate delta inputs synthesize relative expressions or directional steps instead of absolute assignments."
+    },
+    {
+      "case": "assist/ASSIST-1645",
+      "reason": "Relative scale, relative volume, and signed coordinate delta inputs synthesize relative expressions or directional steps instead of absolute assignments."
+    },
+    {
+      "case": "assist/ASSIST-1646",
+      "reason": "Relative scale, relative volume, and signed coordinate delta inputs synthesize relative expressions or directional steps instead of absolute assignments."
+    },
+    {
+      "case": "assist/ASSIST-1648",
+      "reason": "Ordered list speech synthesizes ForEach while excluding list mutations and invalid ReturnStatement in function bodies."
+    },
+    {
+      "case": "assist/ASSIST-1649",
+      "reason": "Ordered list speech synthesizes ForEach while excluding list mutations and invalid ReturnStatement in function bodies."
+    },
+    {
+      "case": "assist/ASSIST-1650",
+      "reason": "Ordered list speech synthesizes ForEach while excluding list mutations and invalid ReturnStatement in function bodies."
+    },
+    {
+      "case": "assist/ASSIST-1651",
+      "reason": "Named-argument procedure call synthesis preserves explicit argument values."
+    },
+    {
+      "case": "assist/ASSIST-1652",
+      "reason": "Multi-clause synthesis carries an updated variable to a subsequent UI display command without inventing default text."
+    },
+    {
+      "case": "assist/ASSIST-1653",
+      "reason": "Multi-clause synthesis carries an updated variable to a subsequent UI display command without inventing default text."
+    },
+    {
+      "case": "assist/ASSIST-1654",
+      "reason": "Condition normalization handles bare-word quoting, unitless counter stripping, negation forms, and comparison synonyms."
+    },
+    {
+      "case": "assist/ASSIST-1655",
+      "reason": "Condition normalization handles bare-word quoting, unitless counter stripping, negation forms, and comparison synonyms."
+    },
+    {
+      "case": "assist/ASSIST-1656",
+      "reason": "Condition normalization handles bare-word quoting, unitless counter stripping, negation forms, and comparison synonyms."
+    },
+    {
+      "case": "assist/ASSIST-1657",
+      "reason": "Condition normalization handles bare-word quoting, unitless counter stripping, negation forms, and comparison synonyms."
+    },
+    {
+      "case": "assist/ASSIST-1658",
+      "reason": "Condition normalization handles bare-word quoting, unitless counter stripping, negation forms, and comparison synonyms."
+    },
+    {
+      "case": "assist/ASSIST-1659",
+      "reason": "Condition normalization handles bare-word quoting, unitless counter stripping, negation forms, and comparison synonyms."
+    },
+    {
+      "case": "assist/ASSIST-1660",
+      "reason": "Key-hold duration phrasing synthesizes ContinuousRule and RepeatWhile candidates."
+    },
+    {
+      "case": "assist/ASSIST-1661",
+      "reason": "Heading-plus-action decomposition synthesizes a keyDown heading invoking the registered procedure."
+    },
+    {
+      "case": "assist/ASSIST-1662",
+      "reason": "Wait-then-action decomposition suppresses incomplete partial proposals and synthesizes the full normalized sequence."
+    },
+    {
+      "case": "assist/ASSIST-179",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-180",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-181",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-182",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-229",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-230",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-263",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-264",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-265",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-270",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-273",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-279",
+      "reason": "Costume and backdrop skeleton synthesis updates candidate origin and removes unrelated procedure proposals on standard phrases."
+    },
+    {
+      "case": "assist/ASSIST-359",
+      "reason": "Duration normalization updates candidate ordering while keeping the 262Hz tone wait candidate first."
+    },
+    {
+      "case": "assist/ASSIST-539",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-540",
+      "reason": "Skeleton repetition synthesis and repetition preservation enforce loop count and multi-clause bodies while excluding unrelated Forever candidates."
+    },
+    {
+      "case": "assist/ASSIST-661",
+      "reason": "Skeleton leaf synthesis updates candidate origin for edge-bounce and list-position phrasing."
+    },
+    {
+      "case": "assist/ASSIST-929",
+      "reason": "Registered procedure priority suppresses unrelated motion candidates when a registered procedure name is written."
+    },
+    {
+      "case": "assist/ASSIST-930",
+      "reason": "Registered procedure priority suppresses unrelated motion candidates when a registered procedure name is written."
+    },
+    {
+      "case": "assist/ASSIST-931",
+      "reason": "Registered procedure priority suppresses unrelated motion candidates when a registered procedure name is written."
+    },
+    {
+      "case": "assist/ASSIST-936",
+      "reason": "Registered procedure priority suppresses unrelated motion candidates when a registered procedure name is written."
+    },
+    {
+      "case": "assist/ASSIST-937",
+      "reason": "Registered procedure priority suppresses unrelated motion candidates when a registered procedure name is written."
+    },
+    {
+      "case": "assist/ASSIST-961",
+      "reason": "Registered procedure priority suppresses unrelated motion candidates when a registered procedure name is written."
+    }
+  ]
 }

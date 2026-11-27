@@ -630,6 +630,11 @@ export function parseSimpleStatement(line: LineLike,symbols: Symbols | null | un
   catch(error){
     if(!(error instanceof AkariError))throw error;
     if(/^[\p{L}ー]+(?:する|しよう)$/u.test(code)&&symbols?.actions?.size){
+      const hasRegisteredAction=[...symbols.actions.values()].some(def=>code.includes(def.name));
+      const standardActionWord=/(?:大きく|おおきく|小さく|ちいさく|高く|たかく|低く|ひくく|速く|はやく|早く|おそく|遅く|明るく|あかるく|暗く|くらく|赤く|あかく|青く|あおく|白く|しろく|黒く|くろく|透明に|とうめいに|太く|ふとく|細く|ほそく|すがたに|姿に|コスチュームに|はいけいに|背景に|移動|いどう|回転|かいてん|前進|ぜんしん|後退|こうたい|拡大|かくだい|縮小|しゅくしょう|待機|たいき|停止|ていし|静止|せいし|再生|さいせい|消音|ミュート|みゅーと|表示|ひょうじ|非表示|ひひょうじ)(?:する|しよう)$/.test(code);
+      const compoundPhrase=/(?:たら|だら|なら|[えけげせてねべめれ]ば|とき|あいだ|間|まで|てから|ながら|ずっと|くり返|繰返|くりかえ|たびに|ごとに)/.test(code);
+      const partialClause=Boolean(working.inline||(working.start??0)>0);
+      if((!hasRegisteredAction&&standardActionWord)||compoundPhrase||partialClause)throw new AkariError('P205',`「${writtenSentence(working)}」という 文は あかりに ありません。「書ける ことば」から 近い 文を えらんで ください`,working.lineNo,1);
       const proposals=[...symbols.actions.values()].map(def=>({label:`「${def.name}」のブロックを使う`,source:(def.args.length?def.args.map(arg=>`${nameSource(arg)}を〔${arg}を入れる〕`).join('、')+'として、':'')+`【${def.name}】という手順を行う`}));
       throw sentenceDiagnostic('この「〜する」という 短い よび方は、まだ 決めて いません。使う ブロックを えらぶか、自分で 作った ブロックで よび方を 決めて ください',working,proposals,{kind:'UserActionCall',missing:['registeredCallPhrase']});
     }

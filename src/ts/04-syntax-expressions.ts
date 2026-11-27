@@ -6,8 +6,8 @@ import { isMeijinPart, meijinBare, meijinNamedRead, meijinNearestRead } from './
 import { PREC, formatCommand } from './05-command-presentation.ts';
 import { formatExpression, formatExpressionCore, formatKnownName, formatSymbols, formatTarget, joinPartSource, quantityValueSource } from './06-source-formatting.ts';
 import { WORD_LINES, genericReadingError } from './07-semantic-analysis-core.ts';
-import { meijinTrialReads } from './07-semantic-analysis.ts';
-import { assistWorkCheck } from './09-editor-search.ts';
+import { analyzeAst, meijinTrialReads } from './07-semantic-analysis.ts';
+import { assistWorkCheck } from './09-assist-verify.ts';
 
 import type { Diagnostic, Symbols } from '../types/compiled.d.ts';
 import type { ConditionForm, ExtensionSentenceForm, LineLike, ParseContext, RoleSlot, SentenceForm, SentenceNode, SourcePart } from '../types/parse.d.ts';
@@ -1515,8 +1515,12 @@ export function parseSyntax(source: string, context: ParseContext & { key?: stri
         // line before another sentence).
         if(!MEANING_CHOICES.has(error)&&project&&(context.key||context.ownerKey)&&!assistWorkCheck(project,source,context,p.start??0,p.end??source.length,replacement))return false;
         const next=parseSyntax(source.slice(0,p.start)+replacement+source.slice(p.end),context);
-        if(next.ast){if(input)p.input=input;return true;}
-        const from=source.slice(0,p.start).split(LINE_END).length,to=from+p.source.split('\n').length-1,line=next.syntaxDiagnostics[0]?.line;
+        const from=source.slice(0,p.start).split(LINE_END).length;
+        if(next.ast){
+          if(!MEANING_CHOICES.has(error)&&project&&p.start!>begin&&prefix.trim()&&analyzeAst(next.ast,project,{...context,definition:typeof context.definition==='object'?context.definition:null}).some(e=>e.line===from))return false;
+          if(input)p.input=input;return true;
+        }
+        const to=from+p.source.split('\n').length-1,line=next.syntaxDiagnostics[0]?.line;
         // A different malformed line must not hide a useful correction here.
         const useful=!line||line<from||line>to;if(useful&&input)p.input=input;return useful;
       }); }

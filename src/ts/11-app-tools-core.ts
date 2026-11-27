@@ -7,6 +7,7 @@ import { formatScript } from './06-source-formatting.ts';
 import { scriptBySourceKey, scriptHeadingMetadata, staticScaleDiagnostics, updateScriptSource } from './07-semantic-analysis-core.ts';
 import { assetStateFingerprint, astEquivalent, callableDraftContext, collectReachableAssetIds, stableJson, validateCallableDraftState, validateEditorState } from './07-semantic-analysis.ts';
 import { ADVANCED_ONLY_SCHEMA_IDS, makeTutorialProject, tutorialDestination, tutorialExpectedTrees, tutorialField, tutorialFreeValueAccepted, tutorialStep } from './09-editor-sessions.ts';
+import { assistDiagnosticEligible } from './09-assist-normalize.ts';
 import { appendDiagnosticDetails, childDiagnosticText } from './10-diagnostic-text.ts';
 import { designResizeMode } from './10-block-view.ts';
 import type { PageElement } from '../types/page.d.ts';
@@ -284,7 +285,7 @@ export function createAppToolsCore(appVars: AppVars, appCalls: object, appRedraw
   function assistEligible(binding: EditorBinding,error: EditorFailure | null | undefined) {
     const diagnostic=error?.diagnostics?.[0]||error;
     return binding.session?.mode==='code'&&!binding.session.blockDraft&&!bindingContext(binding).meijin&&
-      typeof error?.proposalSource==='string'&&diagnostic?.line&&['P201','P205','S317'].includes(diagnostic.code);
+      typeof error?.proposalSource==='string'&&assistDiagnosticEligible(diagnostic,error.proposalSource);
   }
   // The note under a コード／ブロック toggle that says why it does not switch: it shows when a press is refused (the toggle
   // keeps its look) and goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
